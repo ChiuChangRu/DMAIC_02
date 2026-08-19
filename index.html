@@ -181,15 +181,15 @@
   }
   .clip-badge.on{display:inline-block;}
   td.clipcell{color:var(--danger);font-weight:600;}
-  #logBody tr{cursor:pointer;}
-  #logBody tr:hover{background:#212932;}
-  #logBody tr.sel{background:#1e3330;}
-  #logBody tr.sel td{color:var(--accent);}
-  #evtCanvas{height:240px;}
   .evt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
-  .evt-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);}
-  .evt-title b{color:var(--text);}
-  .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);cursor:pointer;}
+  .evt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+  .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;}
+  .evt-card.clip{border-color:var(--danger);}
+  .evt-card-title{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);display:flex;justify-content:space-between;gap:6px;margin-bottom:4px;}
+  .evt-card-title b{color:var(--text);font-weight:600;}
+  .evt-card-title .clipflag{color:var(--danger);font-weight:600;}
+  .evt-card canvas{width:100%;height:100px;display:block;}
+  .evt-empty{color:var(--text-dim);font-size:12.5px;padding:20px 4px;}
 
   .warn-box{
     background:#2a2416;
@@ -268,7 +268,7 @@
       <h2>觸發記錄設定</h2>
       <div class="row">
         <label>觸發閾值 (dB)</label>
-        <input type="number" id="triggerThresh" value="-30">
+        <input type="number" id="triggerThresh" value="10">
       </div>
       <div class="row">
         <label>量測窗 dwell (ms)</label>
@@ -313,11 +313,13 @@
 
     <div class="panel chart-panel">
       <div class="evt-head">
-        <h2 style="margin:0;">擊發波形 <span style="color:var(--text-dim);font-weight:400;">(點記錄表任一列可切換)</span></h2>
-        <label class="chk"><input type="checkbox" id="overlayChk"> 疊上同標籤的其他次以便比對</label>
+        <h2 style="margin:0;">擊發波形 <span style="color:var(--text-dim);font-weight:400;">(每筆各自成圖，縱軸以自身峰值為 0 dB)</span></h2>
+        <div class="row" style="margin:0;">
+          <label style="min-width:auto;">顯示範圍 (dB)</label>
+          <input type="number" id="evtRangeDb" value="10" min="1" max="60" step="1" style="width:70px;">
+        </div>
       </div>
-      <div class="evt-title" id="evtTitle"></div>
-      <canvas id="evtCanvas" style="margin-top:8px;"></canvas>
+      <div class="evt-grid" id="evtGrid"></div>
     </div>
 
     <div class="panel log-panel">
@@ -353,7 +355,7 @@ let capNode = null, ringBuf = null, ringLen = 0, totalSamples = 0, capRate = 480
 let captureMode = '';                 // 'AudioWorklet' / 'ScriptProcessor' / '' 表示不可用
 let fbDwellStart = 0, fbHoldUntil = 0;
 let crossIdx = 0, evtPeak = 0, evtClipped = false, holdoffUntilSample = 0;
-let selectedEntry = -1;
+
 let calOffset = null; // dB offset to add to dBFS to get SPL
 let logEntries = [];
 // 觸發狀態機：armed（待命）→ collecting（dwell 窗內取最大值 + 擷取波形）→ holdoff（冷卻）
@@ -390,10 +392,8 @@ const chartLegend = document.getElementById('chartLegend');
 const clipBadge = document.getElementById('clipBadge');
 const preMsInput = document.getElementById('preMs');
 const postMsInput = document.getElementById('postMs');
-const overlayChk = document.getElementById('overlayChk');
-const evtCanvas = document.getElementById('evtCanvas');
-const evtCtx = evtCanvas.getContext('2d');
-const evtTitle = document.getElementById('evtTitle');
+const evtGrid = document.getElementById('evtGrid');
+const evtRangeDbInput = document.getElementById('evtRangeDb');
 const logNowBtn = document.getElementById('logNowBtn');
 const clearLogBtn = document.getElementById('clearLogBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -409,10 +409,8 @@ function resizeCanvas(){
   canvas.height = canvas.clientHeight * devicePixelRatio;
   logCanvas.width = logCanvas.clientWidth * devicePixelRatio;
   logCanvas.height = logCanvas.clientHeight * devicePixelRatio;
-  evtCanvas.width = evtCanvas.clientWidth * devicePixelRatio;
-  evtCanvas.height = evtCanvas.clientHeight * devicePixelRatio;
   drawLogChart();
-  drawEventWave();
+  renderEventGrid();
 }
 window.addEventListener('resize', resizeCanvas);
 
@@ -1232,115 +1230,151 @@ function drawLogChart(){
   });
 }
 
-function drawEventWave(){
-  const g = evtCtx, w = evtCanvas.width, h = evtCanvas.height, dpr = devicePixelRatio;
+// 每筆記錄各自畫成一張小圖：縱軸不是原始振幅，而是相對於「這一筆自己的峰值」
+// 的 dB 差距——峰值那一刻是 0 dB，其餘時間點是比峰值低幾 dB。
+// 這樣不同大小聲的擊發可以直接比對衰減形狀與時間，不受絕對音量影響；
+// 也因為每張圖各自獨立（不疊加），彼此互不干擾，才看得出單一次的異常。
+function computeDbCurve(wv, rangeDb){
+  const B = wv.env.length/2;
+  let peakMag = 0;
+  const mag = new Float32Array(B);
+  for(let b=0;b<B;b++){
+    const m = Math.max(Math.abs(wv.env[b*2]), Math.abs(wv.env[b*2+1]));
+    mag[b] = m;
+    if(m > peakMag) peakMag = m;
+  }
+  const db = new Float32Array(B);
+  let peakBucket = 0;
+  for(let b=0;b<B;b++){
+    const v = peakMag > 0 && mag[b] > 0 ? 20*Math.log10(mag[b]/peakMag) : -rangeDb;
+    db[b] = Math.max(-rangeDb, v);
+    if(mag[b] === peakMag) peakBucket = b;
+  }
+  return {db, peakBucket};
+}
+
+function drawSingleEventChart(canvas, entry, rangeDb){
+  const dpr = devicePixelRatio;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
   if(!w || !h) return;
   g.clearRect(0,0,w,h);
 
-  const hasWave = logEntries.some(e=>e.wave);
-  if(!hasWave){
-    g.fillStyle = '#8b96a5';
-    g.font = (12*dpr) + 'px -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText('尚無擊發波形 — 觸發記錄後會自動擷取擊發前後的波形', w/2, h/2);
-    evtTitle.textContent = '';
+  const wv = entry.wave;
+  const {db, peakBucket} = computeDbCurve(wv, rangeDb);
+  const B = db.length;
+  const totalN = wv.preN + wv.postN;
+
+  const mL = 30*dpr, mR = 6*dpr, mT = 6*dpr, mB = 16*dpr;
+  const pw = w - mL - mR, ph = h - mT - mB;
+  const xOf = b => mL + pw*b/B;
+  const yOf = v => mT + ph*(1 - (v + rangeDb)/rangeDb);   // 0dB 在頂端，-rangeDb 在底部
+  const x0 = mL + pw*(wv.preN/totalN);   // 觸發瞬間（t=0）
+
+  g.fillStyle = '#0d1116';
+  g.fillRect(mL, mT, pw, ph);
+  g.fillStyle = 'rgba(255,255,255,0.025)';
+  g.fillRect(mL, mT, x0-mL, ph);   // 擊發前的區間用底色區隔
+
+  // 縱軸格線：0 / -range/2 / -range
+  g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
+  g.fillStyle = '#8b96a5'; g.font = (9*dpr)+'px Consolas, monospace';
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  [0, -rangeDb/2, -rangeDb].forEach(v=>{
+    const y = yOf(v);
+    g.beginPath(); g.moveTo(mL, y); g.lineTo(w-mR, y); g.stroke();
+    g.fillText(v.toFixed(0), mL-4*dpr, y);
+  });
+
+  // 觸發瞬間
+  g.strokeStyle = '#3a4452'; g.lineWidth = 1*dpr;
+  g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
+
+  // dB 曲線：面積填色到底部，峰值點另外標記
+  g.beginPath();
+  g.moveTo(xOf(0), yOf(db[0]));
+  for(let b=1;b<B;b++) g.lineTo(xOf(b), yOf(db[b]));
+  g.lineTo(xOf(B-1), mT+ph);
+  g.lineTo(xOf(0), mT+ph);
+  g.closePath();
+  g.fillStyle = entry.clip ? 'rgba(229,100,74,0.35)' : 'rgba(79,209,197,0.30)';
+  g.fill();
+
+  g.beginPath();
+  g.moveTo(xOf(0), yOf(db[0]));
+  for(let b=1;b<B;b++) g.lineTo(xOf(b), yOf(db[b]));
+  g.strokeStyle = entry.clip ? '#e5644a' : '#4fd1c5';
+  g.lineWidth = 1.3*dpr;
+  g.stroke();
+
+  // 峰值點（0 dB）
+  g.beginPath();
+  g.arc(xOf(peakBucket), yOf(0), 2*dpr, 0, Math.PI*2);
+  g.fillStyle = entry.clip ? '#e5644a' : '#4fd1c5';
+  g.fill();
+
+  // 時間軸只標 0 與端點，卡片小沒有空間畫太多刻度
+  g.fillStyle = '#8b96a5'; g.font = (9*dpr)+'px Consolas, monospace';
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillText('-' + (wv.preN/wv.rate*1000).toFixed(0), mL, mT+ph+3*dpr);
+  g.textAlign = 'right';
+  g.fillText('+' + (wv.postN/wv.rate*1000).toFixed(0) + 'ms', w-mR, mT+ph+3*dpr);
+}
+
+function renderEventGrid(){
+  const rangeDb = clampNum(evtRangeDbInput.value, 1, 60, 10);
+  evtGrid.textContent = '';
+
+  const withWave = logEntries.map((e,i)=>({e,i})).filter(x=>x.e.wave);
+  if(logEntries.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'evt-empty';
+    empty.textContent = '尚無記錄 — 觸發或手動記錄後，每一筆會各自畫成一張波形圖';
+    evtGrid.appendChild(empty);
+    return;
+  }
+  if(withWave.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'evt-empty';
+    empty.textContent = '目前的記錄沒有波形資料（波形擷取鏈不可用時的退路記錄不含波形）';
+    evtGrid.appendChild(empty);
     return;
   }
 
-  let idx = selectedEntry;
-  if(idx < 0 || idx >= logEntries.length || !logEntries[idx].wave){
-    for(let i=logEntries.length-1;i>=0;i--){ if(logEntries[i].wave){ idx = i; break; } }
-  }
-  const e = logEntries[idx], wv = e.wave;
-  const others = overlayChk.checked
-    ? logEntries.filter((x,i)=>i!==idx && x.wave && x.tag===e.tag && x.wave.env.length===wv.env.length)
-    : [];
+  withWave.forEach(({e,i})=>{
+    const card = document.createElement('div');
+    card.className = 'evt-card' + (e.clip ? ' clip' : '');
 
-  // 疊圖比較必須共用同一個縱軸尺度，否則兩條線的高低沒有意義
-  let peak = 0;
-  [e].concat(others).forEach(x=>{
-    for(let i=0;i<x.wave.env.length;i++){ const v = Math.abs(x.wave.env[i]); if(v > peak) peak = v; }
-  });
-  if(peak <= 0) peak = 1e-6;
-  const yScale = 1/(peak*1.12);
+    const title = document.createElement('div');
+    title.className = 'evt-card-title';
+    const left = document.createElement('span');
+    const b1 = document.createElement('b');
+    b1.textContent = '#' + (i+1) + ' ' + (e.tag || '(無標籤)');
+    left.appendChild(b1);
+    const right = document.createElement('span');
+    right.textContent = (isFinite(e.dbfs) ? e.dbfs.toFixed(1) : '--') + ' dBFS';
+    title.appendChild(left);
+    title.appendChild(right);
+    card.appendChild(title);
 
-  const mL = 44*dpr, mR = 12*dpr, mT = 10*dpr, mB = 22*dpr;
-  const pw = w - mL - mR, ph = h - mT - mB;
-  const cy = mT + ph/2;
-  const B = wv.env.length/2;
-  const totalN = wv.preN + wv.postN;
-  const xOf = b => mL + pw*b/B;
-  const yOf = v => cy - v*yScale*ph/2;
-  const tOf = b => (-wv.preN + totalN*b/B)/wv.rate*1000;
-
-  // 中線與 t=0 之前的底色（區分擊發前 / 擊發後）
-  g.fillStyle = '#0d1116';
-  g.fillRect(mL, mT, pw, ph);
-  const x0 = mL + pw*(wv.preN/totalN);
-  g.fillStyle = 'rgba(255,255,255,0.025)';
-  g.fillRect(mL, mT, x0-mL, ph);
-
-  g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
-  g.beginPath(); g.moveTo(mL, cy); g.lineTo(w-mR, cy); g.stroke();
-
-  // 觸發閾值（線性振幅）
-  const threshDb = parseFloat(triggerThresh.value);
-  if(isFinite(threshDb)){
-    const tl = Math.pow(10, threshDb/20);
-    if(tl*yScale < 1){
-      g.save();
-      g.strokeStyle = '#e5a34a'; g.setLineDash([5*dpr,4*dpr]);
-      g.beginPath(); g.moveTo(mL, yOf(tl)); g.lineTo(w-mR, yOf(tl));
-      g.moveTo(mL, yOf(-tl)); g.lineTo(w-mR, yOf(-tl)); g.stroke();
-      g.restore();
+    if(e.clip){
+      const flag = document.createElement('div');
+      flag.className = 'evt-card-title';
+      const f = document.createElement('span');
+      f.className = 'clipflag';
+      f.textContent = '⚠ 削波，形狀不可信';
+      flag.appendChild(f);
+      card.appendChild(flag);
     }
-  }
 
-  // 疊圖：同標籤的其他次，畫成淡線供比對
-  g.lineWidth = 1*dpr;
-  others.forEach(x=>{
-    g.strokeStyle = 'rgba(139,150,165,0.5)';
-    g.beginPath();
-    for(let b=0;b<B;b++){ const v = x.wave.env[b*2+1]; if(b===0) g.moveTo(xOf(b), yOf(v)); else g.lineTo(xOf(b), yOf(v)); }
-    for(let b=B-1;b>=0;b--){ g.lineTo(xOf(b), yOf(x.wave.env[b*2])); }
-    g.stroke();
+    const canvas = document.createElement('canvas');
+    card.appendChild(canvas);
+    evtGrid.appendChild(card);
+    drawSingleEventChart(canvas, e, rangeDb);
   });
-
-  // 主波形包絡
-  g.fillStyle = e.clip ? 'rgba(229,100,74,0.85)' : 'rgba(79,209,197,0.85)';
-  g.beginPath();
-  for(let b=0;b<B;b++){ const v = wv.env[b*2+1]; if(b===0) g.moveTo(xOf(b), yOf(v)); else g.lineTo(xOf(b), yOf(v)); }
-  for(let b=B-1;b>=0;b--){ g.lineTo(xOf(b), yOf(wv.env[b*2])); }
-  g.closePath(); g.fill();
-
-  // 觸發瞬間
-  g.strokeStyle = '#e8ecf1'; g.lineWidth = 1.5*dpr;
-  g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
-
-  // 時間軸
-  g.fillStyle = '#8b96a5'; g.font = (10*dpr)+'px Consolas, monospace';
-  g.textAlign = 'center'; g.textBaseline = 'top';
-  const spanMs = totalN/wv.rate*1000;
-  const step = spanMs > 800 ? 200 : (spanMs > 400 ? 100 : 50);
-  for(let t=Math.ceil(tOf(0)/step)*step; t<=tOf(B-1); t+=step){
-    const b = (t/1000*wv.rate + wv.preN)/totalN*B;
-    const x = xOf(b);
-    g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
-    g.beginPath(); g.moveTo(x, mT); g.lineTo(x, mT+ph); g.stroke();
-    g.fillText((t>0?'+':'') + t, x, mT+ph+5*dpr);
-  }
-  g.textAlign = 'right';
-  g.fillText('ms', w-mR, mT+ph+5*dpr);
-
-  evtTitle.innerHTML = '';
-  const t1 = document.createElement('span');
-  t1.textContent = '第 ' + (idx+1) + ' 筆 · ' + (e.tag || '(無標籤)')
-    + ' · 峰值 ' + (isFinite(e.dbfs)?e.dbfs.toFixed(1):'--') + ' dBFS'
-    + ' · 擷取 -' + (wv.preN/wv.rate*1000).toFixed(0) + ' ~ +' + (wv.postN/wv.rate*1000).toFixed(0) + ' ms'
-    + (others.length ? ' · 疊圖 ' + others.length + ' 次' : '')
-    + (e.clip ? ' · ⚠ 削波，此筆不可用於比較' : '');
-  evtTitle.appendChild(t1);
 }
+
 
 function addLogEntry(peakDbfsVal, auto, clipped, wave){
   const t = new Date();
@@ -1354,7 +1388,6 @@ function addLogEntry(peakDbfsVal, auto, clipped, wave){
     clip: !!clipped,
     wave: wave || null
   });
-  selectedEntry = logEntries.length - 1;   // 新記錄自動顯示其波形
   renderLog();
 }
 
@@ -1363,13 +1396,11 @@ function renderLog(){
   logEntries.forEach((e,i)=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i+1}</td><td>${e.time}</td><td>${e.tag}</td><td>${isFinite(e.dbfs)?e.dbfs.toFixed(1):'--'}</td><td>${e.spl!==null?e.spl.toFixed(1):'--'}</td><td class="${e.clip?'clipcell':''}">${e.clip?'⚠ 削波':''}</td>`;
-    tr.dataset.idx = i;
-    if(i === selectedEntry) tr.classList.add('sel');
     logBody.appendChild(tr);
   });
   logCount.textContent = `(${logEntries.length} 筆)`;
   drawLogChart();
-  drawEventWave();
+  renderEventGrid();
   logBody.parentElement.parentElement.scrollTop = logBody.parentElement.parentElement.scrollHeight;
 }
 
@@ -1409,14 +1440,8 @@ startBtn.addEventListener('click', startAudio);
 stopBtn.addEventListener('click', stopAudio);
 resetPeakBtn.addEventListener('click', resetPeakHold);
 scanBtn.addEventListener('click', scanDevices);
-triggerThresh.addEventListener('input', ()=>{ drawLogChart(); drawEventWave(); });
-overlayChk.addEventListener('change', drawEventWave);
-logBody.addEventListener('click', ev=>{
-  const tr = ev.target.closest('tr');
-  if(!tr || !tr.dataset.idx) return;
-  selectedEntry = parseInt(tr.dataset.idx, 10);
-  renderLog();
-});
+triggerThresh.addEventListener('input', drawLogChart);
+evtRangeDbInput.addEventListener('input', renderEventGrid);
 logNowBtn.addEventListener('click', ()=>{
   // 手動記錄同樣附上波形：以「現在」為基準往回取，擷取後段用已收到的樣本
   let wave = null;
@@ -1427,7 +1452,7 @@ logNowBtn.addEventListener('click', ()=>{
   }
   addLogEntry(peakHoldDbfs, false, peakHoldClipped, wave);
 });
-clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; selectedEntry=-1; renderLog(); });
+clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
 exportBtn.addEventListener('click', ()=>{
   if(logEntries.length===0){ alert('目前沒有記錄可匯出'); return; }
   let csv = '編號,時間,標籤,峰值dBFS,校正後dBSPL,削波\n';
