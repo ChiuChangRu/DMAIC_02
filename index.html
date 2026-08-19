@@ -430,6 +430,7 @@ function setMicState(kind, text){
 // Firefox 不支援 name:'microphone'，查詢失敗就靜默略過。
 function applyPerm(state){
   lastPermState = state;
+  showDiag();
   if(!stopBtn.disabled) return;         // 收音中不要覆蓋現場狀態
   if(state === 'granted')      setMicState('ready', '麥克風已授權，尚未啟動');
   else if(state === 'denied')  setMicState('error', '麥克風權限被拒絕 — 請點網址列的鎖頭圖示改為允許');
@@ -454,7 +455,10 @@ function fmtFlag(v){ return v===false ? '關' : (v===true ? '開' : '未知'); }
 
 function showDiag(){
   const track = micStream && micStream.getAudioTracks()[0];
-  if(!track){ diagText.textContent = ''; return; }
+  if(!track){
+    diagText.textContent = '權限狀態：' + (lastPermState || '未知（瀏覽器不支援查詢）');
+    return;
+  }
   const st = track.getSettings ? track.getSettings() : {};
   diagText.textContent = [
     '裝置：' + (track.label || '(瀏覽器未提供名稱)'),
@@ -664,14 +668,21 @@ async function reportMicError(e){
         + '② Windows 設定 → 隱私權與安全性 → 麥克風 →「讓應用程式存取您的麥克風」'
         + '以及下方瀏覽器的個別開關；'
         + '③ 關閉可能獨佔麥克風的程式後重新整理。', false);
+    }else if(perm === 'denied'){
+      setMicState('error', '麥克風權限為「拒絕」');
+      setStatus('瀏覽器把麥克風權限判定為拒絕。開新分頁貼上 chrome://settings/content/microphone '
+        + '（Edge 為 edge://settings/content/microphone），檢查兩個地方：'
+        + '① 最上方的全域開關要選「網站可以要求使用您的麥克風」，'
+        + '若選的是「不允許網站使用您的麥克風」，所有網站都會被拒絕，而且封鎖清單裡不會有任何條目；'
+        + '② 下方「不允許使用您的麥克風」清單中若有本站，將它移除。改完重新整理頁面。', false);
     }else{
-      setMicState('error', '本站的麥克風權限被封鎖');
-      setStatus('本站的麥克風權限被封鎖。請點網址列右側被劃掉的麥克風圖示（或左側的鎖頭／調整圖示）→ '
-        + '把「麥克風」改成「允許」→ 重新整理頁面。'
-        + '若圖示裡看到「已由系統封鎖」，則要改的是 Windows 的麥克風隱私權設定。'
-        + '　若網址列找不到該圖示，開新分頁貼上 chrome://settings/content/microphone '
-        + '（Edge 為 edge://settings/content/microphone），'
-        + '在「不允許使用您的麥克風」清單中移除本站後重新整理。', false);
+      // prompt：權限提示出現過但沒有被回答（按了 X 或 Esc、或被其他視窗蓋住）
+      setMicState('error', '權限提示未被允許（狀態仍為 prompt）');
+      setStatus('瀏覽器顯示了權限提示但沒有收到「允許」——狀態仍是 prompt，代表提示被略過或被其他視窗蓋掉，'
+        + '並不是被封鎖。請再按一次「開始收音」，注意網址列正下方跳出的小視窗並按「允許」；'
+        + '按 Esc 或點視窗外面都算略過。'
+        + '若提示根本沒出現，檢查 chrome://settings/content/microphone 最上方的全域開關'
+        + '是否為「網站可以要求使用您的麥克風」。', false);
     }
   }else if(e.name === 'NotFoundError'){
     setMicState('error', '找不到任何麥克風裝置');
