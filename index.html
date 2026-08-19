@@ -107,6 +107,31 @@
 
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
 
+  .mic-state{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-size:12.5px;
+    font-weight:600;
+    padding:7px 16px;
+    border-radius:99px;
+    border:1px solid var(--panel-line);
+    color:var(--text-dim);
+    background:#0d1116;
+    margin-top:16px;
+  }
+  .mic-state .dot{width:9px;height:9px;border-radius:50%;background:var(--text-dim);flex:none;}
+  .mic-state.ready{border-color:var(--accent-dim);color:var(--accent);}
+  .mic-state.ready .dot{background:var(--accent-dim);}
+  .mic-state.live{border-color:var(--accent);color:var(--accent);}
+  .mic-state.live .dot{background:var(--accent);animation:micPulse 1.2s ease-in-out infinite;}
+  .mic-state.armed{border-color:var(--warn);color:var(--warn);}
+  .mic-state.armed .dot{background:var(--warn);}
+  .mic-state.error{border-color:var(--danger);color:var(--danger);}
+  .mic-state.error .dot{background:var(--danger);}
+  @keyframes micPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.3;transform:scale(0.75);}}
+  @media (prefers-reduced-motion:reduce){.mic-state.live .dot{animation:none;}}
+
   .status{font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.6;}
   .status.active{color:var(--accent);}
   .badge{
@@ -167,6 +192,7 @@
         <button id="stopBtn" class="secondary" disabled>停止</button>
         <button id="resetPeakBtn" class="secondary">重置 Peak Hold</button>
       </div>
+      <div><span class="mic-state" id="micState"><span class="dot"></span><span id="micStateText">麥克風未啟動</span></span></div>
       <div class="status" id="statusText">尚未啟動麥克風</div>
       <div class="status" id="diagText" style="font-family:var(--mono);font-size:11px;"></div>
     </div>
@@ -224,7 +250,9 @@ let audioCtx, analyser, micStream, dataArray, rafId;
 // sourceNode 必須保留全域參照：Chrome 會回收掉沒有 JS 參照的 MediaStreamAudioSourceNode，
 // 造成收音在幾秒後無聲無息地斷掉。silentGain 則是把音訊鏈接到 destination（音量 0），
 // 確保所有瀏覽器都會實際驅動這條鏈。
-let sourceNode, silentGain;
+let sourceNode, silentGain, micTrack;
+let lastPermState = null;
+let lastMicStateKey = '';
 let silentFrames = 0;
 const FLOOR_DBFS = -100;  // 顯示下限：安靜時顯示 -100 而不是 '--'，避免誤判成「沒收到」
 let peakHoldDbfs = -Infinity;
@@ -238,6 +266,8 @@ const modeLabelEl = document.getElementById('modeLabel');
 const statusText = document.getElementById('statusText');
 const diagText = document.getElementById('diagText');
 const deviceSelect = document.getElementById('deviceSelect');
+const micState = document.getElementById('micState');
+const micStateText = document.getElementById('micStateText');
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const resetPeakBtn = document.getElementById('resetPeakBtn');
@@ -263,6 +293,35 @@ function resizeCanvas(){
   canvas.height = canvas.clientHeight * devicePixelRatio;
 }
 window.addEventListener('resize', resizeCanvas);
+
+// 麥克風狀態指示燈。kind: idle / ready / live / armed / error
+function setMicState(kind, text){
+  const key = kind + '|' + text;
+  if(key === lastMicStateKey) return;   // 每幀都會呼叫，狀態沒變就不要動 DOM
+  lastMicStateKey = key;
+  micState.className = 'mic-state ' + kind;
+  micStateText.textContent = text;
+}
+
+// 瀏覽器的麥克風授權狀態在「按下開始」之前就查得到，
+// 這樣使用者不必先按一次才知道權限被擋掉。
+// Firefox 不支援 name:'microphone'，查詢失敗就靜默略過。
+function applyPerm(state){
+  lastPermState = state;
+  if(!stopBtn.disabled) return;         // 收音中不要覆蓋現場狀態
+  if(state === 'granted')      setMicState('ready', '麥克風已授權，尚未啟動');
+  else if(state === 'denied')  setMicState('error', '麥克風權限被拒絕 — 請點網址列的鎖頭圖示改為允許');
+  else                         setMicState('idle',  '麥克風未啟動（按下按鈕時會詢問權限）');
+}
+
+async function checkPermission(){
+  if(!navigator.permissions || !navigator.permissions.query) return;
+  try{
+    const st = await navigator.permissions.query({name:'microphone'});
+    applyPerm(st.state);
+    st.onchange = ()=>applyPerm(st.state);
+  }catch(e){ /* 不支援就維持預設顯示 */ }
+}
 
 function setStatus(msg, active){
   statusText.textContent = msg;
@@ -305,6 +364,7 @@ async function refreshDeviceList(){
 async function startAudio(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     setStatus('這個頁面不是安全來源，瀏覽器禁止存取麥克風。請用 https:// 的網址開啟，不要用 file:// 直接開本機檔案。', false);
+    setMicState('error', '不是安全來源，無法使用麥克風');
     return;
   }
 
@@ -319,10 +379,22 @@ async function startAudio(){
     micStream = await navigator.mediaDevices.getUserMedia({audio: audioConstraints});
   }catch(e){
     setStatus('無法取得麥克風：' + e.name + ' — ' + e.message, false);
+    setMicState('error', e.name === 'NotAllowedError'
+      ? '麥克風權限被拒絕 — 請點網址列的鎖頭圖示改為允許'
+      : (e.name === 'NotFoundError' ? '找不到任何麥克風裝置' : '麥克風啟動失敗：' + e.name));
     return;
   }
 
   await refreshDeviceList();
+
+  // 軌道層級事件：裝置被拔掉、被其他程式搶走、或被系統靜音時，
+  // 讀值會直接變平而沒有任何提示，必須主動攔下來告知。
+  micTrack = micStream.getAudioTracks()[0];
+  if(micTrack){
+    micTrack.onended   = ()=>{ setMicState('error','麥克風已中斷（裝置被移除或被其他程式接管）'); showDiag(); };
+    micTrack.onmute    = ()=>{ setMicState('error','麥克風被系統靜音'); showDiag(); };
+    micTrack.onunmute  = ()=>{ setMicState('live','收音中'); showDiag(); };
+  }
 
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if(audioCtx.state === 'suspended'){
@@ -347,7 +419,8 @@ async function startAudio(){
   resizeCanvas();
   startBtn.disabled = true;
   stopBtn.disabled = false;
-  setStatus('收音中...', true);
+  setStatus('', true);
+  setMicState('live', '收音中');
   showDiag();
   loop();
 }
@@ -356,6 +429,7 @@ function stopAudio(){
   if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
   if(sourceNode){ try{ sourceNode.disconnect(); }catch(e){} sourceNode = null; }
   if(silentGain){ try{ silentGain.disconnect(); }catch(e){} silentGain = null; }
+  if(micTrack){ micTrack.onended = micTrack.onmute = micTrack.onunmute = null; micTrack = null; }
   if(micStream) micStream.getTracks().forEach(t=>t.stop());
   if(audioCtx && audioCtx.state !== 'closed'){ try{ audioCtx.close(); }catch(e){} }
   silentFrames = 0;
@@ -363,6 +437,7 @@ function stopAudio(){
   startBtn.disabled = false;
   stopBtn.disabled = true;
   setStatus('已停止', false);
+  applyPerm(lastPermState || 'prompt');
   diagText.textContent = '';
 }
 
@@ -411,6 +486,7 @@ function loop(){
   // 訊號全為 0 = 瀏覽器拿到裝置了，但裝置沒送出任何聲音樣本
   if(peakAbs === 0){
     silentFrames++;
+    if(silentFrames >= 30) setMicState('armed', '已啟動 · 收不到訊號');
     if(silentFrames === 120){
       setStatus('⚠ 已取得麥克風，但音訊連續 2 秒完全是 0（不是很小聲，是數位靜音）。'
         + '通常代表：選錯輸入裝置、系統把該麥克風靜音或音量設為 0、或裝置被其他程式獨佔。'
@@ -418,7 +494,8 @@ function loop(){
       showDiag();
     }
   }else{
-    if(silentFrames >= 120) setStatus('收音中...', true);
+    if(silentFrames >= 120) setStatus('', true);
+    if(silentFrames >= 30) setMicState('live', '收音中');
     silentFrames = 0;
   }
 
@@ -428,7 +505,8 @@ function loop(){
   dbMainEl.textContent = isFinite(displayVal) ? displayVal.toFixed(1) : '--';
   dbPeakEl.textContent = isFinite(displayPeak) ? displayPeak.toFixed(1) : '--';
 
-  if(displayVal > -10) dbMainEl.style.color = 'var(--danger)';
+  if(silentFrames >= 30) dbMainEl.style.color = 'var(--text-dim)';   // 收不到訊號，別讓讀值看起來正常
+  else if(displayVal > -10) dbMainEl.style.color = 'var(--danger)';
   else if(displayVal > -25) dbMainEl.style.color = 'var(--warn)';
   else dbMainEl.style.color = 'var(--accent)';
 
@@ -521,6 +599,10 @@ exportBtn.addEventListener('click', ()=>{
 
 resizeCanvas();
 refreshDeviceList();
+checkPermission();
+if(navigator.mediaDevices && 'ondevicechange' in navigator.mediaDevices){
+  navigator.mediaDevices.addEventListener('devicechange', refreshDeviceList);
+}
 </script>
 </body>
 </html>
