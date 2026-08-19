@@ -350,6 +350,8 @@ let peakHoldClipped = false;
 // 內部結構（雙擊、彈跳等機構異常都在毫秒級），因此另外接一條擷取鏈
 // 把原始樣本寫進環形緩衝，觸發時才能回頭取出擊發「之前」的波形。
 let capNode = null, ringBuf = null, ringLen = 0, totalSamples = 0, capRate = 48000;
+let captureMode = '';                 // 'AudioWorklet' / 'ScriptProcessor' / '' 表示不可用
+let fbDwellStart = 0, fbHoldUntil = 0;
 let crossIdx = 0, evtPeak = 0, evtClipped = false, holdoffUntilSample = 0;
 let selectedEntry = -1;
 let calOffset = null; // dB offset to add to dBFS to get SPL
@@ -459,7 +461,8 @@ function showDiag(){
     '軌道：' + track.readyState + (track.muted ? ' / 系統靜音' : ''),
     'AudioContext：' + audioCtx.state,
     audioCtx.sampleRate + ' Hz',
-    'AGC ' + fmtFlag(st.autoGainControl) + '／降噪 ' + fmtFlag(st.noiseSuppression) + '／回音消除 ' + fmtFlag(st.echoCancellation)
+    'AGC ' + fmtFlag(st.autoGainControl) + '／降噪 ' + fmtFlag(st.noiseSuppression) + '／回音消除 ' + fmtFlag(st.echoCancellation),
+    '波形擷取：' + (captureMode || '不可用（已退回基本觸發，無波形）')
   ].join('　·　');
 }
 
@@ -689,7 +692,6 @@ async function startAudio(){
   currentDbfsSmoothed = -Infinity;
   resetTrigger();
   resetPeakHold();
-  await setupCapture();
 
   resizeCanvas();
   startBtn.disabled = true;
@@ -698,6 +700,11 @@ async function startAudio(){
   setMicState('live', '收音中');
   showDiag();
   loop();
+
+  // 波形擷取是加值功能，絕不能擋住基本量測：
+  // 放在核心啟動完成之後，且刻意不 await——建立擷取鏈若失敗或卡住，
+  // 收音、讀值、繪圖都已經在跑了，只會少掉波形而已。
+  setupCapture();
 }
 
 function stopAudio(){
@@ -759,6 +766,8 @@ function loop(){
   currentDbfsSmoothed = currentDbfsSmoothed === -Infinity ? rmsDbfs : (currentDbfsSmoothed*0.7 + rmsDbfs*0.3);
 
   if(peakDbfs > peakHoldDbfs) peakHoldDbfs = peakDbfs;
+
+  if(!captureMode) updateTriggerFallback(peakDbfs, peakAbs);
 
   // 訊號全為 0 = 瀏覽器拿到裝置了，但裝置沒送出任何聲音樣本
   if(peakAbs === 0){
@@ -824,33 +833,51 @@ registerProcessor('cap-proc', CapProc);
 `;
 
 async function setupCapture(){
-  capRate = audioCtx.sampleRate;
-  ringLen = Math.ceil(4 * capRate);      // 4 秒環形緩衝，足夠涵蓋任何擷取窗設定
-  ringBuf = new Float32Array(ringLen);
-  totalSamples = 0;
-  capNode = null;
+  captureMode = '';
+  try{
+    capRate = audioCtx.sampleRate;
+    ringLen = Math.ceil(4 * capRate);    // 4 秒環形緩衝，足夠涵蓋任何擷取窗設定
+    ringBuf = new Float32Array(ringLen);
+    totalSamples = 0;
+    capNode = null;
 
-  if(audioCtx.audioWorklet){
-    try{
-      const url = URL.createObjectURL(new Blob([CAPTURE_WORKLET], {type:'application/javascript'}));
-      await audioCtx.audioWorklet.addModule(url);
-      URL.revokeObjectURL(url);
-      capNode = new AudioWorkletNode(audioCtx, 'cap-proc');
-      capNode.port.onmessage = ev => onSamples(ev.data);
-    }catch(e){ capNode = null; }
+    if(audioCtx.audioWorklet){
+      try{
+        const url = URL.createObjectURL(new Blob([CAPTURE_WORKLET], {type:'application/javascript'}));
+        // addModule 在部分環境會遲遲不 resolve，加逾時免得擷取鏈永遠卡在這裡
+        await Promise.race([
+          audioCtx.audioWorklet.addModule(url),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('addModule timeout')), 3000))
+        ]);
+        URL.revokeObjectURL(url);
+        capNode = new AudioWorkletNode(audioCtx, 'cap-proc');
+        capNode.port.onmessage = ev => onSamples(ev.data);
+        captureMode = 'AudioWorklet';
+      }catch(e){ capNode = null; captureMode = ''; }
+    }
+    if(!capNode && audioCtx.createScriptProcessor){
+      // 舊瀏覽器退路：ScriptProcessor 已棄用但相容性最好
+      try{
+        capNode = audioCtx.createScriptProcessor(1024, 1, 1);
+        capNode.onaudioprocess = ev => onSamples(ev.inputBuffer.getChannelData(0));
+        captureMode = 'ScriptProcessor';
+      }catch(e){ capNode = null; captureMode = ''; }
+    }
+    if(capNode && sourceNode && silentGain){
+      sourceNode.connect(capNode);
+      capNode.connect(silentGain);
+    }else{
+      capNode = null; captureMode = '';
+    }
+  }catch(e){
+    capNode = null; captureMode = '';
   }
-  if(!capNode && audioCtx.createScriptProcessor){
-    // 舊瀏覽器退路：ScriptProcessor 已棄用但相容性最好
-    capNode = audioCtx.createScriptProcessor(1024, 1, 1);
-    capNode.onaudioprocess = ev => onSamples(ev.inputBuffer.getChannelData(0));
-  }
-  if(capNode){
-    sourceNode.connect(capNode);
-    capNode.connect(silentGain);
-  }
+  if(!captureMode) ringBuf = null;   // 沒有擷取鏈就不要留著 4 秒的緩衝佔記憶體
+  showDiag();
 }
 
 function teardownCapture(){
+  captureMode = '';
   if(capNode){
     try{ capNode.disconnect(); }catch(e){}
     if(capNode.port) capNode.port.onmessage = null;
@@ -949,6 +976,42 @@ function onSamples(block){
   }else if(trigState === 'holdoff' && totalSamples >= holdoffUntilSample){
     trigState = 'armed';
     setTrigBadge('', '待命');
+  }
+}
+
+// 擷取鏈不可用時的退路：沿用每幀輪詢做 dwell 觸發。
+// 時間解析度只有約 17ms、也拿不到波形，但至少自動記錄不會整個失效。
+function updateTriggerFallback(peakDbfs, peakAbs){
+  const thresh = parseFloat(triggerThresh.value);
+  const dwellMs = clampNum(dwellMsInput.value, 10, 5000, 150);
+  const holdMs  = clampNum(holdoffMsInput.value, 0, 60000, 800);
+  const now = performance.now();
+
+  if(peakAbs >= CLIP_LEVEL){
+    peakHoldClipped = true;
+    clipBadge.classList.add('on');
+  }
+
+  if(trigState === 'armed'){
+    if(isFinite(thresh) && peakDbfs > thresh){
+      trigState = 'collecting';
+      fbDwellStart = now;
+      evtPeak = peakAbs;
+      evtClipped = peakAbs >= CLIP_LEVEL;
+      setTrigBadge('dwell', '擷取中');
+    }
+  }else if(trigState === 'collecting'){
+    if(peakAbs > evtPeak) evtPeak = peakAbs;
+    if(peakAbs >= CLIP_LEVEL) evtClipped = true;
+    if(now - fbDwellStart >= dwellMs){
+      const db = evtPeak > 0 ? Math.max(20*Math.log10(evtPeak), FLOOR_DBFS) : FLOOR_DBFS;
+      addLogEntry(db, true, evtClipped, null);
+      resetPeakHoldValue();
+      if(holdMs > 0){ trigState='holdoff'; fbHoldUntil = now + holdMs; setTrigBadge('hold','冷卻中'); }
+      else { trigState='armed'; setTrigBadge('','待命'); }
+    }
+  }else{
+    if(now >= fbHoldUntil){ trigState = 'armed'; setTrigBadge('', '待命'); }
   }
 }
 
