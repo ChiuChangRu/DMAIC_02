@@ -594,6 +594,11 @@ async function scanDevices(){
     setStatus('這個頁面不是安全來源，無法掃描裝置。請用 https:// 的網址開啟。', false);
     return;
   }
+  if(lastPermState === 'denied'){
+    await reportMicError(Object.assign(new Error('Permission denied'), {name:'NotAllowedError'}));
+    return;
+  }
+
   const wasRunning = !stopBtn.disabled;
   if(wasRunning) stopAudio();
 
@@ -663,7 +668,10 @@ async function reportMicError(e){
       setMicState('error', '本站的麥克風權限被封鎖');
       setStatus('本站的麥克風權限被封鎖。請點網址列右側被劃掉的麥克風圖示（或左側的鎖頭／調整圖示）→ '
         + '把「麥克風」改成「允許」→ 重新整理頁面。'
-        + '若圖示裡看到「已由系統封鎖」，則要改的是 Windows 的麥克風隱私權設定。', false);
+        + '若圖示裡看到「已由系統封鎖」，則要改的是 Windows 的麥克風隱私權設定。'
+        + '　若網址列找不到該圖示，開新分頁貼上 chrome://settings/content/microphone '
+        + '（Edge 為 edge://settings/content/microphone），'
+        + '在「不允許使用您的麥克風」清單中移除本站後重新整理。', false);
     }
   }else if(e.name === 'NotFoundError'){
     setMicState('error', '找不到任何麥克風裝置');
