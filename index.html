@@ -1347,7 +1347,7 @@ function computeDbCurve(wv, rangeDb){
   let peakBucket = 0;
   for(let b=0;b<B;b++){
     const v = peakMag > 0 && mag[b] > 0 ? 20*Math.log10(mag[b]/peakMag) : -rangeDb;
-    db[b] = Math.max(-rangeDb, v);
+    db[b] = Math.min(0, Math.max(-rangeDb, v));
     if(mag[b] === peakMag) peakBucket = b;
   }
   return {db, peakBucket};
@@ -1369,7 +1369,11 @@ function drawSingleEventChart(canvas, entry, rangeDb){
   const mL = 30*dpr, mR = 6*dpr, mT = 6*dpr, mB = 16*dpr;
   const pw = w - mL - mR, ph = h - mT - mB;
   const xOf = b => mL + pw*b/B;
-  const yOf = v => mT + ph*(1 - (v + rangeDb)/rangeDb);   // 0dB 在頂端，-rangeDb 在底部
+  // 峰值(0dB)不直接貼著圖表最上緣畫，留一點頭部空間，視覺上才不會像要衝出邊框——
+  // 之前完全不留白時，密集鋸齒的削波波形疊在頂部格線上看起來很像超出範圍。
+  const topPad = Math.max(1, rangeDb*0.08);
+  const totalSpan = rangeDb + topPad;
+  const yOf = v => mT + ph*(1 - (v + rangeDb)/totalSpan);   // 0dB 在頂端留白處，-rangeDb 在底部
   const x0 = mL + pw*(wv.preN/totalN);   // 觸發瞬間（t=0）
 
   g.fillStyle = '#0d1116';
@@ -1406,6 +1410,7 @@ function drawSingleEventChart(canvas, entry, rangeDb){
   for(let b=1;b<B;b++) g.lineTo(xOf(b), yOf(db[b]));
   g.strokeStyle = entry.clip ? '#e5644a' : '#4fd1c5';
   g.lineWidth = 1.3*dpr;
+  g.lineJoin = 'round';
   g.stroke();
 
   // 峰值點（0 dB）
@@ -1542,7 +1547,9 @@ function drawCompareChart(canvas, entries, rangeDb){
   const mL = 46*dpr, mR = 14*dpr, mT = 12*dpr, mB = 22*dpr;
   const pw = w - mL - mR, ph = h - mT - mB;
   const xOf = t => mL + pw*(t - tMin)/tSpan;
-  const yOf = v => mT + ph*(1 - (v + rangeDb)/rangeDb);
+  const topPad = Math.max(1, rangeDb*0.08);
+  const totalSpan = rangeDb + topPad;
+  const yOf = v => mT + ph*(1 - (v + rangeDb)/totalSpan);
 
   g.fillStyle = '#0d1116'; g.fillRect(mL, mT, pw, ph);
 
@@ -1559,6 +1566,10 @@ function drawCompareChart(canvas, entries, rangeDb){
   g.strokeStyle = '#3a4452'; g.lineWidth = 1*dpr;
   g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
 
+  // 疊圖時「哪一筆是哪一筆」比「有沒有削波」重要，所以顏色一律按編號分配，
+  // 不能像單卡那樣把削波的一律畫成紅色——如果目前選取的好幾筆剛好都削波
+  // （例如都在同一個過高的閾值下觸發），全部變成同一種紅線疊在一起就完全分不出來。
+  // 削波改用虛線表示，並保留線色的識別度；同時用半透明讓重疊處彼此看得穿。
   curves.forEach((c,idx)=>{
     const color = TAG_PALETTE[idx % TAG_PALETTE.length];
     g.beginPath();
@@ -1566,9 +1577,14 @@ function drawCompareChart(canvas, entries, rangeDb){
       const x = xOf(c.times[b]), y = yOf(c.db[b]);
       if(b===0) g.moveTo(x,y); else g.lineTo(x,y);
     }
-    g.strokeStyle = c.e.clip ? '#e5644a' : color;
-    g.lineWidth = 1.8*dpr;
+    g.save();
+    g.globalAlpha = 0.82;
+    g.strokeStyle = color;
+    g.lineWidth = 2*dpr;
+    g.lineJoin = 'round';
+    if(c.e.clip) g.setLineDash([5*dpr, 3*dpr]);
     g.stroke();
+    g.restore();
   });
 
   g.fillStyle = '#8b96a5'; g.textBaseline = 'top';
@@ -1599,12 +1615,15 @@ function renderCompare(){
     const idxInLog = logEntries.indexOf(e);
     const sp = document.createElement('span');
     const sw = document.createElement('i');
-    sw.style.background = e.clip ? '#e5644a' : TAG_PALETTE[idx % TAG_PALETTE.length];
+    // 圖例色塊跟圖上的線同色（一律按編號分配，不因削波蓋成紅色），
+    // 削波與否改用文字說明，虛線樣式則在圖上呈現，色塊本身維持圓角矩形即可。
+    sw.style.background = TAG_PALETTE[idx % TAG_PALETTE.length];
+    if(e.clip) sw.style.backgroundImage = 'repeating-linear-gradient(90deg, transparent 0 2px, rgba(0,0,0,0.45) 2px 4px)';
     sp.appendChild(sw);
     sp.appendChild(document.createTextNode(
       '#' + (idxInLog+1) + ' ' + (e.tag || '(無標籤)')
       + (isFinite(e.dbfs) ? ' · ' + e.dbfs.toFixed(1) + ' dBFS' : '')
-      + (e.clip ? ' · ⚠削波' : '')
+      + (e.clip ? ' · ⚠削波(虛線)' : '')
     ));
     evtCompareLegend.appendChild(sp);
   });
