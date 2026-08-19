@@ -175,6 +175,21 @@
   }
   .trig-state.dwell{border-color:var(--danger);color:var(--danger);}
   .trig-state.hold{border-color:var(--warn);color:var(--warn);}
+  .clip-badge{
+    display:none;border:1px solid var(--danger);color:var(--danger);
+    border-radius:99px;padding:2px 10px;font-size:11px;font-weight:600;
+  }
+  .clip-badge.on{display:inline-block;}
+  td.clipcell{color:var(--danger);font-weight:600;}
+  #logBody tr{cursor:pointer;}
+  #logBody tr:hover{background:#212932;}
+  #logBody tr.sel{background:#1e3330;}
+  #logBody tr.sel td{color:var(--accent);}
+  #evtCanvas{height:240px;}
+  .evt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .evt-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .evt-title b{color:var(--text);}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);cursor:pointer;}
 
   .warn-box{
     background:#2a2416;
@@ -207,6 +222,7 @@
       <div class="db-sub">
         <span>PEAK HOLD <b id="dbPeak">--</b> dB</span>
         <span>模式 <b id="modeLabel">未校正 (dBFS)</b></span>
+        <span class="clip-badge" id="clipBadge">⚠ 削波 CLIP</span>
       </div>
       <canvas id="waveCanvas" style="margin-top:20px;"></canvas>
       <div class="row" style="justify-content:center;margin-top:16px;">
@@ -263,6 +279,14 @@
         <input type="number" id="holdoffMs" value="800" min="0" max="60000" step="50">
       </div>
       <div class="row">
+        <label>波形擷取前 (ms)</label>
+        <input type="number" id="preMs" value="60" min="10" max="1000" step="10">
+      </div>
+      <div class="row">
+        <label>波形擷取後 (ms)</label>
+        <input type="number" id="postMs" value="300" min="20" max="2000" step="10">
+      </div>
+      <div class="row">
         <label>備註標籤</label>
         <input type="text" id="tagInput" placeholder="例如 A膠-針1">
       </div>
@@ -274,6 +298,9 @@
       <div class="status">
         超過閾值即開始擷取，持續 <b>dwell</b> 毫秒並取這段期間的最大值記錄，
         擊發瞬間的真正峰值才不會被漏掉；記錄後進入<b>再觸發間隔</b>，避免同一次擊發被記成多筆。
+        每次觸發同時擷取擊發<b>前後</b>的完整波形供機構判讀。
+        若出現<b style="color:var(--danger);">削波</b>提示，代表波形已被削平、峰值一律讀成 0.0 dBFS，
+        該筆不能用於比較——請調低系統麥克風輸入音量，讓峰值落在 -12 ~ -6 dBFS 再重測。
         <span class="trig-state" id="trigStateBadge">待命</span>
       </div>
     </div>
@@ -284,10 +311,19 @@
       <div class="legend" id="chartLegend"></div>
     </div>
 
+    <div class="panel chart-panel">
+      <div class="evt-head">
+        <h2 style="margin:0;">擊發波形 <span style="color:var(--text-dim);font-weight:400;">(點記錄表任一列可切換)</span></h2>
+        <label class="chk"><input type="checkbox" id="overlayChk"> 疊上同標籤的其他次以便比對</label>
+      </div>
+      <div class="evt-title" id="evtTitle"></div>
+      <canvas id="evtCanvas" style="margin-top:8px;"></canvas>
+    </div>
+
     <div class="panel log-panel">
       <h2>量測記錄 <span id="logCount" style="color:var(--text-dim);font-weight:400;">(0 筆)</span></h2>
       <table>
-        <thead><tr><th>#</th><th>時間</th><th>標籤</th><th>峰值 dBFS</th><th>校正後 dB SPL</th></tr></thead>
+        <thead><tr><th>#</th><th>時間</th><th>標籤</th><th>峰值 dBFS</th><th>校正後 dB SPL</th><th>削波</th></tr></thead>
         <tbody id="logBody"></tbody>
       </table>
     </div>
@@ -305,11 +341,21 @@ let lastMicStateKey = '';
 let silentFrames = 0;
 const FLOOR_DBFS = -100;  // 顯示下限：安靜時顯示 -100 而不是 '--'，避免誤判成「沒收到」
 let peakHoldDbfs = -Infinity;
+// 樣本觸及滿刻度即為削波：波形被削平，峰值一律讀成 0.0 dBFS，
+// 不同強度的擊發會變得無法區分，該筆量測不能用於比較。
+const CLIP_LEVEL = 0.999;
+let peakHoldClipped = false;
+
+// 逐樣本擷取：AnalyserNode 每幀輪詢只有約 17ms 解析度，看不出喀嗒聲的
+// 內部結構（雙擊、彈跳等機構異常都在毫秒級），因此另外接一條擷取鏈
+// 把原始樣本寫進環形緩衝，觸發時才能回頭取出擊發「之前」的波形。
+let capNode = null, ringBuf = null, ringLen = 0, totalSamples = 0, capRate = 48000;
+let crossIdx = 0, evtPeak = 0, evtClipped = false, holdoffUntilSample = 0;
+let selectedEntry = -1;
 let calOffset = null; // dB offset to add to dBFS to get SPL
 let logEntries = [];
-// 觸發狀態機：armed（待命）→ dwelling（擷取窗內取最大值）→ holdoff（冷卻，避免同一次擊發重複記錄）
+// 觸發狀態機：armed（待命）→ collecting（dwell 窗內取最大值 + 擷取波形）→ holdoff（冷卻）
 let trigState = 'armed';
-let dwellStart = 0, dwellPeak = -Infinity, holdoffUntil = 0;
 
 const dbMainEl = document.getElementById('dbMain');
 const dbPeakEl = document.getElementById('dbPeak');
@@ -339,6 +385,13 @@ const logCanvas = document.getElementById('logCanvas');
 const logCtx = logCanvas.getContext('2d');
 const chartAxisLabel = document.getElementById('chartAxisLabel');
 const chartLegend = document.getElementById('chartLegend');
+const clipBadge = document.getElementById('clipBadge');
+const preMsInput = document.getElementById('preMs');
+const postMsInput = document.getElementById('postMs');
+const overlayChk = document.getElementById('overlayChk');
+const evtCanvas = document.getElementById('evtCanvas');
+const evtCtx = evtCanvas.getContext('2d');
+const evtTitle = document.getElementById('evtTitle');
 const logNowBtn = document.getElementById('logNowBtn');
 const clearLogBtn = document.getElementById('clearLogBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -354,7 +407,10 @@ function resizeCanvas(){
   canvas.height = canvas.clientHeight * devicePixelRatio;
   logCanvas.width = logCanvas.clientWidth * devicePixelRatio;
   logCanvas.height = logCanvas.clientHeight * devicePixelRatio;
+  evtCanvas.width = evtCanvas.clientWidth * devicePixelRatio;
+  evtCanvas.height = evtCanvas.clientHeight * devicePixelRatio;
   drawLogChart();
+  drawEventWave();
 }
 window.addEventListener('resize', resizeCanvas);
 
@@ -632,6 +688,8 @@ async function startAudio(){
   silentFrames = 0;
   currentDbfsSmoothed = -Infinity;
   resetTrigger();
+  resetPeakHold();
+  await setupCapture();
 
   resizeCanvas();
   startBtn.disabled = true;
@@ -652,6 +710,7 @@ function stopAudio(){
   silentFrames = 0;
   currentDbfsSmoothed = -Infinity;
   resetTrigger();
+  teardownCapture();
   startBtn.disabled = false;
   stopBtn.disabled = true;
   setStatus('已停止', false);
@@ -732,7 +791,6 @@ function loop(){
 
   drawWave();
 
-  updateTrigger(peakDbfs);
 }
 
 function clampNum(v, lo, hi, fallback){
@@ -748,45 +806,169 @@ function setTrigBadge(kind, text){
 
 // 擊發偵測：跨過閾值後不立刻記錄，而是continue收集 dwell 毫秒取最大值。
 // 喀嗒聲的真正峰值常落在跨越閾值之後的幾毫秒，只取跨越當幀會低估。
-function updateTrigger(peakDbfs){
-  const thresh = parseFloat(triggerThresh.value);
-  const dwellMs = clampNum(dwellMsInput.value, 10, 5000, 150);
-  const holdMs  = clampNum(holdoffMsInput.value, 0, 60000, 800);
-  const now = performance.now();
-
-  if(trigState === 'armed'){
-    if(isFinite(thresh) && peakDbfs > thresh){
-      trigState = 'dwelling';
-      dwellStart = now;
-      dwellPeak = peakDbfs;
-      setTrigBadge('dwell', '擷取中');
-    }
-  }else if(trigState === 'dwelling'){
-    if(peakDbfs > dwellPeak) dwellPeak = peakDbfs;
-    if(now - dwellStart >= dwellMs){
-      addLogEntry(dwellPeak, true);
-      peakHoldDbfs = -Infinity;
-      if(holdMs > 0){
-        trigState = 'holdoff';
-        holdoffUntil = now + holdMs;
-        setTrigBadge('hold', '冷卻中');
-      }else{
-        trigState = 'armed';
-        setTrigBadge('', '待命');
+const CAPTURE_WORKLET = `
+class CapProc extends AudioWorkletProcessor {
+  constructor(){ super(); this.buf = new Float32Array(1024); this.n = 0; }
+  process(inputs){
+    const ch = inputs[0] && inputs[0][0];
+    if(ch){
+      for(let i=0;i<ch.length;i++){
+        this.buf[this.n++] = ch[i];
+        if(this.n === this.buf.length){ this.port.postMessage(this.buf.slice(0)); this.n = 0; }
       }
     }
-  }else{
-    if(now >= holdoffUntil){
+    return true;
+  }
+}
+registerProcessor('cap-proc', CapProc);
+`;
+
+async function setupCapture(){
+  capRate = audioCtx.sampleRate;
+  ringLen = Math.ceil(4 * capRate);      // 4 秒環形緩衝，足夠涵蓋任何擷取窗設定
+  ringBuf = new Float32Array(ringLen);
+  totalSamples = 0;
+  capNode = null;
+
+  if(audioCtx.audioWorklet){
+    try{
+      const url = URL.createObjectURL(new Blob([CAPTURE_WORKLET], {type:'application/javascript'}));
+      await audioCtx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
+      capNode = new AudioWorkletNode(audioCtx, 'cap-proc');
+      capNode.port.onmessage = ev => onSamples(ev.data);
+    }catch(e){ capNode = null; }
+  }
+  if(!capNode && audioCtx.createScriptProcessor){
+    // 舊瀏覽器退路：ScriptProcessor 已棄用但相容性最好
+    capNode = audioCtx.createScriptProcessor(1024, 1, 1);
+    capNode.onaudioprocess = ev => onSamples(ev.inputBuffer.getChannelData(0));
+  }
+  if(capNode){
+    sourceNode.connect(capNode);
+    capNode.connect(silentGain);
+  }
+}
+
+function teardownCapture(){
+  if(capNode){
+    try{ capNode.disconnect(); }catch(e){}
+    if(capNode.port) capNode.port.onmessage = null;
+    capNode.onaudioprocess = null;
+    capNode = null;
+  }
+  ringBuf = null;
+  totalSamples = 0;
+}
+
+function ringGet(absIndex){
+  if(!ringBuf) return 0;
+  if(absIndex < 0 || absIndex >= totalSamples) return 0;
+  if(totalSamples - absIndex > ringLen) return 0;   // 已被新資料覆蓋
+  return ringBuf[absIndex % ringLen];
+}
+
+// 把一段樣本壓成 min/max 包絡，畫圖用；直接畫原始樣本在螢幕上沒有意義
+function extractEnvelope(from, to, buckets){
+  buckets = buckets || 900;
+  const env = new Float32Array(buckets*2);
+  const total = Math.max(1, to - from);
+  for(let b=0;b<buckets;b++){
+    const s0 = from + Math.floor(total*b/buckets);
+    const s1 = Math.max(s0+1, from + Math.floor(total*(b+1)/buckets));
+    let mn = 0, mx = 0, first = true;
+    for(let i=s0;i<s1;i++){
+      const v = ringGet(i);
+      if(first){ mn = mx = v; first = false; }
+      else{ if(v < mn) mn = v; if(v > mx) mx = v; }
+    }
+    env[b*2] = mn; env[b*2+1] = mx;
+  }
+  return env;
+}
+
+function trigParams(){
+  return {
+    threshDb: parseFloat(triggerThresh.value),
+    dwellN: Math.round(clampNum(dwellMsInput.value, 10, 5000, 150)/1000*capRate),
+    holdN:  Math.round(clampNum(holdoffMsInput.value, 0, 60000, 800)/1000*capRate),
+    preN:   Math.round(clampNum(preMsInput.value, 10, 1000, 60)/1000*capRate),
+    postN:  Math.round(clampNum(postMsInput.value, 20, 2000, 300)/1000*capRate)
+  };
+}
+
+// 觸發偵測改在樣本層做，時間解析度等同取樣率，
+// 才能精準定位擊發瞬間並回頭取出「擊發之前」的波形。
+function onSamples(block){
+  if(!ringBuf) return;
+  const n = block.length;
+  const startIdx = totalSamples;
+  for(let i=0;i<n;i++) ringBuf[(startIdx+i) % ringLen] = block[i];
+  totalSamples += n;
+
+  const P = trigParams();
+  const threshLin = isFinite(P.threshDb) ? Math.pow(10, P.threshDb/20) : Infinity;
+
+  for(let i=0;i<n;i++){
+    const a = Math.abs(block[i]);
+    if(a >= CLIP_LEVEL){
+      peakHoldClipped = true;
+      clipBadge.classList.add('on');
+    }
+    if(trigState === 'armed'){
+      if(a > threshLin){
+        trigState = 'collecting';
+        crossIdx = startIdx + i;
+        evtPeak = a;
+        evtClipped = a >= CLIP_LEVEL;
+        setTrigBadge('dwell', '擷取中');
+      }
+    }else if(trigState === 'collecting'){
+      if(startIdx + i < crossIdx + P.dwellN){
+        if(a > evtPeak) evtPeak = a;
+        if(a >= CLIP_LEVEL) evtClipped = true;
+      }
+    }
+  }
+
+  if(trigState === 'collecting' && totalSamples >= crossIdx + Math.max(P.dwellN, P.postN)){
+    const db = evtPeak > 0 ? Math.max(20*Math.log10(evtPeak), FLOOR_DBFS) : FLOOR_DBFS;
+    addLogEntry(db, true, evtClipped, {
+      env: extractEnvelope(crossIdx - P.preN, crossIdx + P.postN),
+      preN: P.preN, postN: P.postN, rate: capRate
+    });
+    resetPeakHoldValue();
+    if(P.holdN > 0){
+      trigState = 'holdoff';
+      holdoffUntilSample = crossIdx + P.dwellN + P.holdN;
+      setTrigBadge('hold', '冷卻中');
+    }else{
       trigState = 'armed';
       setTrigBadge('', '待命');
     }
+  }else if(trigState === 'holdoff' && totalSamples >= holdoffUntilSample){
+    trigState = 'armed';
+    setTrigBadge('', '待命');
   }
 }
 
 function resetTrigger(){
   trigState = 'armed';
-  dwellPeak = -Infinity;
+  evtPeak = 0;
+  evtClipped = false;
   setTrigBadge('', '待命');
+}
+
+// 觸發記錄後只清峰值，不清削波警示：削波代表該次量測失真，
+// 使用者必須看得到，不能被下一次擷取的重置動作抹掉。
+function resetPeakHoldValue(){
+  peakHoldDbfs = -Infinity;
+}
+
+function resetPeakHold(){
+  resetPeakHoldValue();
+  peakHoldClipped = false;
+  clipBadge.classList.remove('on');
 }
 
 // 同一支針的多次擊發在圖譜上是同色，方便相互比較。
@@ -892,8 +1074,12 @@ function drawLogChart(){
     const yy = y(v);
     g.fillStyle = tagColors.get(e.tag || '');
     g.fillRect(cx - bw/2, yy, bw, mT + ph - yy);
+    if(e.clip){
+      g.fillStyle = '#e5644a';
+      g.fillRect(cx - bw/2, yy - 4*dpr, bw, 4*dpr);   // 削波的長條加紅色頂蓋
+    }
     if(n <= 24){
-      g.fillStyle = '#e8ecf1';
+      g.fillStyle = e.clip ? '#e5644a' : '#e8ecf1';
       g.font = (9.5*dpr) + 'px Consolas, monospace';
       g.textBaseline = 'bottom';
       g.fillText(v.toFixed(1), cx, yy - 3*dpr);
@@ -911,7 +1097,117 @@ function drawLogChart(){
   });
 }
 
-function addLogEntry(peakDbfsVal, auto){
+function drawEventWave(){
+  const g = evtCtx, w = evtCanvas.width, h = evtCanvas.height, dpr = devicePixelRatio;
+  if(!w || !h) return;
+  g.clearRect(0,0,w,h);
+
+  const hasWave = logEntries.some(e=>e.wave);
+  if(!hasWave){
+    g.fillStyle = '#8b96a5';
+    g.font = (12*dpr) + 'px -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('尚無擊發波形 — 觸發記錄後會自動擷取擊發前後的波形', w/2, h/2);
+    evtTitle.textContent = '';
+    return;
+  }
+
+  let idx = selectedEntry;
+  if(idx < 0 || idx >= logEntries.length || !logEntries[idx].wave){
+    for(let i=logEntries.length-1;i>=0;i--){ if(logEntries[i].wave){ idx = i; break; } }
+  }
+  const e = logEntries[idx], wv = e.wave;
+  const others = overlayChk.checked
+    ? logEntries.filter((x,i)=>i!==idx && x.wave && x.tag===e.tag && x.wave.env.length===wv.env.length)
+    : [];
+
+  // 疊圖比較必須共用同一個縱軸尺度，否則兩條線的高低沒有意義
+  let peak = 0;
+  [e].concat(others).forEach(x=>{
+    for(let i=0;i<x.wave.env.length;i++){ const v = Math.abs(x.wave.env[i]); if(v > peak) peak = v; }
+  });
+  if(peak <= 0) peak = 1e-6;
+  const yScale = 1/(peak*1.12);
+
+  const mL = 44*dpr, mR = 12*dpr, mT = 10*dpr, mB = 22*dpr;
+  const pw = w - mL - mR, ph = h - mT - mB;
+  const cy = mT + ph/2;
+  const B = wv.env.length/2;
+  const totalN = wv.preN + wv.postN;
+  const xOf = b => mL + pw*b/B;
+  const yOf = v => cy - v*yScale*ph/2;
+  const tOf = b => (-wv.preN + totalN*b/B)/wv.rate*1000;
+
+  // 中線與 t=0 之前的底色（區分擊發前 / 擊發後）
+  g.fillStyle = '#0d1116';
+  g.fillRect(mL, mT, pw, ph);
+  const x0 = mL + pw*(wv.preN/totalN);
+  g.fillStyle = 'rgba(255,255,255,0.025)';
+  g.fillRect(mL, mT, x0-mL, ph);
+
+  g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
+  g.beginPath(); g.moveTo(mL, cy); g.lineTo(w-mR, cy); g.stroke();
+
+  // 觸發閾值（線性振幅）
+  const threshDb = parseFloat(triggerThresh.value);
+  if(isFinite(threshDb)){
+    const tl = Math.pow(10, threshDb/20);
+    if(tl*yScale < 1){
+      g.save();
+      g.strokeStyle = '#e5a34a'; g.setLineDash([5*dpr,4*dpr]);
+      g.beginPath(); g.moveTo(mL, yOf(tl)); g.lineTo(w-mR, yOf(tl));
+      g.moveTo(mL, yOf(-tl)); g.lineTo(w-mR, yOf(-tl)); g.stroke();
+      g.restore();
+    }
+  }
+
+  // 疊圖：同標籤的其他次，畫成淡線供比對
+  g.lineWidth = 1*dpr;
+  others.forEach(x=>{
+    g.strokeStyle = 'rgba(139,150,165,0.5)';
+    g.beginPath();
+    for(let b=0;b<B;b++){ const v = x.wave.env[b*2+1]; if(b===0) g.moveTo(xOf(b), yOf(v)); else g.lineTo(xOf(b), yOf(v)); }
+    for(let b=B-1;b>=0;b--){ g.lineTo(xOf(b), yOf(x.wave.env[b*2])); }
+    g.stroke();
+  });
+
+  // 主波形包絡
+  g.fillStyle = e.clip ? 'rgba(229,100,74,0.85)' : 'rgba(79,209,197,0.85)';
+  g.beginPath();
+  for(let b=0;b<B;b++){ const v = wv.env[b*2+1]; if(b===0) g.moveTo(xOf(b), yOf(v)); else g.lineTo(xOf(b), yOf(v)); }
+  for(let b=B-1;b>=0;b--){ g.lineTo(xOf(b), yOf(wv.env[b*2])); }
+  g.closePath(); g.fill();
+
+  // 觸發瞬間
+  g.strokeStyle = '#e8ecf1'; g.lineWidth = 1.5*dpr;
+  g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
+
+  // 時間軸
+  g.fillStyle = '#8b96a5'; g.font = (10*dpr)+'px Consolas, monospace';
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  const spanMs = totalN/wv.rate*1000;
+  const step = spanMs > 800 ? 200 : (spanMs > 400 ? 100 : 50);
+  for(let t=Math.ceil(tOf(0)/step)*step; t<=tOf(B-1); t+=step){
+    const b = (t/1000*wv.rate + wv.preN)/totalN*B;
+    const x = xOf(b);
+    g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
+    g.beginPath(); g.moveTo(x, mT); g.lineTo(x, mT+ph); g.stroke();
+    g.fillText((t>0?'+':'') + t, x, mT+ph+5*dpr);
+  }
+  g.textAlign = 'right';
+  g.fillText('ms', w-mR, mT+ph+5*dpr);
+
+  evtTitle.innerHTML = '';
+  const t1 = document.createElement('span');
+  t1.textContent = '第 ' + (idx+1) + ' 筆 · ' + (e.tag || '(無標籤)')
+    + ' · 峰值 ' + (isFinite(e.dbfs)?e.dbfs.toFixed(1):'--') + ' dBFS'
+    + ' · 擷取 -' + (wv.preN/wv.rate*1000).toFixed(0) + ' ~ +' + (wv.postN/wv.rate*1000).toFixed(0) + ' ms'
+    + (others.length ? ' · 疊圖 ' + others.length + ' 次' : '')
+    + (e.clip ? ' · ⚠ 削波，此筆不可用於比較' : '');
+  evtTitle.appendChild(t1);
+}
+
+function addLogEntry(peakDbfsVal, auto, clipped, wave){
   const t = new Date();
   const timeStr = t.toLocaleTimeString('zh-TW', {hour12:false}) + '.' + String(t.getMilliseconds()).padStart(3,'0');
   const splVal = calOffset!==null ? (peakDbfsVal + calOffset) : null;
@@ -919,8 +1215,11 @@ function addLogEntry(peakDbfsVal, auto){
     time:timeStr,
     tag: tagInput.value || (auto?'(自動觸發)':'(手動)'),
     dbfs: peakDbfsVal,
-    spl: splVal
+    spl: splVal,
+    clip: !!clipped,
+    wave: wave || null
   });
+  selectedEntry = logEntries.length - 1;   // 新記錄自動顯示其波形
   renderLog();
 }
 
@@ -928,11 +1227,14 @@ function renderLog(){
   logBody.innerHTML = '';
   logEntries.forEach((e,i)=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${e.time}</td><td>${e.tag}</td><td>${isFinite(e.dbfs)?e.dbfs.toFixed(1):'--'}</td><td>${e.spl!==null?e.spl.toFixed(1):'--'}</td>`;
+    tr.innerHTML = `<td>${i+1}</td><td>${e.time}</td><td>${e.tag}</td><td>${isFinite(e.dbfs)?e.dbfs.toFixed(1):'--'}</td><td>${e.spl!==null?e.spl.toFixed(1):'--'}</td><td class="${e.clip?'clipcell':''}">${e.clip?'⚠ 削波':''}</td>`;
+    tr.dataset.idx = i;
+    if(i === selectedEntry) tr.classList.add('sel');
     logBody.appendChild(tr);
   });
   logCount.textContent = `(${logEntries.length} 筆)`;
   drawLogChart();
+  drawEventWave();
   logBody.parentElement.parentElement.scrollTop = logBody.parentElement.parentElement.scrollHeight;
 }
 
@@ -970,16 +1272,32 @@ deviceSelect.addEventListener('change', async ()=>{
 
 startBtn.addEventListener('click', startAudio);
 stopBtn.addEventListener('click', stopAudio);
-resetPeakBtn.addEventListener('click', ()=>{ peakHoldDbfs = -Infinity; });
+resetPeakBtn.addEventListener('click', resetPeakHold);
 scanBtn.addEventListener('click', scanDevices);
-triggerThresh.addEventListener('input', drawLogChart);
-logNowBtn.addEventListener('click', ()=>{ addLogEntry(peakHoldDbfs, false); });
-clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
+triggerThresh.addEventListener('input', ()=>{ drawLogChart(); drawEventWave(); });
+overlayChk.addEventListener('change', drawEventWave);
+logBody.addEventListener('click', ev=>{
+  const tr = ev.target.closest('tr');
+  if(!tr || !tr.dataset.idx) return;
+  selectedEntry = parseInt(tr.dataset.idx, 10);
+  renderLog();
+});
+logNowBtn.addEventListener('click', ()=>{
+  // 手動記錄同樣附上波形：以「現在」為基準往回取，擷取後段用已收到的樣本
+  let wave = null;
+  if(ringBuf && totalSamples > 0){
+    const P = trigParams();
+    const c = totalSamples - P.postN;
+    wave = {env: extractEnvelope(c - P.preN, c + P.postN), preN:P.preN, postN:P.postN, rate:capRate};
+  }
+  addLogEntry(peakHoldDbfs, false, peakHoldClipped, wave);
+});
+clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; selectedEntry=-1; renderLog(); });
 exportBtn.addEventListener('click', ()=>{
   if(logEntries.length===0){ alert('目前沒有記錄可匯出'); return; }
-  let csv = '編號,時間,標籤,峰值dBFS,校正後dBSPL\n';
+  let csv = '編號,時間,標籤,峰值dBFS,校正後dBSPL,削波\n';
   logEntries.forEach((e,i)=>{
-    csv += `${i+1},${e.time},"${e.tag}",${isFinite(e.dbfs)?e.dbfs.toFixed(2):''},${e.spl!==null?e.spl.toFixed(2):''}\n`;
+    csv += `${i+1},${e.time},"${e.tag}",${isFinite(e.dbfs)?e.dbfs.toFixed(2):''},${e.spl!==null?e.spl.toFixed(2):''},${e.clip?'Y':''}\n`;
   });
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
