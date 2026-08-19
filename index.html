@@ -184,9 +184,15 @@
   td.clipcell{color:var(--danger);font-weight:600;}
   .evt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
   .evt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
-  .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;}
+  .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;position:relative;}
+  .evt-card-del{
+    position:absolute;top:6px;right:6px;width:18px;height:18px;padding:0;
+    border-radius:4px;border:1px solid var(--panel-line);background:#12161c;
+    color:var(--text-dim);font-size:12px;line-height:16px;text-align:center;cursor:pointer;
+  }
+  .evt-card-del:hover{border-color:var(--danger);color:var(--danger);}
   .evt-card.clip{border-color:var(--danger);}
-  .evt-card-title{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);display:flex;justify-content:space-between;gap:6px;margin-bottom:4px;}
+  .evt-card-title{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);display:flex;justify-content:space-between;gap:6px;margin-bottom:4px;padding-right:20px;}
   .evt-card-title b{color:var(--text);font-weight:600;}
   .evt-card-title .clipflag{color:var(--danger);font-weight:600;}
   .evt-card canvas{width:100%;height:100px;display:block;}
@@ -319,6 +325,7 @@
         <div class="row" style="margin:0;">
           <label style="min-width:auto;">顯示範圍 (dB)</label>
           <input type="number" id="evtRangeDb" value="10" min="1" max="60" step="1" style="width:70px;">
+          <button id="clearAllEvtBtn" class="secondary">全部清除</button>
         </div>
       </div>
       <div class="evt-grid" id="evtGrid"></div>
@@ -397,6 +404,7 @@ const preMsInput = document.getElementById('preMs');
 const postMsInput = document.getElementById('postMs');
 const evtGrid = document.getElementById('evtGrid');
 const evtRangeDbInput = document.getElementById('evtRangeDb');
+const clearAllEvtBtn = document.getElementById('clearAllEvtBtn');
 const logNowBtn = document.getElementById('logNowBtn');
 const clearLogBtn = document.getElementById('clearLogBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -1400,6 +1408,22 @@ function drawSingleEventChart(canvas, entry, rangeDb){
   g.fillText('+' + (wv.postN/wv.rate*1000).toFixed(0) + 'ms', w-mR, mT+ph+3*dpr);
 }
 
+// 清空記錄設定面板的按鈕與波形區塊的「全部清除」共用同一個確認流程與清除邏輯，
+// 避免一按就整批不可逆地清掉。
+function clearAllLog(){
+  if(logEntries.length === 0) return;
+  if(!confirm('確定要清除全部 ' + logEntries.length + ' 筆記錄與波形嗎？此動作無法復原。')) return;
+  logEntries = [];
+  renderLog();
+}
+
+// 個別刪除單一筆記錄（連同它的波形卡片、記錄表列、圖譜長條一併移除）。
+// 單筆刪除不彈確認，方便快速丟掉單次誤觸發或量測失敗的擊發。
+function deleteLogEntry(i){
+  logEntries.splice(i, 1);
+  renderLog();
+}
+
 function renderEventGrid(){
   const rangeDb = clampNum(evtRangeDbInput.value, 1, 60, 10);
   evtGrid.textContent = '';
@@ -1445,6 +1469,14 @@ function renderEventGrid(){
       flag.appendChild(f);
       card.appendChild(flag);
     }
+
+    const del = document.createElement('button');
+    del.className = 'evt-card-del';
+    del.type = 'button';
+    del.textContent = '×';
+    del.title = '刪除這一筆記錄';
+    del.addEventListener('click', ()=>deleteLogEntry(i));
+    card.appendChild(del);
 
     const canvas = document.createElement('canvas');
     card.appendChild(canvas);
@@ -1541,7 +1573,8 @@ logNowBtn.addEventListener('click', ()=>{
   }
   addLogEntry(peakHoldDbfs, false, peakHoldClipped, wave);
 });
-clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
+clearLogBtn.addEventListener('click', clearAllLog);
+clearAllEvtBtn.addEventListener('click', clearAllLog);
 exportBtn.addEventListener('click', ()=>{
   if(logEntries.length===0){ alert('目前沒有記錄可匯出'); return; }
   let csv = '編號,時間,標籤,峰值dBFS,校正後dBSPL,削波\n';
