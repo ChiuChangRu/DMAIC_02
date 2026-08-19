@@ -81,6 +81,7 @@
     width:100px;
   }
   select{width:auto;max-width:280px;}
+  input[type=range]{accent-color:var(--accent);height:4px;}
   button{
     background:var(--accent-dim);
     color:var(--accent);
@@ -268,7 +269,8 @@
       <h2>觸發記錄設定</h2>
       <div class="row">
         <label>觸發閾值 (dB)</label>
-        <input type="number" id="triggerThresh" value="10">
+        <input type="number" id="triggerThresh" value="-25" style="width:70px;">
+        <input type="range" id="triggerThreshBar" min="-80" max="0" step="0.5" value="-25" style="flex:1;min-width:100px;">
       </div>
       <div class="row">
         <label>量測窗 dwell (ms)</label>
@@ -381,6 +383,7 @@ const calibrateBtn = document.getElementById('calibrateBtn');
 const clearCalBtn = document.getElementById('clearCalBtn');
 const calBadge = document.getElementById('calBadge');
 const triggerThresh = document.getElementById('triggerThresh');
+const triggerThreshBar = document.getElementById('triggerThreshBar');
 const tagInput = document.getElementById('tagInput');
 const dwellMsInput = document.getElementById('dwellMs');
 const holdoffMsInput = document.getElementById('holdoffMs');
@@ -404,11 +407,25 @@ const ctx2d = canvas.getContext('2d');
 
 let currentDbfsSmoothed = -Infinity;
 
+// 即時讀值下方那張圖原本是逐幀畫原始波形（像示波器），每秒刷新數十次，
+// 幾乎看不清楚在動什麼。改成畫「近 1 分鐘的音量趨勢」：
+// 每 200ms 記一個點、捲動視窗，變化速度肉眼看得清楚，也能看出緩慢的趨勢。
+const TREND_WINDOW_MS = 60000;
+const TREND_PUSH_INTERVAL_MS = 200;
+let trendHistory = [];
+let lastTrendPush = 0;
+
+function resetTrend(){
+  trendHistory = [];
+  lastTrendPush = 0;
+}
+
 function resizeCanvas(){
   canvas.width = canvas.clientWidth * devicePixelRatio;
   canvas.height = canvas.clientHeight * devicePixelRatio;
   logCanvas.width = logCanvas.clientWidth * devicePixelRatio;
   logCanvas.height = logCanvas.clientHeight * devicePixelRatio;
+  drawTrend();
   drawLogChart();
   renderEventGrid();
 }
@@ -762,6 +779,7 @@ async function startAudio(){
   currentDbfsSmoothed = -Infinity;
   resetTrigger();
   resetPeakHold();
+  resetTrend();
 
   resizeCanvas();
   startBtn.disabled = true;
@@ -813,20 +831,76 @@ function computeDbfs(){
   return {rmsDbfs, peakDbfs, peakAbs};
 }
 
-function drawWave(){
-  const w = canvas.width, h = canvas.height;
+function drawTrend(){
+  const w = canvas.width, h = canvas.height, dpr = devicePixelRatio;
   ctx2d.clearRect(0,0,w,h);
-  ctx2d.strokeStyle = '#4fd1c5';
-  ctx2d.lineWidth = 1.5 * devicePixelRatio;
-  ctx2d.beginPath();
-  const step = Math.ceil(dataArray.length / w);
-  for(let x=0;x<w;x++){
-    const idx = x*step;
-    const v = dataArray[idx] || 0;
-    const y = h/2 - v*h/2*0.9;
-    if(x===0) ctx2d.moveTo(x,y); else ctx2d.lineTo(x,y);
+  if(!w || !h) return;
+
+  const now = performance.now();
+  const cutoff = now - TREND_WINDOW_MS;
+  while(trendHistory.length && trendHistory[0].t < cutoff) trendHistory.shift();
+
+  const mL = 40*dpr, mR = 10*dpr, mT = 8*dpr, mB = 16*dpr;
+  const pw = w - mL - mR, ph = h - mT - mB;
+  const xOf = t => mL + pw*(t - cutoff)/TREND_WINDOW_MS;
+
+  const threshRaw = parseFloat(triggerThresh.value);
+  const threshVal = isFinite(threshRaw) ? (calOffset!==null ? threshRaw + calOffset : threshRaw) : null;
+
+  let vals = trendHistory.map(p=>p.db).filter(isFinite);
+  if(vals.length === 0) vals = [FLOOR_DBFS, 0];
+  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  if(threshVal !== null){ lo = Math.min(lo, threshVal); hi = Math.max(hi, threshVal); }
+  if(hi - lo < 10){ const mid = (hi+lo)/2; lo = mid-5; hi = mid+5; }
+  const pad = (hi-lo)*0.12; lo -= pad; hi += pad;
+  const yOf = v => mT + ph*(1 - (v-lo)/(hi-lo));
+
+  // 縱軸格線
+  ctx2d.strokeStyle = '#2a323d'; ctx2d.lineWidth = 1*dpr;
+  ctx2d.fillStyle = '#8b96a5'; ctx2d.font = (9*dpr)+'px Consolas, monospace';
+  ctx2d.textAlign = 'right'; ctx2d.textBaseline = 'middle';
+  for(let i=0;i<=3;i++){
+    const v = lo + (hi-lo)*i/3;
+    const y = yOf(v);
+    ctx2d.beginPath(); ctx2d.moveTo(mL, y); ctx2d.lineTo(w-mR, y); ctx2d.stroke();
+    ctx2d.fillText(v.toFixed(0), mL-4*dpr, y);
   }
-  ctx2d.stroke();
+
+  // 觸發閾值虛線
+  if(threshVal !== null && threshVal >= lo && threshVal <= hi){
+    ctx2d.save();
+    ctx2d.strokeStyle = '#e5a34a'; ctx2d.setLineDash([4*dpr,3*dpr]); ctx2d.lineWidth = 1*dpr;
+    const y = yOf(threshVal);
+    ctx2d.beginPath(); ctx2d.moveTo(mL, y); ctx2d.lineTo(w-mR, y); ctx2d.stroke();
+    ctx2d.restore();
+  }
+
+  // 音量趨勢線
+  if(trendHistory.length >= 2){
+    ctx2d.strokeStyle = '#4fd1c5'; ctx2d.lineWidth = 1.5*dpr;
+    ctx2d.beginPath();
+    trendHistory.forEach((pt,i)=>{
+      const x = xOf(pt.t), y = yOf(isFinite(pt.db)?pt.db:lo);
+      if(i===0) ctx2d.moveTo(x,y); else ctx2d.lineTo(x,y);
+    });
+    ctx2d.stroke();
+  }
+
+  // 觸發記錄標記：在視窗內的擊發位置畫個小三角，方便對照趨勢線上的當下狀況
+  logEntries.forEach(en=>{
+    if(en.perfTime === undefined || en.perfTime < cutoff) return;
+    const x = xOf(en.perfTime);
+    ctx2d.fillStyle = en.clip ? '#e5644a' : '#4fd1c5';
+    ctx2d.beginPath();
+    ctx2d.moveTo(x, mT); ctx2d.lineTo(x-3*dpr, mT+5*dpr); ctx2d.lineTo(x+3*dpr, mT+5*dpr);
+    ctx2d.closePath(); ctx2d.fill();
+  });
+
+  // 時間軸
+  ctx2d.fillStyle = '#8b96a5'; ctx2d.textBaseline = 'top';
+  ctx2d.textAlign = 'left'; ctx2d.fillText('-60s', mL, mT+ph+3*dpr);
+  ctx2d.textAlign = 'center'; ctx2d.fillText('-30s', mL+pw/2, mT+ph+3*dpr);
+  ctx2d.textAlign = 'right'; ctx2d.fillText('現在', w-mR, mT+ph+3*dpr);
 }
 
 function loop(){
@@ -868,8 +942,12 @@ function loop(){
 
   calCurrentDbfs.value = isFinite(rmsDbfs) ? rmsDbfs.toFixed(1) : '--';
 
-  drawWave();
-
+  const nowPerf = performance.now();
+  if(nowPerf - lastTrendPush >= TREND_PUSH_INTERVAL_MS){
+    lastTrendPush = nowPerf;
+    trendHistory.push({t: nowPerf, db: displayVal});
+  }
+  drawTrend();
 }
 
 function clampNum(v, lo, hi, fallback){
@@ -1382,6 +1460,7 @@ function addLogEntry(peakDbfsVal, auto, clipped, wave){
   const splVal = calOffset!==null ? (peakDbfsVal + calOffset) : null;
   logEntries.push({
     time:timeStr,
+    perfTime: performance.now(),
     tag: tagInput.value || (auto?'(自動觸發)':'(手動)'),
     dbfs: peakDbfsVal,
     spl: splVal,
@@ -1440,7 +1519,17 @@ startBtn.addEventListener('click', startAudio);
 stopBtn.addEventListener('click', stopAudio);
 resetPeakBtn.addEventListener('click', resetPeakHold);
 scanBtn.addEventListener('click', scanDevices);
-triggerThresh.addEventListener('input', drawLogChart);
+// 數字框與拖曳 bar 互相同步；bar 的範圍是 -80~0 dBFS，
+// 手動輸入超出這個範圍的數字（例如校正後的 dB SPL）時 bar 不跟著動，但不影響數值本身生效。
+triggerThresh.addEventListener('input', ()=>{
+  const v = parseFloat(triggerThresh.value);
+  if(isFinite(v) && v >= -80 && v <= 0) triggerThreshBar.value = v;
+  drawLogChart();
+});
+triggerThreshBar.addEventListener('input', ()=>{
+  triggerThresh.value = triggerThreshBar.value;
+  drawLogChart();
+});
 evtRangeDbInput.addEventListener('input', renderEventGrid);
 logNowBtn.addEventListener('click', ()=>{
   // 手動記錄同樣附上波形：以「現在」為基準往回取，擷取後段用已收到的樣本
