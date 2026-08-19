@@ -1353,6 +1353,20 @@ function computeDbCurve(wv, rangeDb){
   return {db, peakBucket};
 }
 
+// 削波是不是嚴重飽和，光看「有沒有削波」看不出來——一次瞬間打頂跟整段時間窗
+// 都貼著頂端來回鋸齒，代表的嚴重程度差很多。用擷取窗內有多少比例的時間
+// 觸及滿刻度來量化，數字越高代表越像前級增益開太大這種持續性飽和，
+// 而不是單一個異常尖峰。
+function computeClipRatio(wv){
+  const B = wv.env.length/2;
+  let hit = 0;
+  for(let b=0;b<B;b++){
+    const m = Math.max(Math.abs(wv.env[b*2]), Math.abs(wv.env[b*2+1]));
+    if(m >= CLIP_LEVEL) hit++;
+  }
+  return hit / B;
+}
+
 function drawSingleEventChart(canvas, entry, rangeDb){
   const dpr = devicePixelRatio;
   canvas.width = canvas.clientWidth * dpr;
@@ -1490,7 +1504,7 @@ function renderEventGrid(){
       flag.className = 'evt-card-title';
       const f = document.createElement('span');
       f.className = 'clipflag';
-      f.textContent = '⚠ 削波，形狀不可信';
+      f.textContent = '⚠ 削波，形狀不可信 · 全窗約 ' + Math.round(computeClipRatio(e.wave)*100) + '% 時間觸頂';
       flag.appendChild(f);
       card.appendChild(flag);
     }
@@ -1582,7 +1596,6 @@ function drawCompareChart(canvas, entries, rangeDb){
     g.strokeStyle = color;
     g.lineWidth = 2*dpr;
     g.lineJoin = 'round';
-    if(c.e.clip) g.setLineDash([5*dpr, 3*dpr]);
     g.stroke();
     g.restore();
   });
@@ -1618,12 +1631,11 @@ function renderCompare(){
     // 圖例色塊跟圖上的線同色（一律按編號分配，不因削波蓋成紅色），
     // 削波與否改用文字說明，虛線樣式則在圖上呈現，色塊本身維持圓角矩形即可。
     sw.style.background = TAG_PALETTE[idx % TAG_PALETTE.length];
-    if(e.clip) sw.style.backgroundImage = 'repeating-linear-gradient(90deg, transparent 0 2px, rgba(0,0,0,0.45) 2px 4px)';
     sp.appendChild(sw);
     sp.appendChild(document.createTextNode(
       '#' + (idxInLog+1) + ' ' + (e.tag || '(無標籤)')
       + (isFinite(e.dbfs) ? ' · ' + e.dbfs.toFixed(1) + ' dBFS' : '')
-      + (e.clip ? ' · ⚠削波(虛線)' : '')
+      + (e.clip ? ' · ⚠削波 ' + Math.round(computeClipRatio(e.wave)*100) + '%觸頂' : '')
     ));
     evtCompareLegend.appendChild(sp);
   });
