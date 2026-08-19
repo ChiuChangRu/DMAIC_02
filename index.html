@@ -184,7 +184,11 @@
   td.clipcell{color:var(--danger);font-weight:600;}
   .evt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
   .evt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
-  .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;position:relative;}
+  .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;position:relative;cursor:pointer;}
+  .evt-card.selected{outline:2px solid var(--accent);outline-offset:-1px;}
+  .evt-compare{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:12px 14px;margin-bottom:14px;}
+  .evt-compare-empty{color:var(--text-dim);font-size:12.5px;padding:34px 4px;text-align:center;}
+  #evtCompareCanvas{height:260px;display:block;}
   .evt-card-del{
     position:absolute;top:6px;right:6px;width:18px;height:18px;padding:0;
     border-radius:4px;border:1px solid var(--panel-line);background:#12161c;
@@ -328,6 +332,11 @@
           <button id="clearAllEvtBtn" class="secondary">全部清除</button>
         </div>
       </div>
+      <div class="evt-compare" id="evtCompare">
+        <div class="evt-compare-empty" id="evtCompareEmpty">點選下方任一張波形卡片可放大檢視；複選多張會疊在同一張圖上比較差異（每張仍各自以自身峰值為 0 dB）</div>
+        <canvas id="evtCompareCanvas" style="display:none;"></canvas>
+        <div class="legend" id="evtCompareLegend"></div>
+      </div>
       <div class="evt-grid" id="evtGrid"></div>
     </div>
 
@@ -367,6 +376,8 @@ let crossIdx = 0, evtPeak = 0, evtClipped = false, holdoffUntilSample = 0;
 
 let calOffset = null; // dB offset to add to dBFS to get SPL
 let logEntries = [];
+let nextEntryId = 1;
+const selectedEvtIds = new Set();   // 存 entry.id，不存陣列索引，避免刪除/清空後選取跑掉
 // 觸發狀態機：armed（待命）→ collecting（dwell 窗內取最大值 + 擷取波形）→ holdoff（冷卻）
 let trigState = 'armed';
 
@@ -405,6 +416,9 @@ const postMsInput = document.getElementById('postMs');
 const evtGrid = document.getElementById('evtGrid');
 const evtRangeDbInput = document.getElementById('evtRangeDb');
 const clearAllEvtBtn = document.getElementById('clearAllEvtBtn');
+const evtCompareEmpty = document.getElementById('evtCompareEmpty');
+const evtCompareCanvas = document.getElementById('evtCompareCanvas');
+const evtCompareLegend = document.getElementById('evtCompareLegend');
 const logNowBtn = document.getElementById('logNowBtn');
 const clearLogBtn = document.getElementById('clearLogBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -1414,18 +1428,24 @@ function clearAllLog(){
   if(logEntries.length === 0) return;
   if(!confirm('確定要清除全部 ' + logEntries.length + ' 筆記錄與波形嗎？此動作無法復原。')) return;
   logEntries = [];
+  selectedEvtIds.clear();
   renderLog();
 }
 
 // 個別刪除單一筆記錄（連同它的波形卡片、記錄表列、圖譜長條一併移除）。
 // 單筆刪除不彈確認，方便快速丟掉單次誤觸發或量測失敗的擊發。
 function deleteLogEntry(i){
+  selectedEvtIds.delete(logEntries[i].id);
   logEntries.splice(i, 1);
   renderLog();
 }
 
 function renderEventGrid(){
   const rangeDb = clampNum(evtRangeDbInput.value, 1, 60, 10);
+  // 資料被刪除或清空後，選取集合裡可能還留著不存在的 id，先清乾淨
+  const liveIds = new Set(logEntries.map(e=>e.id));
+  [...selectedEvtIds].forEach(id=>{ if(!liveIds.has(id)) selectedEvtIds.delete(id); });
+
   evtGrid.textContent = '';
 
   const withWave = logEntries.map((e,i)=>({e,i})).filter(x=>x.e.wave);
@@ -1475,13 +1495,118 @@ function renderEventGrid(){
     del.type = 'button';
     del.textContent = '×';
     del.title = '刪除這一筆記錄';
-    del.addEventListener('click', ()=>deleteLogEntry(i));
+    del.addEventListener('click', ev=>{ ev.stopPropagation(); deleteLogEntry(i); });
     card.appendChild(del);
 
     const canvas = document.createElement('canvas');
     card.appendChild(canvas);
+
+    if(selectedEvtIds.has(e.id)) card.classList.add('selected');
+    card.addEventListener('click', ()=>{
+      if(selectedEvtIds.has(e.id)){ selectedEvtIds.delete(e.id); card.classList.remove('selected'); }
+      else { selectedEvtIds.add(e.id); card.classList.add('selected'); }
+      renderCompare();
+    });
+
     evtGrid.appendChild(card);
     drawSingleEventChart(canvas, e, rangeDb);
+  });
+
+  renderCompare();
+}
+
+// 放大／疊圖比較：把目前選取的卡片各自的 dB 曲線（各自仍以自身峰值為 0 dB）
+// 畫在同一張大圖上。時間軸用實際毫秒對齊 t=0（觸發瞬間），
+// 而不是用 bucket 索引比例——不同筆的擷取前/後長度可能不一樣，
+// 用索引比例對齊會讓 t=0 對不準，失去比較的意義。
+function drawCompareChart(canvas, entries, rangeDb){
+  const dpr = devicePixelRatio;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+  g.clearRect(0,0,w,h);
+  if(!w || !h) return;
+
+  const curves = entries.map(e=>{
+    const wv = e.wave;
+    const {db} = computeDbCurve(wv, rangeDb);
+    const B = db.length, totalN = wv.preN + wv.postN;
+    const times = new Float32Array(B);
+    for(let b=0;b<B;b++) times[b] = (-wv.preN + totalN*b/B)/wv.rate*1000;
+    return {e, db, times, preMs: wv.preN/wv.rate*1000, postMs: wv.postN/wv.rate*1000};
+  });
+  const tMin = -Math.max.apply(null, curves.map(c=>c.preMs));
+  const tMax = Math.max.apply(null, curves.map(c=>c.postMs));
+  const tSpan = Math.max(1, tMax - tMin);
+
+  const mL = 46*dpr, mR = 14*dpr, mT = 12*dpr, mB = 22*dpr;
+  const pw = w - mL - mR, ph = h - mT - mB;
+  const xOf = t => mL + pw*(t - tMin)/tSpan;
+  const yOf = v => mT + ph*(1 - (v + rangeDb)/rangeDb);
+
+  g.fillStyle = '#0d1116'; g.fillRect(mL, mT, pw, ph);
+
+  g.strokeStyle = '#2a323d'; g.lineWidth = 1*dpr;
+  g.fillStyle = '#8b96a5'; g.font = (10*dpr)+'px Consolas, monospace';
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  [0, -rangeDb/2, -rangeDb].forEach(v=>{
+    const y = yOf(v);
+    g.beginPath(); g.moveTo(mL, y); g.lineTo(w-mR, y); g.stroke();
+    g.fillText(v.toFixed(0), mL-5*dpr, y);
+  });
+
+  const x0 = xOf(0);
+  g.strokeStyle = '#3a4452'; g.lineWidth = 1*dpr;
+  g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
+
+  curves.forEach((c,idx)=>{
+    const color = TAG_PALETTE[idx % TAG_PALETTE.length];
+    g.beginPath();
+    for(let b=0;b<c.db.length;b++){
+      const x = xOf(c.times[b]), y = yOf(c.db[b]);
+      if(b===0) g.moveTo(x,y); else g.lineTo(x,y);
+    }
+    g.strokeStyle = c.e.clip ? '#e5644a' : color;
+    g.lineWidth = 1.8*dpr;
+    g.stroke();
+  });
+
+  g.fillStyle = '#8b96a5'; g.textBaseline = 'top';
+  g.textAlign = 'left'; g.fillText(tMin.toFixed(0)+'ms', mL, mT+ph+5*dpr);
+  g.textAlign = 'center'; g.fillText('0', x0, mT+ph+5*dpr);
+  g.textAlign = 'right'; g.fillText('+'+tMax.toFixed(0)+'ms', w-mR, mT+ph+5*dpr);
+}
+
+function renderCompare(){
+  const entries = [...selectedEvtIds]
+    .map(id => logEntries.find(e=>e.id===id))
+    .filter(e => e && e.wave);
+
+  if(entries.length === 0){
+    evtCompareEmpty.style.display = '';
+    evtCompareCanvas.style.display = 'none';
+    evtCompareLegend.textContent = '';
+    return;
+  }
+
+  evtCompareEmpty.style.display = 'none';
+  evtCompareCanvas.style.display = 'block';
+  const rangeDb = clampNum(evtRangeDbInput.value, 1, 60, 10);
+  drawCompareChart(evtCompareCanvas, entries, rangeDb);
+
+  evtCompareLegend.textContent = '';
+  entries.forEach((e,idx)=>{
+    const idxInLog = logEntries.indexOf(e);
+    const sp = document.createElement('span');
+    const sw = document.createElement('i');
+    sw.style.background = e.clip ? '#e5644a' : TAG_PALETTE[idx % TAG_PALETTE.length];
+    sp.appendChild(sw);
+    sp.appendChild(document.createTextNode(
+      '#' + (idxInLog+1) + ' ' + (e.tag || '(無標籤)')
+      + (isFinite(e.dbfs) ? ' · ' + e.dbfs.toFixed(1) + ' dBFS' : '')
+      + (e.clip ? ' · ⚠削波' : '')
+    ));
+    evtCompareLegend.appendChild(sp);
   });
 }
 
@@ -1491,6 +1616,7 @@ function addLogEntry(peakDbfsVal, auto, clipped, wave){
   const timeStr = t.toLocaleTimeString('zh-TW', {hour12:false}) + '.' + String(t.getMilliseconds()).padStart(3,'0');
   const splVal = calOffset!==null ? (peakDbfsVal + calOffset) : null;
   logEntries.push({
+    id: nextEntryId++,
     time:timeStr,
     perfTime: performance.now(),
     tag: tagInput.value || (auto?'(自動觸發)':'(手動)'),
@@ -1562,7 +1688,7 @@ triggerThreshBar.addEventListener('input', ()=>{
   triggerThresh.value = triggerThreshBar.value;
   drawLogChart();
 });
-evtRangeDbInput.addEventListener('input', renderEventGrid);
+evtRangeDbInput.addEventListener('input', renderEventGrid);   // renderEventGrid 內部會一併呼叫 renderCompare()
 logNowBtn.addEventListener('click', ()=>{
   // 手動記錄同樣附上波形：以「現在」為基準往回取，擷取後段用已收到的樣本
   let wave = null;
