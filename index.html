@@ -70,7 +70,7 @@
 
   .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
   .row label{font-size:13px;color:var(--text-dim);min-width:110px;}
-  input[type=number], input[type=text]{
+  input[type=number], input[type=text], select{
     background:#0d1116;
     border:1px solid var(--panel-line);
     color:var(--text);
@@ -80,6 +80,7 @@
     font-size:13px;
     width:100px;
   }
+  select{width:auto;max-width:280px;}
   button{
     background:var(--accent-dim);
     color:var(--accent);
@@ -157,12 +158,17 @@
         <span>模式 <b id="modeLabel">未校正 (dBFS)</b></span>
       </div>
       <canvas id="waveCanvas" style="margin-top:20px;"></canvas>
+      <div class="row" style="justify-content:center;margin-top:16px;">
+        <label style="min-width:auto;">輸入裝置</label>
+        <select id="deviceSelect"><option value="">預設裝置</option></select>
+      </div>
       <div class="btn-row" style="justify-content:center;">
         <button id="startBtn">開始收音</button>
         <button id="stopBtn" class="secondary" disabled>停止</button>
         <button id="resetPeakBtn" class="secondary">重置 Peak Hold</button>
       </div>
       <div class="status" id="statusText">尚未啟動麥克風</div>
+      <div class="status" id="diagText" style="font-family:var(--mono);font-size:11px;"></div>
     </div>
 
     <div class="panel">
@@ -215,6 +221,12 @@
 
 <script>
 let audioCtx, analyser, micStream, dataArray, rafId;
+// sourceNode 必須保留全域參照：Chrome 會回收掉沒有 JS 參照的 MediaStreamAudioSourceNode，
+// 造成收音在幾秒後無聲無息地斷掉。silentGain 則是把音訊鏈接到 destination（音量 0），
+// 確保所有瀏覽器都會實際驅動這條鏈。
+let sourceNode, silentGain;
+let silentFrames = 0;
+const FLOOR_DBFS = -100;  // 顯示下限：安靜時顯示 -100 而不是 '--'，避免誤判成「沒收到」
 let peakHoldDbfs = -Infinity;
 let calOffset = null; // dB offset to add to dBFS to get SPL
 let logEntries = [];
@@ -224,6 +236,8 @@ const dbMainEl = document.getElementById('dbMain');
 const dbPeakEl = document.getElementById('dbPeak');
 const modeLabelEl = document.getElementById('modeLabel');
 const statusText = document.getElementById('statusText');
+const diagText = document.getElementById('diagText');
+const deviceSelect = document.getElementById('deviceSelect');
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const resetPeakBtn = document.getElementById('resetPeakBtn');
@@ -250,43 +264,106 @@ function resizeCanvas(){
 }
 window.addEventListener('resize', resizeCanvas);
 
+function setStatus(msg, active){
+  statusText.textContent = msg;
+  statusText.classList.toggle('active', !!active);
+}
+
+function fmtFlag(v){ return v===false ? '關' : (v===true ? '開' : '未知'); }
+
+function showDiag(){
+  const track = micStream && micStream.getAudioTracks()[0];
+  if(!track){ diagText.textContent = ''; return; }
+  const st = track.getSettings ? track.getSettings() : {};
+  diagText.textContent = [
+    '裝置：' + (track.label || '(瀏覽器未提供名稱)'),
+    '軌道：' + track.readyState + (track.muted ? ' / 系統靜音' : ''),
+    'AudioContext：' + audioCtx.state,
+    audioCtx.sampleRate + ' Hz',
+    'AGC ' + fmtFlag(st.autoGainControl) + '／降噪 ' + fmtFlag(st.noiseSuppression) + '／回音消除 ' + fmtFlag(st.echoCancellation)
+  ].join('　·　');
+}
+
+async function refreshDeviceList(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  let devices;
+  try{ devices = await navigator.mediaDevices.enumerateDevices(); }catch(e){ return; }
+  const cur = deviceSelect.value;
+  deviceSelect.innerHTML = '';
+  const def = document.createElement('option');
+  def.value = ''; def.textContent = '預設裝置';
+  deviceSelect.appendChild(def);
+  devices.filter(d=>d.kind==='audioinput').forEach(d=>{
+    const o = document.createElement('option');
+    o.value = d.deviceId;
+    o.textContent = d.label || ('麥克風 ' + String(d.deviceId).slice(0,8));
+    deviceSelect.appendChild(o);
+  });
+  deviceSelect.value = cur;
+}
+
 async function startAudio(){
-  try{
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:false,
-        noiseSuppression:false,
-        autoGainControl:false
-      }
-    });
-  }catch(e){
-    statusText.textContent = '無法取得麥克風權限：' + e.message;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    setStatus('這個頁面不是安全來源，瀏覽器禁止存取麥克風。請用 https:// 的網址開啟，不要用 file:// 直接開本機檔案。', false);
     return;
   }
+
+  const audioConstraints = {
+    echoCancellation:false,
+    noiseSuppression:false,
+    autoGainControl:false
+  };
+  if(deviceSelect.value) audioConstraints.deviceId = {exact: deviceSelect.value};
+
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({audio: audioConstraints});
+  }catch(e){
+    setStatus('無法取得麥克風：' + e.name + ' — ' + e.message, false);
+    return;
+  }
+
+  await refreshDeviceList();
+
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const source = audioCtx.createMediaStreamSource(micStream);
+  if(audioCtx.state === 'suspended'){
+    try{ await audioCtx.resume(); }catch(e){}
+  }
+
+  sourceNode = audioCtx.createMediaStreamSource(micStream);
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 2048;
   analyser.smoothingTimeConstant = 0;
-  source.connect(analyser);
+  sourceNode.connect(analyser);
+
+  silentGain = audioCtx.createGain();
+  silentGain.gain.value = 0;
+  analyser.connect(silentGain);
+  silentGain.connect(audioCtx.destination);
+
   dataArray = new Float32Array(analyser.fftSize);
+  silentFrames = 0;
+  currentDbfsSmoothed = -Infinity;
 
   resizeCanvas();
   startBtn.disabled = true;
   stopBtn.disabled = false;
-  statusText.textContent = '收音中... 若讀值一直很平，請確認系統麥克風權限與音量。';
-  statusText.classList.add('active');
+  setStatus('收音中...', true);
+  showDiag();
   loop();
 }
 
 function stopAudio(){
-  if(rafId) cancelAnimationFrame(rafId);
+  if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+  if(sourceNode){ try{ sourceNode.disconnect(); }catch(e){} sourceNode = null; }
+  if(silentGain){ try{ silentGain.disconnect(); }catch(e){} silentGain = null; }
   if(micStream) micStream.getTracks().forEach(t=>t.stop());
-  if(audioCtx) audioCtx.close();
+  if(audioCtx && audioCtx.state !== 'closed'){ try{ audioCtx.close(); }catch(e){} }
+  silentFrames = 0;
+  currentDbfsSmoothed = -Infinity;
   startBtn.disabled = false;
   stopBtn.disabled = true;
-  statusText.textContent = '已停止';
-  statusText.classList.remove('active');
+  setStatus('已停止', false);
+  diagText.textContent = '';
 }
 
 function computeDbfs(){
@@ -300,9 +377,11 @@ function computeDbfs(){
     if(a>peakAbs) peakAbs = a;
   }
   const rms = Math.sqrt(sumSquares/dataArray.length);
-  const rmsDbfs = rms>0 ? 20*Math.log10(rms) : -Infinity;
-  const peakDbfs = peakAbs>0 ? 20*Math.log10(peakAbs) : -Infinity;
-  return {rmsDbfs, peakDbfs};
+  const rmsDbfs = rms>0 ? Math.max(20*Math.log10(rms), FLOOR_DBFS) : FLOOR_DBFS;
+  const peakDbfs = peakAbs>0 ? Math.max(20*Math.log10(peakAbs), FLOOR_DBFS) : FLOOR_DBFS;
+  // peakAbs 一併回傳：只有它「恰好等於 0」才是真正的數位靜音（裝置沒送出訊號），
+  // 這跟「很安靜但有底噪」是兩回事，不能用 dB 值判斷。
+  return {rmsDbfs, peakDbfs, peakAbs};
 }
 
 function drawWave(){
@@ -323,11 +402,25 @@ function drawWave(){
 
 function loop(){
   rafId = requestAnimationFrame(loop);
-  const {rmsDbfs, peakDbfs} = computeDbfs();
+  const {rmsDbfs, peakDbfs, peakAbs} = computeDbfs();
 
   currentDbfsSmoothed = currentDbfsSmoothed === -Infinity ? rmsDbfs : (currentDbfsSmoothed*0.7 + rmsDbfs*0.3);
 
   if(peakDbfs > peakHoldDbfs) peakHoldDbfs = peakDbfs;
+
+  // 訊號全為 0 = 瀏覽器拿到裝置了，但裝置沒送出任何聲音樣本
+  if(peakAbs === 0){
+    silentFrames++;
+    if(silentFrames === 120){
+      setStatus('⚠ 已取得麥克風，但音訊連續 2 秒完全是 0（不是很小聲，是數位靜音）。'
+        + '通常代表：選錯輸入裝置、系統把該麥克風靜音或音量設為 0、或裝置被其他程式獨佔。'
+        + '請換上方「輸入裝置」再試。', false);
+      showDiag();
+    }
+  }else{
+    if(silentFrames >= 120) setStatus('收音中...', true);
+    silentFrames = 0;
+  }
 
   const displayVal = calOffset!==null ? currentDbfsSmoothed + calOffset : currentDbfsSmoothed;
   const displayPeak = calOffset!==null ? peakHoldDbfs + calOffset : peakHoldDbfs;
@@ -383,6 +476,12 @@ calibrateBtn.addEventListener('click', ()=>{
     alert('請先輸入已知音壓數值，並確認麥克風有收到穩定聲音（右方 dBFS 需有讀值）');
     return;
   }
+  // 顯示下限是 FLOOR_DBFS，貼著下限代表根本沒收到訊號，
+  // 此時校正會算出毫無意義的巨大 offset，必須擋下來
+  if(cur <= FLOOR_DBFS + 1){
+    alert('目前幾乎沒有收到訊號（' + cur.toFixed(1) + ' dBFS）。\n請先確認麥克風有收到校正器的聲音、讀值穩定之後再套用校正。');
+    return;
+  }
   calOffset = ref - cur;
   modeLabelEl.textContent = `已校正 (offset ${calOffset.toFixed(1)} dB)`;
   calBadge.textContent = '已校正';
@@ -394,6 +493,10 @@ clearCalBtn.addEventListener('click', ()=>{
   modeLabelEl.textContent = '未校正 (dBFS)';
   calBadge.textContent = '未校正';
   calBadge.classList.remove('on');
+});
+
+deviceSelect.addEventListener('change', async ()=>{
+  if(!stopBtn.disabled){ stopAudio(); await startAudio(); }
 });
 
 startBtn.addEventListener('click', startAudio);
@@ -417,6 +520,7 @@ exportBtn.addEventListener('click', ()=>{
 });
 
 resizeCanvas();
+refreshDeviceList();
 </script>
 </body>
 </html>
