@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>檢體針噪音量測工具</title>
+<style>
+  :root{
+    --bg:#12161c;
+    --panel:#1a2028;
+    --panel-line:#2a323d;
+    --text:#e8ecf1;
+    --text-dim:#8b96a5;
+    --accent:#4fd1c5;
+    --accent-dim:#2a5f5a;
+    --warn:#e5a34a;
+    --danger:#e5644a;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    padding:24px;
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    margin:0 0 4px;
+  }
+  .subtitle{color:var(--text-dim);font-size:13px;margin-bottom:24px;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:720px){.grid{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    padding:18px 20px;
+  }
+  .panel h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--text-dim);
+    margin:0 0 14px;
+    font-weight:600;
+  }
+
+  .reading-panel{grid-column:1 / -1;text-align:center;padding:32px 20px;}
+  .db-main{
+    font-family:var(--mono);
+    font-size:64px;
+    font-weight:600;
+    line-height:1;
+    color:var(--accent);
+    transition:color 0.15s;
+  }
+  .db-unit{font-size:20px;color:var(--text-dim);margin-left:6px;}
+  .db-sub{display:flex;justify-content:center;gap:32px;margin-top:14px;font-family:var(--mono);font-size:14px;color:var(--text-dim);}
+  .db-sub span b{color:var(--text);}
+
+  canvas{width:100%;height:120px;display:block;background:#0d1116;border-radius:6px;border:1px solid var(--panel-line);}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .row label{font-size:13px;color:var(--text-dim);min-width:110px;}
+  input[type=number], input[type=text]{
+    background:#0d1116;
+    border:1px solid var(--panel-line);
+    color:var(--text);
+    border-radius:6px;
+    padding:7px 10px;
+    font-family:var(--mono);
+    font-size:13px;
+    width:100px;
+  }
+  button{
+    background:var(--accent-dim);
+    color:var(--accent);
+    border:1px solid var(--accent);
+    border-radius:6px;
+    padding:8px 16px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:opacity 0.15s;
+  }
+  button:hover{opacity:0.85;}
+  button:disabled{opacity:0.35;cursor:not-allowed;}
+  button.secondary{
+    background:transparent;
+    color:var(--text-dim);
+    border-color:var(--panel-line);
+  }
+  button.danger{
+    background:#3a1f1a;
+    color:var(--danger);
+    border-color:var(--danger);
+  }
+
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+
+  .status{font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.6;}
+  .status.active{color:var(--accent);}
+  .badge{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:99px;
+    border:1px solid var(--panel-line);
+    color:var(--text-dim);
+    margin-left:8px;
+  }
+  .badge.on{border-color:var(--accent);color:var(--accent);}
+
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:8px;}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--panel-line);}
+  th{color:var(--text-dim);font-weight:500;}
+  .log-panel{grid-column:1 / -1;max-height:260px;overflow-y:auto;}
+
+  .warn-box{
+    background:#2a2416;
+    border:1px solid #4a3f1f;
+    color:var(--warn);
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:12.5px;
+    line-height:1.7;
+    margin-bottom:20px;
+  }
+  .warn-box b{color:#f0c674;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>檢體針噪音量測工具</h1>
+  <div class="subtitle">瀏覽器即時收音分析（Web Audio API）— 相對比較用，非法規追溯等級</div>
+
+  <div class="warn-box">
+    <b>使用限制請先了解：</b>本工具用電腦內建或外接麥克風收音，屬於「相對比較」工具，不是可追溯校正的聲學儀器。
+    瞬間喀嗒聲量測會受麥克風本身頻率響應、取樣延遲影響；若要正式報告用的絕對 dB SPL 數值，仍建議使用 Class 1 噪音計 + 聲學校正器。
+    使用前請先在瀏覽器/系統設定關閉麥克風的「自動增益 / 降噪 / 回音消除」，否則讀值會失真。
+  </div>
+
+  <div class="grid">
+    <div class="panel reading-panel">
+      <h2>即時讀值</h2>
+      <div><span class="db-main" id="dbMain">--</span><span class="db-unit">dB</span></div>
+      <div class="db-sub">
+        <span>PEAK HOLD <b id="dbPeak">--</b> dB</span>
+        <span>模式 <b id="modeLabel">未校正 (dBFS)</b></span>
+      </div>
+      <canvas id="waveCanvas" style="margin-top:20px;"></canvas>
+      <div class="btn-row" style="justify-content:center;">
+        <button id="startBtn">開始收音</button>
+        <button id="stopBtn" class="secondary" disabled>停止</button>
+        <button id="resetPeakBtn" class="secondary">重置 Peak Hold</button>
+      </div>
+      <div class="status" id="statusText">尚未啟動麥克風</div>
+    </div>
+
+    <div class="panel">
+      <h2>校正 Calibration</h2>
+      <div class="row">
+        <label>已知音壓 (dB SPL)</label>
+        <input type="number" id="calRefDb" placeholder="例如 94">
+      </div>
+      <div class="row">
+        <label>目前 dBFS 讀值</label>
+        <input type="text" id="calCurrentDbfs" readonly placeholder="--">
+      </div>
+      <div class="btn-row">
+        <button id="calibrateBtn">套用校正</button>
+        <button id="clearCalBtn" class="secondary">清除校正</button>
+      </div>
+      <div class="status">
+        操作方式：用聲學校正器（如 94dB@1kHz）對著麥克風發聲，穩定後在左方欄位輸入 94，按「套用校正」。
+        之後主畫面會顯示換算後的近似 dB SPL 值 <span class="badge" id="calBadge">未校正</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>觸發記錄設定</h2>
+      <div class="row">
+        <label>觸發閾值 (dB)</label>
+        <input type="number" id="triggerThresh" value="-30">
+      </div>
+      <div class="row">
+        <label>備註標籤</label>
+        <input type="text" id="tagInput" placeholder="例如 A膠-針1">
+      </div>
+      <div class="btn-row">
+        <button id="logNowBtn">手動記錄目前峰值</button>
+        <button id="clearLogBtn" class="secondary">清空記錄</button>
+        <button id="exportBtn" class="secondary">匯出 CSV</button>
+      </div>
+      <div class="status">超過閾值時會自動記錄一筆（含時間、峰值），也可隨時手動記錄。</div>
+    </div>
+
+    <div class="panel log-panel">
+      <h2>量測記錄 <span id="logCount" style="color:var(--text-dim);font-weight:400;">(0 筆)</span></h2>
+      <table>
+        <thead><tr><th>#</th><th>時間</th><th>標籤</th><th>峰值 dBFS</th><th>校正後 dB SPL</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let audioCtx, analyser, micStream, dataArray, rafId;
+let peakHoldDbfs = -Infinity;
+let calOffset = null; // dB offset to add to dBFS to get SPL
+let logEntries = [];
+let lastLoggedTime = 0;
+
+const dbMainEl = document.getElementById('dbMain');
+const dbPeakEl = document.getElementById('dbPeak');
+const modeLabelEl = document.getElementById('modeLabel');
+const statusText = document.getElementById('statusText');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const resetPeakBtn = document.getElementById('resetPeakBtn');
+const calRefDb = document.getElementById('calRefDb');
+const calCurrentDbfs = document.getElementById('calCurrentDbfs');
+const calibrateBtn = document.getElementById('calibrateBtn');
+const clearCalBtn = document.getElementById('clearCalBtn');
+const calBadge = document.getElementById('calBadge');
+const triggerThresh = document.getElementById('triggerThresh');
+const tagInput = document.getElementById('tagInput');
+const logNowBtn = document.getElementById('logNowBtn');
+const clearLogBtn = document.getElementById('clearLogBtn');
+const exportBtn = document.getElementById('exportBtn');
+const logBody = document.getElementById('logBody');
+const logCount = document.getElementById('logCount');
+const canvas = document.getElementById('waveCanvas');
+const ctx2d = canvas.getContext('2d');
+
+let currentDbfsSmoothed = -Infinity;
+
+function resizeCanvas(){
+  canvas.width = canvas.clientWidth * devicePixelRatio;
+  canvas.height = canvas.clientHeight * devicePixelRatio;
+}
+window.addEventListener('resize', resizeCanvas);
+
+async function startAudio(){
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:false,
+        noiseSuppression:false,
+        autoGainControl:false
+      }
+    });
+  }catch(e){
+    statusText.textContent = '無法取得麥克風權限：' + e.message;
+    return;
+  }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaStreamSource(micStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0;
+  source.connect(analyser);
+  dataArray = new Float32Array(analyser.fftSize);
+
+  resizeCanvas();
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  statusText.textContent = '收音中... 若讀值一直很平，請確認系統麥克風權限與音量。';
+  statusText.classList.add('active');
+  loop();
+}
+
+function stopAudio(){
+  if(rafId) cancelAnimationFrame(rafId);
+  if(micStream) micStream.getTracks().forEach(t=>t.stop());
+  if(audioCtx) audioCtx.close();
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  statusText.textContent = '已停止';
+  statusText.classList.remove('active');
+}
+
+function computeDbfs(){
+  analyser.getFloatTimeDomainData(dataArray);
+  let sumSquares = 0;
+  let peakAbs = 0;
+  for(let i=0;i<dataArray.length;i++){
+    const v = dataArray[i];
+    sumSquares += v*v;
+    const a = Math.abs(v);
+    if(a>peakAbs) peakAbs = a;
+  }
+  const rms = Math.sqrt(sumSquares/dataArray.length);
+  const rmsDbfs = rms>0 ? 20*Math.log10(rms) : -Infinity;
+  const peakDbfs = peakAbs>0 ? 20*Math.log10(peakAbs) : -Infinity;
+  return {rmsDbfs, peakDbfs};
+}
+
+function drawWave(){
+  const w = canvas.width, h = canvas.height;
+  ctx2d.clearRect(0,0,w,h);
+  ctx2d.strokeStyle = '#4fd1c5';
+  ctx2d.lineWidth = 1.5 * devicePixelRatio;
+  ctx2d.beginPath();
+  const step = Math.ceil(dataArray.length / w);
+  for(let x=0;x<w;x++){
+    const idx = x*step;
+    const v = dataArray[idx] || 0;
+    const y = h/2 - v*h/2*0.9;
+    if(x===0) ctx2d.moveTo(x,y); else ctx2d.lineTo(x,y);
+  }
+  ctx2d.stroke();
+}
+
+function loop(){
+  rafId = requestAnimationFrame(loop);
+  const {rmsDbfs, peakDbfs} = computeDbfs();
+
+  currentDbfsSmoothed = currentDbfsSmoothed === -Infinity ? rmsDbfs : (currentDbfsSmoothed*0.7 + rmsDbfs*0.3);
+
+  if(peakDbfs > peakHoldDbfs) peakHoldDbfs = peakDbfs;
+
+  const displayVal = calOffset!==null ? currentDbfsSmoothed + calOffset : currentDbfsSmoothed;
+  const displayPeak = calOffset!==null ? peakHoldDbfs + calOffset : peakHoldDbfs;
+
+  dbMainEl.textContent = isFinite(displayVal) ? displayVal.toFixed(1) : '--';
+  dbPeakEl.textContent = isFinite(displayPeak) ? displayPeak.toFixed(1) : '--';
+
+  if(displayVal > -10) dbMainEl.style.color = 'var(--danger)';
+  else if(displayVal > -25) dbMainEl.style.color = 'var(--warn)';
+  else dbMainEl.style.color = 'var(--accent)';
+
+  calCurrentDbfs.value = isFinite(rmsDbfs) ? rmsDbfs.toFixed(1) : '--';
+
+  drawWave();
+
+  const thresh = parseFloat(triggerThresh.value);
+  const now = performance.now();
+  if(isFinite(thresh) && peakDbfs > thresh && (now - lastLoggedTime) > 800){
+    lastLoggedTime = now;
+    addLogEntry(peakDbfs, true);
+    peakHoldDbfs = -Infinity;
+  }
+}
+
+function addLogEntry(peakDbfsVal, auto){
+  const t = new Date();
+  const timeStr = t.toLocaleTimeString('zh-TW', {hour12:false}) + '.' + String(t.getMilliseconds()).padStart(3,'0');
+  const splVal = calOffset!==null ? (peakDbfsVal + calOffset) : null;
+  logEntries.push({
+    time:timeStr,
+    tag: tagInput.value || (auto?'(自動觸發)':'(手動)'),
+    dbfs: peakDbfsVal,
+    spl: splVal
+  });
+  renderLog();
+}
+
+function renderLog(){
+  logBody.innerHTML = '';
+  logEntries.forEach((e,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${e.time}</td><td>${e.tag}</td><td>${isFinite(e.dbfs)?e.dbfs.toFixed(1):'--'}</td><td>${e.spl!==null?e.spl.toFixed(1):'--'}</td>`;
+    logBody.appendChild(tr);
+  });
+  logCount.textContent = `(${logEntries.length} 筆)`;
+  logBody.parentElement.parentElement.scrollTop = logBody.parentElement.parentElement.scrollHeight;
+}
+
+calibrateBtn.addEventListener('click', ()=>{
+  const ref = parseFloat(calRefDb.value);
+  const cur = parseFloat(calCurrentDbfs.value);
+  if(!isFinite(ref) || !isFinite(cur)){
+    alert('請先輸入已知音壓數值，並確認麥克風有收到穩定聲音（右方 dBFS 需有讀值）');
+    return;
+  }
+  calOffset = ref - cur;
+  modeLabelEl.textContent = `已校正 (offset ${calOffset.toFixed(1)} dB)`;
+  calBadge.textContent = '已校正';
+  calBadge.classList.add('on');
+});
+
+clearCalBtn.addEventListener('click', ()=>{
+  calOffset = null;
+  modeLabelEl.textContent = '未校正 (dBFS)';
+  calBadge.textContent = '未校正';
+  calBadge.classList.remove('on');
+});
+
+startBtn.addEventListener('click', startAudio);
+stopBtn.addEventListener('click', stopAudio);
+resetPeakBtn.addEventListener('click', ()=>{ peakHoldDbfs = -Infinity; });
+logNowBtn.addEventListener('click', ()=>{ addLogEntry(peakHoldDbfs, false); });
+clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
+exportBtn.addEventListener('click', ()=>{
+  if(logEntries.length===0){ alert('目前沒有記錄可匯出'); return; }
+  let csv = '編號,時間,標籤,峰值dBFS,校正後dBSPL\n';
+  logEntries.forEach((e,i)=>{
+    csv += `${i+1},${e.time},"${e.tag}",${isFinite(e.dbfs)?e.dbfs.toFixed(2):''},${e.spl!==null?e.spl.toFixed(2):''}\n`;
+  });
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'noise_log_' + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+resizeCanvas();
+</script>
+</body>
+</html>
