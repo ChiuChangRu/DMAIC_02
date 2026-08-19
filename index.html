@@ -129,6 +129,21 @@
   .mic-state.armed .dot{background:var(--warn);}
   .mic-state.error{border-color:var(--danger);color:var(--danger);}
   .mic-state.error .dot{background:var(--danger);}
+  .scan-box{
+    margin-top:14px;
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:12px 14px;
+    text-align:left;
+    display:none;
+  }
+  .scan-box.on{display:block;}
+  .scan-box h3{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin:0 0 8px;font-weight:600;}
+  .scan-box table{margin-top:0;}
+  .scan-box .ok{color:var(--accent);}
+  .scan-box .no{color:var(--text-dim);}
+  .scan-box .err{color:var(--danger);}
+  .scan-hint{font-size:12px;color:var(--warn);margin-bottom:8px;line-height:1.6;}
   @keyframes micPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.3;transform:scale(0.75);}}
   @media (prefers-reduced-motion:reduce){.mic-state.live .dot{animation:none;}}
 
@@ -191,10 +206,15 @@
         <button id="startBtn">開始收音</button>
         <button id="stopBtn" class="secondary" disabled>停止</button>
         <button id="resetPeakBtn" class="secondary">重置 Peak Hold</button>
+        <button id="scanBtn" class="secondary">自動偵測可用裝置</button>
       </div>
       <div><span class="mic-state" id="micState"><span class="dot"></span><span id="micStateText">麥克風未啟動</span></span></div>
       <div class="status" id="statusText">尚未啟動麥克風</div>
       <div class="status" id="diagText" style="font-family:var(--mono);font-size:11px;"></div>
+      <div class="scan-box" id="scanBox">
+        <h3>裝置掃描結果</h3>
+        <div id="scanBody"></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -266,6 +286,9 @@ const modeLabelEl = document.getElementById('modeLabel');
 const statusText = document.getElementById('statusText');
 const diagText = document.getElementById('diagText');
 const deviceSelect = document.getElementById('deviceSelect');
+const scanBtn = document.getElementById('scanBtn');
+const scanBox = document.getElementById('scanBox');
+const scanBody = document.getElementById('scanBody');
 const micState = document.getElementById('micState');
 const micStateText = document.getElementById('micStateText');
 const startBtn = document.getElementById('startBtn');
@@ -359,6 +382,158 @@ async function refreshDeviceList(){
     deviceSelect.appendChild(o);
   });
   deviceSelect.value = cur;
+}
+
+// 逐一開啟每個輸入裝置實測 1.2 秒，回報實際收到的峰值。
+// 「哪個裝置真的有訊號」用猜的沒有意義，直接量最快。
+async function probeDevice(deviceId, ms){
+  let stream = null, ctx = null;
+  const constraints = {echoCancellation:false, noiseSuppression:false, autoGainControl:false};
+  if(deviceId) constraints.deviceId = {exact: deviceId};
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio: constraints});
+  }catch(e){
+    return {error: e.name};
+  }
+  try{
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if(ctx.state === 'suspended'){ try{ await ctx.resume(); }catch(e){} }
+    const src = ctx.createMediaStreamSource(stream);
+    const an = ctx.createAnalyser();
+    an.fftSize = 2048;
+    an.smoothingTimeConstant = 0;
+    src.connect(an);
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    an.connect(g);
+    g.connect(ctx.destination);
+
+    const buf = new Float32Array(an.fftSize);
+    let peak = 0;
+    const t0 = performance.now();
+    await new Promise(resolve=>{
+      (function step(){
+        an.getFloatTimeDomainData(buf);
+        for(let i=0;i<buf.length;i++){
+          const a = Math.abs(buf[i]);
+          if(a > peak) peak = a;
+        }
+        if(performance.now() - t0 < ms) requestAnimationFrame(step);
+        else resolve();
+      })();
+    });
+    const track = stream.getAudioTracks()[0];
+    return {
+      peak: peak,
+      label: track ? track.label : '',
+      muted: track ? track.muted : false,
+      state: ctx.state
+    };
+  }finally{
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    if(ctx && ctx.state !== 'closed'){ try{ ctx.close(); }catch(e){} }
+  }
+}
+
+function renderScan(rows){
+  scanBody.textContent = '';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const htr = document.createElement('tr');
+  ['裝置','峰值 dBFS','結果'].forEach(h=>{
+    const th = document.createElement('th');
+    th.textContent = h;
+    htr.appendChild(th);
+  });
+  thead.appendChild(htr);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td');
+    td1.textContent = r.name;
+    const td2 = document.createElement('td');
+    const td3 = document.createElement('td');
+    if(r.error){
+      td2.textContent = '—';
+      td3.textContent = '無法開啟：' + r.error;
+      td3.className = 'err';
+    }else if(r.peak > 0){
+      td2.textContent = (20*Math.log10(r.peak)).toFixed(1);
+      td3.textContent = '有訊號';
+      td3.className = 'ok';
+    }else{
+      td2.textContent = '靜音';
+      td3.textContent = r.muted ? '被系統靜音' : '完全沒有訊號';
+      td3.className = 'no';
+    }
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  scanBody.appendChild(table);
+
+  const best = rows.filter(r=>!r.error && r.peak > 0).sort((a,b)=>b.peak-a.peak)[0];
+  const msg = document.createElement('div');
+  msg.className = 'status';
+  if(best){
+    msg.textContent = '已自動選取有訊號的裝置：' + best.name + '。請按「開始收音」。';
+    msg.classList.add('active');
+    deviceSelect.value = best.id;
+  }else{
+    msg.textContent = '所有輸入裝置都收不到訊號。這代表問題不在瀏覽器，'
+      + '而在系統或硬體：請檢查筆電的實體麥克風靜音鍵、'
+      + 'Windows「設定 → 隱私權與安全性 → 麥克風」是否允許應用程式存取、'
+      + '以及音效設定中該裝置的音量不是 0。';
+  }
+  scanBody.appendChild(msg);
+}
+
+async function scanDevices(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    setStatus('這個頁面不是安全來源，無法掃描裝置。請用 https:// 的網址開啟。', false);
+    return;
+  }
+  const wasRunning = !stopBtn.disabled;
+  if(wasRunning) stopAudio();
+
+  scanBtn.disabled = true;
+  scanBox.classList.add('on');
+  scanBody.textContent = '';
+  const hint = document.createElement('div');
+  hint.className = 'scan-hint';
+  hint.textContent = '掃描中——請持續對著麥克風發出聲音（說話或敲桌面），否則有訊號的裝置也會被判成靜音。';
+  scanBody.appendChild(hint);
+
+  // 先取一次權限，enumerateDevices 才拿得到裝置名稱
+  const first = await probeDevice('', 300);
+  if(first.error){
+    scanBody.textContent = '';
+    const e = document.createElement('div');
+    e.className = 'status';
+    e.textContent = '無法取得麥克風權限（' + first.error + '），掃描中止。';
+    scanBody.appendChild(e);
+    scanBtn.disabled = false;
+    return;
+  }
+  await refreshDeviceList();
+
+  const devices = (await navigator.mediaDevices.enumerateDevices())
+    .filter(d=>d.kind === 'audioinput');
+
+  const rows = [];
+  for(const d of devices){
+    const r = await probeDevice(d.deviceId, 1200);
+    rows.push({
+      id: d.deviceId,
+      name: d.label || ('麥克風 ' + String(d.deviceId).slice(0,8)),
+      peak: r.peak || 0,
+      muted: r.muted,
+      error: r.error
+    });
+  }
+  renderScan(rows);
+  scanBtn.disabled = false;
 }
 
 async function startAudio(){
@@ -580,6 +755,7 @@ deviceSelect.addEventListener('change', async ()=>{
 startBtn.addEventListener('click', startAudio);
 stopBtn.addEventListener('click', stopAudio);
 resetPeakBtn.addEventListener('click', ()=>{ peakHoldDbfs = -Infinity; });
+scanBtn.addEventListener('click', scanDevices);
 logNowBtn.addEventListener('click', ()=>{ addLogEntry(peakHoldDbfs, false); });
 clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
 exportBtn.addEventListener('click', ()=>{
