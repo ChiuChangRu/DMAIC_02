@@ -636,6 +636,49 @@ async function scanDevices(){
   scanBtn.disabled = false;
 }
 
+// NotAllowedError 有兩種完全不同的成因，指引也不一樣：
+//   1. 瀏覽器對本站封鎖 → 要去網址列改權限
+//   2. 系統層阻擋（Windows 隱私權設定、實體靜音鍵）→ 改網址列權限沒用
+// Permissions API 說「已授權」卻仍取不到裝置，就是第 2 種。
+async function reportMicError(e){
+  let perm = lastPermState;
+  try{
+    if(navigator.permissions && navigator.permissions.query){
+      const st = await navigator.permissions.query({name:'microphone'});
+      perm = st.state;
+      lastPermState = st.state;
+    }
+  }catch(_){}
+
+  if(e.name === 'NotAllowedError'){
+    if(perm === 'granted'){
+      setMicState('error', '系統層阻擋麥克風（瀏覽器權限是允許的）');
+      setStatus('瀏覽器對本站的麥克風權限是「允許」，卻仍取不到裝置 — 代表是作業系統擋住的，'
+        + '改網址列的權限沒有用。請依序檢查：'
+        + '① 筆電的實體麥克風靜音鍵（多在 F4／F8，鍵帽有麥克風圖示）；'
+        + '② Windows 設定 → 隱私權與安全性 → 麥克風 →「讓應用程式存取您的麥克風」'
+        + '以及下方瀏覽器的個別開關；'
+        + '③ 關閉可能獨佔麥克風的程式後重新整理。', false);
+    }else{
+      setMicState('error', '本站的麥克風權限被封鎖');
+      setStatus('本站的麥克風權限被封鎖。請點網址列右側被劃掉的麥克風圖示（或左側的鎖頭／調整圖示）→ '
+        + '把「麥克風」改成「允許」→ 重新整理頁面。'
+        + '若圖示裡看到「已由系統封鎖」，則要改的是 Windows 的麥克風隱私權設定。', false);
+    }
+  }else if(e.name === 'NotFoundError'){
+    setMicState('error', '找不到任何麥克風裝置');
+    setStatus('系統回報沒有可用的錄音裝置。請確認麥克風已接上，'
+      + '並在 Windows 音效設定的「錄製」分頁確認裝置沒有被停用。', false);
+  }else if(e.name === 'NotReadableError'){
+    setMicState('error', '麥克風被其他程式占用');
+    setStatus('裝置存在但無法讀取，通常是被其他程式獨佔（會議軟體、錄音軟體）。'
+      + '關閉那些程式後重新整理頁面。', false);
+  }else{
+    setMicState('error', '麥克風啟動失敗：' + e.name);
+    setStatus('無法取得麥克風：' + e.name + ' — ' + e.message, false);
+  }
+}
+
 async function startAudio(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     setStatus('這個頁面不是安全來源，瀏覽器禁止存取麥克風。請用 https:// 的網址開啟，不要用 file:// 直接開本機檔案。', false);
@@ -653,11 +696,21 @@ async function startAudio(){
   try{
     micStream = await navigator.mediaDevices.getUserMedia({audio: audioConstraints});
   }catch(e){
-    setStatus('無法取得麥克風：' + e.name + ' — ' + e.message, false);
-    setMicState('error', e.name === 'NotAllowedError'
-      ? '麥克風權限被拒絕 — 請點網址列的鎖頭圖示改為允許'
-      : (e.name === 'NotFoundError' ? '找不到任何麥克風裝置' : '麥克風啟動失敗：' + e.name));
-    return;
+    // 指定的裝置不存在（例如實體靜音鍵切換後 deviceId 改變）：
+    // 退回預設裝置重試一次，而不是直接失敗。
+    if((e.name === 'OverconstrainedError' || e.name === 'NotFoundError') && audioConstraints.deviceId){
+      delete audioConstraints.deviceId;
+      deviceSelect.value = '';
+      try{
+        micStream = await navigator.mediaDevices.getUserMedia({audio: audioConstraints});
+      }catch(e2){
+        await reportMicError(e2);
+        return;
+      }
+    }else{
+      await reportMicError(e);
+      return;
+    }
   }
 
   await refreshDeviceList();
