@@ -164,6 +164,17 @@
   th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--panel-line);}
   th{color:var(--text-dim);font-weight:500;}
   .log-panel{grid-column:1 / -1;max-height:260px;overflow-y:auto;}
+  .chart-panel{grid-column:1 / -1;}
+  #logCanvas{height:210px;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none;}
+  .trig-state{
+    display:inline-block;font-size:11px;padding:2px 10px;border-radius:99px;
+    border:1px solid var(--panel-line);color:var(--text-dim);margin-left:8px;font-weight:600;
+  }
+  .trig-state.dwell{border-color:var(--danger);color:var(--danger);}
+  .trig-state.hold{border-color:var(--warn);color:var(--warn);}
 
   .warn-box{
     background:#2a2416;
@@ -244,6 +255,14 @@
         <input type="number" id="triggerThresh" value="-30">
       </div>
       <div class="row">
+        <label>量測窗 dwell (ms)</label>
+        <input type="number" id="dwellMs" value="150" min="10" max="5000" step="10">
+      </div>
+      <div class="row">
+        <label>再觸發間隔 (ms)</label>
+        <input type="number" id="holdoffMs" value="800" min="0" max="60000" step="50">
+      </div>
+      <div class="row">
         <label>備註標籤</label>
         <input type="text" id="tagInput" placeholder="例如 A膠-針1">
       </div>
@@ -252,7 +271,17 @@
         <button id="clearLogBtn" class="secondary">清空記錄</button>
         <button id="exportBtn" class="secondary">匯出 CSV</button>
       </div>
-      <div class="status">超過閾值時會自動記錄一筆（含時間、峰值），也可隨時手動記錄。</div>
+      <div class="status">
+        超過閾值即開始擷取，持續 <b>dwell</b> 毫秒並取這段期間的最大值記錄，
+        擊發瞬間的真正峰值才不會被漏掉；記錄後進入<b>再觸發間隔</b>，避免同一次擊發被記成多筆。
+        <span class="trig-state" id="trigStateBadge">待命</span>
+      </div>
+    </div>
+
+    <div class="panel chart-panel">
+      <h2>記錄圖譜 <span id="chartAxisLabel" style="color:var(--text-dim);font-weight:400;">(dBFS)</span></h2>
+      <canvas id="logCanvas"></canvas>
+      <div class="legend" id="chartLegend"></div>
     </div>
 
     <div class="panel log-panel">
@@ -278,7 +307,9 @@ const FLOOR_DBFS = -100;  // 顯示下限：安靜時顯示 -100 而不是 '--'�
 let peakHoldDbfs = -Infinity;
 let calOffset = null; // dB offset to add to dBFS to get SPL
 let logEntries = [];
-let lastLoggedTime = 0;
+// 觸發狀態機：armed（待命）→ dwelling（擷取窗內取最大值）→ holdoff（冷卻，避免同一次擊發重複記錄）
+let trigState = 'armed';
+let dwellStart = 0, dwellPeak = -Infinity, holdoffUntil = 0;
 
 const dbMainEl = document.getElementById('dbMain');
 const dbPeakEl = document.getElementById('dbPeak');
@@ -301,6 +332,13 @@ const clearCalBtn = document.getElementById('clearCalBtn');
 const calBadge = document.getElementById('calBadge');
 const triggerThresh = document.getElementById('triggerThresh');
 const tagInput = document.getElementById('tagInput');
+const dwellMsInput = document.getElementById('dwellMs');
+const holdoffMsInput = document.getElementById('holdoffMs');
+const trigStateBadge = document.getElementById('trigStateBadge');
+const logCanvas = document.getElementById('logCanvas');
+const logCtx = logCanvas.getContext('2d');
+const chartAxisLabel = document.getElementById('chartAxisLabel');
+const chartLegend = document.getElementById('chartLegend');
 const logNowBtn = document.getElementById('logNowBtn');
 const clearLogBtn = document.getElementById('clearLogBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -314,6 +352,9 @@ let currentDbfsSmoothed = -Infinity;
 function resizeCanvas(){
   canvas.width = canvas.clientWidth * devicePixelRatio;
   canvas.height = canvas.clientHeight * devicePixelRatio;
+  logCanvas.width = logCanvas.clientWidth * devicePixelRatio;
+  logCanvas.height = logCanvas.clientHeight * devicePixelRatio;
+  drawLogChart();
 }
 window.addEventListener('resize', resizeCanvas);
 
@@ -590,6 +631,7 @@ async function startAudio(){
   dataArray = new Float32Array(analyser.fftSize);
   silentFrames = 0;
   currentDbfsSmoothed = -Infinity;
+  resetTrigger();
 
   resizeCanvas();
   startBtn.disabled = true;
@@ -609,6 +651,7 @@ function stopAudio(){
   if(audioCtx && audioCtx.state !== 'closed'){ try{ audioCtx.close(); }catch(e){} }
   silentFrames = 0;
   currentDbfsSmoothed = -Infinity;
+  resetTrigger();
   startBtn.disabled = false;
   stopBtn.disabled = true;
   setStatus('已停止', false);
@@ -689,13 +732,183 @@ function loop(){
 
   drawWave();
 
+  updateTrigger(peakDbfs);
+}
+
+function clampNum(v, lo, hi, fallback){
+  const n = parseFloat(v);
+  if(!isFinite(n)) return fallback;
+  return Math.min(hi, Math.max(lo, n));
+}
+
+function setTrigBadge(kind, text){
+  trigStateBadge.className = 'trig-state ' + kind;
+  trigStateBadge.textContent = text;
+}
+
+// 擊發偵測：跨過閾值後不立刻記錄，而是continue收集 dwell 毫秒取最大值。
+// 喀嗒聲的真正峰值常落在跨越閾值之後的幾毫秒，只取跨越當幀會低估。
+function updateTrigger(peakDbfs){
   const thresh = parseFloat(triggerThresh.value);
+  const dwellMs = clampNum(dwellMsInput.value, 10, 5000, 150);
+  const holdMs  = clampNum(holdoffMsInput.value, 0, 60000, 800);
   const now = performance.now();
-  if(isFinite(thresh) && peakDbfs > thresh && (now - lastLoggedTime) > 800){
-    lastLoggedTime = now;
-    addLogEntry(peakDbfs, true);
-    peakHoldDbfs = -Infinity;
+
+  if(trigState === 'armed'){
+    if(isFinite(thresh) && peakDbfs > thresh){
+      trigState = 'dwelling';
+      dwellStart = now;
+      dwellPeak = peakDbfs;
+      setTrigBadge('dwell', '擷取中');
+    }
+  }else if(trigState === 'dwelling'){
+    if(peakDbfs > dwellPeak) dwellPeak = peakDbfs;
+    if(now - dwellStart >= dwellMs){
+      addLogEntry(dwellPeak, true);
+      peakHoldDbfs = -Infinity;
+      if(holdMs > 0){
+        trigState = 'holdoff';
+        holdoffUntil = now + holdMs;
+        setTrigBadge('hold', '冷卻中');
+      }else{
+        trigState = 'armed';
+        setTrigBadge('', '待命');
+      }
+    }
+  }else{
+    if(now >= holdoffUntil){
+      trigState = 'armed';
+      setTrigBadge('', '待命');
+    }
   }
+}
+
+function resetTrigger(){
+  trigState = 'armed';
+  dwellPeak = -Infinity;
+  setTrigBadge('', '待命');
+}
+
+// 同一支針的多次擊發在圖譜上是同色，方便相互比較。
+// 用固定調色盤依標籤首次出現順序配色，而不是字串雜湊——
+// 雜湊出來的色相可能非常接近，肉眼分不出來就失去分組的意義。
+const TAG_PALETTE = ['#4fd1c5','#e5a34a','#7aa2f7','#9ece6a','#f7768e','#bb9af7','#2ac3de','#e0af68'];
+function buildTagColors(){
+  const map = new Map();
+  logEntries.forEach(e=>{
+    const t = e.tag || '';
+    if(!map.has(t)) map.set(t, TAG_PALETTE[map.size % TAG_PALETTE.length]);
+  });
+  return map;
+}
+
+function renderLegend(map){
+  chartLegend.textContent = '';
+  if(map.size <= 1) return;   // 只有一組就不必畫圖例
+  map.forEach((color, tag)=>{
+    const sp = document.createElement('span');
+    const sw = document.createElement('i');
+    sw.style.background = color;
+    sp.appendChild(sw);
+    sp.appendChild(document.createTextNode(tag || '(無標籤)'));
+    chartLegend.appendChild(sp);
+  });
+}
+
+function drawLogChart(){
+  const g = logCtx, w = logCanvas.width, h = logCanvas.height, dpr = devicePixelRatio;
+  g.clearRect(0,0,w,h);
+  if(!w || !h) return;
+
+  if(logEntries.length === 0){
+    g.fillStyle = '#8b96a5';
+    g.font = (12*dpr) + 'px -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('尚無記錄 — 擊發觸發或手動記錄後會自動畫在這裡', w/2, h/2);
+    chartLegend.textContent = '';
+    return;
+  }
+
+  // 校正後整組一起換算成 SPL，圖譜的縱軸才會一致
+  const useSpl = calOffset !== null;
+  const off = useSpl ? calOffset : 0;
+  chartAxisLabel.textContent = useSpl ? '(dB SPL，已校正)' : '(dBFS)';
+
+  const tagColors = buildTagColors();
+  renderLegend(tagColors);
+
+  const vals = logEntries.map(e=>e.dbfs + off).filter(isFinite);
+  if(!vals.length) return;
+  const thresh = parseFloat(triggerThresh.value);
+  const threshVal = isFinite(thresh) ? thresh + off : null;
+
+  let lo = Math.min.apply(null, vals);
+  let hi = Math.max.apply(null, vals);
+  if(threshVal !== null){ lo = Math.min(lo, threshVal); hi = Math.max(hi, threshVal); }
+  if(hi - lo < 6){ const mid=(hi+lo)/2; lo = mid-3; hi = mid+3; }
+  const pad = (hi-lo)*0.15;
+  lo -= pad; hi += pad;
+
+  const mL = 48*dpr, mR = 12*dpr, mT = 12*dpr, mB = 24*dpr;
+  const pw = w - mL - mR, ph = h - mT - mB;
+  const y = v => mT + ph * (1 - (v - lo)/(hi - lo));
+
+  // 格線與縱軸標示
+  g.strokeStyle = '#2a323d';
+  g.lineWidth = 1*dpr;
+  g.fillStyle = '#8b96a5';
+  g.font = (10*dpr) + 'px Consolas, monospace';
+  g.textAlign = 'right';
+  g.textBaseline = 'middle';
+  for(let i=0;i<=4;i++){
+    const v = lo + (hi-lo)*i/4;
+    const yy = y(v);
+    g.beginPath(); g.moveTo(mL, yy); g.lineTo(w-mR, yy); g.stroke();
+    g.fillText(v.toFixed(0), mL - 6*dpr, yy);
+  }
+
+  // 閾值線
+  if(threshVal !== null && threshVal > lo && threshVal < hi){
+    g.save();
+    g.strokeStyle = '#e5a34a';
+    g.setLineDash([5*dpr, 4*dpr]);
+    g.beginPath(); g.moveTo(mL, y(threshVal)); g.lineTo(w-mR, y(threshVal)); g.stroke();
+    g.restore();
+    g.fillStyle = '#e5a34a';
+    g.textAlign = 'left';
+    g.fillText('閾值', mL + 4*dpr, y(threshVal) - 8*dpr);
+  }
+
+  // 長條
+  const n = logEntries.length;
+  const slot = pw / n;
+  const bw = Math.max(2*dpr, Math.min(slot*0.62, 42*dpr));
+  g.textAlign = 'center';
+  logEntries.forEach((e,i)=>{
+    const v = e.dbfs + off;
+    if(!isFinite(v)) return;
+    const cx = mL + slot*(i+0.5);
+    const yy = y(v);
+    g.fillStyle = tagColors.get(e.tag || '');
+    g.fillRect(cx - bw/2, yy, bw, mT + ph - yy);
+    if(n <= 24){
+      g.fillStyle = '#e8ecf1';
+      g.font = (9.5*dpr) + 'px Consolas, monospace';
+      g.textBaseline = 'bottom';
+      g.fillText(v.toFixed(1), cx, yy - 3*dpr);
+    }
+  });
+
+  // 橫軸編號
+  g.fillStyle = '#8b96a5';
+  g.font = (10*dpr) + 'px Consolas, monospace';
+  g.textBaseline = 'top';
+  const stepN = Math.ceil(n/20);
+  logEntries.forEach((e,i)=>{
+    if(i % stepN !== 0 && i !== n-1) return;
+    g.fillText(String(i+1), mL + slot*(i+0.5), mT + ph + 6*dpr);
+  });
 }
 
 function addLogEntry(peakDbfsVal, auto){
@@ -719,6 +932,7 @@ function renderLog(){
     logBody.appendChild(tr);
   });
   logCount.textContent = `(${logEntries.length} 筆)`;
+  drawLogChart();
   logBody.parentElement.parentElement.scrollTop = logBody.parentElement.parentElement.scrollHeight;
 }
 
@@ -739,6 +953,7 @@ calibrateBtn.addEventListener('click', ()=>{
   modeLabelEl.textContent = `已校正 (offset ${calOffset.toFixed(1)} dB)`;
   calBadge.textContent = '已校正';
   calBadge.classList.add('on');
+  drawLogChart();
 });
 
 clearCalBtn.addEventListener('click', ()=>{
@@ -746,6 +961,7 @@ clearCalBtn.addEventListener('click', ()=>{
   modeLabelEl.textContent = '未校正 (dBFS)';
   calBadge.textContent = '未校正';
   calBadge.classList.remove('on');
+  drawLogChart();
 });
 
 deviceSelect.addEventListener('change', async ()=>{
@@ -756,6 +972,7 @@ startBtn.addEventListener('click', startAudio);
 stopBtn.addEventListener('click', stopAudio);
 resetPeakBtn.addEventListener('click', ()=>{ peakHoldDbfs = -Infinity; });
 scanBtn.addEventListener('click', scanDevices);
+triggerThresh.addEventListener('input', drawLogChart);
 logNowBtn.addEventListener('click', ()=>{ addLogEntry(peakHoldDbfs, false); });
 clearLogBtn.addEventListener('click', ()=>{ logEntries=[]; renderLog(); });
 exportBtn.addEventListener('click', ()=>{
