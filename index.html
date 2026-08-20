@@ -6,29 +6,27 @@
   <title>檢體針聲響比較器</title>
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #071018;
-      --panel: #0d1923;
-      --panel-2: #112231;
-      --line: #223746;
-      --text: #ecf5f7;
-      --muted: #8ca3ae;
-      --cyan: #4de1d1;
-      --blue: #55a9ff;
-      --yellow: #ffd166;
-      --orange: #ff9f43;
-      --red: #ff5f57;
-      --green: #55d187;
-      --shadow: 0 18px 50px rgba(0, 0, 0, .28);
+      color-scheme: light;
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel-2: #f7fafb;
+      --line: #d7e2e8;
+      --text: #102a36;
+      --muted: #5c7480;
+      --cyan: #087e77;
+      --blue: #2d8fdf;
+      --yellow: #805300;
+      --orange: #a84b0a;
+      --red: #bd2f2b;
+      --green: #117542;
+      --shadow: 0 10px 30px rgba(35, 62, 76, .09);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 85% -20%, rgba(77, 225, 209, .12), transparent 34rem),
-        linear-gradient(180deg, #08131c 0%, var(--bg) 100%);
+      background: var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
       min-height: 100vh;
@@ -40,17 +38,17 @@
       border: 1px solid var(--line);
       border-radius: 10px;
       color: var(--text);
-      background: #132432;
+      background: #ffffff;
       padding: 9px 13px;
       cursor: pointer;
       transition: transform .15s ease, border-color .15s ease, background .15s ease;
     }
 
-    button:hover { border-color: #4b7184; background: #183042; }
+    button:hover { border-color: #86a8b8; background: #f0f6f8; }
     button:active { transform: translateY(1px); }
     button:disabled { opacity: .45; cursor: not-allowed; }
-    button.primary { background: var(--cyan); border-color: var(--cyan); color: #042a27; font-weight: 800; }
-    button.danger { color: #ffb4ae; }
+    button.primary { background: #1ecfc2; border-color: #14b7ab; color: #073a37; font-weight: 800; }
+    button.danger { color: var(--red); }
     button.small { padding: 5px 9px; border-radius: 8px; font-size: 12px; }
 
     .app { width: min(1440px, 100%); margin: 0 auto; padding: 20px; }
@@ -76,23 +74,23 @@
 
     .status-pill {
       display: inline-flex; align-items: center; gap: 7px;
-      border: 1px solid var(--line); background: rgba(8, 20, 29, .72);
+      border: 1px solid var(--line); background: rgba(255, 255, 255, .88);
       border-radius: 999px; color: var(--muted); padding: 7px 11px; font-size: 12px;
     }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #59707d; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #8da0a8; }
     .status-pill.live .status-dot { background: var(--green); box-shadow: 0 0 0 5px rgba(85, 209, 135, .12); }
     .status-pill.warn .status-dot { background: var(--yellow); }
 
     .notice {
       display: none; margin-bottom: 12px; padding: 11px 14px; border-radius: 11px;
-      border: 1px solid #62432b; background: #2b2017; color: #ffd6a6; font-size: 13px;
+      border: 1px solid #e4bd73; background: #fff8e8; color: #76500b; font-size: 13px;
     }
     .notice.show { display: block; }
-    .notice.danger { border-color: #6e3330; background: #2c1818; color: #ffc0ba; }
+    .notice.danger { border-color: #e7aaa7; background: #fff1f0; color: #9e2723; }
 
     .wave-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 12px; }
     .card {
-      background: linear-gradient(180deg, rgba(17, 34, 49, .92), rgba(11, 25, 35, .96));
+      background: linear-gradient(180deg, #ffffff, #fbfdfe);
       border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
     }
     .card-head {
@@ -104,9 +102,18 @@
     .canvas-wrap { position: relative; height: 300px; min-height: 220px; }
     canvas { display: block; width: 100%; height: 100%; }
 
-    .segmented { display: inline-flex; padding: 3px; gap: 3px; background: #09141d; border: 1px solid var(--line); border-radius: 10px; }
+    .surface-panel { margin-top: 12px; }
+    .surface-wrap { position: relative; height: 390px; min-height: 300px; }
+    .surface-controls { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .surface-controls select { width: auto; padding: 6px 28px 6px 8px; }
+    .surface-legend { display: grid; grid-template-columns: auto minmax(160px, 360px); align-items: center; gap: 10px; padding: 0 16px 13px; color: var(--muted); font-size: 10px; }
+    .surface-scale-wrap { display: grid; gap: 4px; }
+    .surface-scale { height: 9px; border-radius: 999px; background: linear-gradient(90deg, #211a57, #174ea6, #078c82, #e0ad20, #d83b36); }
+    .surface-scale-labels { display: flex; justify-content: space-between; color: #647b86; }
+
+    .segmented { display: inline-flex; padding: 3px; gap: 3px; background: #eef4f6; border: 1px solid var(--line); border-radius: 10px; }
     .segmented button { border: 0; background: transparent; padding: 5px 9px; color: var(--muted); font-size: 11px; }
-    .segmented button.active { background: #1c3547; color: var(--text); }
+    .segmented button.active { background: #d9ecef; color: #0d5360; }
 
     .legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 14px 11px; color: var(--muted); font-size: 11px; }
     .legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -117,13 +124,14 @@
     .live-label { font-size: 13px; color: var(--muted); }
     .live-value { font-variant-numeric: tabular-nums; font-size: 23px; font-weight: 900; }
     .meter {
-      position: relative; height: 24px; border-radius: 999px; overflow: hidden;
-      background: #071018; border: 1px solid #2a4050;
+      position: relative; height: 24px; border-radius: 999px; overflow: visible;
+      background: #eaf0f3; border: 1px solid #cbd9e0;
+      cursor: ew-resize; touch-action: none;
     }
     .meter-gradient {
       position: absolute; inset: 0;
       background: linear-gradient(90deg, #2a9df4 0%, #45d99a 36%, #f2d35e 63%, #ff9f43 80%, #ff5f57 100%);
-      opacity: .28;
+      opacity: .38;
     }
     .meter-fill {
       position: absolute; inset: 0 auto 0 0; width: 0%;
@@ -131,15 +139,38 @@
       border-radius: inherit; transition: width 70ms linear;
       box-shadow: 0 0 18px rgba(77, 225, 209, .35);
     }
-    .threshold-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: white; opacity: .9; left: 40%; }
-    .meter-scale { display: flex; justify-content: space-between; color: #6f8793; font-size: 10px; margin-top: 5px; }
+    .threshold-marker {
+      position: absolute; top: -6px; bottom: -6px; width: 30px; left: 40%;
+      transform: translateX(-15px); z-index: 4; cursor: ew-resize; outline: none;
+    }
+    .threshold-marker::before {
+      content: ''; position: absolute; top: 3px; bottom: 3px; left: 14px; width: 3px;
+      border-radius: 3px; background: #173d4b; box-shadow: 0 0 0 1px rgba(255,255,255,.75);
+    }
+    .threshold-marker::after {
+      content: ''; position: absolute; left: 9px; top: 50%; width: 12px; height: 12px;
+      transform: translateY(-50%); border-radius: 50%; background: #ffffff;
+      border: 3px solid #173d4b; box-shadow: 0 2px 6px rgba(16,42,54,.24);
+    }
+    .threshold-marker:focus-visible::after { box-shadow: 0 0 0 4px rgba(22,184,173,.24); }
+    .threshold-value {
+      position: absolute; left: 50%; top: -23px; transform: translateX(-50%);
+      min-width: 29px; padding: 2px 5px; border-radius: 6px; background: #173d4b;
+      color: #ffffff; font-size: 9px; font-weight: 800; text-align: center;
+      pointer-events: none;
+    }
+    .auto-gate-marker {
+      position: absolute; top: -2px; bottom: -2px; width: 0; z-index: 3;
+      border-left: 2px dashed #d96812; pointer-events: none;
+    }
+    .meter-scale { display: flex; justify-content: space-between; color: #71858e; font-size: 10px; margin-top: 5px; }
 
     .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
     .metric { padding: 13px 14px; min-height: 92px; }
     .metric-label { color: var(--muted); font-size: 11px; margin-bottom: 8px; }
     .metric-value { font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
     .metric-unit { font-size: 11px; color: var(--muted); margin-left: 3px; }
-    .metric-sub { margin-top: 5px; color: #78909b; font-size: 10px; line-height: 1.35; }
+    .metric-sub { margin-top: 5px; color: #6f858f; font-size: 10px; line-height: 1.35; }
     .good { color: var(--green); }
     .warning { color: var(--yellow); }
     .bad { color: var(--red); }
@@ -151,12 +182,12 @@
     .form-row label { color: var(--muted); font-size: 12px; }
     .form-row input[type="number"] { width: 86px; }
     input[type="number"], select {
-      background: #08141d; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px;
+      background: #ffffff; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px;
     }
     select { width: 100%; min-width: 0; }
     input[type="range"] { width: 100%; accent-color: var(--cyan); }
     .range-wrap { display: grid; grid-template-columns: 1fr 58px; gap: 10px; align-items: center; }
-    .control-help { color: #718a96; font-size: 10.5px; line-height: 1.55; margin: -4px 0 13px; }
+    .control-help { color: #657d88; font-size: 10.5px; line-height: 1.55; margin: -4px 0 13px; }
     .control-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .diagnostic { border-top: 1px solid var(--line); margin-top: 15px; padding-top: 12px; color: var(--muted); font-size: 10.5px; line-height: 1.65; }
 
@@ -164,22 +195,22 @@
     .table-wrap { overflow: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
     th, td { padding: 10px 11px; border-bottom: 1px solid var(--line); text-align: left; }
-    th { color: var(--muted); font-weight: 700; background: rgba(7, 16, 24, .34); position: sticky; top: 0; }
+    th { color: #4f6874; font-weight: 700; background: #f0f5f7; position: sticky; top: 0; }
     td { font-variant-numeric: tabular-nums; }
     tbody tr { cursor: pointer; }
-    tbody tr:hover { background: rgba(85, 169, 255, .06); }
-    tbody tr.selected { background: rgba(77, 225, 209, .08); }
+    tbody tr:hover { background: rgba(45, 143, 223, .07); }
+    tbody tr.selected { background: rgba(22, 184, 173, .10); }
     .event-color { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 7px; }
     .badge { display: inline-flex; border-radius: 999px; padding: 3px 7px; border: 1px solid currentColor; font-size: 10px; }
     .empty { padding: 38px 16px; text-align: center; color: var(--muted); }
 
     .strategy { margin-top: 12px; padding: 15px; }
     .strategy-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
-    .strategy-item { border: 1px solid var(--line); background: rgba(6, 17, 25, .45); padding: 12px; border-radius: 11px; }
+    .strategy-item { border: 1px solid var(--line); background: #f7fafb; padding: 12px; border-radius: 11px; }
     .strategy-num { color: var(--cyan); font-size: 11px; font-weight: 900; }
     .strategy-item b { display: block; margin: 4px 0 5px; font-size: 12px; }
     .strategy-item p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
-    .footer { color: #667d88; font-size: 10px; text-align: center; padding: 16px 8px 2px; }
+    .footer { color: #687e88; font-size: 10px; text-align: center; padding: 16px 8px 2px; }
 
     @media (max-width: 980px) {
       .wave-grid, .lower-grid { grid-template-columns: 1fr; }
@@ -194,6 +225,9 @@
       .subtitle { display: none; }
       .status-pill { display: none; }
       .canvas-wrap { height: 240px; }
+      .surface-wrap { height: 320px; }
+      .surface-controls { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .surface-legend { grid-template-columns: 1fr; }
       .metrics { grid-template-columns: 1fr 1fr; }
       .strategy-grid { grid-template-columns: 1fr; }
       .card-head { align-items: flex-start; }
@@ -248,19 +282,47 @@
       </article>
     </section>
 
+    <section class="card surface-panel">
+      <div class="card-head">
+        <div>
+          <div class="card-title">單次擊發 STFT 3D Surface</div>
+          <div id="surfaceNote" class="card-note">選取擊發事件後顯示｜Hann 256 samples、Hop 64、固定 dBFS 色階</div>
+        </div>
+        <label class="surface-controls" for="surfaceFreqSelect">
+          頻率上限
+          <select id="surfaceFreqSelect">
+            <option value="8000">8 kHz</option>
+            <option value="12000" selected>12 kHz</option>
+            <option value="20000">20 kHz</option>
+          </select>
+        </label>
+      </div>
+      <div class="surface-wrap"><canvas id="surfaceCanvas" aria-label="時間、頻率與強度的 STFT 三維曲面圖"></canvas></div>
+      <div class="surface-legend">
+        <span>曲面高度與顏色：頻譜強度 dBFS</span>
+        <div class="surface-scale-wrap">
+          <div class="surface-scale"></div>
+          <div class="surface-scale-labels"><span>−80</span><span>−60</span><span>−40</span><span>−20</span><span>−5 dBFS</span></div>
+        </div>
+      </div>
+    </section>
+
     <!-- 不繪製強度時間序列，只保留當下強弱 bar -->
     <section class="card live-panel">
       <div class="live-top">
         <div>
           <div class="live-label">當下聲音強弱</div>
-          <div class="card-note">即時短時 RMS；白線為目前有效觸發門檻</div>
+          <div class="card-note">拖曳深色線調整門檻；橘色虛線為背景噪音保護門檻</div>
         </div>
         <div><span id="liveValue" class="live-value">0.0</span><span class="metric-unit">dB-R</span></div>
       </div>
-      <div class="meter" role="meter" aria-label="當下相對聲音強度" aria-valuemin="0" aria-valuemax="100">
+      <div id="liveMeter" class="meter" role="meter" aria-label="當下相對聲音強度" aria-valuemin="0" aria-valuemax="100">
         <div class="meter-gradient"></div>
         <div id="meterFill" class="meter-fill"></div>
-        <div id="thresholdMarker" class="threshold-marker"></div>
+        <div id="autoGateMarker" class="auto-gate-marker" hidden></div>
+        <div id="thresholdMarker" class="threshold-marker" role="slider" tabindex="0" aria-label="觸發門檻" aria-valuemin="20" aria-valuemax="90" aria-valuenow="40">
+          <span id="thresholdValue" class="threshold-value">40</span>
+        </div>
       </div>
       <div class="meter-scale"><span>安靜 0</span><span>40</span><span>60</span><span>80</span><span>強 100</span></div>
     </section>
@@ -372,7 +434,11 @@
       maxOverlay: 8,
       rail: 0.995,
       noiseMarginDb: 12,
-      eventColors: ['#4de1d1', '#55a9ff', '#ffd166', '#ff9f43', '#be8cff', '#55d187', '#ff7aa2', '#9bd35a']
+      fftSize: 256,
+      fftHop: 64,
+      stftFloorDb: -80,
+      stftCeilDb: -5,
+      eventColors: ['#078c82', '#1f6fbd', '#a96f00', '#d45b0a', '#8052b8', '#168a4f', '#c13d73', '#5b8f18']
     };
 
     const $ = (id) => document.getElementById(id);
@@ -380,7 +446,9 @@
       startBtn: $('startBtn'), armBtn: $('armBtn'), statusPill: $('statusPill'), statusText: $('statusText'),
       notice: $('notice'), currentCanvas: $('currentCanvas'), overlayCanvas: $('overlayCanvas'),
       rawModeBtn: $('rawModeBtn'), shapeModeBtn: $('shapeModeBtn'), overlayNote: $('overlayNote'), legend: $('legend'),
-      liveValue: $('liveValue'), meterFill: $('meterFill'), thresholdMarker: $('thresholdMarker'),
+      surfaceCanvas: $('surfaceCanvas'), surfaceNote: $('surfaceNote'), surfaceFreqSelect: $('surfaceFreqSelect'),
+      liveValue: $('liveValue'), liveMeter: $('liveMeter'), meterFill: $('meterFill'),
+      thresholdMarker: $('thresholdMarker'), thresholdValue: $('thresholdValue'), autoGateMarker: $('autoGateMarker'),
       eventLevel: $('eventLevel'), peakLevel: $('peakLevel'), clipState: $('clipState'), clipSub: $('clipSub'),
       similarity: $('similarity'), anomalyState: $('anomalyState'), anomalySub: $('anomalySub'),
       triggerRange: $('triggerRange'), triggerNumber: $('triggerNumber'), micSelect: $('micSelect'),
@@ -724,6 +792,7 @@
         number: ++eventSerial,
         timestamp: new Date(),
         data,
+        sampleRate,
         onset,
         triggerIndex,
         eventDbR,
@@ -829,16 +898,38 @@
 
     function updateThresholdUi() {
       const value = configuredThreshold();
+      const effective = effectiveThreshold();
       els.triggerRange.value = value;
       els.triggerNumber.value = value;
-      els.effectiveThreshold.textContent = effectiveThreshold().toFixed(1);
-      els.thresholdMarker.style.left = `${clamp(effectiveThreshold(), 0, 100)}%`;
+      els.effectiveThreshold.textContent = effective.toFixed(1);
+      els.thresholdMarker.style.left = `${value}%`;
+      els.thresholdMarker.setAttribute('aria-valuenow', String(value));
+      els.thresholdMarker.setAttribute('aria-valuetext', `${value} dB-R`);
+      els.thresholdValue.textContent = String(value);
+      const autoGateActive = noiseDbR != null && effective > value + .5;
+      els.autoGateMarker.hidden = !autoGateActive;
+      els.autoGateMarker.style.left = `${clamp(effective, 0, 100)}%`;
+    }
+
+    function setConfiguredThreshold(value) {
+      const next = Math.round(clamp(Number(value) || 40, 20, 90));
+      els.triggerRange.value = next;
+      els.triggerNumber.value = next;
+      updateThresholdUi();
+    }
+
+    function setThresholdFromPointer(clientX) {
+      const rect = els.liveMeter.getBoundingClientRect();
+      if (!rect.width) return;
+      const value = (clientX - rect.left) / rect.width * 100;
+      setConfiguredThreshold(value);
     }
 
     function updateAll() {
       renderHistory();
       renderCurrent();
       renderOverlay();
+      renderSurface();
       updateMetrics();
       els.exportBtn.disabled = events.length === 0;
       els.clearBtn.disabled = events.length === 0;
@@ -931,8 +1022,8 @@
       const plotW = width - left - right;
       const plotH = height - top - bottom;
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#08141d'; ctx.fillRect(0, 0, width, height);
-      ctx.strokeStyle = '#1d3342'; ctx.lineWidth = 1;
+      ctx.fillStyle = '#fbfdfe'; ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = '#d9e5eb'; ctx.lineWidth = 1;
       for (let i = 0; i <= 4; i++) {
         const y = top + plotH * i / 4;
         ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
@@ -941,7 +1032,7 @@
         const x = left + plotW * i / 6;
         ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, height - bottom); ctx.stroke();
       }
-      ctx.fillStyle = '#738b96'; ctx.font = '10px system-ui';
+      ctx.fillStyle = '#607985'; ctx.font = '10px system-ui';
       ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
       ['+1.0', '+0.5', '0', '-0.5', '-1.0'].forEach((label, i) => ctx.fillText(label, left - 7, top + plotH * i / 4));
       return { left, top, right, bottom, plotW, plotH };
@@ -961,9 +1052,9 @@
       drawTimeLabels(ctx, plot, startMs, endMs);
       drawEventLine(ctx, plot, event, event.color, false, 2.0, startMs, endMs, true);
       const triggerX = plot.left + (0 - startMs) / (endMs - startMs) * plot.plotW;
-      ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#ffffff88';
+      ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#284c5aaa';
       ctx.beginPath(); ctx.moveTo(triggerX, plot.top); ctx.lineTo(triggerX, plot.top + plot.plotH); ctx.stroke(); ctx.restore();
-      ctx.fillStyle = '#b3c5cc'; ctx.textAlign = 'left'; ctx.fillText('波形起點', triggerX + 5, plot.top + 11);
+      ctx.fillStyle = '#45636f'; ctx.textAlign = 'left'; ctx.fillText('波形起點', triggerX + 5, plot.top + 11);
       els.currentWaveNote.textContent = `事件 #${event.number}｜${event.clipped ? '削波，紅色區段不可還原' : '未削波，可比較相對強度'}｜起點自動對齊`;
     }
 
@@ -984,6 +1075,224 @@
       els.overlayNote.textContent = overlayMode === 'raw'
         ? '原始振幅：高度與事件能量用來比較聲音大小'
         : '正規化形狀：每筆除以自身峰值，用來觀察雙擊、拖尾與振鈴';
+    }
+
+    function computeStft(event) {
+      if (event.stft) return event.stft;
+      const fftSize = CONFIG.fftSize;
+      const hop = CONFIG.fftHop;
+      const sr = event.sampleRate || sampleRate;
+      const start = Math.max(0, event.onset - Math.round(sr * .005));
+      const end = Math.min(event.data.length, event.onset + Math.round(sr * .150));
+      const window = new Float64Array(fftSize);
+      let windowSum = 0;
+      for (let i = 0; i < fftSize; i++) {
+        window[i] = .5 - .5 * Math.cos(2 * Math.PI * i / (fftSize - 1));
+        windowSum += window[i];
+      }
+
+      const binCount = fftSize / 2 + 1;
+      const frames = [];
+      const times = [];
+      const powerSums = new Float64Array(binCount);
+
+      for (let pos = start; pos + fftSize <= end; pos += hop) {
+        const real = new Float64Array(fftSize);
+        const imag = new Float64Array(fftSize);
+        let mean = 0;
+        for (let i = 0; i < fftSize; i++) mean += event.data[pos + i];
+        mean /= fftSize;
+        for (let i = 0; i < fftSize; i++) real[i] = (event.data[pos + i] - mean) * window[i];
+        fftInPlace(real, imag);
+
+        const spectrum = new Float32Array(binCount);
+        for (let k = 0; k < binCount; k++) {
+          const amplitude = Math.hypot(real[k], imag[k]) * (k === 0 || k === fftSize / 2 ? 1 : 2) / windowSum;
+          powerSums[k] += amplitude * amplitude;
+          spectrum[k] = clamp(20 * Math.log10(Math.max(amplitude, 1e-12)), -120, 0);
+        }
+        frames.push(spectrum);
+        times.push((pos + fftSize / 2 - event.onset) / sr * 1000);
+      }
+
+      const binHz = sr / fftSize;
+      let dominantBin = Math.max(1, Math.ceil(150 / binHz));
+      for (let k = dominantBin + 1; k < binCount; k++) {
+        if (powerSums[k] > powerSums[dominantBin]) dominantBin = k;
+      }
+      event.stft = { frames, times, binHz, dominantHz: dominantBin * binHz };
+      return event.stft;
+    }
+
+    function fftInPlace(real, imag) {
+      const n = real.length;
+      for (let i = 1, j = 0; i < n; i++) {
+        let bit = n >> 1;
+        while (j & bit) { j ^= bit; bit >>= 1; }
+        j ^= bit;
+        if (i < j) {
+          [real[i], real[j]] = [real[j], real[i]];
+          [imag[i], imag[j]] = [imag[j], imag[i]];
+        }
+      }
+      for (let length = 2; length <= n; length <<= 1) {
+        const angle = -2 * Math.PI / length;
+        const stepReal = Math.cos(angle);
+        const stepImag = Math.sin(angle);
+        for (let start = 0; start < n; start += length) {
+          let wReal = 1;
+          let wImag = 0;
+          for (let offset = 0; offset < length / 2; offset++) {
+            const even = start + offset;
+            const odd = even + length / 2;
+            const oddReal = real[odd] * wReal - imag[odd] * wImag;
+            const oddImag = real[odd] * wImag + imag[odd] * wReal;
+            real[odd] = real[even] - oddReal;
+            imag[odd] = imag[even] - oddImag;
+            real[even] += oddReal;
+            imag[even] += oddImag;
+            const nextReal = wReal * stepReal - wImag * stepImag;
+            wImag = wReal * stepImag + wImag * stepReal;
+            wReal = nextReal;
+          }
+        }
+      }
+    }
+
+    function surfaceColor(db) {
+      const stops = [
+        [33, 26, 87], [23, 78, 166], [7, 140, 130], [224, 173, 32], [216, 59, 54]
+      ];
+      const value = clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
+      const scaled = value * (stops.length - 1);
+      const index = Math.min(stops.length - 2, Math.floor(scaled));
+      const mix = scaled - index;
+      const color = stops[index].map((channel, i) => Math.round(channel + (stops[index + 1][i] - channel) * mix));
+      return `rgb(${color[0]},${color[1]},${color[2]})`;
+    }
+
+    function renderSurface() {
+      const { ctx, width, height } = prepareCanvas(els.surfaceCanvas);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#fbfdfe';
+      ctx.fillRect(0, 0, width, height);
+      const event = selectedEvent();
+      if (!event) {
+        drawCenteredMessage(ctx, width, height, '等待單次擊發資料');
+        els.surfaceNote.textContent = '選取擊發事件後顯示｜Hann 256 samples、Hop 64、固定 dBFS 色階';
+        return;
+      }
+
+      const stft = computeStft(event);
+      if (!stft.frames.length) {
+        drawCenteredMessage(ctx, width, height, '訊號長度不足，無法計算 STFT');
+        els.surfaceNote.textContent = `事件 #${event.number}｜訊號長度不足，無法計算 STFT`;
+        return;
+      }
+
+      const maxFrequency = Math.min(Number(els.surfaceFreqSelect.value), (event.sampleRate || sampleRate) / 2);
+      const maxBin = Math.max(1, Math.min(stft.frames[0].length - 1, Math.floor(maxFrequency / stft.binHz)));
+      const timeStep = Math.max(1, Math.ceil((stft.frames.length - 1) / 68));
+      const frequencyStep = Math.max(1, Math.ceil(maxBin / 46));
+      const timeIndices = [];
+      const frequencyIndices = [];
+      for (let i = 0; i < stft.frames.length; i += timeStep) timeIndices.push(i);
+      if (timeIndices.at(-1) !== stft.frames.length - 1) timeIndices.push(stft.frames.length - 1);
+      for (let i = 0; i <= maxBin; i += frequencyStep) frequencyIndices.push(i);
+      if (frequencyIndices.at(-1) !== maxBin) frequencyIndices.push(maxBin);
+
+      const origin = { x: Math.max(45, width * .095), y: height * .82 };
+      const timeVector = { x: width * .68, y: 0 };
+      const frequencyVector = { x: width * .17, y: -height * .27 };
+      const heightScale = height * .39;
+      const normalizeDb = (db) => clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
+      const project = (timeIndex, frequencyIndex, db) => {
+        const u = timeIndex / Math.max(1, stft.frames.length - 1);
+        const v = frequencyIndex / maxBin;
+        const z = normalizeDb(db);
+        return {
+          x: origin.x + u * timeVector.x + v * frequencyVector.x,
+          y: origin.y + u * timeVector.y + v * frequencyVector.y - z * heightScale
+        };
+      };
+
+      for (let fi = frequencyIndices.length - 2; fi >= 0; fi--) {
+        const f0 = frequencyIndices[fi];
+        const f1 = frequencyIndices[fi + 1];
+        for (let ti = 0; ti < timeIndices.length - 1; ti++) {
+          const t0 = timeIndices[ti];
+          const t1 = timeIndices[ti + 1];
+          const d00 = stft.frames[t0][f0];
+          const d10 = stft.frames[t1][f0];
+          const d11 = stft.frames[t1][f1];
+          const d01 = stft.frames[t0][f1];
+          const points = [project(t0, f0, d00), project(t1, f0, d10), project(t1, f1, d11), project(t0, f1, d01)];
+          ctx.beginPath();
+          ctx.moveTo(points[0].x, points[0].y);
+          for (let p = 1; p < points.length; p++) ctx.lineTo(points[p].x, points[p].y);
+          ctx.closePath();
+          ctx.fillStyle = surfaceColor((d00 + d10 + d11 + d01) / 4);
+          ctx.globalAlpha = .91;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(16,42,54,.08)';
+          ctx.lineWidth = .55;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      drawSurfaceAxes(ctx, width, height, origin, timeVector, frequencyVector, heightScale, stft, maxFrequency);
+      els.surfaceNote.textContent = `事件 #${event.number}｜主要頻率約 ${(stft.dominantHz / 1000).toFixed(2)} kHz｜${event.clipped ? '訊號削波，頻譜可能含假諧波' : '未削波'}｜固定色階 ${CONFIG.stftFloorDb} 至 ${CONFIG.stftCeilDb} dBFS`;
+    }
+
+    function drawSurfaceAxes(ctx, width, height, origin, timeVector, frequencyVector, heightScale, stft, maxFrequency) {
+      ctx.save();
+      ctx.strokeStyle = '#78909b';
+      ctx.fillStyle = '#536d78';
+      ctx.lineWidth = 1.2;
+      ctx.font = '10px system-ui';
+      ctx.textBaseline = 'middle';
+      const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+      line(origin.x, origin.y, origin.x + timeVector.x, origin.y + timeVector.y);
+      line(origin.x, origin.y, origin.x + frequencyVector.x, origin.y + frequencyVector.y);
+      line(origin.x, origin.y, origin.x, origin.y - heightScale);
+
+      const firstTime = stft.times[0];
+      const lastTime = stft.times.at(-1);
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 4; i++) {
+        const u = i / 4;
+        const x = origin.x + u * timeVector.x;
+        line(x, origin.y - 3, x, origin.y + 4);
+        ctx.fillText(`${Math.round(firstTime + u * (lastTime - firstTime))} ms`, x, origin.y + 14);
+      }
+      ctx.fillText('時間', origin.x + timeVector.x * .52, origin.y + 29);
+
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 4; i++) {
+        const v = i / 4;
+        const x = origin.x + v * frequencyVector.x;
+        const y = origin.y + v * frequencyVector.y;
+        line(x - 3, y + 2, x + 3, y - 2);
+        ctx.fillText(`${(v * maxFrequency / 1000).toFixed(v ? 0 : 1)}k`, x - 6, y - 2);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillText('頻率 Hz', origin.x + frequencyVector.x + 8, origin.y + frequencyVector.y - 4);
+
+      ctx.textAlign = 'right';
+      const dbTicks = [-80, -60, -40, -20, -5];
+      for (const db of dbTicks) {
+        const z = clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
+        const y = origin.y - z * heightScale;
+        line(origin.x - 3, y, origin.x + 3, y);
+        ctx.fillText(String(db), origin.x - 7, y);
+      }
+      ctx.save();
+      ctx.translate(origin.x - 39, origin.y - heightScale * .5);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.fillText('強度 dBFS', 0, 0);
+      ctx.restore();
+      ctx.restore();
     }
 
     function drawEventLine(ctx, plot, event, color, normalize, lineWidth, startMs, endMs, highlightClips) {
@@ -1012,7 +1321,7 @@
       ctx.restore();
 
       if (highlightClips && event.clipped) {
-        ctx.save(); ctx.strokeStyle = '#ff5f57'; ctx.lineWidth = 2.4;
+        ctx.save(); ctx.strokeStyle = '#d83b36'; ctx.lineWidth = 2.4;
         ctx.beginPath();
         let drawing = false;
         for (let i = 0; i < event.data.length; i++) {
@@ -1028,7 +1337,7 @@
     }
 
     function drawTimeLabels(ctx, plot, startMs, endMs) {
-      ctx.fillStyle = '#738b96'; ctx.font = '10px system-ui'; ctx.textBaseline = 'top';
+      ctx.fillStyle = '#607985'; ctx.font = '10px system-ui'; ctx.textBaseline = 'top';
       for (let i = 0; i <= 6; i++) {
         const ms = startMs + (endMs - startMs) * i / 6;
         const x = plot.left + plot.plotW * i / 6;
@@ -1038,7 +1347,7 @@
     }
 
     function drawCenteredMessage(ctx, width, height, text) {
-      ctx.fillStyle = '#708995'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#667f8a'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(text, width / 2, height / 2);
     }
 
@@ -1080,14 +1389,47 @@
     });
     els.calibrateBtn.addEventListener('click', beginCalibration);
     els.micSelect.addEventListener('change', () => startAudio(els.micSelect.value));
-    els.triggerRange.addEventListener('input', () => { els.triggerNumber.value = els.triggerRange.value; updateThresholdUi(); });
-    els.triggerNumber.addEventListener('change', updateThresholdUi);
+    els.triggerRange.addEventListener('input', () => setConfiguredThreshold(els.triggerRange.value));
+    els.triggerNumber.addEventListener('change', () => setConfiguredThreshold(els.triggerNumber.value));
+
+    let thresholdDragging = false;
+    els.liveMeter.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      thresholdDragging = true;
+      els.liveMeter.setPointerCapture?.(event.pointerId);
+      setThresholdFromPointer(event.clientX);
+      event.preventDefault();
+    });
+    els.liveMeter.addEventListener('pointermove', (event) => {
+      if (!thresholdDragging) return;
+      setThresholdFromPointer(event.clientX);
+      event.preventDefault();
+    });
+    const stopThresholdDrag = (event) => {
+      thresholdDragging = false;
+      if (els.liveMeter.hasPointerCapture?.(event.pointerId)) els.liveMeter.releasePointerCapture(event.pointerId);
+    };
+    els.liveMeter.addEventListener('pointerup', stopThresholdDrag);
+    els.liveMeter.addEventListener('pointercancel', stopThresholdDrag);
+    els.thresholdMarker.addEventListener('keydown', (event) => {
+      const current = configuredThreshold();
+      const step = event.shiftKey ? 5 : 1;
+      let next = null;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') next = current - step;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowUp') next = current + step;
+      if (event.key === 'Home') next = 20;
+      if (event.key === 'End') next = 90;
+      if (next == null) return;
+      setConfiguredThreshold(next);
+      event.preventDefault();
+    });
     els.rawModeBtn.addEventListener('click', () => {
       overlayMode = 'raw'; els.rawModeBtn.classList.add('active'); els.shapeModeBtn.classList.remove('active'); renderOverlay();
     });
     els.shapeModeBtn.addEventListener('click', () => {
       overlayMode = 'shape'; els.shapeModeBtn.classList.add('active'); els.rawModeBtn.classList.remove('active'); renderOverlay();
     });
+    els.surfaceFreqSelect.addEventListener('change', renderSurface);
     els.setRefTopBtn.addEventListener('click', () => selectedId && setReference(selectedId));
     els.exportBtn.addEventListener('click', exportCsv);
     els.clearBtn.addEventListener('click', () => {
@@ -1097,13 +1439,14 @@
       els.clipState.textContent = '—'; els.anomalyState.textContent = '—';
     });
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCurrent(); renderOverlay(); }, 120);
+      clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCurrent(); renderOverlay(); renderSurface(); }, 120);
     });
     window.addEventListener('beforeunload', () => stopAudio(false));
 
     updateThresholdUi();
     renderCurrent();
     renderOverlay();
+    renderSurface();
     renderLoop();
   })();
   </script>
