@@ -308,7 +308,7 @@
 
         <div class="form-row">
           <label for="micSelect">麥克風裝置</label>
-          <select id="micSelect" disabled><option>取得權限後載入裝置</option></select>
+          <select id="micSelect" disabled><option value="">取得權限後載入裝置</option></select>
         </div>
 
         <div class="control-actions">
@@ -476,12 +476,20 @@
               echoCancellation: false,
               noiseSuppression: false,
               autoGainControl: false,
-              ...(deviceId ? { deviceId: { exact: deviceId } } : {})
+              // 備援模式不可再用 exact，避免裝置剛切換或拔除時再次
+              // 觸發 OverconstrainedError；瀏覽器可退回預設輸入。
+              ...(deviceId ? { deviceId: { ideal: deviceId } } : {})
             }
           });
           showNotice('瀏覽器無法保證關閉全部語音處理，已改用相容模式。資料可作趨勢參考，但應特別檢查削波。');
         } catch (fallbackError) {
-          showNotice(`無法啟動麥克風：${fallbackError.message || fallbackError.name}`, true);
+          const failedConstraint = fallbackError.constraint ? `（限制：${fallbackError.constraint}）` : '';
+          const suggestion = fallbackError.name === 'OverconstrainedError'
+            ? '請重新整理頁面後選擇目前存在的麥克風。'
+            : fallbackError.name === 'NotAllowedError'
+              ? '請確認瀏覽器麥克風權限與電腦實體靜音鍵。'
+              : '';
+          showNotice(`無法啟動麥克風：${fallbackError.name || '未知錯誤'}${failedConstraint}。${suggestion}`, true);
           setStatus('啟動失敗', 'warn');
           return;
         }
@@ -573,6 +581,7 @@
       devices.forEach((device, index) => {
         const option = document.createElement('option');
         option.value = device.deviceId;
+        option.dataset.realDevice = 'true';
         option.textContent = device.label || `麥克風 ${index + 1}`;
         option.selected = device.deviceId === selectedDeviceId;
         els.micSelect.appendChild(option);
@@ -1059,7 +1068,10 @@
     }
 
     els.startBtn.addEventListener('click', async () => {
-      if (running) await stopAudio(true); else await startAudio(els.micSelect.value || '');
+      // 尚未取得權限前，下拉選單只是提示文字，不能當作 deviceId。
+      const selectedOption = els.micSelect.selectedOptions[0];
+      const deviceId = selectedOption?.dataset.realDevice === 'true' ? selectedOption.value : '';
+      if (running) await stopAudio(true); else await startAudio(deviceId);
     });
     els.armBtn.addEventListener('click', () => {
       armed = !armed;
