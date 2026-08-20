@@ -183,6 +183,7 @@
   .clip-badge.on{display:inline-block;}
   td.clipcell{color:var(--danger);font-weight:600;}
   .evt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);cursor:pointer;white-space:nowrap;}
   .evt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
   .evt-card{background:#0d1116;border:1px solid var(--panel-line);border-radius:8px;padding:8px 10px;position:relative;cursor:pointer;}
   .evt-card.selected{outline:2px solid var(--accent);outline-offset:-1px;}
@@ -326,9 +327,12 @@
     <div class="panel chart-panel">
       <div class="evt-head">
         <h2 style="margin:0;">擊發波形 <span style="color:var(--text-dim);font-weight:400;">(每筆各自成圖，縱軸以自身峰值為 0 dB)</span></h2>
-        <div class="row" style="margin:0;">
+        <div class="row" style="margin:0;flex-wrap:wrap;">
           <label style="min-width:auto;">顯示範圍 (dB)</label>
           <input type="number" id="evtRangeDb" value="10" min="1" max="60" step="1" style="width:70px;">
+          <label class="chk"><input type="checkbox" id="autoCropChk" checked> 自動裁切時間軸</label>
+          <label style="min-width:auto;">衰退門檻 (%)</label>
+          <input type="number" id="decayPctInput" value="90" min="50" max="99" step="1" style="width:60px;">
           <button id="clearAllEvtBtn" class="secondary">全部清除</button>
         </div>
       </div>
@@ -415,6 +419,8 @@ const preMsInput = document.getElementById('preMs');
 const postMsInput = document.getElementById('postMs');
 const evtGrid = document.getElementById('evtGrid');
 const evtRangeDbInput = document.getElementById('evtRangeDb');
+const autoCropChk = document.getElementById('autoCropChk');
+const decayPctInput = document.getElementById('decayPctInput');
 const clearAllEvtBtn = document.getElementById('clearAllEvtBtn');
 const evtCompareEmpty = document.getElementById('evtCompareEmpty');
 const evtCompareCanvas = document.getElementById('evtCompareCanvas');
@@ -1367,7 +1373,34 @@ function computeClipRatio(wv){
   return hit / B;
 }
 
-function drawSingleEventChart(canvas, entry, rangeDb){
+// 固定顯示整段擷取窗（預設 -60~+300ms）常常有一大截是訊號早就衰退完的空平線，
+// 把真正有變化的部分（衰減快慢、有沒有二次撞擊）壓縮到圖表一小角，反而不容易比較。
+// 自動找出訊號「最後一次」還在峰值下 decayPct% 以內（也就是還沒完全衰退掉）的時間點，
+// 抓最後一次而不是第一次，是為了不要把在主脈衝衰退完之後才出現的二次撞擊切掉——
+// 那正是這個工具原本要看的東西。抓到時間點後乘以 2 倍當緩衝，避免切得太貼。
+// 门檻換算用全解析度（不受目前顯示範圍限制）算，才不會因為顯示範圍設太小而誤判「已衰退完」。
+function computeDecayEndMs(wv, decayPct){
+  const threshDb = 20*Math.log10(1 - Math.min(99.5, Math.max(50, decayPct))/100);
+  const {db} = computeDbCurve(wv, 60);
+  const B = db.length, totalN = wv.preN + wv.postN;
+  let lastMs = 0;
+  for(let b=0;b<B;b++){
+    if(db[b] >= threshDb){
+      const t = (-wv.preN + totalN*b/B)/wv.rate*1000;
+      if(t > lastMs) lastMs = t;
+    }
+  }
+  return lastMs;
+}
+
+function autoDisplayPostMs(wv, autoCrop, decayPct){
+  const fullPostMs = wv.postN/wv.rate*1000;
+  if(!autoCrop) return fullPostMs;
+  const decayEndMs = computeDecayEndMs(wv, decayPct);
+  return Math.min(fullPostMs, Math.max(20, decayEndMs*2));
+}
+
+function drawSingleEventChart(canvas, entry, rangeDb, autoCrop, decayPct){
   const dpr = devicePixelRatio;
   canvas.width = canvas.clientWidth * dpr;
   canvas.height = canvas.clientHeight * dpr;
@@ -1379,16 +1412,21 @@ function drawSingleEventChart(canvas, entry, rangeDb){
   const {db, peakBucket} = computeDbCurve(wv, rangeDb);
   const B = db.length;
   const totalN = wv.preN + wv.postN;
+  const preMs = wv.preN/wv.rate*1000;
+  const displayPostMs = autoDisplayPostMs(wv, autoCrop, decayPct);
+  const displayTotalMs = preMs + displayPostMs;
+  const times = new Float32Array(B);
+  for(let b=0;b<B;b++) times[b] = (-wv.preN + totalN*b/B)/wv.rate*1000;
 
   const mL = 30*dpr, mR = 6*dpr, mT = 6*dpr, mB = 16*dpr;
   const pw = w - mL - mR, ph = h - mT - mB;
-  const xOf = b => mL + pw*b/B;
+  const xOf = t => mL + pw*(t + preMs)/displayTotalMs;
   // 峰值(0dB)不直接貼著圖表最上緣畫，留一點頭部空間，視覺上才不會像要衝出邊框——
   // 之前完全不留白時，密集鋸齒的削波波形疊在頂部格線上看起來很像超出範圍。
   const topPad = Math.max(1, rangeDb*0.08);
   const totalSpan = rangeDb + topPad;
   const yOf = v => mT + ph*(1 - (v + rangeDb)/totalSpan);   // 0dB 在頂端留白處，-rangeDb 在底部
-  const x0 = mL + pw*(wv.preN/totalN);   // 觸發瞬間（t=0）
+  const x0 = xOf(0);   // 觸發瞬間（t=0）
 
   g.fillStyle = '#0d1116';
   g.fillRect(mL, mT, pw, ph);
@@ -1409,19 +1447,25 @@ function drawSingleEventChart(canvas, entry, rangeDb){
   g.strokeStyle = '#3a4452'; g.lineWidth = 1*dpr;
   g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
 
+  // 裁切之後，被排除在顯示範圍外的樣本一律用 clip 擋住，不會畫出圖表框外
+  g.save();
+  g.beginPath();
+  g.rect(mL, mT, pw, ph);
+  g.clip();
+
   // dB 曲線：面積填色到底部，峰值點另外標記
   g.beginPath();
-  g.moveTo(xOf(0), yOf(db[0]));
-  for(let b=1;b<B;b++) g.lineTo(xOf(b), yOf(db[b]));
-  g.lineTo(xOf(B-1), mT+ph);
-  g.lineTo(xOf(0), mT+ph);
+  g.moveTo(xOf(times[0]), yOf(db[0]));
+  for(let b=1;b<B;b++) g.lineTo(xOf(times[b]), yOf(db[b]));
+  g.lineTo(xOf(times[B-1]), mT+ph);
+  g.lineTo(xOf(times[0]), mT+ph);
   g.closePath();
   g.fillStyle = entry.clip ? 'rgba(229,100,74,0.35)' : 'rgba(79,209,197,0.30)';
   g.fill();
 
   g.beginPath();
-  g.moveTo(xOf(0), yOf(db[0]));
-  for(let b=1;b<B;b++) g.lineTo(xOf(b), yOf(db[b]));
+  g.moveTo(xOf(times[0]), yOf(db[0]));
+  for(let b=1;b<B;b++) g.lineTo(xOf(times[b]), yOf(db[b]));
   g.strokeStyle = entry.clip ? '#e5644a' : '#4fd1c5';
   g.lineWidth = 1.3*dpr;
   g.lineJoin = 'round';
@@ -1429,16 +1473,18 @@ function drawSingleEventChart(canvas, entry, rangeDb){
 
   // 峰值點（0 dB）
   g.beginPath();
-  g.arc(xOf(peakBucket), yOf(0), 2*dpr, 0, Math.PI*2);
+  g.arc(xOf(times[peakBucket]), yOf(0), 2*dpr, 0, Math.PI*2);
   g.fillStyle = entry.clip ? '#e5644a' : '#4fd1c5';
   g.fill();
+  g.restore();
 
-  // 時間軸只標 0 與端點，卡片小沒有空間畫太多刻度
+  // 時間軸只標 0 與端點，卡片小沒有空間畫太多刻度；
+  // 端點文字要顯示「實際畫出來的範圍」而不是原始擷取窗長度，否則使用者會誤判時間尺度
   g.fillStyle = '#8b96a5'; g.font = (9*dpr)+'px Consolas, monospace';
   g.textAlign = 'left'; g.textBaseline = 'top';
-  g.fillText('-' + (wv.preN/wv.rate*1000).toFixed(0), mL, mT+ph+3*dpr);
+  g.fillText('-' + preMs.toFixed(0), mL, mT+ph+3*dpr);
   g.textAlign = 'right';
-  g.fillText('+' + (wv.postN/wv.rate*1000).toFixed(0) + 'ms', w-mR, mT+ph+3*dpr);
+  g.fillText('+' + displayPostMs.toFixed(0) + 'ms', w-mR, mT+ph+3*dpr);
 }
 
 // 清空記錄設定面板的按鈕與波形區塊的「全部清除」共用同一個確認流程與清除邏輯，
@@ -1528,7 +1574,7 @@ function renderEventGrid(){
     });
 
     evtGrid.appendChild(card);
-    drawSingleEventChart(canvas, e, rangeDb);
+    drawSingleEventChart(canvas, e, rangeDb, autoCropChk.checked, clampNum(decayPctInput.value, 50, 99, 90));
   });
 
   renderCompare();
@@ -1538,7 +1584,7 @@ function renderEventGrid(){
 // 畫在同一張大圖上。時間軸用實際毫秒對齊 t=0（觸發瞬間），
 // 而不是用 bucket 索引比例——不同筆的擷取前/後長度可能不一樣，
 // 用索引比例對齊會讓 t=0 對不準，失去比較的意義。
-function drawCompareChart(canvas, entries, rangeDb){
+function drawCompareChart(canvas, entries, rangeDb, autoCrop, decayPct){
   const dpr = devicePixelRatio;
   canvas.width = canvas.clientWidth * dpr;
   canvas.height = canvas.clientHeight * dpr;
@@ -1552,10 +1598,19 @@ function drawCompareChart(canvas, entries, rangeDb){
     const B = db.length, totalN = wv.preN + wv.postN;
     const times = new Float32Array(B);
     for(let b=0;b<B;b++) times[b] = (-wv.preN + totalN*b/B)/wv.rate*1000;
-    return {e, db, times, preMs: wv.preN/wv.rate*1000, postMs: wv.postN/wv.rate*1000};
+    return {
+      e, db, times,
+      preMs: wv.preN/wv.rate*1000,
+      postMs: wv.postN/wv.rate*1000,
+      displayPostMs: autoDisplayPostMs(wv, autoCrop, decayPct)
+    };
   });
   const tMin = -Math.max.apply(null, curves.map(c=>c.preMs));
-  const tMax = Math.max.apply(null, curves.map(c=>c.postMs));
+  // 共用軸取「各自自動裁切建議長度」的聯集，而不是原始固定擷取窗——
+  // 只要選取的幾筆裡有一筆真的衰減得晚（例如二次撞擊），軸還是會撐到那裡，
+  // 但不會被某一筆用不到、原本就沒訊號的長尾平白拉長。曲線本身仍照完整資料畫，
+  // 只是選到的顯示範圍變小。
+  const tMax = Math.max.apply(null, curves.map(c=>c.displayPostMs));
   const tSpan = Math.max(1, tMax - tMin);
 
   const mL = 46*dpr, mR = 14*dpr, mT = 12*dpr, mB = 22*dpr;
@@ -1580,6 +1635,11 @@ function drawCompareChart(canvas, entries, rangeDb){
   g.strokeStyle = '#3a4452'; g.lineWidth = 1*dpr;
   g.beginPath(); g.moveTo(x0, mT); g.lineTo(x0, mT+ph); g.stroke();
 
+  g.save();
+  g.beginPath();
+  g.rect(mL, mT, pw, ph);
+  g.clip();
+
   // 疊圖時「哪一筆是哪一筆」比「有沒有削波」重要，所以顏色一律按編號分配，
   // 不能像單卡那樣把削波的一律畫成紅色——如果目前選取的好幾筆剛好都削波
   // （例如都在同一個過高的閾值下觸發），全部變成同一種紅線疊在一起就完全分不出來。
@@ -1599,6 +1659,7 @@ function drawCompareChart(canvas, entries, rangeDb){
     g.stroke();
     g.restore();
   });
+  g.restore();
 
   g.fillStyle = '#8b96a5'; g.textBaseline = 'top';
   g.textAlign = 'left'; g.fillText(tMin.toFixed(0)+'ms', mL, mT+ph+5*dpr);
@@ -1621,7 +1682,7 @@ function renderCompare(){
   evtCompareEmpty.style.display = 'none';
   evtCompareCanvas.style.display = 'block';
   const rangeDb = clampNum(evtRangeDbInput.value, 1, 60, 10);
-  drawCompareChart(evtCompareCanvas, entries, rangeDb);
+  drawCompareChart(evtCompareCanvas, entries, rangeDb, autoCropChk.checked, clampNum(decayPctInput.value, 50, 99, 90));
 
   evtCompareLegend.textContent = '';
   entries.forEach((e,idx)=>{
@@ -1720,6 +1781,8 @@ triggerThreshBar.addEventListener('input', ()=>{
   drawLogChart();
 });
 evtRangeDbInput.addEventListener('input', renderEventGrid);   // renderEventGrid 內部會一併呼叫 renderCompare()
+autoCropChk.addEventListener('change', renderEventGrid);
+decayPctInput.addEventListener('input', renderEventGrid);
 logNowBtn.addEventListener('click', ()=>{
   // 手動記錄同樣附上波形：以「現在」為基準往回取，擷取後段用已收到的樣本
   let wave = null;
