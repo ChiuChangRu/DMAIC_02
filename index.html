@@ -2,1453 +2,725 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>檢體針聲響比較器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>檢體針聲響｜步驟一：LLM前置原始收音</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #ffffff;
-      --panel: #ffffff;
-      --panel-2: #f7fafb;
-      --line: #d7e2e8;
-      --text: #102a36;
-      --muted: #5c7480;
-      --cyan: #087e77;
-      --blue: #2d8fdf;
-      --yellow: #805300;
-      --orange: #a84b0a;
-      --red: #bd2f2b;
-      --green: #117542;
-      --shadow: 0 10px 30px rgba(35, 62, 76, .09);
+      --ink: #102d42;
+      --ink-2: #38576a;
+      --muted: #6b7f8b;
+      --line: #d8e4ea;
+      --soft: #f3f8fa;
+      --blue: #176da8;
+      --blue-soft: #e9f4fb;
+      --teal: #078178;
+      --teal-soft: #e8f7f4;
+      --amber: #a86608;
+      --amber-soft: #fff5df;
+      --red: #b43a3a;
+      --red-soft: #fff0f0;
+      --white: #fff;
+      --shadow: 0 14px 38px rgba(16, 45, 66, .08);
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
-      min-height: 100vh;
+      background: var(--white);
+      color: var(--ink);
+      font-family: Inter, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+      line-height: 1.55;
     }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    .page { width: min(1120px, calc(100% - 30px)); margin: 0 auto; padding: 30px 0 60px; }
+    header { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; padding-bottom: 20px; border-bottom: 3px solid var(--teal); }
+    .eyebrow { margin: 0 0 7px; color: var(--teal); font-size: .8rem; font-weight: 800; letter-spacing: .08em; }
+    h1, h2, h3 { line-height: 1.25; margin-top: 0; }
+    h1 { margin-bottom: 8px; font-size: clamp(1.75rem, 4vw, 2.5rem); }
+    h2 { margin-bottom: 14px; font-size: 1.3rem; }
+    h3 { margin-bottom: 9px; font-size: 1.02rem; }
+    p { margin: 0 0 10px; }
+    .subtitle { color: var(--ink-2); margin: 0; max-width: 760px; }
+    .version { color: var(--muted); font-size: .82rem; text-align: right; white-space: nowrap; }
+    .notice { margin: 22px 0; padding: 16px 18px; border: 1px solid #b9ddd8; border-left: 5px solid var(--teal); border-radius: 10px; background: var(--teal-soft); }
+    .notice.warning { border-color: #ead29c; border-left-color: var(--amber); background: var(--amber-soft); }
+    .notice.danger { border-color: #efc4c4; border-left-color: var(--red); background: var(--red-soft); }
+    .notice p:last-child { margin-bottom: 0; }
 
-    button, input, select { font: inherit; }
+    .step-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 28px; }
+    .step { padding: 13px 15px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
+    .step.active { border-color: #9dcbe7; background: var(--blue-soft); }
+    .step strong { display: block; }
+    .step span { color: var(--muted); font-size: .82rem; }
 
-    button {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      color: var(--text);
-      background: #ffffff;
-      padding: 9px 13px;
-      cursor: pointer;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    }
+    .grid { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 20px; align-items: start; }
+    .card { border: 1px solid var(--line); border-radius: 14px; background: var(--white); box-shadow: var(--shadow); overflow: hidden; }
+    .card-head { padding: 16px 18px; background: var(--soft); border-bottom: 1px solid var(--line); }
+    .card-head h2 { margin: 0; }
+    .card-body { padding: 18px; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; margin-bottom: 6px; font-weight: 800; font-size: .9rem; }
+    select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--white); }
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn { padding: 10px 16px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); color: var(--ink); font-weight: 800; }
+    .btn:hover:not(:disabled) { background: var(--soft); }
+    .btn.primary { border-color: var(--blue); background: var(--blue); color: var(--white); }
+    .btn.stop { border-color: var(--red); background: var(--red); color: var(--white); }
+    .btn.download { border-color: var(--teal); color: var(--teal); }
 
-    button:hover { border-color: #86a8b8; background: #f0f6f8; }
-    button:active { transform: translateY(1px); }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-    button.primary { background: #1ecfc2; border-color: #14b7ab; color: #073a37; font-weight: 800; }
-    button.danger { color: var(--red); }
-    button.small { padding: 5px 9px; border-radius: 8px; font-size: 12px; }
-
-    .app { width: min(1440px, 100%); margin: 0 auto; padding: 20px; }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 14px;
-    }
-
-    .title-wrap { display: flex; align-items: center; gap: 12px; }
-    .mark {
-      width: 42px; height: 42px; border-radius: 13px;
-      display: grid; place-items: center;
-      background: linear-gradient(135deg, var(--cyan), var(--blue));
-      color: #04252a; font-weight: 950; box-shadow: 0 8px 24px rgba(77, 225, 209, .22);
-    }
-    h1 { font-size: clamp(19px, 2vw, 25px); margin: 0; letter-spacing: .02em; }
-    .subtitle { color: var(--muted); font-size: 12px; margin-top: 3px; }
-    .top-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
-
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 7px;
-      border: 1px solid var(--line); background: rgba(255, 255, 255, .88);
-      border-radius: 999px; color: var(--muted); padding: 7px 11px; font-size: 12px;
-    }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #8da0a8; }
-    .status-pill.live .status-dot { background: var(--green); box-shadow: 0 0 0 5px rgba(85, 209, 135, .12); }
-    .status-pill.warn .status-dot { background: var(--yellow); }
-
-    .notice {
-      display: none; margin-bottom: 12px; padding: 11px 14px; border-radius: 11px;
-      border: 1px solid #e4bd73; background: #fff8e8; color: #76500b; font-size: 13px;
-    }
-    .notice.show { display: block; }
-    .notice.danger { border-color: #e7aaa7; background: #fff1f0; color: #9e2723; }
-
-    .wave-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 12px; }
-    .card {
-      background: linear-gradient(180deg, #ffffff, #fbfdfe);
-      border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
-    }
-    .card-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 12px 14px; border-bottom: 1px solid var(--line);
-    }
-    .card-title { font-size: 14px; font-weight: 800; }
-    .card-note { color: var(--muted); font-size: 11px; }
-    .canvas-wrap { position: relative; height: 300px; min-height: 220px; }
-    canvas { display: block; width: 100%; height: 100%; }
-
-    .surface-panel { margin-top: 12px; }
-    .surface-wrap { position: relative; height: 390px; min-height: 300px; }
-    .surface-controls { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
-    .surface-controls select { width: auto; padding: 6px 28px 6px 8px; }
-    .surface-legend { display: grid; grid-template-columns: auto minmax(160px, 360px); align-items: center; gap: 10px; padding: 0 16px 13px; color: var(--muted); font-size: 10px; }
-    .surface-scale-wrap { display: grid; gap: 4px; }
-    .surface-scale { height: 9px; border-radius: 999px; background: linear-gradient(90deg, #211a57, #174ea6, #078c82, #e0ad20, #d83b36); }
-    .surface-scale-labels { display: flex; justify-content: space-between; color: #647b86; }
-
-    .segmented { display: inline-flex; padding: 3px; gap: 3px; background: #eef4f6; border: 1px solid var(--line); border-radius: 10px; }
-    .segmented button { border: 0; background: transparent; padding: 5px 9px; color: var(--muted); font-size: 11px; }
-    .segmented button.active { background: #d9ecef; color: #0d5360; }
-
-    .legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 14px 11px; color: var(--muted); font-size: 11px; }
-    .legend span { display: inline-flex; align-items: center; gap: 5px; }
-    .legend i { width: 14px; height: 3px; border-radius: 4px; display: inline-block; }
-
-    .live-panel { margin-top: 12px; padding: 15px 16px 17px; }
-    .live-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-    .live-label { font-size: 13px; color: var(--muted); }
-    .live-value { font-variant-numeric: tabular-nums; font-size: 23px; font-weight: 900; }
-    .meter {
-      position: relative; height: 24px; border-radius: 999px; overflow: visible;
-      background: #eaf0f3; border: 1px solid #cbd9e0;
-      cursor: ew-resize; touch-action: none;
-    }
-    .meter-gradient {
-      position: absolute; inset: 0;
-      background: linear-gradient(90deg, #2a9df4 0%, #45d99a 36%, #f2d35e 63%, #ff9f43 80%, #ff5f57 100%);
-      opacity: .38;
-    }
-    .meter-fill {
-      position: absolute; inset: 0 auto 0 0; width: 0%;
-      background: linear-gradient(90deg, #2a9df4 0%, #45d99a 38%, #f2d35e 68%, #ff9f43 84%, #ff5f57 100%);
-      border-radius: inherit; transition: width 70ms linear;
-      box-shadow: 0 0 18px rgba(77, 225, 209, .35);
-    }
-    .threshold-marker {
-      position: absolute; top: -6px; bottom: -6px; width: 30px; left: 40%;
-      transform: translateX(-15px); z-index: 4; cursor: ew-resize; outline: none;
-    }
-    .threshold-marker::before {
-      content: ''; position: absolute; top: 3px; bottom: 3px; left: 14px; width: 3px;
-      border-radius: 3px; background: #173d4b; box-shadow: 0 0 0 1px rgba(255,255,255,.75);
-    }
-    .threshold-marker::after {
-      content: ''; position: absolute; left: 9px; top: 50%; width: 12px; height: 12px;
-      transform: translateY(-50%); border-radius: 50%; background: #ffffff;
-      border: 3px solid #173d4b; box-shadow: 0 2px 6px rgba(16,42,54,.24);
-    }
-    .threshold-marker:focus-visible::after { box-shadow: 0 0 0 4px rgba(22,184,173,.24); }
-    .threshold-value {
-      position: absolute; left: 50%; top: -23px; transform: translateX(-50%);
-      min-width: 29px; padding: 2px 5px; border-radius: 6px; background: #173d4b;
-      color: #ffffff; font-size: 9px; font-weight: 800; text-align: center;
-      pointer-events: none;
-    }
-    .auto-gate-marker {
-      position: absolute; top: -2px; bottom: -2px; width: 0; z-index: 3;
-      border-left: 2px dashed #d96812; pointer-events: none;
-    }
-    .meter-scale { display: flex; justify-content: space-between; color: #71858e; font-size: 10px; margin-top: 5px; }
-
-    .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
-    .metric { padding: 13px 14px; min-height: 92px; }
-    .metric-label { color: var(--muted); font-size: 11px; margin-bottom: 8px; }
-    .metric-value { font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
-    .metric-unit { font-size: 11px; color: var(--muted); margin-left: 3px; }
-    .metric-sub { margin-top: 5px; color: #6f858f; font-size: 10px; line-height: 1.35; }
-    .good { color: var(--green); }
-    .warning { color: var(--yellow); }
+    .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 16px; }
+    .status-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
+    .status-label { display: block; color: var(--muted); font-size: .76rem; }
+    .status-value { display: block; font-size: .9rem; font-weight: 800; overflow-wrap: anywhere; }
+    .ok { color: var(--teal); }
+    .warn { color: var(--amber); }
     .bad { color: var(--red); }
 
-    .lower-grid { display: grid; grid-template-columns: 360px 1fr; gap: 12px; margin-top: 12px; }
-    .controls { padding: 15px; }
-    .section-title { font-size: 13px; font-weight: 850; margin: 0 0 13px; }
-    .form-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .form-row label { color: var(--muted); font-size: 12px; }
-    .form-row input[type="number"] { width: 86px; }
-    input[type="number"], select {
-      background: #ffffff; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px;
+    .meter-row { display: grid; grid-template-columns: 1fr 86px; gap: 12px; align-items: center; }
+    .meter { position: relative; height: 24px; border-radius: 999px; overflow: hidden; background: linear-gradient(90deg, #d7eee9 0 55%, #fae7a8 72%, #efad89 88%, #e46d6d 100%); border: 1px solid var(--line); }
+    .meter-mask { position: absolute; top: 0; right: 0; bottom: 0; width: 100%; background: rgba(255,255,255,.78); border-left: 2px solid var(--ink); transition: width 55ms linear; }
+    .meter-value { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .wave-wrap { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #f9fcfd; }
+    canvas { display: block; width: 100%; height: 210px; }
+
+    .timer { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 16px 0 4px; }
+    .record-dot { width: 12px; height: 12px; border-radius: 50%; background: #aebbc2; }
+    .record-dot.live { background: var(--red); box-shadow: 0 0 0 5px rgba(180,58,58,.14); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 50% { opacity: .55; } }
+    .progress { height: 10px; background: var(--soft); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--blue); transition: width .1s linear; }
+    .time { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 88px; text-align: right; }
+
+    .protocol { margin: 24px 0; }
+    .protocol-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .protocol-step { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 13px; background: var(--white); min-height: 112px; }
+    .protocol-step strong { display: block; margin-bottom: 5px; }
+    .protocol-step span { color: var(--ink-2); font-size: .83rem; }
+    .protocol-step:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 44%; z-index: 2; color: var(--muted); font-weight: 900; }
+
+    .result { display: none; margin-top: 22px; }
+    .result.show { display: block; }
+    .result-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .metric { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--soft); }
+    .metric span { display: block; color: var(--muted); font-size: .76rem; }
+    .metric strong { display: block; margin-top: 3px; font-size: 1.08rem; }
+    audio { width: 100%; margin-top: 8px; }
+    code { padding: 1px 5px; border-radius: 4px; background: #edf2f4; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    ol, ul { margin: 8px 0 10px; padding-left: 1.25rem; }
+    li + li { margin-top: 5px; }
+    .small { color: var(--muted); font-size: .82rem; }
+
+    @media (max-width: 850px) {
+      .grid { grid-template-columns: 1fr; }
+      .protocol-grid { grid-template-columns: 1fr; }
+      .protocol-step { min-height: auto; }
+      .protocol-step:not(:last-child)::after { content: "↓"; top: auto; right: auto; left: 50%; bottom: -15px; }
+      .result-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    select { width: 100%; min-width: 0; }
-    input[type="range"] { width: 100%; accent-color: var(--cyan); }
-    .range-wrap { display: grid; grid-template-columns: 1fr 58px; gap: 10px; align-items: center; }
-    .control-help { color: #657d88; font-size: 10.5px; line-height: 1.55; margin: -4px 0 13px; }
-    .control-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .diagnostic { border-top: 1px solid var(--line); margin-top: 15px; padding-top: 12px; color: var(--muted); font-size: 10.5px; line-height: 1.65; }
-
-    .history { min-width: 0; }
-    .table-wrap { overflow: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-    th, td { padding: 10px 11px; border-bottom: 1px solid var(--line); text-align: left; }
-    th { color: #4f6874; font-weight: 700; background: #f0f5f7; position: sticky; top: 0; }
-    td { font-variant-numeric: tabular-nums; }
-    tbody tr { cursor: pointer; }
-    tbody tr:hover { background: rgba(45, 143, 223, .07); }
-    tbody tr.selected { background: rgba(22, 184, 173, .10); }
-    .event-color { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 7px; }
-    .badge { display: inline-flex; border-radius: 999px; padding: 3px 7px; border: 1px solid currentColor; font-size: 10px; }
-    .empty { padding: 38px 16px; text-align: center; color: var(--muted); }
-
-    .strategy { margin-top: 12px; padding: 15px; }
-    .strategy-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
-    .strategy-item { border: 1px solid var(--line); background: #f7fafb; padding: 12px; border-radius: 11px; }
-    .strategy-num { color: var(--cyan); font-size: 11px; font-weight: 900; }
-    .strategy-item b { display: block; margin: 4px 0 5px; font-size: 12px; }
-    .strategy-item p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
-    .footer { color: #687e88; font-size: 10px; text-align: center; padding: 16px 8px 2px; }
-
-    @media (max-width: 980px) {
-      .wave-grid, .lower-grid { grid-template-columns: 1fr; }
-      .metrics { grid-template-columns: repeat(2, 1fr); }
-      .metrics .metric:first-child { grid-column: span 2; }
-      .strategy-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 620px) {
-      .app { padding: 12px; }
-      .topbar { align-items: flex-start; }
-      .subtitle { display: none; }
-      .status-pill { display: none; }
-      .canvas-wrap { height: 240px; }
-      .surface-wrap { height: 320px; }
-      .surface-controls { align-items: flex-start; flex-direction: column; gap: 4px; }
-      .surface-legend { grid-template-columns: 1fr; }
-      .metrics { grid-template-columns: 1fr 1fr; }
-      .strategy-grid { grid-template-columns: 1fr; }
-      .card-head { align-items: flex-start; }
+    @media (max-width: 600px) {
+      header { grid-template-columns: 1fr; }
+      .version { text-align: left; }
+      .step-strip, .status-grid, .result-grid { grid-template-columns: 1fr; }
+      .page { width: min(100% - 20px, 1120px); padding-top: 20px; }
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div class="title-wrap">
-        <div class="mark">N</div>
-        <div>
-          <h1>檢體針聲響比較器</h1>
-          <div class="subtitle">相對聲量、波形衰減與異音差異參考｜非校正分貝計</div>
-        </div>
+  <main class="page">
+    <header>
+      <div>
+        <p class="eyebrow">NEEDLE SOUND · LLM CALIBRATION LOOP</p>
+        <h1>步驟一：原始擊發收音</h1>
+        <p class="subtitle">本頁只忠實錄製60秒原始聲音，不先猜測哪一段是擊發。錄完後將WAV與JSON上傳給LLM，由實測的三次正常擊發建立下一版訊號擷取規則。</p>
       </div>
-      <div class="top-actions">
-        <div id="statusPill" class="status-pill"><i class="status-dot"></i><span id="statusText">尚未啟動</span></div>
-        <button id="startBtn" class="primary">啟動麥克風</button>
-        <button id="armBtn" disabled>暫停擷取</button>
-      </div>
+      <div class="version">Prototype 0.1<br>本機執行／不自動上傳</div>
     </header>
 
-    <div id="notice" class="notice"></div>
+    <div class="step-strip" aria-label="開發步驟">
+      <div class="step active"><strong>1｜原始收音</strong><span>目前版本：不做事件判定</span></div>
+      <div class="step"><strong>2｜LLM分析</strong><span>辨識三次正常擊發與背景差異</span></div>
+      <div class="step"><strong>3｜規則寫回</strong><span>產生可重複的JS事件擷取器</span></div>
+    </div>
 
-    <!-- 擊發後波形固定放在畫面最上方 -->
-    <section class="wave-grid">
+    <div class="notice">
+      <h3>這一版刻意沒有Trigger門檻</h3>
+      <p>若現在就設定−40 dBFS或其他門檻，可能會先入為主地漏掉真正訊號。本頁保存完整60秒，再由LLM根據背景與三次正常擊發的實際波形決定門檻、事件起點、結束點及最小間隔。</p>
+    </div>
+
+    <section class="grid">
       <article class="card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">本次擊發波形</div>
-            <div id="currentWaveNote" class="card-note">等待第一次擊發｜紅色區段代表削波</div>
+        <div class="card-head"><h2>麥克風與錄音</h2></div>
+        <div class="card-body">
+          <div class="field">
+            <label for="micSelect">收音裝置</label>
+            <select id="micSelect" disabled>
+              <option value="">先啟動麥克風權限</option>
+            </select>
           </div>
-          <button id="setRefTopBtn" class="small" disabled>設為基準</button>
+
+          <div class="buttons">
+            <button id="openMicBtn" class="btn" type="button">啟動／套用麥克風</button>
+            <button id="startBtn" class="btn primary" type="button" disabled>開始60秒錄音</button>
+            <button id="stopBtn" class="btn stop" type="button" disabled>提早停止</button>
+          </div>
+
+          <div class="timer" aria-label="錄音進度">
+            <span id="recordDot" class="record-dot" aria-hidden="true"></span>
+            <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+            <span id="timeText" class="time">00:00 / 01:00</span>
+          </div>
+
+          <div id="message" class="notice warning" style="margin:16px 0 0">
+            <p>請先按「啟動／套用麥克風」，允許瀏覽器使用內建麥克風。</p>
+          </div>
+
+          <div class="status-grid" aria-label="實際錄音設定">
+            <div class="status-item"><span class="status-label">安全環境</span><span id="secureStatus" class="status-value">檢查中</span></div>
+            <div class="status-item"><span class="status-label">擷取引擎</span><span id="engineStatus" class="status-value">尚未啟動</span></div>
+            <div class="status-item"><span class="status-label">Sample rate</span><span id="sampleRateStatus" class="status-value">—</span></div>
+            <div class="status-item"><span class="status-label">Channel</span><span id="channelStatus" class="status-value">—</span></div>
+            <div class="status-item"><span class="status-label">Auto gain</span><span id="agcStatus" class="status-value">—</span></div>
+            <div class="status-item"><span class="status-label">Noise suppression</span><span id="nsStatus" class="status-value">—</span></div>
+            <div class="status-item"><span class="status-label">Echo cancellation</span><span id="ecStatus" class="status-value">—</span></div>
+            <div class="status-item"><span class="status-label">實際裝置</span><span id="deviceStatus" class="status-value">—</span></div>
+          </div>
         </div>
-        <div class="canvas-wrap"><canvas id="currentCanvas"></canvas></div>
       </article>
 
       <article class="card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">擊發疊圖比較</div>
-            <div id="overlayNote" class="card-note">以波形起點自動對齊，最多顯示最近 8 筆</div>
+        <div class="card-head"><h2>即時監看（僅顯示，不判定）</h2></div>
+        <div class="card-body">
+          <div class="meter-row">
+            <div class="meter" aria-label="即時相對聲音強度"><div id="meterMask" class="meter-mask"></div></div>
+            <div id="meterValue" class="meter-value">−∞ dBFS</div>
           </div>
-          <div class="segmented" aria-label="疊圖模式">
-            <button id="rawModeBtn" class="active">原始強度</button>
-            <button id="shapeModeBtn">正規化形狀</button>
-          </div>
+          <div class="wave-wrap"><canvas id="waveCanvas" width="900" height="240" aria-label="即時波形"></canvas></div>
+          <p class="small" style="margin-top:9px">dBFS是相對數位滿刻度，0 dBFS為上限。本頁不把它當成絕對聲壓，也不依它自動切割事件。</p>
         </div>
-        <div class="canvas-wrap"><canvas id="overlayCanvas"></canvas></div>
-        <div id="legend" class="legend"></div>
       </article>
     </section>
 
-    <section class="card surface-panel">
-      <div class="card-head">
-        <div>
-          <div class="card-title">單次擊發 STFT 3D Surface</div>
-          <div id="surfaceNote" class="card-note">選取擊發事件後顯示｜Hann 256 samples、Hop 64、固定 dBFS 色階</div>
-        </div>
-        <label class="surface-controls" for="surfaceFreqSelect">
-          頻率上限
-          <select id="surfaceFreqSelect">
-            <option value="8000">8 kHz</option>
-            <option value="12000" selected>12 kHz</option>
-            <option value="20000">20 kHz</option>
-          </select>
-        </label>
+    <section class="protocol">
+      <h2>建議的60秒操作節奏</h2>
+      <div class="protocol-grid">
+        <div class="protocol-step"><strong>0–10秒</strong><span>保持安靜，建立背景與電腦風扇聲。</span></div>
+        <div class="protocol-step"><strong>約15秒</strong><span>正常檢體針第一次擊發。</span></div>
+        <div class="protocol-step"><strong>約30秒</strong><span>相同距離與角度，第二次擊發。</span></div>
+        <div class="protocol-step"><strong>約45秒</strong><span>相同條件，第三次擊發。</span></div>
+        <div class="protocol-step"><strong>50–60秒</strong><span>再次保持安靜，確認背景是否漂移。</span></div>
       </div>
-      <div class="surface-wrap"><canvas id="surfaceCanvas" aria-label="時間、頻率與強度的 STFT 三維曲面圖"></canvas></div>
-      <div class="surface-legend">
-        <span>曲面高度與顏色：頻譜強度 dBFS</span>
-        <div class="surface-scale-wrap">
-          <div class="surface-scale"></div>
-          <div class="surface-scale-labels"><span>−80</span><span>−60</span><span>−40</span><span>−20</span><span>−5 dBFS</span></div>
-        </div>
+      <div class="notice warning">
+        <p><strong>請固定：</strong>電腦、麥克風、檢體針位置、距離、角度、放置桌面與握持方式。錄音期間不要說話、敲桌、移動電腦或播放聲音。</p>
       </div>
     </section>
 
-    <!-- 不繪製強度時間序列，只保留當下強弱 bar -->
-    <section class="card live-panel">
-      <div class="live-top">
-        <div>
-          <div class="live-label">當下聲音強弱</div>
-          <div class="card-note">拖曳深色線調整門檻；橘色虛線為背景噪音保護門檻</div>
+    <section id="result" class="card result">
+      <div class="card-head"><h2>錄音完成</h2></div>
+      <div class="card-body">
+        <div class="result-grid">
+          <div class="metric"><span>錄音長度</span><strong id="durationMetric">—</strong></div>
+          <div class="metric"><span>總樣本數</span><strong id="samplesMetric">—</strong></div>
+          <div class="metric"><span>整段Peak</span><strong id="peakMetric">—</strong></div>
+          <div class="metric"><span>削波樣本比例</span><strong id="clipMetric">—</strong></div>
         </div>
-        <div><span id="liveValue" class="live-value">0.0</span><span class="metric-unit">dB-R</span></div>
-      </div>
-      <div id="liveMeter" class="meter" role="meter" aria-label="當下相對聲音強度" aria-valuemin="0" aria-valuemax="100">
-        <div class="meter-gradient"></div>
-        <div id="meterFill" class="meter-fill"></div>
-        <div id="autoGateMarker" class="auto-gate-marker" hidden></div>
-        <div id="thresholdMarker" class="threshold-marker" role="slider" tabindex="0" aria-label="觸發門檻" aria-valuemin="20" aria-valuemax="90" aria-valuenow="40">
-          <span id="thresholdValue" class="threshold-value">40</span>
+        <audio id="audioPreview" controls></audio>
+        <div class="buttons">
+          <a id="wavDownload" class="btn download" href="#" download>下載原始WAV</a>
+          <a id="jsonDownload" class="btn download" href="#" download>下載分析JSON</a>
         </div>
-      </div>
-      <div class="meter-scale"><span>安靜 0</span><span>40</span><span>60</span><span>80</span><span>強 100</span></div>
-    </section>
-
-    <section class="metrics">
-      <article class="card metric">
-        <div class="metric-label">相對事件聲級</div>
-        <div><span id="eventLevel" class="metric-value">—</span><span class="metric-unit">dB-R</span></div>
-        <div class="metric-sub">固定分析窗的事件能量；用來比較聲音大小</div>
-      </article>
-      <article class="card metric">
-        <div class="metric-label">Peak</div>
-        <div><span id="peakLevel" class="metric-value">—</span><span class="metric-unit">dBFS</span></div>
-        <div class="metric-sub">技術診斷值；0 dBFS 代表已到數位上限</div>
-      </article>
-      <article class="card metric">
-        <div class="metric-label">削波狀態</div>
-        <div id="clipState" class="metric-value">—</div>
-        <div id="clipSub" class="metric-sub">削波事件不進行定量判定</div>
-      </article>
-      <article class="card metric">
-        <div class="metric-label">與基準形狀相似度</div>
-        <div><span id="similarity" class="metric-value">—</span><span class="metric-unit">%</span></div>
-        <div class="metric-sub">先消除音量差，再比較衰減與雙擊形狀</div>
-      </article>
-      <article class="card metric">
-        <div class="metric-label">異音差異參考</div>
-        <div id="anomalyState" class="metric-value">—</div>
-        <div id="anomalySub" class="metric-sub">僅供機構異常篩查，不作合格判定</div>
-      </article>
-    </section>
-
-    <section class="lower-grid">
-      <aside class="card controls">
-        <h2 class="section-title">擷取與削波防護</h2>
-
-        <div class="form-row">
-          <label for="triggerRange">觸發門檻（預設 40 dB-R）</label>
-          <div class="range-wrap">
-            <input id="triggerRange" type="range" min="20" max="90" value="40" step="1">
-            <input id="triggerNumber" type="number" min="20" max="90" value="40" step="1">
-          </div>
+        <div class="notice" style="margin-bottom:0">
+          <h3>下一步：把兩個檔案上傳到此對話</h3>
+          <ol>
+            <li>上傳<code>.wav</code>：讓LLM檢查完整波形與三次擊發。</li>
+            <li>上傳<code>.json</code>：包含實際麥克風設定及每10 ms的Peak／RMS。</li>
+            <li>同時告訴我三次都是正常檢體針，並說明大約在15、30、45秒擊發。</li>
+          </ol>
+          <p>我會回報辨識到的三個事件時間與差異，再把事件判定規則寫入第二版HTML。</p>
         </div>
-        <div class="control-help">有效門檻會取「設定值」與「背景噪音 + 12 dB」較高者，避免環境聲誤觸發。dB-R 是相對尺度，不是 dB SPL。</div>
-
-        <div class="form-row">
-          <label for="micSelect">麥克風裝置</label>
-          <select id="micSelect" disabled><option value="">取得權限後載入裝置</option></select>
-        </div>
-
-        <div class="control-actions">
-          <button id="calibrateBtn" disabled>重新量背景 3 秒</button>
-          <button id="exportBtn" disabled>匯出 CSV</button>
-          <button id="clearBtn" class="danger" disabled>清除紀錄</button>
-        </div>
-
-        <div class="diagnostic">
-          <div>背景：<b id="noiseFloor">—</b> dB-R</div>
-          <div>有效觸發：<b id="effectiveThreshold">40.0</b> dB-R</div>
-          <div>取樣率：<b id="sampleRateText">—</b></div>
-          <div>AGC / 降噪 / 回音消除：<b id="processingText">—</b></div>
-          <div>擷取窗：前置 30 ms＋擊發後 220 ms</div>
-        </div>
-      </aside>
-
-      <section class="card history">
-        <div class="card-head">
-          <div>
-            <div class="card-title">擊發紀錄</div>
-            <div class="card-note">點選任一列可切換上方本次波形；基準建議選正常且未削波事件</div>
-          </div>
-          <span id="eventCount" class="card-note">0 筆</span>
-        </div>
-        <div id="historyEmpty" class="empty">啟動麥克風後，擊發事件會自動出現在這裡。</div>
-        <div id="tableWrap" class="table-wrap" hidden>
-          <table>
-            <thead>
-              <tr>
-                <th>事件</th><th>相對聲級</th><th>Peak</th><th>削波</th><th>拖尾</th><th>二次撞擊</th><th>形狀相似</th><th>異音參考</th><th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="historyBody"></tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
-    <section class="card strategy">
-      <h2 class="section-title">建議判讀策略</h2>
-      <div class="strategy-grid">
-        <article class="strategy-item"><span class="strategy-num">01</span><b>先排除削波</b><p>任何削波事件只顯示下限，不拿 0 dBFS 排名。連續削波時先增加距離、轉離麥克風軸線或關閉 Microphone Boost。</p></article>
-        <article class="strategy-item"><span class="strategy-num">02</span><b>大小看事件能量</b><p>以固定窗的 dB-R 比較檢體針聲音大小，不使用單一尖峰作唯一指標。只能在相同裝置、距離與設定下比較。</p></article>
-        <article class="strategy-item"><span class="strategy-num">03</span><b>異音看正規化疊圖</b><p>正規化後若仍出現雙擊、拖尾變長、振鈴或高頻粗糙度增加，才列為機構異常參考訊號。</p></article>
-        <article class="strategy-item"><span class="strategy-num">04</span><b>以正常樣本作基準</b><p>先取得至少 10 次正常擊發，觀察自然散布，再設定製程界線。異音分數不直接等同 NG。</p></article>
       </div>
     </section>
-
-    <div class="footer">所有音訊僅在本機瀏覽器記憶體分析，不上傳。需由 HTTPS 或 localhost 開啟。</div>
   </main>
 
   <script>
-  (() => {
-    'use strict';
+    (() => {
+      'use strict';
 
-    const CONFIG = {
-      preMs: 30,
-      postMs: 220,
-      cooldownMs: 420,
-      maxOverlay: 8,
-      rail: 0.995,
-      noiseMarginDb: 12,
-      fftSize: 256,
-      fftHop: 64,
-      stftFloorDb: -80,
-      stftCeilDb: -5,
-      eventColors: ['#078c82', '#1f6fbd', '#a96f00', '#d45b0a', '#8052b8', '#168a4f', '#c13d73', '#5b8f18']
-    };
+      const RECORD_SECONDS = 60;
+      const FRAME_MS = 10;
+      const $ = (id) => document.getElementById(id);
+      const micSelect = $('micSelect');
+      const openMicBtn = $('openMicBtn');
+      const startBtn = $('startBtn');
+      const stopBtn = $('stopBtn');
+      const message = $('message');
+      const canvas = $('waveCanvas');
+      const ctx = canvas.getContext('2d');
 
-    const $ = (id) => document.getElementById(id);
-    const els = {
-      startBtn: $('startBtn'), armBtn: $('armBtn'), statusPill: $('statusPill'), statusText: $('statusText'),
-      notice: $('notice'), currentCanvas: $('currentCanvas'), overlayCanvas: $('overlayCanvas'),
-      rawModeBtn: $('rawModeBtn'), shapeModeBtn: $('shapeModeBtn'), overlayNote: $('overlayNote'), legend: $('legend'),
-      surfaceCanvas: $('surfaceCanvas'), surfaceNote: $('surfaceNote'), surfaceFreqSelect: $('surfaceFreqSelect'),
-      liveValue: $('liveValue'), liveMeter: $('liveMeter'), meterFill: $('meterFill'),
-      thresholdMarker: $('thresholdMarker'), thresholdValue: $('thresholdValue'), autoGateMarker: $('autoGateMarker'),
-      eventLevel: $('eventLevel'), peakLevel: $('peakLevel'), clipState: $('clipState'), clipSub: $('clipSub'),
-      similarity: $('similarity'), anomalyState: $('anomalyState'), anomalySub: $('anomalySub'),
-      triggerRange: $('triggerRange'), triggerNumber: $('triggerNumber'), micSelect: $('micSelect'),
-      calibrateBtn: $('calibrateBtn'), exportBtn: $('exportBtn'), clearBtn: $('clearBtn'),
-      noiseFloor: $('noiseFloor'), effectiveThreshold: $('effectiveThreshold'), sampleRateText: $('sampleRateText'),
-      processingText: $('processingText'), historyEmpty: $('historyEmpty'), tableWrap: $('tableWrap'),
-      historyBody: $('historyBody'), eventCount: $('eventCount'), currentWaveNote: $('currentWaveNote'),
-      setRefTopBtn: $('setRefTopBtn')
-    };
+      let stream = null;
+      let audioContext = null;
+      let sourceNode = null;
+      let analyserNode = null;
+      let recorderNode = null;
+      let muteNode = null;
+      let recorderEngine = null;
+      let animationId = null;
+      let timerId = null;
+      let recording = false;
+      let recordingStartedAt = 0;
+      let recordingIsoTime = '';
+      let chunks = [];
+      let totalSamples = 0;
+      let currentSettings = {};
+      let stopResolver = null;
+      let wavUrl = null;
+      let jsonUrl = null;
 
-    let audioContext = null;
-    let mediaStream = null;
-    let mediaSource = null;
-    let processorNode = null;
-    let silentGain = null;
-    let workletUrl = null;
-    let sampleRate = 48000;
-    let running = false;
-    let armed = true;
-    let overlayMode = 'raw';
-    let events = [];
-    let eventSerial = 0;
-    let selectedId = null;
-    let referenceId = null;
-    let preChunks = [];
-    let preSampleCount = 0;
-    let capture = null;
-    let lastTriggerAt = 0;
-    let liveDbR = 0;
-    let noiseDbR = null;
-    let calibrating = false;
-    let calibrationEnds = 0;
-    let calibrationValues = [];
-    let consecutiveClips = 0;
-    let resizeTimer = 0;
-
-    function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
-    function toDb(x, floor = -120) { return x > 0 ? 20 * Math.log10(x) : floor; }
-    function rmsOf(data, start = 0, end = data.length) {
-      let sum = 0;
-      const a = clamp(start | 0, 0, data.length);
-      const b = clamp(end | 0, a, data.length);
-      for (let i = a; i < b; i++) sum += data[i] * data[i];
-      return Math.sqrt(sum / Math.max(1, b - a));
-    }
-    function relativeLevelFromRms(rms) { return clamp(toDb(rms) + 100, 0, 100); }
-    function configuredThreshold() { return clamp(Number(els.triggerNumber.value) || 40, 20, 90); }
-    function effectiveThreshold() {
-      return Math.max(configuredThreshold(), noiseDbR == null ? 0 : noiseDbR + CONFIG.noiseMarginDb);
-    }
-    function formatSigned(value, digits = 1) {
-      if (!Number.isFinite(value)) return '—';
-      return `${value > 0 ? '+' : ''}${value.toFixed(digits)}`;
-    }
-
-    function setStatus(text, type = '') {
-      els.statusText.textContent = text;
-      els.statusPill.className = `status-pill ${type}`.trim();
-    }
-
-    function showNotice(message, danger = false) {
-      els.notice.textContent = message;
-      els.notice.className = `notice show${danger ? ' danger' : ''}`;
-    }
-
-    function hideNotice() { els.notice.className = 'notice'; }
-
-    async function startAudio(deviceId = '') {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        showNotice('此瀏覽器不支援麥克風擷取。請改用最新版 Edge、Chrome、Firefox 或 Safari。', true);
-        return;
+      function setMessage(text, type = 'warning') {
+        message.className = `notice ${type}`;
+        message.innerHTML = `<p>${text}</p>`;
       }
 
-      await stopAudio(false);
-      hideNotice();
-      setStatus('要求麥克風權限…', 'warn');
-
-      const strictAudio = {
-        echoCancellation: { exact: false },
-        noiseSuppression: { exact: false },
-        autoGainControl: { exact: false },
-        ...(deviceId ? { deviceId: { exact: deviceId } } : {})
-      };
-
-      let strictSucceeded = true;
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: strictAudio });
-      } catch (strictError) {
-        strictSucceeded = false;
-        try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false,
-              // 備援模式不可再用 exact，避免裝置剛切換或拔除時再次
-              // 觸發 OverconstrainedError；瀏覽器可退回預設輸入。
-              ...(deviceId ? { deviceId: { ideal: deviceId } } : {})
-            }
-          });
-          showNotice('瀏覽器無法保證關閉全部語音處理，已改用相容模式。資料可作趨勢參考，但應特別檢查削波。');
-        } catch (fallbackError) {
-          const failedConstraint = fallbackError.constraint ? `（限制：${fallbackError.constraint}）` : '';
-          const suggestion = fallbackError.name === 'OverconstrainedError'
-            ? '請重新整理頁面後選擇目前存在的麥克風。'
-            : fallbackError.name === 'NotAllowedError'
-              ? '請確認瀏覽器麥克風權限與電腦實體靜音鍵。'
-              : '';
-          showNotice(`無法啟動麥克風：${fallbackError.name || '未知錯誤'}${failedConstraint}。${suggestion}`, true);
-          setStatus('啟動失敗', 'warn');
-          return;
-        }
+      function dbfs(value) {
+        if (!Number.isFinite(value) || value <= 1e-12) return -120;
+        return 20 * Math.log10(value);
       }
 
-      audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-      await audioContext.resume();
-      sampleRate = audioContext.sampleRate;
-      mediaSource = audioContext.createMediaStreamSource(mediaStream);
-      silentGain = audioContext.createGain();
-      silentGain.gain.value = 0;
-      silentGain.connect(audioContext.destination);
+      function formatDb(value) {
+        if (!Number.isFinite(value) || value <= -119.9) return '−∞ dBFS';
+        return `${value.toFixed(1).replace('-', '−')} dBFS`;
+      }
 
-      try {
+      function formatTime(seconds) {
+        const safe = Math.max(0, Math.min(RECORD_SECONDS, seconds));
+        const mm = Math.floor(safe / 60).toString().padStart(2, '0');
+        const ss = Math.floor(safe % 60).toString().padStart(2, '0');
+        return `${mm}:${ss} / 01:00`;
+      }
+
+      function safeStamp(date = new Date()) {
+        const p = (n) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}${p(date.getMonth() + 1)}${p(date.getDate())}_${p(date.getHours())}${p(date.getMinutes())}${p(date.getSeconds())}`;
+      }
+
+      async function closeAudio() {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+        if (timerId) clearInterval(timerId);
+        timerId = null;
+        if (stream) stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+        try { if (audioContext && audioContext.state !== 'closed') await audioContext.close(); } catch (_) {}
+        audioContext = null;
+        sourceNode = analyserNode = recorderNode = muteNode = null;
+        recorderEngine = null;
+      }
+
+      async function refreshDevices(selectedId = '') {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter((d) => d.kind === 'audioinput');
+        micSelect.innerHTML = '';
+        inputs.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `麥克風 ${index + 1}`;
+          option.selected = selectedId ? device.deviceId === selectedId : index === 0;
+          micSelect.appendChild(option);
+        });
+        micSelect.disabled = inputs.length === 0;
+      }
+
+      async function createWorkletRecorder() {
         const workletCode = `
-          class NeedleCaptureProcessor extends AudioWorkletProcessor {
-            process(inputs, outputs) {
-              const input = inputs[0] && inputs[0][0];
-              if (input) {
-                const copy = input.slice(0);
-                this.port.postMessage(copy, [copy.buffer]);
+          class NeedlePcmRecorder extends AudioWorkletProcessor {
+            constructor() {
+              super();
+              this.active = false;
+              this.size = 4096;
+              this.buffer = new Float32Array(this.size);
+              this.offset = 0;
+              this.port.onmessage = (event) => {
+                if (event.data === 'start') {
+                  this.offset = 0;
+                  this.active = true;
+                } else if (event.data === 'stop') {
+                  this.flush();
+                  this.active = false;
+                  this.port.postMessage({ type: 'stopped' });
+                }
+              };
+            }
+            flush() {
+              if (!this.offset) return;
+              const out = this.buffer.slice(0, this.offset);
+              this.port.postMessage({ type: 'data', buffer: out.buffer }, [out.buffer]);
+              this.buffer = new Float32Array(this.size);
+              this.offset = 0;
+            }
+            process(inputs) {
+              const channel = inputs[0] && inputs[0][0];
+              if (!this.active || !channel) return true;
+              let i = 0;
+              while (i < channel.length) {
+                const take = Math.min(channel.length - i, this.size - this.offset);
+                this.buffer.set(channel.subarray(i, i + take), this.offset);
+                this.offset += take;
+                i += take;
+                if (this.offset === this.size) this.flush();
               }
-              const output = outputs[0] && outputs[0][0];
-              if (output) output.fill(0);
               return true;
             }
           }
-          registerProcessor('needle-capture-processor', NeedleCaptureProcessor);
+          registerProcessor('needle-pcm-recorder', NeedlePcmRecorder);
         `;
-        workletUrl = URL.createObjectURL(new Blob([workletCode], { type: 'application/javascript' }));
-        await audioContext.audioWorklet.addModule(workletUrl);
-        processorNode = new AudioWorkletNode(audioContext, 'needle-capture-processor', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
-        processorNode.port.onmessage = (event) => handleAudioChunk(new Float32Array(event.data));
-        mediaSource.connect(processorNode).connect(silentGain);
-      } catch (workletError) {
-        processorNode = audioContext.createScriptProcessor(1024, 1, 1);
-        processorNode.onaudioprocess = (event) => handleAudioChunk(new Float32Array(event.inputBuffer.getChannelData(0)));
-        mediaSource.connect(processorNode).connect(silentGain);
-        showNotice('此瀏覽器改用相容擷取模式；功能可用，但瞬態時間解析度較低。');
-      }
-
-      running = true;
-      armed = true;
-      els.startBtn.textContent = '停止麥克風';
-      els.armBtn.disabled = false;
-      els.armBtn.textContent = '暫停擷取';
-      els.calibrateBtn.disabled = false;
-      els.micSelect.disabled = false;
-      els.sampleRateText.textContent = `${sampleRate.toLocaleString()} Hz`;
-
-      const track = mediaStream.getAudioTracks()[0];
-      const settings = track.getSettings ? track.getSettings() : {};
-      const processing = [
-        `AGC:${settings.autoGainControl === false ? '關' : settings.autoGainControl === true ? '開' : '未回報'}`,
-        `NS:${settings.noiseSuppression === false ? '關' : settings.noiseSuppression === true ? '開' : '未回報'}`,
-        `EC:${settings.echoCancellation === false ? '關' : settings.echoCancellation === true ? '開' : '未回報'}`
-      ].join(' / ');
-      els.processingText.textContent = `${processing}${strictSucceeded ? '（嚴格要求成功）' : '（相容模式）'}`;
-
-      await refreshDevices(settings.deviceId || deviceId);
-      beginCalibration();
-    }
-
-    async function stopAudio(updateUi = true) {
-      running = false;
-      capture = null;
-      preChunks = [];
-      preSampleCount = 0;
-      calibrating = false;
-      try { processorNode?.disconnect(); } catch (_) {}
-      try { mediaSource?.disconnect(); } catch (_) {}
-      try { silentGain?.disconnect(); } catch (_) {}
-      mediaStream?.getTracks().forEach((track) => track.stop());
-      if (audioContext && audioContext.state !== 'closed') await audioContext.close();
-      if (workletUrl) URL.revokeObjectURL(workletUrl);
-      audioContext = mediaStream = mediaSource = processorNode = silentGain = null;
-      workletUrl = null;
-      if (updateUi) {
-        setStatus('尚未啟動');
-        els.startBtn.textContent = '啟動麥克風';
-        els.armBtn.disabled = true;
-        els.calibrateBtn.disabled = true;
-      }
-    }
-
-    async function refreshDevices(selectedDeviceId = '') {
-      const devices = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
-      els.micSelect.innerHTML = '';
-      devices.forEach((device, index) => {
-        const option = document.createElement('option');
-        option.value = device.deviceId;
-        option.dataset.realDevice = 'true';
-        option.textContent = device.label || `麥克風 ${index + 1}`;
-        option.selected = device.deviceId === selectedDeviceId;
-        els.micSelect.appendChild(option);
-      });
-    }
-
-    function beginCalibration() {
-      if (!running) return;
-      calibrating = true;
-      calibrationValues = [];
-      calibrationEnds = performance.now() + 3000;
-      setStatus('量測背景噪音 3 秒', 'warn');
-      showNotice('背景量測中：請暫時不要擊發或碰觸電腦。');
-    }
-
-    function finishCalibration() {
-      calibrating = false;
-      if (calibrationValues.length) {
-        calibrationValues.sort((a, b) => a - b);
-        noiseDbR = calibrationValues[Math.floor(calibrationValues.length * .55)];
-      } else {
-        noiseDbR = 20;
-      }
-      els.noiseFloor.textContent = noiseDbR.toFixed(1);
-      updateThresholdUi();
-      hideNotice();
-      setStatus(armed ? '已就緒，等待擊發' : '擷取已暫停', armed ? 'live' : 'warn');
-    }
-
-    function handleAudioChunk(chunk) {
-      if (!running || !chunk.length) return;
-
-      const chunkRms = rmsOf(chunk);
-      const chunkDbR = relativeLevelFromRms(chunkRms);
-      liveDbR = chunkDbR;
-
-      if (calibrating) {
-        calibrationValues.push(chunkDbR);
-        if (performance.now() >= calibrationEnds) finishCalibration();
-        pushPreChunk(chunk);
-        return;
-      }
-
-      if (capture) {
-        capture.chunks.push(chunk.slice());
-        capture.sampleCount += chunk.length;
-        if (capture.sampleCount >= capture.targetSamples) finishCapture();
-        return;
-      }
-
-      const now = performance.now();
-      if (armed && now - lastTriggerAt > CONFIG.cooldownMs && chunkDbR >= effectiveThreshold()) {
-        capture = {
-          chunks: preChunks.map((part) => part.slice()),
-          sampleCount: preSampleCount,
-          triggerIndex: preSampleCount,
-          targetSamples: preSampleCount + Math.round(sampleRate * CONFIG.postMs / 1000)
-        };
-        capture.chunks.push(chunk.slice());
-        capture.sampleCount += chunk.length;
-        lastTriggerAt = now;
-        setStatus('擷取擊發波形…', 'live');
-        return;
-      }
-
-      pushPreChunk(chunk);
-    }
-
-    function pushPreChunk(chunk) {
-      const maxPreSamples = Math.round(sampleRate * CONFIG.preMs / 1000);
-      preChunks.push(chunk.slice());
-      preSampleCount += chunk.length;
-      while (preChunks.length && preSampleCount - preChunks[0].length >= maxPreSamples) {
-        preSampleCount -= preChunks[0].length;
-        preChunks.shift();
-      }
-    }
-
-    function finishCapture() {
-      const info = capture;
-      capture = null;
-      const total = info.chunks.reduce((sum, part) => sum + part.length, 0);
-      const data = new Float32Array(total);
-      let offset = 0;
-      for (const part of info.chunks) { data.set(part, offset); offset += part.length; }
-
-      const event = analyzeEvent(data, info.triggerIndex);
-      events.push(event);
-      selectedId = event.id;
-      if (!referenceId && !event.clipped) referenceId = event.id;
-      if (event.clipped) consecutiveClips += 1; else consecutiveClips = 0;
-
-      if (consecutiveClips >= 2) {
-        showNotice('已連續發生削波：請先把擊發點距離加倍、讓麥克風轉離聲源，並確認 Windows Microphone Boost／音效增強已關閉。削波解除前不可比較聲量。', true);
-      } else if (!event.clipped) {
-        hideNotice();
-      }
-
-      preChunks = [];
-      preSampleCount = 0;
-      updateAll();
-      setStatus(armed ? '已就緒，等待擊發' : '擷取已暫停', armed ? 'live' : 'warn');
-    }
-
-    function analyzeEvent(data, triggerIndex) {
-      const onset = detectOnset(data, triggerIndex);
-      const analysisEnd = Math.min(data.length, onset + Math.round(sampleRate * 160 / 1000));
-      let peak = 0;
-      let clipCount = 0;
-      let longestClipRun = 0;
-      let clipRun = 0;
-      let sumSquares = 0;
-      for (let i = onset; i < analysisEnd; i++) {
-        const abs = Math.abs(data[i]);
-        peak = Math.max(peak, abs);
-        sumSquares += data[i] * data[i];
-        if (abs >= CONFIG.rail) {
-          clipCount++;
-          clipRun++;
-          longestClipRun = Math.max(longestClipRun, clipRun);
-        } else clipRun = 0;
-      }
-
-      const energySeconds = sumSquares / sampleRate;
-      const eventDbR = clamp(10 * Math.log10(Math.max(energySeconds, 1e-12)) + 100, 0, 120);
-      const peakDbfs = toDb(peak);
-      const envelope = blockEnvelope(data, onset, analysisEnd, Math.max(8, Math.round(sampleRate * .00075)));
-      const peakBlock = envelope.reduce((best, value, index) => value > envelope[best] ? index : best, 0);
-      const peakEnvelope = envelope[peakBlock] || 0;
-      let tailBlock = peakBlock;
-      const tailThreshold = peakEnvelope * .1;
-      for (let i = peakBlock; i < envelope.length; i++) if (envelope[i] >= tailThreshold) tailBlock = i;
-      const tailMs = Math.max(0, (tailBlock - peakBlock) * .75);
-      const secondaryImpacts = countSecondaryImpacts(envelope, peakBlock, peakEnvelope);
-      const roughness = calculateRoughness(data, onset, analysisEnd);
-      const activeSamples = Math.max(1, analysisEnd - onset);
-
-      return {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        number: ++eventSerial,
-        timestamp: new Date(),
-        data,
-        sampleRate,
-        onset,
-        triggerIndex,
-        eventDbR,
-        peak,
-        peakDbfs,
-        clipped: clipCount > 0,
-        clipCount,
-        clipPct: clipCount / activeSamples * 100,
-        longestClipMs: longestClipRun / sampleRate * 1000,
-        tailMs,
-        secondaryImpacts,
-        roughness,
-        color: CONFIG.eventColors[events.length % CONFIG.eventColors.length]
-      };
-    }
-
-    function detectOnset(data, triggerIndex) {
-      const blockSize = Math.max(8, Math.round(sampleRate * .0005));
-      const searchStart = Math.max(0, triggerIndex - Math.round(sampleRate * CONFIG.preMs / 1000));
-      const searchEnd = Math.min(data.length, triggerIndex + Math.round(sampleRate * 12 / 1000));
-      let peakRms = 0;
-      const blocks = [];
-      for (let i = searchStart; i < searchEnd; i += blockSize) {
-        const value = rmsOf(data, i, Math.min(searchEnd, i + blockSize));
-        blocks.push({ index: i, value });
-        peakRms = Math.max(peakRms, value);
-      }
-      const baseEnd = Math.max(1, Math.floor(blocks.length * .35));
-      const baseline = blocks.slice(0, baseEnd).reduce((s, b) => s + b.value, 0) / baseEnd;
-      const threshold = Math.max(baseline * 4, peakRms * .08);
-      const found = blocks.find((block) => block.value >= threshold);
-      return found ? found.index : Math.max(0, triggerIndex - blockSize);
-    }
-
-    function blockEnvelope(data, start, end, blockSize) {
-      const values = [];
-      for (let i = start; i < end; i += blockSize) values.push(rmsOf(data, i, Math.min(end, i + blockSize)));
-      return values;
-    }
-
-    function countSecondaryImpacts(envelope, peakIndex, peakValue) {
-      if (!peakValue) return 0;
-      let count = 0;
-      let last = peakIndex;
-      const minGap = 4;
-      for (let i = peakIndex + minGap; i < envelope.length - 1; i++) {
-        if (envelope[i] > peakValue * .22 && envelope[i] >= envelope[i - 1] && envelope[i] > envelope[i + 1] && i - last >= minGap) {
-          count++;
-          last = i;
+        const blob = new Blob([workletCode], { type: 'application/javascript' });
+        const url = URL.createObjectURL(blob);
+        try {
+          await audioContext.audioWorklet.addModule(url);
+        } finally {
+          URL.revokeObjectURL(url);
         }
-      }
-      return count;
-    }
-
-    function calculateRoughness(data, start, end) {
-      let diffEnergy = 0;
-      let signalEnergy = 0;
-      for (let i = start + 1; i < end; i++) {
-        const d = data[i] - data[i - 1];
-        diffEnergy += d * d;
-        signalEnergy += data[i] * data[i];
-      }
-      return Math.sqrt(diffEnergy / Math.max(signalEnergy, 1e-12));
-    }
-
-    function comparisonFor(event) {
-      const ref = events.find((item) => item.id === referenceId);
-      if (!ref || ref.id === event.id) return { similarity: 100, anomalyScore: 0, state: '基準', limited: event.clipped };
-      if (event.clipped || ref.clipped) return { similarity: null, anomalyScore: null, state: '削波', limited: true };
-
-      const similarity = maxNormalizedCorrelation(event, ref) * 100;
-      const shapeDifference = clamp(1 - similarity / 100, 0, 1);
-      const roughnessDifference = clamp(Math.abs(Math.log2(Math.max(event.roughness, 1e-6) / Math.max(ref.roughness, 1e-6))) / 2, 0, 1);
-      const impactDifference = clamp(Math.abs(event.secondaryImpacts - ref.secondaryImpacts) / 3, 0, 1);
-      const anomalyScore = 100 * (.60 * shapeDifference + .25 * roughnessDifference + .15 * impactDifference);
-      const state = anomalyScore < 25 ? '差異低' : anomalyScore < 50 ? '請留意' : '差異大';
-      return { similarity, anomalyScore, state, limited: false };
-    }
-
-    function maxNormalizedCorrelation(a, b) {
-      const length = Math.min(
-        Math.round(sampleRate * .10),
-        a.data.length - a.onset,
-        b.data.length - b.onset
-      );
-      if (length < 32) return 0;
-      const maxShift = Math.round(sampleRate * .0008);
-      let best = -1;
-      for (let shift = -maxShift; shift <= maxShift; shift += 2) {
-        let dot = 0, aa = 0, bb = 0;
-        for (let i = 0; i < length; i += 3) {
-          const ai = a.onset + i;
-          const bi = b.onset + i + shift;
-          if (bi < 0 || bi >= b.data.length) continue;
-          const av = a.data[ai] / Math.max(a.peak, 1e-9);
-          const bv = b.data[bi] / Math.max(b.peak, 1e-9);
-          dot += av * bv; aa += av * av; bb += bv * bv;
-        }
-        if (aa && bb) best = Math.max(best, Math.abs(dot / Math.sqrt(aa * bb)));
-      }
-      return clamp(best, 0, 1);
-    }
-
-    function updateThresholdUi() {
-      const value = configuredThreshold();
-      const effective = effectiveThreshold();
-      els.triggerRange.value = value;
-      els.triggerNumber.value = value;
-      els.effectiveThreshold.textContent = effective.toFixed(1);
-      els.thresholdMarker.style.left = `${value}%`;
-      els.thresholdMarker.setAttribute('aria-valuenow', String(value));
-      els.thresholdMarker.setAttribute('aria-valuetext', `${value} dB-R`);
-      els.thresholdValue.textContent = String(value);
-      const autoGateActive = noiseDbR != null && effective > value + .5;
-      els.autoGateMarker.hidden = !autoGateActive;
-      els.autoGateMarker.style.left = `${clamp(effective, 0, 100)}%`;
-    }
-
-    function setConfiguredThreshold(value) {
-      const next = Math.round(clamp(Number(value) || 40, 20, 90));
-      els.triggerRange.value = next;
-      els.triggerNumber.value = next;
-      updateThresholdUi();
-    }
-
-    function setThresholdFromPointer(clientX) {
-      const rect = els.liveMeter.getBoundingClientRect();
-      if (!rect.width) return;
-      const value = (clientX - rect.left) / rect.width * 100;
-      setConfiguredThreshold(value);
-    }
-
-    function updateAll() {
-      renderHistory();
-      renderCurrent();
-      renderOverlay();
-      renderSurface();
-      updateMetrics();
-      els.exportBtn.disabled = events.length === 0;
-      els.clearBtn.disabled = events.length === 0;
-      els.setRefTopBtn.disabled = !selectedId;
-      els.eventCount.textContent = `${events.length} 筆`;
-    }
-
-    function selectedEvent() { return events.find((event) => event.id === selectedId) || events.at(-1) || null; }
-
-    function updateMetrics() {
-      const event = selectedEvent();
-      if (!event) return;
-      const compare = comparisonFor(event);
-      els.eventLevel.textContent = event.eventDbR.toFixed(1);
-      els.peakLevel.textContent = event.peakDbfs.toFixed(1);
-      els.clipState.textContent = event.clipped ? '削波' : '正常';
-      els.clipState.className = `metric-value ${event.clipped ? 'bad' : 'good'}`;
-      els.clipSub.textContent = event.clipped
-        ? `${event.clipPct.toFixed(2)}%｜最長 ${event.longestClipMs.toFixed(2)} ms｜聲量僅為下限`
-        : '未觸及數位 rail，可用於相對聲量比較';
-      els.similarity.textContent = compare.similarity == null ? '—' : compare.similarity.toFixed(0);
-      els.anomalyState.textContent = compare.state;
-      els.anomalyState.className = `metric-value ${compare.state === '差異大' || compare.state === '削波' ? 'bad' : compare.state === '請留意' ? 'warning' : 'good'}`;
-      els.anomalySub.textContent = compare.limited
-        ? '削波造成形狀失真，不提供異音分數'
-        : `拖尾 ${event.tailMs.toFixed(1)} ms｜二次撞擊 ${event.secondaryImpacts} 次｜僅供參考`;
-    }
-
-    function renderHistory() {
-      els.historyEmpty.hidden = events.length > 0;
-      els.tableWrap.hidden = events.length === 0;
-      els.historyBody.innerHTML = '';
-      [...events].reverse().forEach((event) => {
-        const compare = comparisonFor(event);
-        const row = document.createElement('tr');
-        if (event.id === selectedId) row.classList.add('selected');
-        const clipHtml = event.clipped
-          ? `<span class="badge bad">${event.clipPct.toFixed(2)}%</span>`
-          : '<span class="badge good">正常</span>';
-        const stateClass = compare.state === '差異大' || compare.state === '削波' ? 'bad' : compare.state === '請留意' ? 'warning' : 'good';
-        row.innerHTML = `
-          <td><span class="event-color" style="background:${event.color}"></span>#${event.number}${event.id === referenceId ? ' · 基準' : ''}</td>
-          <td>${event.clipped ? '&gt;' : ''}${event.eventDbR.toFixed(1)} dB-R</td>
-          <td>${event.peakDbfs.toFixed(1)} dBFS</td>
-          <td>${clipHtml}</td>
-          <td>${event.tailMs.toFixed(1)} ms</td>
-          <td>${event.secondaryImpacts}</td>
-          <td>${compare.similarity == null ? '—' : `${compare.similarity.toFixed(0)}%`}</td>
-          <td><span class="${stateClass}">${compare.state}</span></td>
-          <td><button class="small ref-btn">設基準</button> <button class="small danger del-btn">刪除</button></td>`;
-        row.addEventListener('click', () => { selectedId = event.id; updateAll(); });
-        row.querySelector('.ref-btn').addEventListener('click', (e) => { e.stopPropagation(); setReference(event.id); });
-        row.querySelector('.del-btn').addEventListener('click', (e) => { e.stopPropagation(); deleteEvent(event.id); });
-        els.historyBody.appendChild(row);
-      });
-    }
-
-    function setReference(id) {
-      const event = events.find((item) => item.id === id);
-      if (!event) return;
-      if (event.clipped) {
-        showNotice('削波波形不能設為異音比較基準。請先調整距離或輸入增益，選擇未削波的正常擊發。', true);
-        return;
-      }
-      referenceId = id;
-      selectedId = id;
-      hideNotice();
-      updateAll();
-    }
-
-    function deleteEvent(id) {
-      events = events.filter((event) => event.id !== id);
-      if (selectedId === id) selectedId = events.at(-1)?.id || null;
-      if (referenceId === id) referenceId = events.find((event) => !event.clipped)?.id || null;
-      updateAll();
-    }
-
-    function prepareCanvas(canvas) {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const width = Math.max(320, Math.round(rect.width * dpr));
-      const height = Math.max(180, Math.round(rect.height * dpr));
-      if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
-      const ctx = canvas.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      return { ctx, width: rect.width, height: rect.height };
-    }
-
-    function drawGrid(ctx, width, height, left = 42, top = 15, right = 12, bottom = 28) {
-      const plotW = width - left - right;
-      const plotH = height - top - bottom;
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#fbfdfe'; ctx.fillRect(0, 0, width, height);
-      ctx.strokeStyle = '#d9e5eb'; ctx.lineWidth = 1;
-      for (let i = 0; i <= 4; i++) {
-        const y = top + plotH * i / 4;
-        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
-      }
-      for (let i = 0; i <= 6; i++) {
-        const x = left + plotW * i / 6;
-        ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, height - bottom); ctx.stroke();
-      }
-      ctx.fillStyle = '#607985'; ctx.font = '10px system-ui';
-      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      ['+1.0', '+0.5', '0', '-0.5', '-1.0'].forEach((label, i) => ctx.fillText(label, left - 7, top + plotH * i / 4));
-      return { left, top, right, bottom, plotW, plotH };
-    }
-
-    function renderCurrent() {
-      const { ctx, width, height } = prepareCanvas(els.currentCanvas);
-      const plot = drawGrid(ctx, width, height);
-      const event = selectedEvent();
-      if (!event) {
-        drawCenteredMessage(ctx, width, height, '等待擊發波形');
-        return;
-      }
-
-      const startMs = -15;
-      const endMs = 150;
-      drawTimeLabels(ctx, plot, startMs, endMs);
-      drawEventLine(ctx, plot, event, event.color, false, 2.0, startMs, endMs, true);
-      const triggerX = plot.left + (0 - startMs) / (endMs - startMs) * plot.plotW;
-      ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#284c5aaa';
-      ctx.beginPath(); ctx.moveTo(triggerX, plot.top); ctx.lineTo(triggerX, plot.top + plot.plotH); ctx.stroke(); ctx.restore();
-      ctx.fillStyle = '#45636f'; ctx.textAlign = 'left'; ctx.fillText('波形起點', triggerX + 5, plot.top + 11);
-      els.currentWaveNote.textContent = `事件 #${event.number}｜${event.clipped ? '削波，紅色區段不可還原' : '未削波，可比較相對強度'}｜起點自動對齊`;
-    }
-
-    function renderOverlay() {
-      const { ctx, width, height } = prepareCanvas(els.overlayCanvas);
-      const plot = drawGrid(ctx, width, height);
-      const startMs = -10;
-      const endMs = 130;
-      drawTimeLabels(ctx, plot, startMs, endMs);
-      const shown = events.slice(-CONFIG.maxOverlay);
-      if (!shown.length) {
-        drawCenteredMessage(ctx, width, height, '累積兩次以上擊發後，可在此比較');
-        els.legend.innerHTML = '';
-        return;
-      }
-      shown.forEach((event) => drawEventLine(ctx, plot, event, event.color, overlayMode === 'shape', event.id === referenceId ? 2.6 : 1.25, startMs, endMs, false));
-      els.legend.innerHTML = shown.map((event) => `<span><i style="background:${event.color}"></i>#${event.number}${event.id === referenceId ? ' 基準' : ''}${event.clipped ? ' 削波' : ''}</span>`).join('');
-      els.overlayNote.textContent = overlayMode === 'raw'
-        ? '原始振幅：高度與事件能量用來比較聲音大小'
-        : '正規化形狀：每筆除以自身峰值，用來觀察雙擊、拖尾與振鈴';
-    }
-
-    function computeStft(event) {
-      if (event.stft) return event.stft;
-      const fftSize = CONFIG.fftSize;
-      const hop = CONFIG.fftHop;
-      const sr = event.sampleRate || sampleRate;
-      const start = Math.max(0, event.onset - Math.round(sr * .005));
-      const end = Math.min(event.data.length, event.onset + Math.round(sr * .150));
-      const window = new Float64Array(fftSize);
-      let windowSum = 0;
-      for (let i = 0; i < fftSize; i++) {
-        window[i] = .5 - .5 * Math.cos(2 * Math.PI * i / (fftSize - 1));
-        windowSum += window[i];
-      }
-
-      const binCount = fftSize / 2 + 1;
-      const frames = [];
-      const times = [];
-      const powerSums = new Float64Array(binCount);
-
-      for (let pos = start; pos + fftSize <= end; pos += hop) {
-        const real = new Float64Array(fftSize);
-        const imag = new Float64Array(fftSize);
-        let mean = 0;
-        for (let i = 0; i < fftSize; i++) mean += event.data[pos + i];
-        mean /= fftSize;
-        for (let i = 0; i < fftSize; i++) real[i] = (event.data[pos + i] - mean) * window[i];
-        fftInPlace(real, imag);
-
-        const spectrum = new Float32Array(binCount);
-        for (let k = 0; k < binCount; k++) {
-          const amplitude = Math.hypot(real[k], imag[k]) * (k === 0 || k === fftSize / 2 ? 1 : 2) / windowSum;
-          powerSums[k] += amplitude * amplitude;
-          spectrum[k] = clamp(20 * Math.log10(Math.max(amplitude, 1e-12)), -120, 0);
-        }
-        frames.push(spectrum);
-        times.push((pos + fftSize / 2 - event.onset) / sr * 1000);
-      }
-
-      const binHz = sr / fftSize;
-      let dominantBin = Math.max(1, Math.ceil(150 / binHz));
-      for (let k = dominantBin + 1; k < binCount; k++) {
-        if (powerSums[k] > powerSums[dominantBin]) dominantBin = k;
-      }
-      event.stft = { frames, times, binHz, dominantHz: dominantBin * binHz };
-      return event.stft;
-    }
-
-    function fftInPlace(real, imag) {
-      const n = real.length;
-      for (let i = 1, j = 0; i < n; i++) {
-        let bit = n >> 1;
-        while (j & bit) { j ^= bit; bit >>= 1; }
-        j ^= bit;
-        if (i < j) {
-          [real[i], real[j]] = [real[j], real[i]];
-          [imag[i], imag[j]] = [imag[j], imag[i]];
-        }
-      }
-      for (let length = 2; length <= n; length <<= 1) {
-        const angle = -2 * Math.PI / length;
-        const stepReal = Math.cos(angle);
-        const stepImag = Math.sin(angle);
-        for (let start = 0; start < n; start += length) {
-          let wReal = 1;
-          let wImag = 0;
-          for (let offset = 0; offset < length / 2; offset++) {
-            const even = start + offset;
-            const odd = even + length / 2;
-            const oddReal = real[odd] * wReal - imag[odd] * wImag;
-            const oddImag = real[odd] * wImag + imag[odd] * wReal;
-            real[odd] = real[even] - oddReal;
-            imag[odd] = imag[even] - oddImag;
-            real[even] += oddReal;
-            imag[even] += oddImag;
-            const nextReal = wReal * stepReal - wImag * stepImag;
-            wImag = wReal * stepImag + wImag * stepReal;
-            wReal = nextReal;
+        const node = new AudioWorkletNode(audioContext, 'needle-pcm-recorder', {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [1]
+        });
+        node.port.onmessage = (event) => {
+          if (event.data.type === 'data') {
+            const chunk = new Float32Array(event.data.buffer);
+            chunks.push(chunk);
+            totalSamples += chunk.length;
+          } else if (event.data.type === 'stopped' && stopResolver) {
+            stopResolver();
+            stopResolver = null;
           }
-        }
-      }
-    }
-
-    function surfaceColor(db) {
-      const stops = [
-        [33, 26, 87], [23, 78, 166], [7, 140, 130], [224, 173, 32], [216, 59, 54]
-      ];
-      const value = clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
-      const scaled = value * (stops.length - 1);
-      const index = Math.min(stops.length - 2, Math.floor(scaled));
-      const mix = scaled - index;
-      const color = stops[index].map((channel, i) => Math.round(channel + (stops[index + 1][i] - channel) * mix));
-      return `rgb(${color[0]},${color[1]},${color[2]})`;
-    }
-
-    function renderSurface() {
-      const { ctx, width, height } = prepareCanvas(els.surfaceCanvas);
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#fbfdfe';
-      ctx.fillRect(0, 0, width, height);
-      const event = selectedEvent();
-      if (!event) {
-        drawCenteredMessage(ctx, width, height, '等待單次擊發資料');
-        els.surfaceNote.textContent = '選取擊發事件後顯示｜Hann 256 samples、Hop 64、固定 dBFS 色階';
-        return;
-      }
-
-      const stft = computeStft(event);
-      if (!stft.frames.length) {
-        drawCenteredMessage(ctx, width, height, '訊號長度不足，無法計算 STFT');
-        els.surfaceNote.textContent = `事件 #${event.number}｜訊號長度不足，無法計算 STFT`;
-        return;
-      }
-
-      const maxFrequency = Math.min(Number(els.surfaceFreqSelect.value), (event.sampleRate || sampleRate) / 2);
-      const maxBin = Math.max(1, Math.min(stft.frames[0].length - 1, Math.floor(maxFrequency / stft.binHz)));
-      const timeStep = Math.max(1, Math.ceil((stft.frames.length - 1) / 68));
-      const frequencyStep = Math.max(1, Math.ceil(maxBin / 46));
-      const timeIndices = [];
-      const frequencyIndices = [];
-      for (let i = 0; i < stft.frames.length; i += timeStep) timeIndices.push(i);
-      if (timeIndices.at(-1) !== stft.frames.length - 1) timeIndices.push(stft.frames.length - 1);
-      for (let i = 0; i <= maxBin; i += frequencyStep) frequencyIndices.push(i);
-      if (frequencyIndices.at(-1) !== maxBin) frequencyIndices.push(maxBin);
-
-      const origin = { x: Math.max(45, width * .095), y: height * .82 };
-      const timeVector = { x: width * .68, y: 0 };
-      const frequencyVector = { x: width * .17, y: -height * .27 };
-      const heightScale = height * .39;
-      const normalizeDb = (db) => clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
-      const project = (timeIndex, frequencyIndex, db) => {
-        const u = timeIndex / Math.max(1, stft.frames.length - 1);
-        const v = frequencyIndex / maxBin;
-        const z = normalizeDb(db);
-        return {
-          x: origin.x + u * timeVector.x + v * frequencyVector.x,
-          y: origin.y + u * timeVector.y + v * frequencyVector.y - z * heightScale
         };
-      };
+        return node;
+      }
 
-      for (let fi = frequencyIndices.length - 2; fi >= 0; fi--) {
-        const f0 = frequencyIndices[fi];
-        const f1 = frequencyIndices[fi + 1];
-        for (let ti = 0; ti < timeIndices.length - 1; ti++) {
-          const t0 = timeIndices[ti];
-          const t1 = timeIndices[ti + 1];
-          const d00 = stft.frames[t0][f0];
-          const d10 = stft.frames[t1][f0];
-          const d11 = stft.frames[t1][f1];
-          const d01 = stft.frames[t0][f1];
-          const points = [project(t0, f0, d00), project(t1, f0, d10), project(t1, f1, d11), project(t0, f1, d01)];
-          ctx.beginPath();
-          ctx.moveTo(points[0].x, points[0].y);
-          for (let p = 1; p < points.length; p++) ctx.lineTo(points[p].x, points[p].y);
-          ctx.closePath();
-          ctx.fillStyle = surfaceColor((d00 + d10 + d11 + d01) / 4);
-          ctx.globalAlpha = .91;
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(16,42,54,.08)';
-          ctx.lineWidth = .55;
-          ctx.stroke();
+      function createLegacyRecorder() {
+        const node = audioContext.createScriptProcessor(4096, 1, 1);
+        node.onaudioprocess = (event) => {
+          if (!recording) return;
+          const chunk = new Float32Array(event.inputBuffer.getChannelData(0));
+          chunks.push(chunk);
+          totalSamples += chunk.length;
+        };
+        return node;
+      }
+
+      async function openMicrophone() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setMessage('此瀏覽器或開啟方式無法使用麥克風。請改用最新版Chrome／Edge，必要時以localhost或HTTPS開啟。', 'danger');
+          return;
+        }
+        if (recording) return;
+        openMicBtn.disabled = true;
+        startBtn.disabled = true;
+        setMessage('正在取得麥克風權限與實際設定…');
+
+        const selectedId = micSelect.value;
+        await closeAudio();
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: selectedId ? { exact: selectedId } : undefined,
+              channelCount: { ideal: 1 },
+              sampleRate: { ideal: 48000 },
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            }
+          });
+
+          const track = stream.getAudioTracks()[0];
+          currentSettings = track.getSettings ? track.getSettings() : {};
+          await refreshDevices(currentSettings.deviceId || selectedId);
+
+          audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            latencyHint: 'interactive',
+            sampleRate: 48000
+          });
+          await audioContext.resume();
+          sourceNode = audioContext.createMediaStreamSource(stream);
+          analyserNode = audioContext.createAnalyser();
+          analyserNode.fftSize = 2048;
+          analyserNode.smoothingTimeConstant = 0;
+          muteNode = audioContext.createGain();
+          muteNode.gain.value = 0;
+
+          sourceNode.connect(analyserNode);
+          analyserNode.connect(muteNode);
+
+          if (audioContext.audioWorklet) {
+            recorderNode = await createWorkletRecorder();
+            recorderEngine = 'AudioWorklet';
+          } else {
+            recorderNode = createLegacyRecorder();
+            recorderEngine = 'ScriptProcessor fallback';
+          }
+          sourceNode.connect(recorderNode);
+          recorderNode.connect(muteNode);
+          muteNode.connect(audioContext.destination);
+
+          updateSettings(track.label || micSelect.options[micSelect.selectedIndex]?.text || '未知裝置');
+          drawLive();
+          startBtn.disabled = false;
+          setMessage('麥克風已就緒。固定位置後，按「開始60秒錄音」。', '');
+        } catch (error) {
+          console.error(error);
+          setMessage(`無法啟動麥克風：${error.name || 'Error'}。請確認權限、裝置是否被其他程式占用，並重新嘗試。`, 'danger');
+          await closeAudio();
+        } finally {
+          openMicBtn.disabled = false;
         }
       }
-      ctx.globalAlpha = 1;
-      drawSurfaceAxes(ctx, width, height, origin, timeVector, frequencyVector, heightScale, stft, maxFrequency);
-      els.surfaceNote.textContent = `事件 #${event.number}｜主要頻率約 ${(stft.dominantHz / 1000).toFixed(2)} kHz｜${event.clipped ? '訊號削波，頻譜可能含假諧波' : '未削波'}｜固定色階 ${CONFIG.stftFloorDb} 至 ${CONFIG.stftCeilDb} dBFS`;
-    }
 
-    function drawSurfaceAxes(ctx, width, height, origin, timeVector, frequencyVector, heightScale, stft, maxFrequency) {
-      ctx.save();
-      ctx.strokeStyle = '#78909b';
-      ctx.fillStyle = '#536d78';
-      ctx.lineWidth = 1.2;
-      ctx.font = '10px system-ui';
-      ctx.textBaseline = 'middle';
-      const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
-      line(origin.x, origin.y, origin.x + timeVector.x, origin.y + timeVector.y);
-      line(origin.x, origin.y, origin.x + frequencyVector.x, origin.y + frequencyVector.y);
-      line(origin.x, origin.y, origin.x, origin.y - heightScale);
-
-      const firstTime = stft.times[0];
-      const lastTime = stft.times.at(-1);
-      ctx.textAlign = 'center';
-      for (let i = 0; i <= 4; i++) {
-        const u = i / 4;
-        const x = origin.x + u * timeVector.x;
-        line(x, origin.y - 3, x, origin.y + 4);
-        ctx.fillText(`${Math.round(firstTime + u * (lastTime - firstTime))} ms`, x, origin.y + 14);
+      function updateSettings(label) {
+        const boolState = (value, id) => {
+          const el = $(id);
+          if (value === false) { el.textContent = '關閉'; el.className = 'status-value ok'; }
+          else if (value === true) { el.textContent = '開啟'; el.className = 'status-value warn'; }
+          else { el.textContent = '瀏覽器未回報'; el.className = 'status-value warn'; }
+        };
+        $('engineStatus').textContent = recorderEngine;
+        $('engineStatus').className = 'status-value ok';
+        $('sampleRateStatus').textContent = `${audioContext.sampleRate.toLocaleString()} Hz`;
+        $('channelStatus').textContent = `${currentSettings.channelCount || 1} ch（取第1聲道）`;
+        $('deviceStatus').textContent = label;
+        boolState(currentSettings.autoGainControl, 'agcStatus');
+        boolState(currentSettings.noiseSuppression, 'nsStatus');
+        boolState(currentSettings.echoCancellation, 'ecStatus');
       }
-      ctx.fillText('時間', origin.x + timeVector.x * .52, origin.y + 29);
 
-      ctx.textAlign = 'right';
-      for (let i = 0; i <= 4; i++) {
-        const v = i / 4;
-        const x = origin.x + v * frequencyVector.x;
-        const y = origin.y + v * frequencyVector.y;
-        line(x - 3, y + 2, x + 3, y - 2);
-        ctx.fillText(`${(v * maxFrequency / 1000).toFixed(v ? 0 : 1)}k`, x - 6, y - 2);
-      }
-      ctx.textAlign = 'left';
-      ctx.fillText('頻率 Hz', origin.x + frequencyVector.x + 8, origin.y + frequencyVector.y - 4);
+      function drawLive() {
+        if (!analyserNode) return;
+        const data = new Float32Array(analyserNode.fftSize);
+        analyserNode.getFloatTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+        const rms = Math.sqrt(sum / data.length);
+        const levelDb = dbfs(rms);
+        const normalized = Math.max(0, Math.min(1, (levelDb + 80) / 80));
+        $('meterMask').style.width = `${(1 - normalized) * 100}%`;
+        $('meterValue').textContent = formatDb(levelDb);
 
-      ctx.textAlign = 'right';
-      const dbTicks = [-80, -60, -40, -20, -5];
-      for (const db of dbTicks) {
-        const z = clamp((db - CONFIG.stftFloorDb) / (CONFIG.stftCeilDb - CONFIG.stftFloorDb), 0, 1);
-        const y = origin.y - z * heightScale;
-        line(origin.x - 3, y, origin.x + 3, y);
-        ctx.fillText(String(db), origin.x - 7, y);
-      }
-      ctx.save();
-      ctx.translate(origin.x - 39, origin.y - heightScale * .5);
-      ctx.rotate(-Math.PI / 2);
-      ctx.textAlign = 'center';
-      ctx.fillText('強度 dBFS', 0, 0);
-      ctx.restore();
-      ctx.restore();
-    }
-
-    function drawEventLine(ctx, plot, event, color, normalize, lineWidth, startMs, endMs, highlightClips) {
-      const samplesPerPixel = Math.max(1, Math.floor((endMs - startMs) / 1000 * sampleRate / plot.plotW));
-      const scale = normalize ? Math.max(event.peak, 1e-9) : 1;
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = event.clipped ? .72 : .9;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      let started = false;
-      for (let px = 0; px <= plot.plotW; px++) {
-        const ms = startMs + px / plot.plotW * (endMs - startMs);
-        const center = Math.round(event.onset + ms / 1000 * sampleRate);
-        const a = Math.max(0, center - Math.floor(samplesPerPixel / 2));
-        const b = Math.min(event.data.length, center + Math.ceil(samplesPerPixel / 2));
-        if (a >= b) continue;
-        let value = 0;
-        for (let i = a; i < b; i++) if (Math.abs(event.data[i]) > Math.abs(value)) value = event.data[i];
-        value = clamp(value / scale, -1.08, 1.08);
-        const x = plot.left + px;
-        const y = plot.top + plot.plotH * (.5 - value / 2.16);
-        if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-      ctx.restore();
-
-      if (highlightClips && event.clipped) {
-        ctx.save(); ctx.strokeStyle = '#d83b36'; ctx.lineWidth = 2.4;
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#f9fcfd';
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = '#dbe7ec';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+          const y = h * i / 4;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+        ctx.strokeStyle = '#7c4ac7';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        let drawing = false;
-        for (let i = 0; i < event.data.length; i++) {
-          if (Math.abs(event.data[i]) < CONFIG.rail) { drawing = false; continue; }
-          const ms = (i - event.onset) / sampleRate * 1000;
-          if (ms < startMs || ms > endMs) continue;
-          const x = plot.left + (ms - startMs) / (endMs - startMs) * plot.plotW;
-          const y = plot.top + plot.plotH * (.5 - clamp(event.data[i], -1.08, 1.08) / 2.16);
-          if (!drawing) { ctx.moveTo(x, y); drawing = true; } else ctx.lineTo(x, y);
+        for (let i = 0; i < data.length; i++) {
+          const x = i / (data.length - 1) * w;
+          const y = h / 2 - data[i] * h * .42;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
-        ctx.stroke(); ctx.restore();
+        ctx.stroke();
+        animationId = requestAnimationFrame(drawLive);
       }
-    }
 
-    function drawTimeLabels(ctx, plot, startMs, endMs) {
-      ctx.fillStyle = '#607985'; ctx.font = '10px system-ui'; ctx.textBaseline = 'top';
-      for (let i = 0; i <= 6; i++) {
-        const ms = startMs + (endMs - startMs) * i / 6;
-        const x = plot.left + plot.plotW * i / 6;
-        ctx.textAlign = i === 0 ? 'left' : i === 6 ? 'right' : 'center';
-        ctx.fillText(`${Math.round(ms)} ms`, x, plot.top + plot.plotH + 8);
+      async function startRecording() {
+        if (!audioContext || recording) return;
+        if (audioContext.state === 'suspended') await audioContext.resume();
+        if (wavUrl) URL.revokeObjectURL(wavUrl);
+        if (jsonUrl) URL.revokeObjectURL(jsonUrl);
+        wavUrl = jsonUrl = null;
+        chunks = [];
+        totalSamples = 0;
+        recording = true;
+        recordingStartedAt = performance.now();
+        recordingIsoTime = new Date().toISOString();
+        $('result').classList.remove('show');
+        $('recordDot').classList.add('live');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        openMicBtn.disabled = true;
+        micSelect.disabled = true;
+        if (recorderEngine === 'AudioWorklet') recorderNode.port.postMessage('start');
+        setMessage('錄音中：請依15、30、45秒節奏擊發三次正常檢體針。', 'danger');
+
+        timerId = setInterval(() => {
+          const elapsed = (performance.now() - recordingStartedAt) / 1000;
+          $('timeText').textContent = formatTime(elapsed);
+          $('progressFill').style.width = `${Math.min(100, elapsed / RECORD_SECONDS * 100)}%`;
+          if (elapsed >= RECORD_SECONDS) stopRecording();
+        }, 100);
       }
-    }
 
-    function drawCenteredMessage(ctx, width, height, text) {
-      ctx.fillStyle = '#667f8a'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(text, width / 2, height / 2);
-    }
+      async function stopRecording() {
+        if (!recording) return;
+        recording = false;
+        if (timerId) clearInterval(timerId);
+        timerId = null;
+        stopBtn.disabled = true;
+        $('recordDot').classList.remove('live');
+        setMessage('正在整理WAV與每10 ms的中性量測資料，請稍候…');
 
-    function renderLoop() {
-      const value = clamp(liveDbR, 0, 100);
-      els.liveValue.textContent = value.toFixed(1);
-      els.meterFill.style.width = `${value}%`;
-      requestAnimationFrame(renderLoop);
-    }
+        if (recorderEngine === 'AudioWorklet') {
+          await new Promise((resolve) => {
+            stopResolver = resolve;
+            recorderNode.port.postMessage('stop');
+            setTimeout(() => {
+              if (stopResolver) { stopResolver(); stopResolver = null; }
+            }, 1000);
+          });
+        }
 
-    function exportCsv() {
-      if (!events.length) return;
-      const rows = [['event', 'time', 'event_level_db_r', 'peak_dbfs', 'clipped', 'clip_pct', 'longest_clip_ms', 'tail_ms', 'secondary_impacts', 'shape_similarity_pct', 'anomaly_reference', 'is_reference']];
-      for (const event of events) {
-        const compare = comparisonFor(event);
-        rows.push([
-          event.number, event.timestamp.toISOString(), event.eventDbR.toFixed(2), event.peakDbfs.toFixed(2), event.clipped,
-          event.clipPct.toFixed(4), event.longestClipMs.toFixed(3), event.tailMs.toFixed(2), event.secondaryImpacts,
-          compare.similarity == null ? '' : compare.similarity.toFixed(2), compare.state, event.id === referenceId
-        ]);
+        const elapsed = Math.min(RECORD_SECONDS, (performance.now() - recordingStartedAt) / 1000);
+        $('timeText').textContent = formatTime(elapsed);
+        $('progressFill').style.width = `${elapsed / RECORD_SECONDS * 100}%`;
+        await finalizeRecording();
+        openMicBtn.disabled = false;
+        micSelect.disabled = false;
+        startBtn.disabled = false;
+        setMessage('錄音完成。請下載WAV與JSON，將兩個檔案上傳到此對話。', '');
       }
-      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\r\n');
-      const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
-      const link = document.createElement('a');
-      link.href = url; link.download = `needle-sound-${new Date().toISOString().slice(0, 19).replaceAll(':', '-')}.csv`;
-      link.click(); URL.revokeObjectURL(url);
-    }
 
-    els.startBtn.addEventListener('click', async () => {
-      // 尚未取得權限前，下拉選單只是提示文字，不能當作 deviceId。
-      const selectedOption = els.micSelect.selectedOptions[0];
-      const deviceId = selectedOption?.dataset.realDevice === 'true' ? selectedOption.value : '';
-      if (running) await stopAudio(true); else await startAudio(deviceId);
-    });
-    els.armBtn.addEventListener('click', () => {
-      armed = !armed;
-      els.armBtn.textContent = armed ? '暫停擷取' : '繼續擷取';
-      setStatus(armed ? '已就緒，等待擊發' : '擷取已暫停', armed ? 'live' : 'warn');
-    });
-    els.calibrateBtn.addEventListener('click', beginCalibration);
-    els.micSelect.addEventListener('change', () => startAudio(els.micSelect.value));
-    els.triggerRange.addEventListener('input', () => setConfiguredThreshold(els.triggerRange.value));
-    els.triggerNumber.addEventListener('change', () => setConfiguredThreshold(els.triggerNumber.value));
+      function mergeChunks() {
+        const merged = new Float32Array(totalSamples);
+        let offset = 0;
+        for (const chunk of chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+        return merged;
+      }
 
-    let thresholdDragging = false;
-    els.liveMeter.addEventListener('pointerdown', (event) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      thresholdDragging = true;
-      els.liveMeter.setPointerCapture?.(event.pointerId);
-      setThresholdFromPointer(event.clientX);
-      event.preventDefault();
-    });
-    els.liveMeter.addEventListener('pointermove', (event) => {
-      if (!thresholdDragging) return;
-      setThresholdFromPointer(event.clientX);
-      event.preventDefault();
-    });
-    const stopThresholdDrag = (event) => {
-      thresholdDragging = false;
-      if (els.liveMeter.hasPointerCapture?.(event.pointerId)) els.liveMeter.releasePointerCapture(event.pointerId);
-    };
-    els.liveMeter.addEventListener('pointerup', stopThresholdDrag);
-    els.liveMeter.addEventListener('pointercancel', stopThresholdDrag);
-    els.thresholdMarker.addEventListener('keydown', (event) => {
-      const current = configuredThreshold();
-      const step = event.shiftKey ? 5 : 1;
-      let next = null;
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') next = current - step;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowUp') next = current + step;
-      if (event.key === 'Home') next = 20;
-      if (event.key === 'End') next = 90;
-      if (next == null) return;
-      setConfiguredThreshold(next);
-      event.preventDefault();
-    });
-    els.rawModeBtn.addEventListener('click', () => {
-      overlayMode = 'raw'; els.rawModeBtn.classList.add('active'); els.shapeModeBtn.classList.remove('active'); renderOverlay();
-    });
-    els.shapeModeBtn.addEventListener('click', () => {
-      overlayMode = 'shape'; els.shapeModeBtn.classList.add('active'); els.rawModeBtn.classList.remove('active'); renderOverlay();
-    });
-    els.surfaceFreqSelect.addEventListener('change', renderSurface);
-    els.setRefTopBtn.addEventListener('click', () => selectedId && setReference(selectedId));
-    els.exportBtn.addEventListener('click', exportCsv);
-    els.clearBtn.addEventListener('click', () => {
-      events = []; eventSerial = 0; selectedId = referenceId = null; consecutiveClips = 0; hideNotice(); updateAll();
-      els.currentWaveNote.textContent = '等待第一次擊發｜紅色區段代表削波';
-      ['eventLevel', 'peakLevel', 'similarity'].forEach((id) => $(id).textContent = '—');
-      els.clipState.textContent = '—'; els.anomalyState.textContent = '—';
-    });
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderCurrent(); renderOverlay(); renderSurface(); }, 120);
-    });
-    window.addEventListener('beforeunload', () => stopAudio(false));
+      function createWavBlob(samples, rate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        const writeText = (offset, text) => {
+          for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i));
+        };
+        writeText(0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeText(8, 'WAVE');
+        writeText(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, rate, true);
+        view.setUint32(28, rate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeText(36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+          const sample = Math.max(-1, Math.min(1, samples[i]));
+          view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
+        }
+        return new Blob([buffer], { type: 'audio/wav' });
+      }
 
-    updateThresholdUi();
-    renderCurrent();
-    renderOverlay();
-    renderSurface();
-    renderLoop();
-  })();
+      function buildNeutralAnalysis(samples, rate) {
+        const frameSize = Math.max(1, Math.round(rate * FRAME_MS / 1000));
+        const frames = [];
+        let totalSq = 0;
+        let overallPeak = 0;
+        let clipped = 0;
+        for (let start = 0; start < samples.length; start += frameSize) {
+          const end = Math.min(samples.length, start + frameSize);
+          let sumSq = 0;
+          let peak = 0;
+          let frameClipped = 0;
+          for (let i = start; i < end; i++) {
+            const abs = Math.abs(samples[i]);
+            sumSq += samples[i] * samples[i];
+            if (abs > peak) peak = abs;
+            if (abs >= .999) frameClipped++;
+          }
+          totalSq += sumSq;
+          overallPeak = Math.max(overallPeak, peak);
+          clipped += frameClipped;
+          const rms = Math.sqrt(sumSq / Math.max(1, end - start));
+          frames.push({
+            startMs: Math.round(start / rate * 1000),
+            rmsDbfs: Number(dbfs(rms).toFixed(2)),
+            peakDbfs: Number(dbfs(peak).toFixed(2)),
+            clippedSamples: frameClipped
+          });
+        }
+        const overallRms = Math.sqrt(totalSq / Math.max(1, samples.length));
+        return {
+          schema: 'needle-sound-neutral-capture/1.0',
+          purpose: 'LLM determines the three real normal firing events before deterministic JS rules are written.',
+          eventDetectionApplied: false,
+          expectedProtocol: {
+            durationSeconds: RECORD_SECONDS,
+            expectedNormalFirings: 3,
+            approximateFiringTimesSeconds: [15, 30, 45],
+            quietWindowsSeconds: [[0, 10], [50, 60]]
+          },
+          capture: {
+            startedAt: recordingIsoTime,
+            durationSeconds: Number((samples.length / rate).toFixed(4)),
+            sampleRate: rate,
+            channels: 1,
+            encoding: 'PCM 16-bit WAV',
+            recorderEngine,
+            mediaTrackSettings: currentSettings,
+            userAgent: navigator.userAgent,
+            secureContext: window.isSecureContext
+          },
+          neutralSummary: {
+            totalSamples: samples.length,
+            overallPeakDbfs: Number(dbfs(overallPeak).toFixed(2)),
+            overallRmsDbfs: Number(dbfs(overallRms).toFixed(2)),
+            clippedSamples: clipped,
+            clippingRatio: Number((clipped / Math.max(1, samples.length)).toFixed(8)),
+            frameDurationMs: FRAME_MS
+          },
+          frames
+        };
+      }
+
+      async function finalizeRecording() {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        const samples = mergeChunks();
+        const rate = audioContext.sampleRate;
+        const analysis = buildNeutralAnalysis(samples, rate);
+        const wavBlob = createWavBlob(samples, rate);
+        const jsonBlob = new Blob([JSON.stringify(analysis, null, 2)], { type: 'application/json' });
+        const stamp = safeStamp();
+        wavUrl = URL.createObjectURL(wavBlob);
+        jsonUrl = URL.createObjectURL(jsonBlob);
+        $('wavDownload').href = wavUrl;
+        $('wavDownload').download = `needle_normal_3shots_${stamp}.wav`;
+        $('jsonDownload').href = jsonUrl;
+        $('jsonDownload').download = `needle_normal_3shots_${stamp}_metrics.json`;
+        $('audioPreview').src = wavUrl;
+        $('durationMetric').textContent = `${analysis.capture.durationSeconds.toFixed(2)} s`;
+        $('samplesMetric').textContent = samples.length.toLocaleString();
+        $('peakMetric').textContent = formatDb(analysis.neutralSummary.overallPeakDbfs);
+        $('clipMetric').textContent = `${(analysis.neutralSummary.clippingRatio * 100).toFixed(4)}%`;
+        $('result').classList.add('show');
+        $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      $('secureStatus').textContent = window.isSecureContext ? '可使用麥克風' : '可能遭瀏覽器阻擋';
+      $('secureStatus').className = `status-value ${window.isSecureContext ? 'ok' : 'bad'}`;
+      $('timeText').textContent = formatTime(0);
+      openMicBtn.addEventListener('click', openMicrophone);
+      startBtn.addEventListener('click', startRecording);
+      stopBtn.addEventListener('click', stopRecording);
+      window.addEventListener('beforeunload', () => {
+        if (stream) stream.getTracks().forEach((track) => track.stop());
+        if (wavUrl) URL.revokeObjectURL(wavUrl);
+        if (jsonUrl) URL.revokeObjectURL(jsonUrl);
+      });
+    })();
   </script>
 </body>
 </html>
