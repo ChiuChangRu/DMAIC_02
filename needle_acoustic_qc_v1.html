@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>檢體針聲學品管工作台</title>
+  <style>
+    :root{
+      --ink:#102a43;--muted:#627d98;--line:#d9e2ec;--soft:#f4f8fb;--white:#fff;
+      --blue:#1677c8;--teal:#0f8f87;--cyan:#38bdf8;--amber:#b7791f;--green:#18864b;
+      --violet:#7c5ce7;--shadow:0 12px 34px rgba(16,42,67,.08);--radius:20px;
+    }
+    *{box-sizing:border-box}html{background:#fff;color:var(--ink);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+    body{margin:0;background:linear-gradient(180deg,#f8fcff 0,#fff 280px);min-height:100vh}
+    button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    .shell{width:min(1480px,calc(100% - 32px));margin:0 auto;padding:20px 0 48px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
+    .brand{display:flex;align-items:center;gap:14px}.mark{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#43d5d0,#4ba3ef);display:grid;place-items:center;color:#063453;font-size:22px;font-weight:800;box-shadow:var(--shadow)}
+    h1{font-size:clamp(22px,3vw,32px);margin:0;letter-spacing:.01em}.sub{font-size:13px;color:var(--muted);margin-top:3px}
+    .status-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.badge{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;font-size:12px;color:var(--muted)}.badge.ok{color:var(--green);border-color:#addbc1;background:#f0fbf5}.badge.warn{color:var(--amber);border-color:#ead39c;background:#fffaf0}
+    .tabs{display:flex;gap:6px;padding:5px;background:#eaf3f8;border:1px solid var(--line);border-radius:14px;width:max-content;margin-bottom:16px}
+    .tab{border:0;background:transparent;color:#486581;padding:10px 18px;border-radius:10px;font-weight:700}.tab.active{background:#fff;color:var(--blue);box-shadow:0 3px 12px rgba(16,42,67,.1)}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fbfdff}.card-head h2,.card-head h3{margin:0;font-size:17px}.eyebrow{font-size:12px;color:var(--muted);margin-top:3px}
+    .wave-card{margin-bottom:16px}.canvas-wrap{padding:14px 18px 10px}canvas{display:block;width:100%;border-radius:12px;background:#fbfdff;border:1px solid #d6e4ec}.wave-canvas{height:280px}.spec-canvas{height:340px}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 20px 14px;color:var(--muted);font-size:12px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+    .grid{display:grid;grid-template-columns:minmax(320px,.82fr) minmax(480px,1.5fr);gap:16px}.stack{display:grid;gap:16px}.body{padding:18px 20px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:6px}.field.wide{grid-column:1/-1}.field label{font-size:12px;color:#486581;font-weight:700}.field input,.field select{width:100%;border:1px solid #bcccdc;border-radius:10px;padding:9px 11px;color:var(--ink);background:#fff}.field input:focus,.field select:focus{outline:3px solid rgba(56,189,248,.18);border-color:#38bdf8}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #b9cbd8;background:#fff;color:#274c68;border-radius:11px;padding:10px 14px;font-weight:750}.btn:hover{border-color:#6aa8d2}.btn.primary{background:#1bb9b0;border-color:#1bb9b0;color:#062f36}.btn.stop{background:#fff6e5;border-color:#e5b85c;color:#79520d}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .meter-box{margin-top:17px}.meter-title{display:flex;justify-content:space-between;align-items:end;margin-bottom:8px}.big-num{font-size:30px;font-weight:800;color:#0b3c5d}.bar{height:22px;border-radius:999px;background:linear-gradient(90deg,#d9f3ef 0,#6ed1c2 40%,#ffd166 70%,#ef8f65 100%);overflow:hidden;position:relative}.bar::after{content:"";position:absolute;inset:0 0 0 var(--level,0%);background:rgba(255,255,255,.82);transition:inset .08s linear}.bar-gate{position:absolute;left:var(--gate,75%);top:-4px;width:3px;height:30px;background:#102a43;z-index:2}.scale{display:flex;justify-content:space-between;color:#829ab1;font-size:10px;margin-top:5px}
+    .range-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:18px}.range-row input{width:100%;accent-color:var(--teal)}.range-value{font-weight:800;color:var(--teal);min-width:74px;text-align:right}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.stat{background:var(--soft);border:1px solid #e3edf3;border-radius:12px;padding:10px}.stat span{display:block;font-size:11px;color:var(--muted)}.stat b{display:block;font-size:18px;margin-top:3px}
+    .notice{border-left:4px solid var(--cyan);background:#f0f9ff;color:#315b72;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.6;margin-top:14px}.notice.amber{border-color:#e2a928;background:#fffaf0;color:#725318}
+    .table-wrap{overflow:auto}.events{width:100%;border-collapse:collapse;min-width:920px}.events th{font-size:11px;color:#627d98;text-align:left;background:#f3f8fb;padding:10px;border-bottom:1px solid var(--line);position:sticky;top:0}.events td{padding:10px;border-bottom:1px solid #e5edf2;font-size:13px}.events tr.selected{background:#eef8ff}.pill{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid}.pill.fire{color:#0e6f68;background:#ecfbf8;border-color:#8edbd2}.pill.cock{color:#7a5b13;background:#fff9e8;border-color:#ead28d}.pill.sim{color:#6646c3;background:#f4f0ff;border-color:#cbbcf5}.mini{padding:5px 8px;border-radius:8px;border:1px solid #bfd0dc;background:#fff;color:#315b72;font-size:11px}.mini.base{color:#087f5b;border-color:#8fd3bb}.mini.del{color:#8a5d00;border-color:#e3c37a}
+    .analysis-grid{display:grid;grid-template-columns:minmax(300px,.72fr) minmax(520px,1.55fr);gap:16px}.drop{border:2px dashed #a9c4d6;border-radius:16px;background:#f8fcff;padding:24px;text-align:center}.drop input{max-width:100%}.drop strong{display:block;margin-bottom:6px}
+    .decision{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.decision-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.decision-box span{font-size:11px;color:var(--muted)}.decision-box b{display:block;font-size:22px;margin-top:5px}.decision-main{background:#f2fbfa;border-color:#9eddd7}
+    .baseline-list{display:grid;gap:8px;margin-top:12px}.base-row{display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:10px;background:#f4f8fb;font-size:12px}.sim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.sim-grid button{text-align:left}
+    .mode-select{border:1px solid #bcccdc;border-radius:9px;padding:6px 9px;background:#fff;color:var(--ink)}
+    .footer-note{margin-top:16px;text-align:center;color:#829ab1;font-size:11px;line-height:1.6}
+    @media(max-width:980px){.grid,.analysis-grid{grid-template-columns:1fr}.wave-canvas{height:220px}.spec-canvas{height:280px}.stats{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:620px){.shell{width:min(100% - 18px,1480px)}header{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.decision{grid-template-columns:1fr}.card-head{padding:14px}.body{padding:14px}.canvas-wrap{padding:10px}.wave-canvas{height:190px}.tabs{width:100%}.tab{flex:1;padding:9px 8px}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div class="brand"><div class="mark">N</div><div><h1>檢體針聲學品管工作台</h1><div class="sub">擊發擷取・正常基準・異常探索｜本機運算，不需雲端API</div></div></div>
+    <div class="status-row"><span id="secureBadge" class="badge">連線環境檢查中</span><span id="micBadge" class="badge warn">麥克風未啟動</span></div>
+  </header>
+
+  <nav class="tabs" aria-label="主要功能">
+    <button class="tab active" data-tab="record">1　錄製與擷取</button>
+    <button class="tab" data-tab="analysis">2　分析與基準</button>
+  </nav>
+
+  <section class="card wave-card">
+    <div class="card-head"><div><h2>擊發後波形與疊圖比較</h2><div id="waveSubtitle" class="eyebrow">完成錄音後，選取事件即可比較；繪圖會正規化時間起點</div></div><select id="overlayMode" class="mode-select" aria-label="疊圖顯示模式"><option value="raw">原始相對強度</option><option value="normalized">正規化形狀</option></select></div>
+    <div class="canvas-wrap"><canvas id="waveCanvas" class="wave-canvas" width="1400" height="300" aria-label="擊發波形圖"></canvas></div>
+    <div id="waveLegend" class="legend"><span>尚無事件</span></div>
+  </section>
+
+  <section id="recordTab">
+    <div class="grid">
+      <div class="stack">
+        <article class="card"><div class="card-head"><div><h3>檢體與錄製設定</h3><div class="eyebrow">相同距離、角度、治具與行程是比較前提</div></div></div><div class="body">
+          <div class="form-grid">
+            <div class="field"><label for="brand">品牌</label><select id="brand"><option>Argon</option><option>Bard</option><option>其他／盲測</option></select></div>
+            <div class="field"><label for="model">型號</label><input id="model" value="SuperCore 20G × 20 cm"></div>
+            <div class="field"><label for="throw">行程</label><select id="throw"><option value="10">10 mm／第一定位點</option><option value="20">20 mm／第二定位點</option><option value="unknown">未知／盲測</option></select></div>
+            <div class="field"><label for="quality">樣品狀態</label><select id="quality"><option value="normal">正常</option><option value="abnormal">已確認異常</option><option value="unknown">未知／盲測</option></select></div>
+            <div class="field wide"><label for="failure">失效模式／備註</label><input id="failure" placeholder="例：針體折彎；若正常可留白"></div>
+            <div class="field"><label for="sampleId">樣品編號</label><input id="sampleId" placeholder="例：BARD-BENT-01"></div>
+            <div class="field"><label for="lot">批號</label><input id="lot" placeholder="選填"></div>
+          </div>
+          <div class="actions"><button id="startBtn" class="btn primary">啟動麥克風並錄製</button><button id="stopBtn" class="btn stop" disabled>停止並分析</button><button id="resetBtn" class="btn">清除本次</button></div>
+          <div id="recordMessage" class="notice">首次使用請允許麥克風權限。建議每次錄製包含3～6次操作，最長60秒。</div>
+        </div></article>
+
+        <article class="card"><div class="card-head"><div><h3>當下聲音強弱</h3><div class="eyebrow">僅顯示彩色Bar；dBFS為錄音系統相對值</div></div><div id="meterDb" class="big-num">−∞</div></div><div class="body">
+          <div class="bar" id="levelBar"><i class="bar-gate"></i></div><div class="scale"><span>安靜 −80</span><span>−40</span><span>強 0 dBFS</span></div>
+          <div class="range-row"><input id="threshold" type="range" min="20" max="60" value="40" step="1" aria-label="背景以上門檻"><div class="range-value">+<span id="thresholdValue">40</span> dB</div></div>
+          <div class="eyebrow">擊發候選門檻＝動態背景噪音＋調整值；預設40 dB。</div>
+          <div class="stats"><div class="stat"><span>錄製時間</span><b id="durationStat">0.0 s</b></div><div class="stat"><span>背景噪音</span><b id="noiseStat">—</b></div><div class="stat"><span>確認擊發</span><b id="shotStat">0</b></div><div class="stat"><span>擊發候選</span><b id="otherStat">0</b></div></div>
+        </div></article>
+      </div>
+
+      <article class="card"><div class="card-head"><div><h3>本次事件紀錄</h3><div class="eyebrow">短促上膛聲與完整擊發分開，不把每個大聲衝擊都當成產品訊號</div></div><div class="actions" style="margin:0"><button id="exportWav" class="mini" disabled>下載WAV</button><button id="exportJson" class="mini" disabled>下載分析JSON</button></div></div><div class="table-wrap"><table class="events"><thead><tr><th>選取</th><th>時間</th><th>類型</th><th>Peak</th><th>RMS100</th><th>T90</th><th>拖尾</th><th>上膛前導</th><th>基準／操作</th></tr></thead><tbody id="eventRows"><tr><td colspan="9" style="text-align:center;color:#829ab1;padding:42px">尚無錄音資料</td></tr></tbody></table></div></article>
+    </div>
+  </section>
+
+  <section id="analysisTab" class="hidden">
+    <div class="analysis-grid">
+      <div class="stack">
+        <article class="card"><div class="card-head"><div><h3>匯入與正常基準</h3><div class="eyebrow">可載入PCM WAV，或沿用本頁錄音事件</div></div></div><div class="body">
+          <label class="drop"><strong>載入新的錄音資料</strong><span class="eyebrow">支援PCM 16-bit／Float WAV與本工具JSON</span><input id="fileInput" type="file" accept=".wav,.json,audio/wav,application/json" multiple></label>
+          <div class="actions"><button id="addSelectedBase" class="btn primary">加入正常基準</button><button id="addSelectedAbnormal" class="btn stop">加入已知異常</button><button id="exportBase" class="btn">匯出資料庫</button><button id="clearBase" class="btn">清除基準</button></div>
+          <div class="stats"><div class="stat"><span>正常基準數</span><b id="baseCount">0</b></div><div class="stat"><span>建議最低</span><b>20支</b></div><div class="stat"><span>已確認異常</span><b id="abnormalCount">0</b></div><div class="stat"><span>模型狀態</span><b id="modelState">未建立</b></div></div>
+          <div id="baselineRows" class="baseline-list"></div>
+          <div class="notice amber"><b>缺乏異常品時：</b>先建立正常聲紋範圍，超出範圍只標記為「未知異常／重測」，不能直接推測折彎或組裝失效。</div>
+        </div></article>
+
+        <article class="card"><div class="card-head"><div><h3>異常模擬壓力測試</h3><div class="eyebrow">用於測試偵測器，不可當作真實失效訓練資料</div></div></div><div class="body"><div class="sim-grid"><button class="btn simBtn" data-sim="short">模擬拖尾縮短</button><button class="btn simBtn" data-sim="double">模擬二次撞擊</button><button class="btn simBtn" data-sim="resonance">模擬新增共振</button><button class="btn simBtn" data-sim="noise">模擬環境雜訊</button></div><div class="notice">紫色事件均標示為「合成」，只能確認分析流程是否敏感，不代表任何實際失效模式。</div></div></article>
+      </div>
+
+      <div class="stack">
+        <article class="card"><div class="card-head"><div><h3>正常範圍比較</h3><div class="eyebrow">採正常單類模型：形狀相似＋穩健特徵距離</div></div></div><div class="body"><div class="decision"><div class="decision-box decision-main"><span>研究判定</span><b id="decisionText">資料不足</b></div><div class="decision-box"><span>正常相似度</span><b id="similarity">—</b></div><div class="decision-box"><span>穩健距離</span><b id="distanceScore">—</b></div></div><div id="decisionNote" class="notice">請先選取一筆擊發事件，並建立至少5筆正常基準。</div></div></article>
+
+        <article class="card"><div class="card-head"><div><h3>STFT 時頻分析</h3><div class="eyebrow">時間 × 頻率；顏色／高度表示相對能量</div></div><select id="specMode" class="mode-select"><option value="heat">熱圖</option><option value="surface">Surface</option></select></div><div class="canvas-wrap"><canvas id="specCanvas" class="spec-canvas" width="1100" height="430" aria-label="STFT時頻圖"></canvas></div></article>
+
+        <article class="card"><div class="card-head"><div><h3>選取事件特徵</h3><div class="eyebrow">聲級僅作相對參考，分類以波形形狀與頻率組成為主</div></div></div><div class="body"><div class="stats"><div class="stat"><span>Peak dBFS</span><b id="fPeak">—</b></div><div class="stat"><span>T90</span><b id="fT90">—</b></div><div class="stat"><span>頻譜重心</span><b id="fCentroid">—</b></div><div class="stat"><span>上膛事件</span><b id="fPre">—</b></div></div><div class="footer-note">此版本為研發與資料蒐集工具，尚未完成量測系統分析、跨設備驗證或產品放行確效。</div></div></article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const colors = ['#0f8f87','#1677c8','#7c5ce7','#d48a18','#1f9d61','#db5f8a','#335c81','#8f6a13'];
+  const state = {stream:null,ctx:null,processor:null,source:null,chunks:[],samples:null,sampleRate:48000,recording:false,startAt:0,timer:null,events:[],selected:new Set(),noiseFloor:-75,wavUrl:null,baseline:loadLocal('needleQcBaseline',[]),knownAbnormal:loadLocal('needleQcAbnormal',[]),sourceName:'本次錄音'};
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  const db=v=>20*Math.log10(Math.max(1e-12,v));
+  const fmtDb=v=>Number.isFinite(v)?`${v.toFixed(1)} dBFS`:'−∞';
+  const uid=()=>`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+  function loadLocal(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}}
+  function saveLocal(){localStorage.setItem('needleQcBaseline',JSON.stringify(state.baseline));localStorage.setItem('needleQcAbnormal',JSON.stringify(state.knownAbnormal))}
+  function setMsg(text,kind=''){const n=$('#recordMessage');n.textContent=text;n.className=`notice ${kind}`}
+
+  $$('.tab').forEach(b=>b.addEventListener('click',()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===b));$('#recordTab').classList.toggle('hidden',b.dataset.tab!=='record');$('#analysisTab').classList.toggle('hidden',b.dataset.tab!=='analysis');if(b.dataset.tab==='analysis')refreshAnalysis()}));
+  const secure=window.isSecureContext||['localhost','127.0.0.1'].includes(location.hostname);$('#secureBadge').textContent=secure?'安全連線可使用麥克風':'需HTTPS或localhost';$('#secureBadge').className=`badge ${secure?'ok':'warn'}`;
+  $('#brand').addEventListener('change',()=>{$('#model').value=$('#brand').value==='Bard'?'Mission MSK':$('#brand').value==='Argon'?'SuperCore 20G × 20 cm':''});
+  $('#quality').addEventListener('change',()=>{if($('#brand').value==='Bard'&&$('#quality').value==='abnormal'&&!$('#failure').value)$('#failure').value='針體折彎'});
+  $('#threshold').addEventListener('input',()=>{$('#thresholdValue').textContent=$('#threshold').value;updateGate()});
+  $('#overlayMode').addEventListener('change',drawWave);$('#specMode').addEventListener('change',drawSpectrogram);
+
+  async function startRecording(){
+    if(!navigator.mediaDevices?.getUserMedia){setMsg('此瀏覽器不支援麥克風錄音。','amber');return}
+    try{
+      const requested={channelCount:{ideal:1},echoCancellation:false,noiseSuppression:false,autoGainControl:false};
+      try{state.stream=await navigator.mediaDevices.getUserMedia({audio:requested})}catch(e){state.stream=await navigator.mediaDevices.getUserMedia({audio:true});setMsg(`進階音訊條件未被裝置接受，已改用預設模式：${e.name}`,'amber')}
+      state.ctx=new (window.AudioContext||window.webkitAudioContext)();await state.ctx.resume();state.sampleRate=state.ctx.sampleRate;
+      state.source=state.ctx.createMediaStreamSource(state.stream);state.processor=state.ctx.createScriptProcessor(4096,1,1);const mute=state.ctx.createGain();mute.gain.value=0;
+      state.chunks=[];state.recording=true;state.startAt=performance.now();state.processor.onaudioprocess=e=>{if(!state.recording)return;const a=e.inputBuffer.getChannelData(0);state.chunks.push(new Float32Array(a));updateMeter(a);if((performance.now()-state.startAt)/1000>=60)stopRecording()};
+      state.source.connect(state.processor);state.processor.connect(mute);mute.connect(state.ctx.destination);
+      $('#startBtn').disabled=true;$('#stopBtn').disabled=false;$('#micBadge').textContent='錄製中';$('#micBadge').className='badge ok';
+      state.timer=setInterval(()=>{$('#durationStat').textContent=`${((performance.now()-state.startAt)/1000).toFixed(1)} s`},100);
+    }catch(e){setMsg(`無法啟動麥克風：${e.name}。請確認瀏覽器權限、實體靜音鍵，並以HTTPS或localhost開啟。`,'amber');$('#micBadge').textContent='啟動失敗'}
+  }
+  function updateMeter(a){let ss=0,p=0;for(let i=0;i<a.length;i++){const v=Math.abs(a[i]);ss+=v*v;if(v>p)p=v}const r=db(Math.sqrt(ss/a.length));$('#meterDb').textContent=fmtDb(r);$('#levelBar').style.setProperty('--level',`${clamp((r+80)/80*100,0,100)}%`)}
+  async function stopRecording(){
+    if(!state.recording)return;state.recording=false;clearInterval(state.timer);state.processor?.disconnect();state.source?.disconnect();state.stream?.getTracks().forEach(t=>t.stop());await state.ctx?.close();
+    const total=state.chunks.reduce((s,a)=>s+a.length,0),all=new Float32Array(total);let o=0;state.chunks.forEach(a=>{all.set(a,o);o+=a.length});state.samples=all;state.sourceName=`${$('#brand').value}-${$('#sampleId').value||new Date().toISOString().slice(11,19).replaceAll(':','')}`;
+    $('#durationStat').textContent=`${(all.length/state.sampleRate).toFixed(1)} s`;$('#startBtn').disabled=false;$('#stopBtn').disabled=true;$('#micBadge').textContent='錄製完成';$('#micBadge').className='badge ok';
+    analyzeRecording(all,state.sampleRate,state.sourceName);prepareWav();setMsg(`分析完成：自動確認 ${state.events.filter(e=>e.type==='fire').length} 次擊發，另有 ${state.events.filter(e=>e.type==='candidate').length} 筆候選。卡頓上膛時請人工確認後再加入基準。`)
+  }
+  function resetSession(){if(state.recording)stopRecording();state.events=[];state.selected.clear();state.samples=null;state.chunks=[];if(state.wavUrl)URL.revokeObjectURL(state.wavUrl);state.wavUrl=null;renderEvents();drawWave();drawSpectrogram();$('#shotStat').textContent='0';$('#otherStat').textContent='0';$('#noiseStat').textContent='—';$('#exportWav').disabled=true;$('#exportJson').disabled=true;setMsg('本次資料已清除；正常基準仍保留在此瀏覽器。')}
+
+  function percentile(a,q){const z=Array.from(a).filter(Number.isFinite).sort((x,y)=>x-y);if(!z.length)return-90;return z[Math.floor((z.length-1)*q)]}
+  function analyzeRecording(samples,sr,name){
+    const n=Math.max(1,Math.round(sr/1000)),m=Math.floor(samples.length/n),rms=new Float32Array(m),peaks=new Float32Array(m);
+    for(let i=0;i<m;i++){let ss=0,p=0;for(let j=0;j<n;j++){const v=samples[i*n+j],av=Math.abs(v);ss+=v*v;if(av>p)p=av}rms[i]=db(Math.sqrt(ss/n));peaks[i]=db(p)}
+    state.noiseFloor=percentile(rms,.5);const margin=+$(`#threshold`).value,gate=state.noiseFloor+margin,tailGate=state.noiseFloor+25;updateGate();
+    const groups=[];let start=-1,last=-1;for(let i=0;i<m;i++){if(rms[i]>gate){if(start<0)start=i;last=i}else if(start>=0&&i-last>80){groups.push([start,last]);start=-1}}if(start>=0)groups.push([start,last]);
+    const raw=[];groups.forEach(([a,b])=>{let im=a*n,p=0;const lo=Math.max(0,(a-10)*n),hi=Math.min(samples.length,(b+12)*n);for(let i=lo;i<hi;i++){const v=Math.abs(samples[i]);if(v>p){p=v;im=i}}
+      let end=b;let below=0;for(let i=b;i<Math.min(m,b+250);i++){if(rms[i]>tailGate){end=i;below=0}else if(++below>=12)break}const duration=end-a+1;raw.push(makeEvent(samples,sr,im,a/1000,duration,name));
+    });
+    let previousFire=-99;raw.forEach((e,i)=>{const excess=e.features.peak-state.noiseFloor,rmsEx=e.features.rms100-state.noiseFloor;e.type=(excess>=50&&rmsEx>=40&&e.features.duration>=60)?'fire':(excess>=48&&rmsEx>=35&&e.features.duration>=35)?'candidate':'impact';if(e.type==='fire'||e.type==='candidate'){e.precursors=raw.filter((p,j)=>j<i&&p.time>previousFire+.2&&p.time<e.time-.25&&e.time-p.time<4.5&&p.type==='impact').slice(-2).length;previousFire=e.time}});
+    state.events=raw;state.selected=new Set(raw.filter(e=>e.type==='fire'||e.type==='candidate').slice(0,3).map(e=>e.id));
+    saveLocal();renderEvents();drawWave();refreshAnalysis();$('#noiseStat').textContent=fmtDb(state.noiseFloor);updateEventCounts();$('#exportJson').disabled=false;
+  }
+  function makeEvent(samples,sr,peakIndex,time,duration,name,isSynthetic=false,label=''){
+    const pre=Math.round(.01*sr),len=Math.round(.16*sr),wave=new Float32Array(len);const from=peakIndex-pre;for(let i=0;i<len;i++)wave[i]=samples[from+i]||0;
+    const f=features(wave,sr,duration);return{id:uid(),time,peakIndex,source:name,type:isSynthetic?'sim':'impact',synthetic:isSynthetic,label,wave,sr,features:f,precursors:0,meta:getMeta()};
+  }
+  function features(w,sr,duration){
+    let p=0,ss=0;const start=Math.round(.01*sr),end=Math.min(w.length,start+Math.round(.1*sr));for(let i=start;i<end;i++){const a=Math.abs(w[i]);if(a>p)p=a;ss+=w[i]*w[i]}
+    const energy=[];let total=0;for(let i=start;i<w.length;i++){total+=w[i]*w[i];energy.push(total)}const i05=energy.findIndex(x=>x>=total*.05),i95=energy.findIndex(x=>x>=total*.95);const t90=Math.max(0,(i95-i05)/sr*1000);
+    const N=2048,buf=new Float64Array(N);for(let i=0;i<N;i++){const x=w[start+i]||0;buf[i]=x*(.5-.5*Math.cos(2*Math.PI*i/(N-1)))}const spec=fftPower(buf),bands=[[100,2000],[2000,5000],[5000,10000],[10000,Math.min(20000,sr/2-1)]],bp=[],binHz=sr/N;let den=0,weighted=0,dom=0,domP=0;for(let k=1;k<N/2;k++){const hz=k*binHz,v=spec[k];if(hz>=100&&hz<=20000){den+=v;weighted+=hz*v;if(v>domP){domP=v;dom=hz}}}bands.forEach(([a,b])=>{let s=0;for(let k=Math.ceil(a/binHz);k<Math.min(N/2,Math.floor(b/binHz));k++)s+=spec[k];bp.push(den?100*s/den:0)});
+    const env=[];const en=Math.max(1,Math.round(sr/1000));for(let o=0;o<w.length;o+=en){let s=0,c=0;for(let j=o;j<Math.min(w.length,o+en);j++){s+=w[j]*w[j];c++}env.push(db(Math.sqrt(s/Math.max(1,c))))}
+    return{peak:db(p),rms100:db(Math.sqrt(ss/Math.max(1,end-start))),t90,duration,centroid:den?weighted/den:0,dominant:dom,bands:bp,envelope:env};
+  }
+  function fftPower(input){const n=input.length,re=Float64Array.from(input),im=new Float64Array(n);for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]]}}
+    for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len,wlr=Math.cos(ang),wli=Math.sin(ang);for(let i=0;i<n;i+=len){let wr=1,wi=0;for(let j=0;j<len/2;j++){const uR=re[i+j],uI=im[i+j],vR=re[i+j+len/2]*wr-im[i+j+len/2]*wi,vI=re[i+j+len/2]*wi+im[i+j+len/2]*wr;re[i+j]=uR+vR;im[i+j]=uI+vI;re[i+j+len/2]=uR-vR;im[i+j+len/2]=uI-vI;const nw=wr*wlr-wi*wli;wi=wr*wli+wi*wlr;wr=nw}}}const p=new Float64Array(n/2);for(let i=0;i<p.length;i++)p[i]=re[i]*re[i]+im[i]*im[i];return p}
+  function getMeta(){return{brand:$('#brand').value,model:$('#model').value,throw:$('#throw').value,quality:$('#quality').value,failureMode:$('#failure').value,sampleId:$('#sampleId').value,lot:$('#lot').value}}
+  function toRecord(e){return{id:e.id,createdAt:new Date().toISOString(),source:e.source,label:e.label,meta:e.meta,features:e.features}}
+
+  function renderEvents(){const body=$('#eventRows');if(!state.events.length){body.innerHTML='<tr><td colspan="9" style="text-align:center;color:#829ab1;padding:42px">尚無錄音資料</td></tr>';return}body.innerHTML=state.events.map((e,i)=>`<tr class="${state.selected.has(e.id)?'selected':''}"><td><input type="checkbox" data-select="${e.id}" ${state.selected.has(e.id)?'checked':''} aria-label="選取事件"></td><td>${e.time.toFixed(3)} s</td><td><span class="pill ${e.type==='fire'?'fire':e.type==='sim'?'sim':'cock'}">${e.type==='fire'?'擊發':e.type==='candidate'?'擊發候選':e.type==='sim'?'模擬':'其他衝擊'}</span></td><td>${e.features.peak.toFixed(1)}</td><td>${e.features.rms100.toFixed(1)}</td><td>${e.features.t90.toFixed(1)} ms</td><td>${e.features.duration.toFixed(0)} ms</td><td>${e.precursors||0}</td><td><button class="mini" data-view="${e.id}">查看</button> ${e.type!=='sim'?`<button class="mini" data-toggle="${e.id}">${e.type==='fire'?'改為其他':'確認擊發'}</button>`:''} ${e.type==='fire'?`<button class="mini base" data-base="${e.id}">正常</button><button class="mini del" data-abnormal="${e.id}">異常</button>`:''} <button class="mini" data-delete="${e.id}">刪除</button></td></tr>`).join('');
+    $$('[data-select]').forEach(x=>x.addEventListener('change',()=>{x.checked?state.selected.add(x.dataset.select):state.selected.delete(x.dataset.select);renderEvents();drawWave();refreshAnalysis()}));$$('[data-view]').forEach(x=>x.addEventListener('click',()=>{state.selected=new Set([x.dataset.view]);renderEvents();drawWave();refreshAnalysis()}));$$('[data-toggle]').forEach(x=>x.addEventListener('click',()=>{const e=state.events.find(v=>v.id===x.dataset.toggle);if(e)e.type=e.type==='fire'?'impact':'fire';updateEventCounts();renderEvents();refreshAnalysis()}));$$('[data-base]').forEach(x=>x.addEventListener('click',()=>addBase([x.dataset.base])));$$('[data-abnormal]').forEach(x=>x.addEventListener('click',()=>addAbnormal([x.dataset.abnormal])));$$('[data-delete]').forEach(x=>x.addEventListener('click',()=>{state.events=state.events.filter(e=>e.id!==x.dataset.delete);state.selected.delete(x.dataset.delete);updateEventCounts();renderEvents();drawWave();refreshAnalysis()}));
+  }
+  function updateEventCounts(){$('#shotStat').textContent=state.events.filter(e=>e.type==='fire').length;$('#otherStat').textContent=state.events.filter(e=>e.type==='candidate').length}
+  function canvasFit(c){const d=devicePixelRatio||1,r=c.getBoundingClientRect();const w=Math.max(300,Math.round(r.width*d)),h=Math.max(160,Math.round(r.height*d));if(c.width!==w||c.height!==h){c.width=w;c.height=h}return{ctx:c.getContext('2d'),w,h,d}}
+  function drawWave(){const c=$('#waveCanvas'),{ctx,w,h,d}=canvasFit(c);ctx.clearRect(0,0,w,h);ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,w,h);const L=58*d,R=18*d,T=18*d,B=34*d,pw=w-L-R,ph=h-T-B;ctx.strokeStyle='#d9e7ef';ctx.lineWidth=1;ctx.font=`${11*d}px sans-serif`;ctx.fillStyle='#6b8294';
+    for(let i=0;i<=6;i++){const x=L+pw*i/6;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();ctx.fillText(`${(-10+160*i/6).toFixed(0)} ms`,x-15*d,h-12*d)}for(let i=0;i<=4;i++){const y=T+ph*i/4;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);ctx.stroke()}ctx.strokeStyle='#9fb7c7';ctx.beginPath();ctx.moveTo(L,T+ph/2);ctx.lineTo(L+pw,T+ph/2);ctx.stroke();
+    const ev=state.events.filter(e=>state.selected.has(e.id));if(!ev.length){ctx.fillStyle='#829ab1';ctx.font=`${15*d}px sans-serif`;ctx.fillText('等待選取擊發事件',L+pw*.38,T+ph*.53);$('#waveLegend').innerHTML='<span>尚無事件</span>';return}
+    const norm=$('#overlayMode').value==='normalized';ev.slice(0,8).forEach((e,idx)=>{let max=0;if(norm)for(const v of e.wave)max=Math.max(max,Math.abs(v));else max=1;ctx.strokeStyle=colors[idx%colors.length];ctx.lineWidth=1.5*d;ctx.globalAlpha=.82;ctx.beginPath();for(let x=0;x<pw;x++){const si=Math.floor(x/pw*(e.wave.length-1)),v=e.wave[si]/Math.max(max,1e-9),y=T+ph/2-v*ph*.44;x===0?ctx.moveTo(L+x,y):ctx.lineTo(L+x,y)}ctx.stroke()});ctx.globalAlpha=1;$('#waveLegend').innerHTML=ev.slice(0,8).map((e,i)=>`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${e.source} ${e.time.toFixed(2)}s${e.synthetic?'（模擬）':''}</span>`).join('');$('#waveSubtitle').textContent=`顯示 ${ev.length} 筆｜${norm?'正規化形狀，忽略音量':'原始相對強度'}`;
+  }
+
+  function addBase(ids){const selected=state.events.filter(e=>ids.includes(e.id)&&e.type==='fire');selected.forEach(e=>{if(!state.baseline.some(b=>b.id===e.id))state.baseline.push(toRecord(e))});saveLocal();refreshAnalysis();setMsg(`已加入 ${selected.length} 筆正常基準。請注意：同一支產品重複擊發不等於多支獨立樣品。`)}
+  function addAbnormal(ids){const selected=state.events.filter(e=>ids.includes(e.id)&&e.type==='fire');selected.forEach(e=>{if(!state.knownAbnormal.some(b=>b.id===e.id))state.knownAbnormal.push(toRecord(e))});saveLocal();refreshAnalysis();setMsg(`已加入 ${selected.length} 筆已知異常事件；請確認失效模式欄位已填寫。`,'amber')}
+  function refreshAnalysis(){const fires=state.events.filter(e=>state.selected.has(e.id)&&(e.type==='fire'||e.type==='sim'));const e=fires[0];$('#baseCount').textContent=state.baseline.length;$('#abnormalCount').textContent=state.knownAbnormal.length;$('#modelState').textContent=state.baseline.length>=20?'探索模型':state.baseline.length>=5?'初步模型':'未建立';$('#baselineRows').innerHTML=state.baseline.slice(-6).reverse().map(b=>`<div class="base-row"><span>${b.meta?.brand||'未標示'}｜${b.meta?.sampleId||b.source}</span><b>${b.features.t90.toFixed(1)} ms</b></div>`).join('')||'<div class="eyebrow">尚無正常基準</div>';
+    if(!e){setDecision(null);drawSpectrogram();return}$('#fPeak').textContent=e.features.peak.toFixed(1);$('#fT90').textContent=`${e.features.t90.toFixed(1)} ms`;$('#fCentroid').textContent=`${(e.features.centroid/1000).toFixed(1)} kHz`;$('#fPre').textContent=e.precursors||0;setDecision(scoreNormal(e));drawSpectrogram();
+  }
+  function median(a){return percentile(a,.5)}
+  function scoreNormal(e){let refs=state.baseline.filter(b=>b.meta?.brand===e.meta?.brand&&String(b.meta?.throw)===String(e.meta?.throw));let scope='同品牌、同行程';if(refs.length<5){refs=state.baseline.filter(b=>b.meta?.brand===e.meta?.brand);scope='同品牌（跨行程，僅暫用）'}if(refs.length<5){refs=state.baseline;scope='全部正常資料（僅暫用）'}if(refs.length<5)return{status:'資料不足',note:'同品牌、同行程至少需要5筆正常事件；建議最終使用20支以上獨立正常樣品。'};const vec=x=>[x.t90,x.duration,x.centroid/1000,...x.bands];const base=refs.map(b=>vec(b.features)),v=vec(e.features),med=v.map((_,j)=>median(base.map(x=>x[j]))),mad=v.map((_,j)=>Math.max(.15,median(base.map(x=>Math.abs(x[j]-med[j])))*1.4826));let dist=0;for(let j=0;j<v.length;j++)dist+=Math.min(8,Math.abs(v[j]-med[j])/mad[j]);dist/=v.length;const envMed=[];for(let j=0;j<e.features.envelope.length;j++)envMed.push(median(refs.map(b=>b.features.envelope[j]).filter(Number.isFinite)));const corr=correlation(e.features.envelope,envMed);dist=.72*dist+.28*(1-clamp(corr,-1,1))*5;const sim=100*Math.exp(-dist/2.8);const status=sim>=80?'正常範圍':sim>=60?'建議重測':'超出正常範圍';return{status,sim,dist,note:e.synthetic?'此為合成壓力測試，不可解讀為真實失效。':`比較範圍：${scope}。結果只表示正常距離，不能直接推測特定失效模式。`}}
+  function correlation(a,b){const n=Math.min(a.length,b.length),ma=a.slice(0,n).reduce((s,x)=>s+x,0)/n,mb=b.slice(0,n).reduce((s,x)=>s+x,0)/n;let c=0,sa=0,sb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;c+=x*y;sa+=x*x;sb+=y*y}return c/Math.sqrt(Math.max(1e-9,sa*sb))}
+  function setDecision(r){if(!r){$('#decisionText').textContent='資料不足';$('#similarity').textContent='—';$('#distanceScore').textContent='—';$('#decisionNote').textContent='請先選取一筆擊發事件，並建立至少5筆正常基準。';return}$('#decisionText').textContent=r.status;$('#similarity').textContent=r.sim==null?'—':`${r.sim.toFixed(0)}%`;$('#distanceScore').textContent=r.dist==null?'—':r.dist.toFixed(2);$('#decisionNote').textContent=r.note}
+
+  function stft(w,sr){const N=256,hop=64,start=Math.round(.01*sr),frames=[];for(let o=start;o+N<=w.length;o+=hop){const buf=new Float64Array(N);for(let i=0;i<N;i++)buf[i]=w[o+i]*(.5-.5*Math.cos(2*Math.PI*i/(N-1)));const p=fftPower(buf),row=[];for(let k=1;k<N/2;k++)if(k*sr/N<=20000)row.push(10*Math.log10(p[k]+1e-12));frames.push(row)}return frames}
+  function heatColor(v){v=clamp(v,0,1);const stops=[[244,248,251],[79,209,197],[37,132,190],[121,72,201],[244,166,42]];const x=v*(stops.length-1),i=Math.min(stops.length-2,Math.floor(x)),t=x-i,a=stops[i],b=stops[i+1];return`rgb(${a.map((q,j)=>Math.round(q+(b[j]-q)*t)).join(',')})`}
+  function drawSpectrogram(){const c=$('#specCanvas'),{ctx,w,h,d}=canvasFit(c);ctx.clearRect(0,0,w,h);ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,w,h);const e=state.events.find(x=>state.selected.has(x.id)&&(x.type==='fire'||x.type==='sim'));if(!e){ctx.fillStyle='#829ab1';ctx.font=`${15*d}px sans-serif`;ctx.fillText('選取事件後顯示STFT',w*.38,h*.52);return}const M=stft(e.wave,e.sr);if(!M.length)return;let max=-Infinity;for(const r of M)for(const v of r)if(v>max)max=v;const min=max-55,mode=$('#specMode').value;
+    if(mode==='heat'){const L=55*d,R=16*d,T=16*d,B=34*d,pw=w-L-R,ph=h-T-B;for(let x=0;x<M.length;x++)for(let y=0;y<M[x].length;y++){ctx.fillStyle=heatColor((M[x][y]-min)/(max-min));ctx.fillRect(L+x*pw/M.length,T+ph-(y+1)*ph/M[x].length,pw/M.length+1,ph/M[x].length+1)}ctx.fillStyle='#5f788b';ctx.font=`${11*d}px sans-serif`;ctx.fillText('20 kHz',5*d,T+8*d);ctx.fillText('0',26*d,T+ph);ctx.fillText('時間 0–150 ms',L+pw*.43,h-11*d)}else{ctx.strokeStyle='#d8e5ec';ctx.lineWidth=1;const rows=M.length,cols=M[0].length;for(let x=0;x<rows;x+=2){ctx.beginPath();for(let y=0;y<cols;y++){const power=clamp((M[x][y]-min)/(max-min),0,1),px=60*d+x*(w-150*d)/rows+y*.75*d,py=h-45*d-y*(h-95*d)/cols-power*70*d;ctx.strokeStyle=heatColor(power);y===0?ctx.moveTo(px,py):ctx.lineTo(px,py)}ctx.stroke()}ctx.fillStyle='#5f788b';ctx.font=`${11*d}px sans-serif`;ctx.fillText('時間 →',w-80*d,h-15*d);ctx.fillText('頻率 ↗',12*d,30*d)}
+  }
+
+  function simulate(kind){const src=state.events.find(e=>state.selected.has(e.id)&&e.type==='fire');if(!src){alert('請先選取一筆完整擊發事件。');return}const w=new Float32Array(src.wave),sr=src.sr,start=Math.round(.01*sr);let label='';if(kind==='short'){label='拖尾縮短';for(let i=start+Math.round(.018*sr);i<w.length;i++)w[i]*=Math.exp(-(i-start-.018*sr)/(sr*.008))}if(kind==='double'){label='二次撞擊';const shift=Math.round(.027*sr);for(let i=w.length-1;i>=shift;i--)w[i]=clamp(w[i]+.42*w[i-shift],-1,1)}if(kind==='resonance'){label='新增共振';for(let i=start;i<w.length;i++){const t=(i-start)/sr;w[i]=clamp(w[i]+.12*Math.sin(2*Math.PI*4600*t)*Math.exp(-t/.035),-1,1)}}if(kind==='noise'){label='環境雜訊';for(let i=0;i<w.length;i++)w[i]=clamp(w[i]+(Math.random()*2-1)*.025,-1,1)}const fake={...src,id:uid(),source:`${src.source}｜模擬`,type:'sim',synthetic:true,label,wave:w,features:features(w,sr,src.features.duration),meta:{...src.meta,quality:'synthetic',failureMode:`模擬：${label}`}};state.events.push(fake);state.selected=new Set([fake.id]);renderEvents();drawWave();refreshAnalysis()}
+
+  function prepareWav(){if(state.wavUrl)URL.revokeObjectURL(state.wavUrl);const blob=encodeWav(state.samples,state.sampleRate);state.wavUrl=URL.createObjectURL(blob);$('#exportWav').disabled=false}
+  function encodeWav(samples,sr){const ab=new ArrayBuffer(44+samples.length*2),v=new DataView(ab),str=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));str(0,'RIFF');v.setUint32(4,36+samples.length*2,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,samples.length*2,true);for(let i=0;i<samples.length;i++)v.setInt16(44+i*2,Math.round(clamp(samples[i],-1,1)*32767),true);return new Blob([ab],{type:'audio/wav'})}
+  function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+  function compactExport(){return{schema:'needle-acoustic-qc/1.0',createdAt:new Date().toISOString(),sampleRate:state.sampleRate,thresholdMarginDb:+$('#threshold').value,noiseFloorDbfs:state.noiseFloor,meta:getMeta(),events:state.events.map(toRecord),limitations:['dBFS為相對值','合成異常不可視為真實失效','未完成產品放行確效']}}
+  async function parseWav(file){const ab=await file.arrayBuffer(),v=new DataView(ab);if(v.getUint32(0,false)!==0x52494646||v.getUint32(8,false)!==0x57415645)throw Error('非WAV');let o=12,fmt=null,data=null;while(o+8<=v.byteLength){const id=String.fromCharCode(...new Uint8Array(ab,o,4)),sz=v.getUint32(o+4,true);if(id==='fmt ')fmt={format:v.getUint16(o+8,true),channels:v.getUint16(o+10,true),sr:v.getUint32(o+12,true),bits:v.getUint16(o+22,true)};if(id==='data')data={o:o+8,sz};o+=8+sz+(sz%2)}if(!fmt||!data)throw Error('WAV缺少fmt或data');const bytes=fmt.bits/8,count=Math.floor(data.sz/(bytes*fmt.channels)),out=new Float32Array(count);for(let i=0;i<count;i++){let s=0;for(let c=0;c<fmt.channels;c++){const p=data.o+(i*fmt.channels+c)*bytes;s+=fmt.format===1&&fmt.bits===16?v.getInt16(p,true)/32768:fmt.format===3&&fmt.bits===32?v.getFloat32(p,true):0}out[i]=s/fmt.channels}return{samples:out,sr:fmt.sr}}
+
+  $('#startBtn').addEventListener('click',startRecording);$('#stopBtn').addEventListener('click',stopRecording);$('#resetBtn').addEventListener('click',resetSession);
+  $('#exportWav').addEventListener('click',()=>{if(state.wavUrl){const a=document.createElement('a');a.href=state.wavUrl;a.download=`needle_${Date.now()}.wav`;a.click()}});$('#exportJson').addEventListener('click',()=>download(new Blob([JSON.stringify(compactExport(),null,2)],{type:'application/json'}),`needle_${Date.now()}_metrics.json`));
+  $('#addSelectedBase').addEventListener('click',()=>addBase([...state.selected]));$('#addSelectedAbnormal').addEventListener('click',()=>addAbnormal([...state.selected]));$('#exportBase').addEventListener('click',()=>download(new Blob([JSON.stringify({schema:'needle-acoustic-reference/1.0',createdAt:new Date().toISOString(),baseline:state.baseline,knownAbnormal:state.knownAbnormal},null,2)],{type:'application/json'}),'needle_acoustic_reference.json'));$('#clearBase').addEventListener('click',()=>{if(confirm('確定清除本機正常基準？')){state.baseline=[];saveLocal();refreshAnalysis()}});$$('.simBtn').forEach(b=>b.addEventListener('click',()=>simulate(b.dataset.sim)));
+  $('#fileInput').addEventListener('change',async e=>{
+    for(const file of e.target.files){
+      try{
+        if(file.name.toLowerCase().endsWith('.wav')){
+          const r=await parseWav(file);state.samples=r.samples;state.sampleRate=r.sr;state.sourceName=file.name;analyzeRecording(r.samples,r.sr,file.name);prepareWav();
+        }else{
+          const j=JSON.parse(await file.text());
+          if(Array.isArray(j.baseline)){
+            state.baseline.push(...j.baseline);if(Array.isArray(j.knownAbnormal))state.knownAbnormal.push(...j.knownAbnormal);saveLocal();refreshAnalysis();
+          }else if(Array.isArray(j.events)){
+            alert('此JSON含特徵紀錄；若要重畫波形與STFT，請同時載入對應WAV。');
+          }
+        }
+      }catch(err){alert(`${file.name} 無法載入：${err.message}`)}
+    }
+    e.target.value='';
+  });
+  function updateGate(){const abs=state.noiseFloor+(+$('#threshold').value);$('#levelBar').style.setProperty('--gate',`${clamp((abs+80)/80*100,0,100)}%`)}
+  renderEvents();drawWave();refreshAnalysis();updateGate();
+})();
+</script>
+</body>
+</html>
