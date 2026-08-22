@@ -33,6 +33,7 @@
     .notice{border-left:4px solid var(--cyan);background:#f0f9ff;color:#315b72;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.6;margin-top:14px}.notice.amber{border-color:#e2a928;background:#fffaf0;color:#725318}
     .table-wrap{overflow:auto}.events{width:100%;border-collapse:collapse;min-width:920px}.events th{font-size:11px;color:#627d98;text-align:left;background:#f3f8fb;padding:10px;border-bottom:1px solid var(--line);position:sticky;top:0}.events td{padding:10px;border-bottom:1px solid #e5edf2;font-size:13px}.events tr.selected{background:#eef8ff}.pill{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid}.pill.fire{color:#0e6f68;background:#ecfbf8;border-color:#8edbd2}.pill.cock{color:#7a5b13;background:#fff9e8;border-color:#ead28d}.pill.sim{color:#6646c3;background:#f4f0ff;border-color:#cbbcf5}.mini{padding:5px 8px;border-radius:8px;border:1px solid #bfd0dc;background:#fff;color:#315b72;font-size:11px}.mini.base{color:#087f5b;border-color:#8fd3bb}.mini.del{color:#8a5d00;border-color:#e3c37a}
     .analysis-grid{display:grid;grid-template-columns:minmax(300px,.72fr) minmax(520px,1.55fr);gap:16px}.drop{border:2px dashed #a9c4d6;border-radius:16px;background:#f8fcff;padding:24px;text-align:center}.drop input{max-width:100%}.drop strong{display:block;margin-bottom:6px}
+    .import-mode{margin-bottom:12px}.import-mode select{width:100%;border:1px solid #bcccdc;border-radius:10px;padding:10px 11px;color:var(--ink);background:#fff}.import-mode select:focus{outline:3px solid rgba(56,189,248,.18);border-color:#38bdf8}.import-mode label{display:block;font-size:12px;color:#486581;font-weight:700;margin-bottom:6px}.event-classify{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}.event-classify strong{display:block;font-size:13px}.event-classify .actions{margin-top:9px}.notice.ok{border-color:#54b88a;background:#f0fbf5;color:#17643f}
     .decision{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.decision-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.decision-box span{font-size:11px;color:var(--muted)}.decision-box b{display:block;font-size:22px;margin-top:5px}.decision-main{background:#f2fbfa;border-color:#9eddd7}
     .baseline-list{display:grid;gap:8px;margin-top:12px}.base-row{display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:10px;background:#f4f8fb;font-size:12px}.sim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.sim-grid button{text-align:left}
     .mode-select{border:1px solid #bcccdc;border-radius:9px;padding:6px 9px;background:#fff;color:var(--ink)}
@@ -146,9 +147,12 @@
   <section id="analysisTab" class="hidden">
     <div class="analysis-grid">
       <div class="stack">
-        <article class="card"><div class="card-head"><div><h3>匯入與正常基準</h3><div class="eyebrow">可載入PCM WAV，或沿用本頁錄音事件</div></div></div><div class="body">
-          <label class="drop"><strong>載入新的錄音資料</strong><span class="eyebrow">支援PCM 16-bit／Float WAV與本工具JSON</span><input id="fileInput" type="file" accept=".wav,.json,audio/wav,application/json" multiple></label>
-          <div class="actions"><button id="addSelectedBase" class="btn primary">加入正常基準</button><button id="addSelectedAbnormal" class="btn stop">加入已知異常</button><button id="exportBase" class="btn">匯出資料庫</button><button id="clearBase" class="btn">清除基準</button></div>
+        <article class="card"><div class="card-head"><div><h3>匯入與正常基準</h3><div class="eyebrow">資料庫JSON可安全取代或去重追加；WAV則載入本次分析</div></div></div><div class="body">
+          <div class="import-mode"><label for="referenceImportMode">資料庫 JSON 匯入方式</label><select id="referenceImportMode"><option value="replace" selected>取代現有資料庫（建議）</option><option value="append">追加資料並略過重複 ID</option></select></div>
+          <label class="drop"><strong>選擇 WAV 或 JSON 檔案</strong><span class="eyebrow">取代匯入會先顯示新舊筆數，確認後才寫入</span><input id="fileInput" type="file" accept=".wav,.json,audio/wav,application/json" multiple></label>
+          <div id="importStatus" class="notice">建議選擇「取代現有資料庫」，再載入乾淨版參考 JSON；匯入完成後應確認筆數。</div>
+          <div class="actions"><button id="exportBase" class="btn">匯出資料庫</button><button id="clearAllData" class="btn stop">清除全部資料</button></div>
+          <div class="event-classify"><strong>本次錄音事件分類</strong><div class="eyebrow">下列按鈕只處理本次選取的擊發事件，不是匯入確認鍵。</div><div class="actions"><button id="addSelectedBase" class="btn primary">加入正常基準</button><button id="addSelectedAbnormal" class="btn stop">加入已知異常</button></div></div>
           <div class="stats"><div class="stat"><span>正常基準數</span><b id="baseCount">0</b></div><div class="stat"><span>建議最低</span><b>20支</b></div><div class="stat"><span>已確認異常</span><b id="abnormalCount">0</b></div><div class="stat"><span>模型狀態</span><b id="modelState">未建立</b></div></div>
           <div id="baselineRows" class="baseline-list"></div>
           <div class="notice amber"><b>缺乏異常品時：</b>先建立正常聲紋範圍，超出範圍只標記為「未知異常／重測」，不能直接推測折彎或組裝失效。</div>
@@ -182,6 +186,27 @@
   function loadLocal(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}}
   function saveLocal(){localStorage.setItem('needleQcBaseline',JSON.stringify(state.baseline));localStorage.setItem('needleQcAbnormal',JSON.stringify(state.knownAbnormal))}
   function setMsg(text,kind=''){const n=$('#recordMessage');n.textContent=text;n.className=`notice ${kind}`}
+  function setImportStatus(text,kind=''){const n=$('#importStatus');n.textContent=text;n.className=`notice ${kind}`}
+  function recordIdentity(r){return r?.id||['no-id',r?.createdAt||'',r?.source||'',r?.meta?.brand||'',r?.meta?.throw||'',r?.features?.peak??'',r?.features?.t90??''].join('|')}
+  function uniqueRecords(records,blocked=new Set()){
+    const out=[],seen=new Set(blocked);let skipped=0;
+    for(const r of Array.isArray(records)?records:[]){if(!r||typeof r!=='object'||!r.features){skipped++;continue}const key=recordIdentity(r);if(seen.has(key)){skipped++;continue}seen.add(key);out.push(r)}
+    return{records:out,seen,skipped}
+  }
+  function importReference(j,fileName){
+    const mode=$('#referenceImportMode').value,base=uniqueRecords(j.baseline),abnormal=uniqueRecords(j.knownAbnormal,base.seen),conflicts=base.skipped+abnormal.skipped;
+    if(mode==='replace'){
+      const ok=confirm(`將以「${fileName}」取代目前資料庫。\n\n目前：正常 ${state.baseline.length} 筆／異常 ${state.knownAbnormal.length} 筆\n匯入後：正常 ${base.records.length} 筆／異常 ${abnormal.records.length} 筆\n\n確定繼續？`);
+      if(!ok){setImportStatus('已取消取代匯入；現有資料未變更。','amber');return}
+      state.baseline=base.records;state.knownAbnormal=abnormal.records;saveLocal();refreshAnalysis();
+      setImportStatus(`取代完成：正常 ${state.baseline.length} 筆、異常 ${state.knownAbnormal.length} 筆${conflicts?`；另略過 ${conflicts} 筆重複或無效資料`:''}。`,'ok');
+      return
+    }
+    const existing=new Set([...state.baseline,...state.knownAbnormal].map(recordIdentity)),newBase=uniqueRecords(j.baseline,existing);newBase.records.forEach(r=>existing.add(recordIdentity(r)));const newAbnormal=uniqueRecords(j.knownAbnormal,existing);
+    state.baseline.push(...newBase.records);state.knownAbnormal.push(...newAbnormal.records);saveLocal();refreshAnalysis();
+    const skipped=newBase.skipped+newAbnormal.skipped;
+    setImportStatus(`追加完成：新增正常 ${newBase.records.length} 筆、異常 ${newAbnormal.records.length} 筆；略過 ${skipped} 筆重複或無效資料。現有合計正常 ${state.baseline.length} 筆、異常 ${state.knownAbnormal.length} 筆。`,'ok')
+  }
 
   function buildGuidePlan(){
     const devices=[];
@@ -359,7 +384,7 @@
   $('#startBtn').addEventListener('click',()=>startRecording(false));$('#stopBtn').addEventListener('click',()=>state.guide.session?finishGuide(false):stopRecording(false));$('#resetBtn').addEventListener('click',resetSession);
   $('#guideStartBtn').addEventListener('click',startGuide);$('#guidePauseBtn').addEventListener('click',toggleGuidePause);$('#guideStopBtn').addEventListener('click',()=>finishGuide(false));['guideMode','guideRepeats','guideArgon','guideBard','guide10','guide20'].forEach(id=>$(`#${id}`).addEventListener('change',updatePlanPreview));
   $('#exportWav').addEventListener('click',downloadWavFile);$('#exportJson').addEventListener('click',downloadMetricsFile);$('#guideExportWav').addEventListener('click',downloadWavFile);$('#guideExportJson').addEventListener('click',downloadMetricsFile);$('#guideExportBase').addEventListener('click',downloadReferenceFile);
-  $('#addSelectedBase').addEventListener('click',()=>addBase([...state.selected]));$('#addSelectedAbnormal').addEventListener('click',()=>addAbnormal([...state.selected]));$('#exportBase').addEventListener('click',downloadReferenceFile);$('#clearBase').addEventListener('click',()=>{if(confirm('確定清除本機正常基準？')){state.baseline=[];saveLocal();refreshAnalysis()}});$$('.simBtn').forEach(b=>b.addEventListener('click',()=>simulate(b.dataset.sim)));
+  $('#addSelectedBase').addEventListener('click',()=>addBase([...state.selected]));$('#addSelectedAbnormal').addEventListener('click',()=>addAbnormal([...state.selected]));$('#exportBase').addEventListener('click',downloadReferenceFile);$('#clearAllData').addEventListener('click',()=>{if(confirm(`確定清除全部資料？\n\n正常基準 ${state.baseline.length} 筆與已確認異常 ${state.knownAbnormal.length} 筆都會刪除。建議先匯出備份。`)){state.baseline=[];state.knownAbnormal=[];saveLocal();refreshAnalysis();setImportStatus('已清除全部正常基準與已確認異常資料。','ok')}});$$('.simBtn').forEach(b=>b.addEventListener('click',()=>simulate(b.dataset.sim)));
   $('#fileInput').addEventListener('change',async e=>{
     for(const file of e.target.files){
       try{
@@ -368,9 +393,11 @@
         }else{
           const j=JSON.parse(await file.text());
           if(Array.isArray(j.baseline)){
-            state.baseline.push(...j.baseline);if(Array.isArray(j.knownAbnormal))state.knownAbnormal.push(...j.knownAbnormal);saveLocal();refreshAnalysis();
+            importReference(j,file.name);
           }else if(Array.isArray(j.events)){
             alert('此JSON含特徵紀錄；若要重畫波形與STFT，請同時載入對應WAV。');
+          }else{
+            throw Error('JSON格式不符：找不到 baseline 或 events 陣列')
           }
         }
       }catch(err){alert(`${file.name} 無法載入：${err.message}`)}
