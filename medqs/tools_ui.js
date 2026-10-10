@@ -166,7 +166,7 @@
   let msaSub = "grr", doeSub = "fact";
   const TOOL_KEYS_AI = ["spc", "msa", "doe", "taguchi", "sample"];
   function toolHas(k) { return k === "sample" ? sampleHas() : k === "taguchi" ? !!TQ.tg : k === "spc" ? !!TQ.spc : k === "msa" ? !!TQ[msaSub] : k === "doe" ? !!TQ[doeSub] : false; }
-  function toolName(k) { return k === "sample" ? "樣本數規劃 · " + SS_NAME[sampleSub] : k === "taguchi" ? "田口方法" : k === "spc" ? "SPC 管制圖" : k === "msa" ? "MSA · " + ({ grr: "Gage R&R", bias: "偏差", lin: "線性", stab: "穩定性", attr: "計數型一致性" }[msaSub]) : "DOE · " + (doeSub === "fact" ? "因子設計" : "混合設計"); }
+  function toolName(k) { return k === "sample" ? "樣本數規劃 · " + SS_NAME[sampleSub] : k === "taguchi" ? "田口方法" : k === "spc" ? "SPC 管制圖" : k === "msa" ? "MSA · " + ({ grr: "Gage R&R", bias: "偏差", lin: "線性", stab: "穩定性", attr: "屬性一致性" }[msaSub]) : "DOE · " + (doeSub === "fact" ? "因子設計" : "混合設計"); }
   function toolContext(k) {
     const pd = (($(k + "Problem") || {}).value || "").trim();
     const body = k === "sample" ? sampleBody() : k === "taguchi" ? (TQ.tg && TQ.tg.ctx) : k === "spc" ? (TQ.spc && TQ.spc.ctx) : k === "msa" ? (TQ[msaSub] && TQ[msaSub].ctx) : (TQ[doeSub] && TQ[doeSub].ctx);
@@ -178,7 +178,7 @@
     if (k === "taguchi") return "請說明這個田口實驗結果：哪些因子影響穩健性（S/N）、哪些是調整因子、建議條件與預測的改善幅度、確認實驗要注意什麼，以及這個設計的限制（例如交互作用、雜音條件是否涵蓋實際變異）。";
     if (k === "spc") return "請說明這個管制圖結果：製程是否在統計管制內、判異點可能代表什麼（只列可能性，要標 *）、製程能力是否足夠，以及下一步建議。";
     if (k === "msa") return msaSub === "grr" ? "請說明這個 Gage R&R 結果：量測系統是否可接受、變異主要來自重複性還是再現性、ndc 的意義，以及改善方向。"
-      : msaSub === "attr" ? "請說明這個計數型一致性結果：評估員自身、彼此、與標準答案的一致程度，Kappa 是否足夠，以及改善方向。"
+      : msaSub === "attr" ? "請說明這個屬性一致性結果：評估員自身、彼此、與標準答案的一致程度，Kappa 是否足夠，以及改善方向。"
       : "請說明這個量測系統" + ({ bias: "偏差", lin: "線性", stab: "穩定性" }[msaSub]) + "結果：結論是什麼、實務意義，以及需要注意的限制。";
     return doeSub === "fact" ? "請說明這個實驗設計結果：哪些因子或交互作用有顯著影響、效應大小的實務意義、別名（混淆）的限制、建議的設定與確認實驗。"
       : "請說明這個混合設計結果：各成分與成分間交互作用的影響、模型是否適當、建議配方與確認實驗。";
@@ -533,7 +533,7 @@
     TQ.attr = { r }; const kmin = hasStd ? r.allStd.kappa : r.between.kappa;
     const kj = k => !isFinite(k) ? "—" : k >= 0.9 ? "良好" : k >= 0.7 ? "尚可" : "不足";
     const cls = k => !isFinite(k) ? "ns" : k >= 0.9 ? "good" : k >= 0.7 ? "warn" : "bad";
-    $("attrTitle").textContent = "計數型一致性";
+    $("attrTitle").textContent = "屬性一致性";
     $("attrOut").innerHTML = `<div class="verdict">${pill(cls(kmin), (hasStd ? "全體與標準" : "評估員之間") + " κ " + kj(kmin))}
       <p class="big">${hasStd ? `所有人所有次數都判對的樣本：${r.allStd.matched}/${r.S}（${pc(r.allStd.pct)}），κ = ${fmt(r.allStd.kappa, 3)}。` : `評估員之間完全一致的樣本：${r.between.matched}/${r.S}（${pc(r.between.pct)}），Fleiss κ = ${fmt(r.between.kappa, 3)}。`}</p></div>
       ${kv([["樣本", r.S], ["評估員", r.A + " 位"], ["每人次數", r.T], ["判定類別", esc(r.cats.join("、"))], ["評估員之間 κ", fmt(r.between.kappa, 3)], hasStd ? ["全體與標準 κ", fmt(r.allStd.kappa, 3)] : null])}`;
@@ -544,7 +544,7 @@
     if (r.allStd) rows.push(["全體", "與標準答案", `${r.allStd.matched}/${r.allStd.n}`, pc(r.allStd.pct), fmt(r.allStd.kappa, 3), kj(r.allStd.kappa)]);
     $("attrTable").innerHTML = table(["對象", "比較", "一致樣本", "一致比例", "κ", "判讀"], rows);
     $("attrSheets").hidden = false;
-    TQ.attr.ctx = `計數型一致性：${r.S} 個樣本、${r.A} 位評估員、每人 ${r.T} 次；類別 ${r.cats.join("、")}\n` + rows.map(x => x.slice(0, 5).join("｜")).join("\n") + "\n（自身一致與評估員之間用 Fleiss κ，與標準答案用 Cohen κ；判讀經驗值 ≥0.9 良好、0.7～0.9 尚可、<0.7 不足）";
+    TQ.attr.ctx = `屬性一致性：${r.S} 個樣本、${r.A} 位評估員、每人 ${r.T} 次；類別 ${r.cats.join("、")}\n` + rows.map(x => x.slice(0, 5).join("｜")).join("\n") + "\n（自身一致與評估員之間用 Fleiss κ，與標準答案用 Cohen κ；判讀經驗值 ≥0.9 良好、0.7～0.9 尚可、<0.7 不足）";
     toolChanged("msa");
   }
   $("attrRun").addEventListener("click", attrRun);

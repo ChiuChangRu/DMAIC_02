@@ -573,3 +573,27 @@ g.fb-hit:hover rect { stroke-width: 3; }
 #guideCats.need-cats { margin: 4px 0 14px; } #guideCats .chip { border-color: var(--deep-orange); color: var(--deep-orange); background: var(--surface); } #guideCats .chip[aria-pressed="true"] { background: var(--deep-orange); border-color: var(--deep-orange); color: var(--on-deep-orange); font-weight: 700; } #guideCats .chip[aria-pressed="true"]::before { color: inherit; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #guideCats .chip:not([aria-pressed="true"]) { color: #D9935E; } }
 :root[data-theme="dark"] #guideCats .chip:not([aria-pressed="true"]) { color: #D9935E; }
+
+/* MSA 實驗規劃 */
+.mp-card { margin: 0 0 18px; padding: 0; }
+.mp-card > summary { cursor: pointer; padding: 16px 24px; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.mp-card > summary::-webkit-details-marker { display: none; }
+.mp-body { padding: 0 24px 24px; display: grid; gap: 14px; }
+.mp-body .field textarea { width: 100%; box-sizing: border-box; }
+.mp-why { border-left: 3px solid var(--teal); padding: 4px 14px; font-size: 15px; }
+.mp-check { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; }
+.mp-check .mp-bad { color: var(--bad); } .mp-check .mp-ok { color: var(--good); }
+.mp-aux h4 { margin: 4px 0 8px; font-size: 15px; }
+.mp-aux-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.mp-aux-grid label { display: grid; gap: 2px; font-size: 13px; color: var(--muted); }
+.mp-aux-grid .mp-in { width: 96px; }
+.mp-in { font: inherit; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
+.mp-tblwrap { max-height: 420px; overflow: auto; }
+.mp-tbl td, .mp-tbl th { padding: 4px 8px; text-align: left; white-space: nowrap; }
+.mp-tbl thead th { position: sticky; top: 0; background: var(--surface); }
+.mp-paste summary { cursor: pointer; color: var(--teal); font-weight: 700; }
+@media (max-width: 480px) { .mp-card > summary, .mp-body { padding-left: 16px; padding-right: 16px; } }
+.mp-meta { display: grid; gap: 12px; }
+.mp-opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 15px; }
+.mp-opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.mp-meta select { height: 48px; box-sizing: border-box; }
