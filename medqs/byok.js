@@ -124,7 +124,7 @@
     $("aiModeLine").innerHTML = aiMode === "claude"
       ? "目前使用：<b>模式 (1) claude.ai</b>。AI 用的是開啟者自己的 Claude 帳號額度；帳號安裝 NyquistAI 連接器後，可檢索 FDA 外部案例。"
       : aiMode === "byok" ? `目前使用：<b>模式 (2) 自帶 API key</b>（${esc(BYOK_PROV[byokCfg.provider].name)}・模型 ${esc(byokModel())}）。費用由 key 的擁有者負擔；NyquistAI 外部案例在這個模式無法使用。`
-      : inC ? "目前無法使用 AI。在 claude.ai 中只能使用模式 (1)，而這個帳號無法使用（常見原因：不屬於發布者的組織、未登入）。要用自己的 API key，請改開 GitHub 版的網址。"
+      : inC ? "目前無法使用 AI。在 claude.ai 中只能使用模式 (1)，而這個帳號無法使用（可能原因*：未登入，或帳號與發布者不在同一個組織）。要用自己的 API key，請改開 GitHub 版的網址。"
       : "目前尚未設定 AI。貼上 API key 並按「儲存並啟用」後即可使用。";
     $("byokForm").hidden = inC;
     $("byokInClaude").hidden = !inC;

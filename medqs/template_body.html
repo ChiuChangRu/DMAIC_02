@@ -816,18 +816,19 @@
         <h3>AI 連線方式</h3>
         <p class="help" id="aiModeLine"></p>
         <ul class="reasons">
-          <li><b>模式 (1) claude.ai</b>：在 claude.ai 中開啟本頁時自動使用，用量算在開啟者自己的 Claude 帳號（需為發布者組織內的帳號）；可搭配 NyquistAI 連接器。</li>
+          <li><b>模式 (1) claude.ai</b>：在 claude.ai 中開啟本頁時自動使用，用量算在開啟者自己的 Claude 帳號；帳號與發布者的關係（例如不同組織）可能使這項功能無法使用*；可搭配 NyquistAI 連接器。</li>
           <li><b>模式 (2) 自帶 API key</b>：在 claude.ai 以外開啟時（例如 GitHub 版）使用。key 只存在你的瀏覽器，直接送到你填的 AI 服務，不經過其他伺服器；費用由 key 的擁有者負擔。請選支援圖片（多模態）的模型，附件照片才看得到。</li>
         </ul>
         <p class="hint" id="byokInClaude" hidden>在 claude.ai 中無法使用自帶 key（平台的安全規則禁止網頁連到外部 API）。要用自己的 key，請開 GitHub 版：<a class="link" href="https://chiuchangru.github.io/DMAIC_02/medqs/" target="_blank" rel="noopener">chiuchangru.github.io/DMAIC_02/medqs</a></p>
         <div id="byokForm" hidden>
-          <div class="fields">
-            <div class="field"><label for="byokProv">AI 提供者</label><select id="byokProv"></select></div>
-            <div class="field"><label for="byokModel">模型名稱</label><input type="text" id="byokModel" autocomplete="off" spellcheck="false"></div>
+          <div class="fields" style="align-items:start">
+            <div class="field"><label for="byokProv">AI 提供者</label><select id="byokProv" autocomplete="off"></select></div>
+            <div class="field"><label for="byokKey" id="byokKeyLab">API key</label><input type="password" id="byokKey" name="byok-secret" autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" placeholder="貼上後按「儲存並啟用」"></div>
           </div>
-          <div class="fields" style="margin-top:10px">
-            <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" autocomplete="off" spellcheck="false"></div>
-            <div class="field"><label for="byokKey" id="byokKeyLab">API key</label><input type="password" id="byokKey" autocomplete="off" spellcheck="false" placeholder="貼上後按「儲存並啟用」"><span class="hint" id="byokKeyState"></span></div>
+          <p class="hint" id="byokKeyState" style="margin:6px 0 0"></p>
+          <div class="fields" style="margin-top:10px;align-items:start">
+            <div class="field"><label for="byokModel">模型名稱</label><input type="text" id="byokModel" name="byok-model" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
+            <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" name="byok-endpoint" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
           </div>
           <div class="byok-opts">
             <label><input type="checkbox" id="byokKeep"> 把 key 記在這個瀏覽器（共用電腦請不要勾；不勾則關閉網頁就清除）</label>
