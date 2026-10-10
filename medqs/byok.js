@@ -136,7 +136,7 @@
     if (aiMode === "claude") { byokRender(); return; }
     if (byokUsable() && !inClaudeView()) { sample = byokSample; aiMode = "byok"; aiErr = ""; }
     else { if (sample === byokSample) sample = null; aiMode = "none";
-      aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
+      aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定與案件存取」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
     try { attInitLimits(); } catch (_) {}
     setHelpText(); updateChatControls(); byokRender();
   }

@@ -143,7 +143,7 @@
   const MP_CHAT_RULE = "【MSA 實驗參數】回答中如果有建議具體的實驗設計，最後附一個 ```msaplan 區塊，讓使用者按按鈕帶入網頁的規劃表單。區塊內只放設計參數，不放任何量測數值。格式：\n" + MP_SCHEMA;
   async function mpAsk() {
     const q = $("mpDesc").value.trim(); if (!q) { mpNote("請先描述量測情境。", true); return; }
-    if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定」確認；也可以直接在下方自己選擇與調整。", true); return; }
+    if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (MP.busy) return; MP.busy = true; $("mpAi").disabled = true; mpNote("AI 規劃中…");
     mpRead();
     const ctx = ($("msaProblem").value || "").trim(), M = MP.m;

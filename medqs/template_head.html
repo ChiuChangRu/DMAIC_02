@@ -597,3 +597,27 @@ g.fb-hit:hover rect { stroke-width: 3; }
 .mp-opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 15px; }
 .mp-opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 .mp-meta select { height: 48px; box-sizing: border-box; }
+/* AI 輔助視窗：深紅色（亮色、暗色主題都一樣） */
+.ai-panel { --surface: #4A1218; --bg: #3A0D12; --ink: #FBECEC; --muted: #E3B9BC; --line: #7A2C33; --grid: #7A2C33; --code-bg: #5A1A21; --navy-soft: #6E2530; --teal: #9FDCD3; --teal-soft: #4A2A2E; --copper-text: #FFD0A3; --copper-soft: #5E2A1E; --warn-ink: #FFDE8F; --warn-soft: #5A3A1E; --good: #A6E3B5; --good-soft: #2F3A26; --bad: #FFB8AE; --bad-soft: #6A1F26; --on-accent: #3A0D12; background: var(--surface); color: var(--ink); border-color: #7A2C33; }
+.ai-panel .ai-head { background: #330A0F; color: #FFF4F4; }
+.ai-panel textarea, .ai-panel input, .ai-panel select { background: #3A0D12; color: var(--ink); border-color: var(--line); }
+.ai-panel a { color: #FFC9A8; }
+.ai-fab { background: #8E1B24; color: #FFF4F4; }
+.pk-wide textarea { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 14px; }
+.case-badge { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--teal); }
+.case-badge[hidden] { display: none; }
+#caseList td { vertical-align: middle; }
+.case-btns { white-space: nowrap; display: flex; gap: 6px; }
+tr.case-cur td { background: var(--teal-soft); }
+.pk-miss, .mp-in.pk-miss, select.pk-miss { border-color: var(--bad) !important; box-shadow: 0 0 0 1px var(--bad) inset; }
+.pk-src { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 999px; padding: 2px 10px; }
+.pk-src[hidden] { display: none; }
+.pk-badge { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 8px; padding: 6px 10px; }
+.pk-badge[hidden] { display: none; }
+.pk-ask { border: 1.5px solid var(--copper); border-radius: 10px; padding: 10px 14px; background: var(--copper-soft); }
+.pk-ask p { margin: 0 0 6px; font-weight: 700; }
+.pk-tbl .mp-in { min-width: 90px; }
+.pk-srccell { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.pk-pv { font-size: 14px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+.pk-pv table { margin-top: 6px; }
+.fb-carry { margin-top: 10px; flex-wrap: wrap; }

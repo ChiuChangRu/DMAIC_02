@@ -597,6 +597,30 @@ g.fb-hit:hover rect { stroke-width: 3; }
 .mp-opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 15px; }
 .mp-opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 .mp-meta select { height: 48px; box-sizing: border-box; }
+/* AI 輔助視窗：深紅色（亮色、暗色主題都一樣） */
+.ai-panel { --surface: #4A1218; --bg: #3A0D12; --ink: #FBECEC; --muted: #E3B9BC; --line: #7A2C33; --grid: #7A2C33; --code-bg: #5A1A21; --navy-soft: #6E2530; --teal: #9FDCD3; --teal-soft: #4A2A2E; --copper-text: #FFD0A3; --copper-soft: #5E2A1E; --warn-ink: #FFDE8F; --warn-soft: #5A3A1E; --good: #A6E3B5; --good-soft: #2F3A26; --bad: #FFB8AE; --bad-soft: #6A1F26; --on-accent: #3A0D12; background: var(--surface); color: var(--ink); border-color: #7A2C33; }
+.ai-panel .ai-head { background: #330A0F; color: #FFF4F4; }
+.ai-panel textarea, .ai-panel input, .ai-panel select { background: #3A0D12; color: var(--ink); border-color: var(--line); }
+.ai-panel a { color: #FFC9A8; }
+.ai-fab { background: #8E1B24; color: #FFF4F4; }
+.pk-wide textarea { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 14px; }
+.case-badge { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--teal); }
+.case-badge[hidden] { display: none; }
+#caseList td { vertical-align: middle; }
+.case-btns { white-space: nowrap; display: flex; gap: 6px; }
+tr.case-cur td { background: var(--teal-soft); }
+.pk-miss, .mp-in.pk-miss, select.pk-miss { border-color: var(--bad) !important; box-shadow: 0 0 0 1px var(--bad) inset; }
+.pk-src { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 999px; padding: 2px 10px; }
+.pk-src[hidden] { display: none; }
+.pk-badge { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 8px; padding: 6px 10px; }
+.pk-badge[hidden] { display: none; }
+.pk-ask { border: 1.5px solid var(--copper); border-radius: 10px; padding: 10px 14px; background: var(--copper-soft); }
+.pk-ask p { margin: 0 0 6px; font-weight: 700; }
+.pk-tbl .mp-in { min-width: 90px; }
+.pk-srccell { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.pk-pv { font-size: 14px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+.pk-pv table { margin-top: 6px; }
+.fb-carry { margin-top: 10px; flex-wrap: wrap; }
 </style>
 
 <div class="wrap">
@@ -605,11 +629,10 @@ g.fb-hit:hover rect { stroke-width: 3; }
       <div>
         <div class="eyebrow">Medical Device Quality Statistics</div>
         <h1>醫材品質統計工作台</h1>
-        <p class="lede">醫療器材研發與品質工作常用的統計與品質分析工具。資料只在瀏覽器內計算；需要解讀時，用你自己的 Claude 帳號直接請 AI 說明結果、回答追問。</p>
       </div>
     </div>
     <nav class="tabs toolnav" role="tablist" aria-label="工具">
-      <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定</button>
+      <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
       <button type="button" role="tab" data-route="home" aria-selected="true">定義問題</button>
       <button type="button" role="tab" data-route="fishbone" aria-selected="false">魚骨圖</button>
       <button type="button" role="tab" data-route="sample" aria-selected="false">樣本數規劃</button>
@@ -620,6 +643,7 @@ g.fb-hit:hover rect { stroke-width: 3; }
       <button type="button" role="tab" data-route="taguchi" aria-selected="false">田口方法</button>
       <button type="button" role="tab" data-route="validation" aria-selected="false">確效</button>
     </nav>
+    <p class="case-badge" id="caseBadge" hidden></p>
   </header>
 
   <section id="viewHome" role="tabpanel" data-view="home">
@@ -1150,6 +1174,19 @@ g.fb-hit:hover rect { stroke-width: 3; }
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
     <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
     <div class="tool-problem"><label for="spcProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
+    <details class="card mp-card" id="spcPlan" open>
+      <summary><span class="qref copper">規劃</span> <b>資料規劃</b><span class="hint"> 先決定資料怎麼收、怎麼分組；收完把數值填回，再分析</span></summary>
+      <div class="mp-body">
+        <p class="help">流程：① 描述要監控的製程與特性，請 AI 建議資料結構（AI 只給規劃，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生依時間順序的記錄表 → ④ 現場依序填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊；分層欄位用代號。</p>
+        <div class="field"><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
+        <div class="run-row"><button class="btn" type="button" id="spAi">請 AI 建議資料結構</button><span class="hint" id="spHint"></span></div>
+        <div class="mp-why" id="spWhy" hidden></div>
+        <div id="spMeta" class="mp-meta"></div>
+        <ul class="mp-check" id="spCheck"></ul>
+        <div class="run-row"><button class="btn primary" type="button" id="spGen">產生記錄表</button><button class="btn ghost" type="button" id="spReset">恢復預設值</button></div>
+        <div id="spSheet" hidden></div>
+      </div>
+    </details>
     <div class="grid">
       <main class="card">
         <div class="step">
@@ -1423,8 +1460,22 @@ g.fb-hit:hover rect { stroke-width: 3; }
   </section>
 
   <section id="viewAISettings" role="tabpanel" data-view="aisettings" hidden>
-    <div class="tool-head"><h2 class="tool-title">AI 設定</h2><span class="hint" id="asState"></span></div>
+    <div class="tool-head"><h2 class="tool-title">AI 設定與案件存取</h2><span class="hint" id="asState"></span></div>
     <div class="sheets" style="margin-top:0">
+      <section class="card sheet" id="caseSheet">
+        <h3>案件存取</h3>
+        <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
+        <p class="hint" id="demoDesc"></p>
+        <div class="pk-ask" id="demoAsk" hidden></div>
+        <p id="caseCurLine"></p>
+        <div class="fields"><div class="field"><label for="caseName">案件名稱</label><input type="text" id="caseName" autocomplete="off" placeholder="例如：客訴 C-001 封口拉力偏低（請用代號）"></div></div>
+        <div class="mp-opts"><label><input type="checkbox" id="caseChat"> 一起儲存 AI 對話紀錄（可能含敏感內容，預設不存）</label></div>
+        <div class="run-row"><button class="btn primary" type="button" id="caseSaveNew">另存新案件</button><button class="btn" type="button" id="caseSaveOver" hidden>覆蓋目前案件</button><button class="btn" type="button" id="caseExportNow">匯出目前內容（.json）</button><button class="btn" type="button" id="caseImportBtn">匯入案件檔</button><input type="file" id="caseFile" accept=".json,application/json" hidden><button class="btn ghost" type="button" id="caseNew">開新案件（清空全部）</button></div>
+        <p class="hint" id="caseHint" aria-live="polite"></p>
+        <h4 style="margin:14px 0 6px">這個瀏覽器的案件清單</h4>
+        <div class="scroll-x" id="caseList"></div>
+        <p class="hint">清單存在這台電腦的這個瀏覽器；清除瀏覽器資料、換電腦或用無痕視窗時就看不到，重要案件請另外匯出。請不要在案件名稱或內容中輸入客戶、病患、批號等可識別資訊。</p>
+      </section>
       <section class="card sheet" id="byokSheet">
         <h3>AI 連線方式</h3>
         <p class="help" id="aiModeLine"></p>
@@ -1456,7 +1507,6 @@ g.fb-hit:hover rect { stroke-width: 3; }
       </section>
       <section class="card sheet">
         <h3>回答風格</h3>
-        <p class="help">設定所有分頁的 AI 說明怎麼回答（各分頁的 AI 說明視窗也可以臨時改用其他視角）。個人設定只存在你的瀏覽器；按「回到公司預設」可還原。改了之後，下一個問題就照新風格回答，不用清除對話。</p>
         <div class="as-grid">
           <div class="as-row"><span class="group-label">視角</span><div class="chips" id="asPersp" role="group" aria-label="視角"></div></div>
           <div class="as-row"><span class="group-label">長度</span><div class="chips" id="asDetail" role="group" aria-label="長度"><button class="chip" type="button" data-v="short">精簡</button><button class="chip" type="button" data-v="std">標準</button><button class="chip" type="button" data-v="long">詳細</button></div></div>
@@ -1468,26 +1518,8 @@ g.fb-hit:hover rect { stroke-width: 3; }
         <div class="run-row"><button class="btn small" type="button" id="asReset">回到公司預設</button><span class="hint">固定不變的三條：繁體中文、推論在句尾標 *、不編造數字與法規條文。</span></div>
       </section>
       <section class="card sheet">
-        <h3>AI 層級怎麼選</h3>
-        <p class="help">網站只能指定「等級」，無法指定特定的模型名稱；實際由哪個模型回答由 claude.ai 平台決定。帳號方案沒有所選的等級時，平台會改用相近的等級，每則回答下方會標示實際使用的等級。</p>
-        <div class="scroll-x"><table class="mini as-tier-table">
-          <thead><tr><th>等級</th><th>特色</th><th>適合</th><th>注意</th></tr></thead>
-          <tbody>
-            <tr><td><b>快速</b></td><td>不先思考就直接回答，幾秒內出現文字，用量最少</td><td>名詞解釋、簡單追問、改寫一句話</td><td>容易漏掉樣板段落、推理較淺*；定義問題的 AI 診斷分析不使用這一級（會自動用「標準」）</td></tr>
-            <tr><td><b>標準</b>（建議）</td><td>先思考再回答，通常 5～60 秒開始出現文字</td><td>大部分的結果說明、規劃說明、AI 診斷分析</td><td>—</td></tr>
-            <tr><td><b>深入思考</b></td><td>思考最久、推理能力最強，用量最多</td><td>附件很長、多個工具結果要一起判斷、需要仔細檢查統計方法的情況</td><td>可能要等一兩分鐘才開始出現文字</td></tr>
-          </tbody>
-        </table></div>
-      </section>
-      <section class="card sheet">
         <h3>五個視角的固定樣板</h3>
-        <p class="help">每個視角都有固定的小標題與順序，AI 回答後網站會自動檢查；缺段落或順序不對時會提醒，並可按「依樣板重寫」。追問時 AI 直接回答，不重複樣板。魚骨圖對話使用魚骨圖自己的格式。</p>
         <div class="scroll-x"><table class="mini" id="asTplTable"></table></div>
-      </section>
-      <section class="card sheet">
-        <h3>公司預設</h3>
-        <p class="help">所有人第一次打開網頁時套用的風格。要修改公司預設，請告訴網頁維護者，改完重新發布後生效。</p>
-        <ul class="reasons" id="asCompany"></ul>
       </section>
       <section class="card sheet">
         <h3>比較兩種視角</h3>
@@ -1580,10 +1612,9 @@ g.fb-hit:hover rect { stroke-width: 3; }
   </aside>
   <button class="sel-ask" id="selAsk" type="button" hidden>問 AI</button>
 
-  <div class="note warn disclaimer site-disclaimer">本網站的計算結果、確效資料與確效報告僅供參考。作者不擔保其正確性、完整性，或符合任何法規（例如 ISO 13485 對軟體確效的要求）；用於產品放行、法規申報或品質判定前，使用者應依公司程序自行確認。</div>
   <footer>
     <span><b>醫材品質統計工作台</b> · 統計引擎 <span id="engineVer"></span></span>
-    <span>資料只在你的瀏覽器中計算；使用 AI 說明時，結果摘要與數據會送給 Claude。計算結果僅供參考，不擔保符合法規要求。</span>
+    <span>資料只在你的瀏覽器中計算；使用 AI 說明時，結果摘要與數據會送給 Claude，請先去識別化（客戶、病患、批號等）。計算結果、確效資料與報告僅供參考，不擔保正確、完整或符合任何法規；用於產品放行、法規申報或品質判定前，請依公司程序自行確認。</span>
   </footer>
 </div>
 
@@ -4592,11 +4623,14 @@ else root.runValidation = runValidation;
   }
   function aiBody(text, final, key) {
     key = key || chatKey;
-    const mpj = key === "msa" ? mpParsePlan(text) : null;
+    const mpj = key === "msa" ? mpParsePlan(text) : null, spj = key === "spc" ? spParsePlan(text) : null;
+    const pkk = key === "home" ? "doe" : key, pkp = typeof PLANS !== "undefined" && PLANS && PLANS[pkk] ? PLANS[pkk] : null, pkj = pkp && final ? pkp.parse(text) : null;
+    if (pkp) text = String(text).replace(pkp.stripRe, "").trim();
     if (key === "msa") text = String(text).replace(/```msaplan[\s\S]*?(```|$)/g, "").trim();
+    if (key === "spc") text = String(text).replace(/```spcplan[\s\S]*?(```|$)/g, "").trim();
     const sp = fbSplit(text, final);
     if (key === "carried") return mdLite(sp.clean) + (final && sp.sug && sp.sug.factors.length ? `<p class="hint">（這則回答建議的 ${sp.sug.factors.length} 個原因，已在帶入時加進魚骨圖，請到 STEP 2「待決定」逐一採用或排除。）</p>` : "");
-    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") : "");
+    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (pkj ? pkp.html(pkj) : "") : "");
   }
   function homeGotoHtml(text, sug) {
     const m = String(text).match(/建議工具[:：]\s*([^\n]+)/);
@@ -4756,7 +4790,7 @@ else root.runValidation = runValidation;
     upstream_error: "連線中斷，請再試一次。",
     images_unavailable: "這個檢視無法把圖片傳給 AI，請移除照片後再試。",
     image_rejected: "有圖片格式不支援或檔案太大，請改用 JPG 或 PNG。",
-    byok_nokey: "尚未設定 API key 或模型名稱，請到「AI 設定」→「AI 連線方式」填寫。",
+    byok_nokey: "尚未設定 API key 或模型名稱，請到「AI 設定與案件存取」→「AI 連線方式」填寫。",
     byok_network: "連不到 AI 服務：可能是網址錯誤、網路被公司擋住，或這家服務不允許從瀏覽器直接呼叫（CORS）。",
     byok_auth: "API key 錯誤、已失效，或沒有使用這個模型的權限。",
     byok_model: "API 網址或模型名稱錯誤（找不到）。",
@@ -4768,9 +4802,11 @@ else root.runValidation = runValidation;
     if (!sample || busy || !hasData()) return;
     busy = true;
     const parts = [];
-    if (!turns.length) parts.push(chatKey === "home" ? GUIDE_RULES + "\n" + FB_HOME_RULE + "\n\n" + guideContext()
+    if (!turns.length) parts.push(chatKey === "home" ? GUIDE_RULES + "\n" + FB_HOME_RULE + (PLANS && PLANS.doe ? "\n\n" + PLANS.doe.chatRule : "") + "\n\n" + guideContext()
       : chatKey === "fishbone" ? FB_RULES + "\n\n" + fbToolsText()
       : chatKey === "msa" ? RULES + "\n\n" + MP_CHAT_RULE
+      : chatKey === "spc" ? RULES + "\n\n" + SP_CHAT_RULE
+      : PLANS && PLANS[chatKey] ? RULES + "\n\n" + PLANS[chatKey].chatRule
       : RULES);
     const prevPrefix = chatPrefix, prevCtx = chatLastCtx, prevStyle = styleSent[chatKey];
     { const sty = styleForAsk(chatKey, !turns.length); if (sty) parts.push(sty); }
@@ -5479,8 +5515,11 @@ else root.runValidation = runValidation;
     const keys = fb.factors.filter(f => f.key && !f.verify && f.st === "use");
     const row = (f, tag) => `<tr><td>${esc(fbCatName(f))}</td><td>${esc(f.text)}</td><td>${tag}</td></tr>`;
     const tools = `<p class="help">驗證工具：<button type="button" class="linkbtn" data-go="sample" data-sub="power">樣本數規劃</button>（先決定要測幾個）、<button type="button" class="linkbtn" data-go="msa">MSA</button>（量測系統是否可信）、<button type="button" class="linkbtn" data-go="hypothesis" data-sub="compare">假設檢定</button>（條件改變前後是否不同）、<button type="button" class="linkbtn" data-go="spc">SPC</button>（製程是否穩定）、<button type="button" class="linkbtn" data-go="doe">DOE</button>（哪些參數有影響）、<button type="button" class="linkbtn" data-go="taguchi">田口方法</button>（讓產品對雜音不敏感）。</p>`;
+    const row2 = (f, tag) => `<tr><td>${esc(fbCatName(f))}</td><td>${esc(f.text)}</td><td>${tag}</td><td><button type="button" class="linkbtn" data-pkfb="hyp" data-fid="${f.id}">→ 假設檢定比較</button></td></tr>`;
+    const meas = ver.concat(keys).some(f => /量測|測量|量具|檢測|Measure/i.test(fbCatName(f)));
+    const carry = `<div class="run-row fb-carry"><span class="group-label">帶入統計工具的確認區：</span><button type="button" class="btn small" data-pkfb="doe">→ DOE</button><button type="button" class="btn small" data-pkfb="taguchi">→ 田口方法</button><button type="button" class="btn small" data-pkfb="spc">→ SPC 分層欄位</button></div><p class="hint">帶入的是上表的原因名稱，到確認區後可改成因子名稱（例如「封口溫度不足」→「封口溫度 (°C)」）；水準、數量等數字要自己填。${meas ? "" : ""}</p>${meas ? `<p class="note warn">有「量測」相關的原因：建議先做 <button type="button" class="linkbtn" data-go="msa">MSA</button>，確認量測系統可信，再用量測數據驗證其他原因*。</p>` : ""}`;
     $("fbVerify").innerHTML = (ver.length || keys.length)
-      ? `<div class="scroll-x"><table><thead><tr><th>分類</th><th>原因</th><th>標記</th></tr></thead><tbody>${ver.map(f => row(f, "◇ 待驗證" + (f.key ? "、★ 重要" : ""))).join("")}${keys.map(f => row(f, "★ 重要（未標待驗證）")).join("")}</tbody></table></div>${tools}`
+      ? `<div class="scroll-x"><table><thead><tr><th>分類</th><th>原因</th><th>標記</th><th></th></tr></thead><tbody>${ver.map(f => row2(f, "◇ 待驗證" + (f.key ? "、★ 重要" : ""))).join("")}${keys.map(f => row2(f, "★ 重要（未標待驗證）")).join("")}</tbody></table></div>${carry}${tools}`
       : `<p class="hint">還沒有標記「◇ 待驗證」的原因。在 STEP 2 的原因下方按「◇ 待驗證」即可加入。</p>${tools}`;
   }
   function fbToolsText() {
@@ -6224,7 +6263,6 @@ else root.runValidation = runValidation;
     $("asPreview").textContent = styleText(st, "cmp");
     $("asState").textContent = myStyle ? "目前使用：你的個人設定" : "目前使用：公司預設";
     $("asReset").disabled = !myStyle;
-    $("asCompany").innerHTML = `<li>視角：${esc(perspName(COMPANY_STYLE))}</li><li>長度：${esc(DETAIL[COMPANY_STYLE.detail])}</li><li>格式：${esc(FORMAT[COMPANY_STYLE.format])}</li><li>用途：${esc(USE[COMPANY_STYLE.use])}</li><li>AI 層級：${TIER[COMPANY_STYLE.tier]}</li>`;
     $("asTplTable").innerHTML = "<thead><tr><th>視角</th><th>說明結果時的段落</th><th>還沒分析（規劃）時的段落</th><th>AI 診斷分析的專屬段落</th></tr></thead><tbody>" +
       Object.values(PERSP).map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${p.res.map(s => esc(s[0])).join(" → ")}</td><td>${p.plan.map(s => esc(s[0])).join(" → ")}</td><td>${esc(p.home[0])}</td></tr>`).join("") + "</tbody>";
     renderPanelPersp();
@@ -6608,7 +6646,7 @@ else root.runValidation = runValidation;
     if (aiMode === "claude") { byokRender(); return; }
     if (byokUsable() && !inClaudeView()) { sample = byokSample; aiMode = "byok"; aiErr = ""; }
     else { if (sample === byokSample) sample = null; aiMode = "none";
-      aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
+      aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定與案件存取」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
     try { attInitLimits(); } catch (_) {}
     setHelpText(); updateChatControls(); byokRender();
   }
@@ -7268,7 +7306,12 @@ else root.runValidation = runValidation;
   }
   function doeMatrixLabels() { $("doeMatrix").querySelectorAll("[data-fc]").forEach(s => { const c = +s.dataset.fc; s.textContent = +s.dataset.s > 0 ? doeF[c].hi : doeF[c].lo; }); $("doeMatrix").querySelectorAll("[data-fh]").forEach(s => { const i = +s.dataset.fh; s.textContent = QQ.LETTERS[i] + " " + doeF[i].name; }); }
   $("doeMatrix").addEventListener("input", e => { const t = e.target.closest("[data-run]"); if (t && doe) doe.y[t.dataset.run + "_" + t.dataset.rep] = t.value; });
-  $("doeGen").addEventListener("click", () => doeGenerate());
+  $("doeGen").addEventListener("click", () => {
+    const k = doeKNow(), miss = doeF.slice(0, k).map((f, i) => (!String(f.lo).trim() || !String(f.hi).trim()) ? i : -1).filter(i => i >= 0);
+    $("doeFactors").querySelectorAll('[data-fk="lo"], [data-fk="hi"]').forEach(el => el.classList.toggle("pk-miss", +el.dataset.fi < k && !el.value.trim()));
+    if (miss.length) { $("doeGenHint").innerHTML = `<span class="status ng">請填實際範圍：${esc(miss.map(i => QQ.LETTERS[i] + " " + doeF[i].name).join("、"))} 的低／高水準還沒填（紅色格子）。</span>`; return; }
+    doeGenerate(); const b = $("doeSrcBadge"); if (b) b.hidden = true;
+  });
   $("doeY").addEventListener("input", () => { if (doe) { const th = $("doeMatrix").querySelector("th:last-child"); if (th) th.textContent = $("doeY").value || "反應"; } });
   $("doeGoal").addEventListener("change", () => { $("doeTgtF").hidden = $("doeGoal").value !== "target"; });
   $("doePasteBtn").addEventListener("click", () => {
@@ -7612,7 +7655,7 @@ else root.runValidation = runValidation;
   const MP_CHAT_RULE = "【MSA 實驗參數】回答中如果有建議具體的實驗設計，最後附一個 ```msaplan 區塊，讓使用者按按鈕帶入網頁的規劃表單。區塊內只放設計參數，不放任何量測數值。格式：\n" + MP_SCHEMA;
   async function mpAsk() {
     const q = $("mpDesc").value.trim(); if (!q) { mpNote("請先描述量測情境。", true); return; }
-    if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定」確認；也可以直接在下方自己選擇與調整。", true); return; }
+    if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (MP.busy) return; MP.busy = true; $("mpAi").disabled = true; mpNote("AI 規劃中…");
     mpRead();
     const ctx = ($("msaProblem").value || "").trim(), M = MP.m;
@@ -7817,6 +7860,258 @@ else root.runValidation = runValidation;
   $("mpGen").addEventListener("click", mpGen);
   $("mpReset").addEventListener("click", () => { MP.p[MP.type] = JSON.parse(JSON.stringify(MP_DEF[MP.type])); MP.m = Object.assign({}, MP_META_DEF); MP.sheet = null; $("mpSheet").hidden = true; $("mpWhy").hidden = true; mpRenderFields(); mpNote(""); });
   setMpType("grr", false);
+  // =====================================================================
+  // SPC 資料規劃：AI 建議資料結構（管制圖、子組大小、組數、抽樣頻率、規格、分層欄位）→ 程式檢查 → 人員修改
+  // → 產生依時間順序的記錄表 → 人員填數值 → 帶入下方 SPC 分析（統計仍由 JS 計算；AI 不產生任何量測數值）
+  // =====================================================================
+  const SP_DT = {
+    continuous: { name: "連續型（計量）", eg: "例如拉力、外徑、重量", kind: "var" },
+    defective: { name: "不良品（每件判通過／不通過）", eg: "每批抽幾件、幾件不良", kind: "defective" },
+    defect: { name: "缺點數（一件可有多個缺點）", eg: "例如每片的異物數、每批的外觀缺點數", kind: "defect" }
+  };
+  const SP_GOAL = { stable: "只看製程是否穩定", cap: "穩定後再算製程能力（Cpk）" };
+  const SP_DEF = { dataType: "", goal: "cap", cpkTarget: "1.33", unit: "", resolution: "", lsl: "", target: "", usl: "", subgroupSize: 5, subgroups: 25, frequency: "", sampleSize: 200, sizeVaries: false, units: 1, unitsVary: false, strata: "", skewed: false };
+  const SP = { m: Object.assign({}, SP_DEF), sheet: null, busy: false };
+  const spNum = v => { const s = String(v == null ? "" : v).trim(); if (s === "") return null; const x = Number(s); return isFinite(x) ? x : NaN; };
+  const spInt = (v, lo, hi, d) => { const x = Math.round(Number(v)); return isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
+  const spStrata = () => String(SP.m.strata || "").split(/[,，、]+/).map(s => s.trim()).filter(Boolean).slice(0, 4);
+  function spChart(M) {
+    if (M.dataType === "continuous") return M.subgroupSize === 1 ? "imr" : M.subgroupSize <= 10 ? "xbarr" : "xbars";
+    if (M.dataType === "defective") return M.sizeVaries ? "p" : "np";
+    if (M.dataType === "defect") return M.unitsVary ? "u" : "c";
+    return "";
+  }
+
+  // ---- 程式檢查（數量門檻依一般慣例*；不是法規硬性規定） ----
+  function spCheck(M) {
+    const o = [], bad = m => o.push({ lv: "bad", m }), warn = m => o.push({ lv: "warn", m }), ok = m => o.push({ lv: "ok", m });
+    if (!SP_DT[M.dataType]) { bad("請先選擇「資料型態」（必填）。"); return o; }
+    const k = M.subgroups;
+    if (M.dataType === "continuous") {
+      const n = M.subgroupSize, L = spNum(M.lsl), U = spNum(M.usl), T = spNum(M.target), R = spNum(M.resolution);
+      if ([L, U, T, R].some(Number.isNaN)) bad("規格、目標值、解析度要填數字（不需要就留空）。");
+      if (n > 25) bad("子組大小超過 25，請重新分組。");
+      if (n === 1) { if (k < 20) bad("個別值少於 20 點：管制界限估不準。"); else if (k < 25) warn("個別值少於 25 點（常見做法是 25～30 點以上*）。"); }
+      else if (k < 15) bad("子組少於 15 組：管制界限估不準。"); else if (k < 20) warn("子組少於 20 組（常見做法是 20～25 組*）。");
+      if (n > 1 && n <= 10) ok(`子組大小 ${n}：使用 X̄-R 管制圖。`); else if (n > 10 && n <= 25) ok(`子組大小 ${n}：使用 X̄-S 管制圖。`); else if (n === 1) ok("每次只量 1 個：使用 I-MR（個別值）管制圖。");
+      if (n > 1) warn("同一子組的樣品要在「同一時間、同一條件」下連續取（例如同一小時內連續 5 個），子組之間才看得出時間的變化*。");
+      if (L != null && U != null && L >= U) bad("規格下限必須小於上限。");
+      if (T != null && ((L != null && T < L) || (U != null && T > U))) bad("目標值要在規格範圍內。");
+      if (R > 0 && L != null && U != null && L < U && (U - L) / R < 10) warn(`解析度 ${R} 相對於公差太粗（常見要求：解析度 ≤ 公差的 1/10*）。`);
+      if (M.goal === "cap") {
+        if (L == null && U == null) bad("要算 Cpk 必須至少有一邊規格（LSL 或 USL）。");
+        else if (L == null || U == null) warn(`只有${L != null ? "下限" : "上限"}：會算單邊的 ${L != null ? "Cpl" : "Cpu"}（也就是 Cpk），Cp 不適用。`);
+        const N = n * k; if (N < 50) warn(`總共 ${N} 個數值：算 Cpk 太少，信賴區間會很寬（常見建議 100 個以上*）。`); else if (N < 100) warn(`總共 ${N} 個數值：Cpk 可以算，但信賴區間偏寬（常見建議 100 個以上*）。`);
+        const t = spNum(M.cpkTarget); if (t != null && !Number.isNaN(t)) warn(`判斷 Cpk ≥ ${t} 時，看點估計也要看信賴區間下限；目標值依公司程序與驗證計畫決定。`);
+        if (M.skewed) warn("你勾了「資料可能偏態」：拉力、強度這類資料常有偏態，Cpk 假設常態，偏態時要先轉換或改用非常態方法*。帶入後程式會計算偏態係數提醒你。");
+      }
+    } else if (M.dataType === "defective") {
+      if (k < 20) warn("少於 20 批（常見做法是 20～25 批以上*）。");
+      if (!M.sizeVaries && M.sampleSize < 50) warn("每批抽樣數偏少：不良率的管制圖會很不敏感，常常整批 0 件不良也看不出變化*。");
+      ok(`每批抽樣數${M.sizeVaries ? "會變動：使用 p 管制圖（看不良率）" : "固定：使用 np 管制圖（直接看不良數）"}。`);
+    } else {
+      if (k < 20) warn("少於 20 次檢驗（常見做法是 20～25 次以上*）。");
+      ok(`檢驗單位數${M.unitsVary ? "會變動：使用 u 管制圖（看每單位缺點數）" : "固定：使用 c 管制圖（直接看缺點數）"}。`);
+    }
+    const st = spStrata();
+    if (st.length) warn(`有分層欄位（${st.join("、")}）：不同${st[0]}的資料混在同一張圖，管制界限會被撐寬、看不出真正的異常；帶入時若發現混了多種，程式會提醒你分開畫*。`);
+    else warn("建議記錄可能造成差異的分層欄位（例如機台、模具、操作員、材料），用代號即可。");
+    warn("資料要依生產時間順序記錄，不要挑樣、不要重新排序；連續點的判異規則（規則 2～8）靠順序才有意義。");
+    return o;
+  }
+
+  // ---- 表單 ----
+  function spRenderForm() {
+    const M = SP.m, dt = M.dataType;
+    const inp = (k, lab, ph, type) => `<div class="field"><label for="spm_${k}">${lab}</label><input id="spm_${k}" data-sm="${k}" type="${type || "text"}" ${type === "number" ? 'step="any" inputmode="decimal"' : 'autocomplete="off"'} value="${esc(M[k] == null ? "" : M[k])}" placeholder="${ph || ""}"></div>`;
+    const int = (k, lab, lo, hi) => `<div class="field"><label for="spm_${k}">${lab}</label><input id="spm_${k}" data-sm="${k}" data-int="${lo},${hi}" type="number" min="${lo}" max="${hi}" step="1" inputmode="numeric" value="${M[k]}"></div>`;
+    const cb = (k, lab) => `<label><input type="checkbox" data-sm="${k}"${M[k] ? " checked" : ""}> ${lab}</label>`;
+    let h = `<div class="fields"><div class="field"><label for="spm_dataType">資料型態（必填）</label><select id="spm_dataType" data-sm="dataType"><option value="">請選擇…</option>${Object.entries(SP_DT).map(([k, v]) => `<option value="${k}"${dt === k ? " selected" : ""}>${v.name}：${v.eg}</option>`).join("")}</select></div>`;
+    if (dt === "continuous") h += `<div class="field"><label for="spm_goal">目的</label><select id="spm_goal" data-sm="goal">${Object.entries(SP_GOAL).map(([k, v]) => `<option value="${k}"${M.goal === k ? " selected" : ""}>${v}</option>`).join("")}</select></div>`;
+    h += "</div>";
+    if (dt === "continuous") {
+      h += `<div class="fields">${inp("unit", "單位", "例如 N/15mm")}${inp("resolution", "量測解析度（選填）", "例如 0.01", "number")}${inp("lsl", "規格下限 LSL", "選填", "number")}${inp("target", "目標值", "選填", "number")}${inp("usl", "規格上限 USL", "選填", "number")}${M.goal === "cap" ? inp("cpkTarget", "Cpk 目標", "例如 1.33", "number") : ""}</div>`;
+      h += `<div class="fields">${int("subgroupSize", "每次抽幾個（子組大小；1＝個別值）", 1, 25)}${int("subgroups", "抽幾次（子組數）", 5, 200)}${inp("frequency", "抽樣頻率（選填）", "例如 每小時、每批、每班")}</div>`;
+      h += `<div class="mp-opts">${cb("skewed", "資料可能偏態（例如拉力、強度、只有單邊規格）")}</div>`;
+    } else if (dt === "defective") {
+      h += `<div class="fields">${int("subgroups", "抽幾批", 5, 200)}${int("sampleSize", "每批抽樣數（件）", 1, 100000)}${inp("frequency", "抽樣頻率（選填）", "例如 每批、每天")}</div><div class="mp-opts">${cb("sizeVaries", "每批抽樣數會不一樣")}</div>`;
+    } else if (dt === "defect") {
+      h += `<div class="fields">${int("subgroups", "檢驗幾次", 5, 200)}${int("units", "每次檢驗的單位數", 1, 100000)}${inp("frequency", "檢驗頻率（選填）", "例如 每批、每天")}</div><div class="mp-opts">${cb("unitsVary", "每次檢驗的單位數會不一樣")}</div>`;
+    }
+    if (dt) h += `<div class="fields">${inp("strata", "分層欄位（選填，逗號分隔，最多 4 個；記錄用代號）", "例如 機台, 模具, 操作員")}</div>`;
+    $("spMeta").innerHTML = h;
+    spRenderCheck();
+  }
+  function spRead() {
+    const M = SP.m;
+    $("spMeta").querySelectorAll("[data-sm]").forEach(el => {
+      const k = el.dataset.sm;
+      if (el.type === "checkbox") M[k] = el.checked;
+      else if (el.dataset.int) { const [lo, hi] = el.dataset.int.split(",").map(Number); M[k] = spInt(el.value, lo, hi, SP_DEF[k]); }
+      else M[k] = el.value.trim();
+    });
+  }
+  function spRenderCheck() {
+    const ck = spCheck(SP.m), has = ck.some(x => x.lv === "bad");
+    $("spCheck").innerHTML = ck.map(x => `<li class="mp-${x.lv}"><b>${x.lv === "bad" ? "✗ 不可行" : x.lv === "warn" ? "⚠ 提醒" : "✓"}</b> ${esc(x.m)}</li>`).join("") + `<li class="hint">標 * 的是一般慣例或推論，不是法規硬性規定；以公司程序為準。</li>`;
+    $("spGen").disabled = has;
+  }
+  function spNote(m, bad) { $("spHint").innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; }
+
+  // ---- AI 建議資料結構 ----
+  const SP_SCHEMA = [
+    "```spcplan",
+    '{"dataType":"continuous","goal":"cap","cpkTarget":1.33,"unit":"N/15mm","resolution":null,"spec":{"lsl":null,"target":null,"usl":null},"subgroupSize":5,"subgroups":25,"frequency":"每小時","skewed":true,"strata":["機台","模具"],"sampleSize":null,"sizeVaries":false,"units":null,"unitsVary":false}',
+    "```",
+    "欄位：dataType＝continuous（連續型量測值）、defective（不良品：每件判通過／不通過，記錄每批不良數與抽樣數）、defect（缺點數：一件可有多個缺點）。goal＝stable（只看穩定）或 cap（穩定後算 Cpk）。",
+    "continuous 用 subgroupSize（每次抽幾個；1＝個別值 I-MR）、subgroups（抽幾次）、frequency、skewed（資料可能偏態）；defective 用 subgroups（幾批）、sampleSize（每批抽樣數）、sizeVaries；defect 用 subgroups、units（每次檢驗單位數）、unitsVary。strata 是建議記錄的分層欄位名稱（最多 4 個）。",
+    "unit、resolution、spec（lsl／target／usl）、cpkTarget 只在使用者有提供時填，否則填 null；這些是規格與設計條件，不是量測結果。不得填入任何量測數值。"
+  ].join("\n");
+  const SP_RULE = [
+    "你是 SPC（統計製程管制）的資料規劃助手。只依使用者描述的情境，建議「資料要怎麼收、怎麼分組」。",
+    "規則：1. 全程使用繁體中文。2. 不要產生、猜測或舉例任何量測數值；只給資料結構與抽樣設計。3. 不確定的地方標 * 並說明要使用者確認什麼。4. 不要要求或重複客戶、病患、批號等可識別資訊；分層欄位用代號。",
+    "回答格式：先用最多 6 點說明為什麼這樣規劃（每點一行，以「- 」開頭），口語、短句，具體到可以照做，例如「每小時從同一台機台連續取 5 個，記下機台代號」「先收 25 組，約 3 天」；常見做法的數量標 *。最後附一個 ```spcplan 區塊（JSON），格式如下：",
+    SP_SCHEMA
+  ].join("\n");
+  const SP_CHAT_RULE = "【SPC 資料規劃】回答中如果有建議具體的資料結構（子組大小、組數、抽樣頻率、分層欄位等），最後附一個 ```spcplan 區塊，讓使用者按按鈕帶入網頁的規劃表單。區塊內只放規劃參數，不放任何量測數值。格式：\n" + SP_SCHEMA;
+  function spParsePlan(text) {
+    const m = String(text).match(/```spcplan\s*([\s\S]*?)```/); if (!m) return null;
+    let j; try { j = JSON.parse(m[1]); } catch (_) { return null; }
+    return j && typeof j === "object" && SP_DT[j.dataType] ? j : null;
+  }
+  function spApplyPlan(j) {
+    const M = SP.m, nb = v => { const x = Number(v); return v == null || v === "" || !isFinite(x) ? "" : String(x); };
+    M.dataType = j.dataType;
+    if (SP_GOAL[j.goal]) M.goal = j.goal;
+    if (j.cpkTarget !== undefined) M.cpkTarget = nb(j.cpkTarget);
+    if (j.unit != null) M.unit = String(j.unit).slice(0, 20);
+    if (j.resolution !== undefined) M.resolution = nb(j.resolution);
+    if (j.spec && typeof j.spec === "object") { M.lsl = nb(j.spec.lsl); M.target = nb(j.spec.target); M.usl = nb(j.spec.usl); }
+    if (j.subgroupSize != null) M.subgroupSize = spInt(j.subgroupSize, 1, 25, 5);
+    if (j.subgroups != null) M.subgroups = spInt(j.subgroups, 5, 200, 25);
+    if (j.frequency != null) M.frequency = String(j.frequency).slice(0, 30);
+    if (j.sampleSize != null) M.sampleSize = spInt(j.sampleSize, 1, 100000, 200);
+    if (j.units != null) M.units = spInt(j.units, 1, 100000, 1);
+    ["sizeVaries", "unitsVary", "skewed"].forEach(k => { if (typeof j[k] === "boolean") M[k] = j[k]; });
+    if (Array.isArray(j.strata)) M.strata = j.strata.map(s => String(s).slice(0, 12)).slice(0, 4).join(", ");
+    SP.sheet = null; $("spSheet").hidden = true; spRenderForm();
+    const bad = spCheck(M).some(x => x.lv === "bad");
+    spNote(bad ? "已帶入 AI 的建議，但程式檢查發現不可行的設定，請看下方說明並修改。" : "已帶入 AI 的建議，下方可修改；程式檢查會即時更新。", bad);
+  }
+  async function spAsk() {
+    const q = $("spDesc").value.trim(); if (!q) { spNote("請先描述要監控的製程與特性。", true); return; }
+    if (!sample) { spNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
+    if (SP.busy) return; SP.busy = true; $("spAi").disabled = true; spNote("AI 規劃中…");
+    spRead();
+    const ctx = ($("spcProblem").value || "").trim(), newbie = styleFor("spc").persp === "teach";
+    const msg = SP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (SP_DT[SP.m.dataType] ? "\n\n【使用者選的資料型態】" + SP_DT[SP.m.dataType].name : "") + (ctx ? "\n【問題描述】" + ctx : "") + "\n【製程與特性】" + q;
+    try {
+      const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
+      const j = spParsePlan(res.text), why = res.text.replace(/```spcplan[\s\S]*?```/g, "").trim();
+      $("spWhy").innerHTML = j ? `<b>AI 的規劃理由（推論，請自行判斷是否適用）</b>${mdLite(why)}` : mdLite(why || res.text); $("spWhy").hidden = false;
+      if (!j) { spNote("AI 的回答沒有附上可用的規劃參數，請參考說明自己填寫。", true); return; }
+      spApplyPlan(j);
+    } catch (e) { spNote((ERR[e && e.code] || ERR.upstream_error) + (e && e.message ? "（" + e.message + "）" : ""), true); }
+    finally { SP.busy = false; $("spAi").disabled = false; }
+  }
+  function spChatHtml(j) { return `<div class="fb-sug"><span class="hint">AI 建議的資料結構（${esc(SP_DT[j.dataType].name)}）：</span><button type="button" class="btn small primary" data-spcplan="${esc(JSON.stringify(j))}">帶入下方「資料規劃」表單</button></div>`; }
+  $("msgs").addEventListener("click", e => {
+    const b = e.target.closest("[data-spcplan]"); if (!b) return;
+    let j; try { j = JSON.parse(b.dataset.spcplan); } catch (_) { return; }
+    if (!j || !SP_DT[j.dataType]) return;
+    closePanel(); route("spc"); spApplyPlan(j); $("spcPlan").open = true; $("spcPlan").scrollIntoView({ behavior: "smooth", block: "start" }); b.textContent = "已帶入";
+  });
+
+  // ---- 記錄表（依時間順序，不隨機） ----
+  function spGen() {
+    spRead(); const M = SP.m; if (spCheck(M).some(x => x.lv === "bad")) { spRenderCheck(); return; }
+    const S = { m: Object.assign({}, M), chart: spChart(M), k: M.subgroups, strata: spStrata(), when: Array(M.subgroups).fill(""), st: [], v: [] };
+    S.cols = M.dataType === "continuous" ? Array.from({ length: M.subgroupSize }, (_, j) => M.subgroupSize === 1 ? "量測值" : "第 " + (j + 1) + " 個")
+      : M.dataType === "defective" ? ["不良數", "抽樣數"] : ["缺點數", "檢驗單位數"];
+    for (let i = 0; i < S.k; i++) {
+      S.st.push(S.strata.map(() => ""));
+      S.v.push(S.cols.map((_, j) => M.dataType === "defective" && j === 1 && !M.sizeVaries ? String(M.sampleSize) : M.dataType === "defect" && j === 1 && !M.unitsVary ? String(M.units) : ""));
+    }
+    SP.sheet = S; spSheetHtml();
+  }
+  function spSheetHtml() {
+    const S = SP.sheet, M = S.m, u = M.unit ? `（${esc(M.unit)}）` : "";
+    const cell = (a, i, j, v, ph) => `<input class="mp-in" data-${a}="${i}" ${j != null ? `data-j="${j}"` : ""} value="${esc(v)}" type="text" ${a === "v" ? 'inputmode="decimal"' : ""} autocomplete="off" placeholder="${ph || ""}">`;
+    const head = `<th>子組</th><th>時間／日期</th>${S.strata.map(s => `<th>${esc(s)}</th>`).join("")}${S.cols.map(c => `<th>${esc(c)}${M.dataType === "continuous" ? u : ""}</th>`).join("")}`;
+    const body = S.v.map((row, i) => `<tr><td>${i + 1}</td><td>${cell("w", i, null, S.when[i], M.frequency || "")}</td>${S.strata.map((_, j) => `<td>${cell("s", i, j, S.st[i][j], "代號")}</td>`).join("")}${row.map((v, j) => `<td>${cell("v", i, j, v)}</td>`).join("")}</tr>`).join("");
+    const tip = M.dataType === "continuous" ? (M.subgroupSize > 1 ? `每一列是一次抽樣：同一時間、同一條件下連續取 ${M.subgroupSize} 個，依序填入。` : "每一列是一次量測，依生產順序填。") : M.dataType === "defective" ? "每一列是一批：填不良數與抽樣數。" : "每一列是一次檢驗：填缺點數與檢驗單位數。";
+    $("spSheet").innerHTML = `<h3>記錄表（${esc(QQ.CHART_NAME[S.chart])}・共 ${S.k} ${M.dataType === "continuous" ? "組" : "列"}）</h3><p class="help">${tip}依時間順序由上往下填，不要重新排序。時間與分層欄位只用來追查異常，不會送進計算。統計全部由程式計算，AI 不參與。</p>
+      <div class="scroll-x mp-tblwrap"><table class="mp-tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <details class="mp-paste"><summary>從 Excel 一次貼上數值</summary><p class="hint">直接貼上 Excel 的數值範圍（${S.cols.length} 欄 × ${S.k} 列，只含數值欄，不含時間與分層欄）${S.cols.length > 1 && S.m.dataType !== "continuous" ? "；只貼一欄 " + S.k + " 列時，會填入第一欄（" + S.cols[0] + "）" : ""}。</p><textarea id="spBulk" rows="3" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" id="spBulkGo">填入表格</button></div></details>
+      <div class="run-row"><button class="btn primary" type="button" id="spApply">帶入下方分析</button><button class="btn" type="button" id="spCsv">下載空白記錄表（CSV）</button><span class="hint" id="spProg"></span></div>
+      <ul class="mp-check" id="spDataWarn" hidden></ul>`;
+    $("spSheet").hidden = false; spProg();
+  }
+  function spProg() { const S = SP.sheet; if (!S) return; const all = [].concat(...S.v), f = all.filter(v => String(v).trim() !== "").length; $("spProg").textContent = `已填 ${f} / ${all.length}`; }
+  $("spSheet").addEventListener("input", e => { const S = SP.sheet; if (!S) return; const el = e.target, i = +(el.dataset.v ?? el.dataset.s ?? el.dataset.w), j = +el.dataset.j;
+    if (el.dataset.v != null) S.v[i][j] = el.value; else if (el.dataset.s != null) S.st[i][j] = el.value; else if (el.dataset.w != null) S.when[i] = el.value; spProg(); });
+  $("spSheet").addEventListener("click", e => {
+    const S = SP.sheet; if (!S) return; const id = e.target.id;
+    if (id === "spBulkGo") {
+      const lines = $("spBulk").value.split(/\r?\n/).map(l => l.trim()).filter(Boolean); if (!lines.length) return;
+      const split = l => l.split(/[\s,，;\t]+/).filter(Boolean);
+      if (lines.length > 1 && lines.some(l => split(l).length > 1)) lines.slice(0, S.k).forEach((l, i) => split(l).slice(0, S.cols.length).forEach((v, j) => { S.v[i][j] = v; }));
+      else if (S.cols.length > 1 && lines.length === S.k) lines.forEach((l, i) => { S.v[i][0] = split(l)[0]; });
+      else split(lines.join(" ")).slice(0, S.k * S.cols.length).forEach((v, n) => { S.v[Math.floor(n / S.cols.length)][n % S.cols.length] = v; });
+      spSheetHtml(); spNote("已填入表格，請檢查。");
+    } else if (id === "spCsv") {
+      const q = s => `"${String(s).replace(/"/g, '""')}"`, L = [["子組", "時間／日期"].concat(S.strata, S.cols.map(c => c + (S.m.unit && S.m.dataType === "continuous" ? `（${S.m.unit}）` : ""))).map(q).join(",")];
+      S.v.forEach((row, i) => L.push([i + 1, q(S.when[i])].concat(S.st[i].map(q), row.map(q)).join(",")));
+      const fn = `SPC_${QQ.CHART_NAME[S.chart].replace(/[\\/:*?"<>|\s]+/g, "_")}_記錄表_${new Date().toISOString().slice(0, 10)}.csv`;
+      if (!downloads) { spNote("這個檢視無法下載檔案。", true); return; }
+      Promise.resolve().then(() => downloads.save({ filename: fn, data: "﻿" + L.join("\r\n") })).catch(e2 => { if (!(e2 && e2.code === "declined")) spNote("無法下載檔案。", true); });
+    } else if (id === "spApply") spApply();
+  });
+  function spApply() {
+    const S = SP.sheet, M = S.m, isN = s => s !== "" && isFinite(Number(s));
+    const vals = S.v.map(r => r.map(v => String(v).trim()));
+    const miss = [].concat(...vals).filter(v => v === "").length; if (miss) { spNote(`還有 ${miss} 格數值沒填，填完才能分析。`, true); return; }
+    const bad = [].concat(...vals).find(v => !isN(v)); if (bad != null) { spNote(`「${bad}」不是數字。`, true); return; }
+    const nums = vals.map(r => r.map(Number)), o = [], warn = m => o.push({ lv: "warn", m }), badm = m => o.push({ lv: "bad", m });
+    if (M.dataType === "defective" && nums.some(r => r[0] < 0 || r[1] <= 0 || r[0] > r[1] || r.some(x => x !== Math.round(x)))) { spNote("不良數與抽樣數要是整數，且不良數介於 0 與抽樣數之間。", true); return; }
+    if (M.dataType === "defect" && nums.some(r => r[0] < 0 || r[1] <= 0 || r[0] !== Math.round(r[0]))) { spNote("缺點數要是 0 以上的整數，檢驗單位數要大於 0。", true); return; }
+    // 分層混雜
+    S.strata.forEach((s, j) => { const set = new Set(S.st.map(r => String(r[j]).trim()).filter(Boolean)); if (set.size > 1) warn(`「${s}」有 ${set.size} 種（${[...set].slice(0, 5).join("、")}）：混在同一張管制圖，界限會被撐寬。建議依「${s}」分開各畫一張，或先用假設檢定比較是否有差異*。`); });
+    if (M.dataType === "continuous") {
+      const all = [].concat(...nums), n = all.length, mean = all.reduce((a, b) => a + b, 0) / n;
+      const sd = Math.sqrt(all.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1));
+      const distinct = new Set(all.map(x => +x.toPrecision(12))).size, R = spNum(M.resolution);
+      if (distinct < 5) warn(`全部 ${n} 個值只有 ${distinct} 種不同數值：解析度太粗，管制界限與 Cpk 都會失真*。`);
+      else if (R > 0 && (Math.max(...all) - Math.min(...all)) / R < 10) warn("資料範圍不到 10 個解析度刻度（常見要求至少 10 個*）：管制圖容易出現假警報。");
+      if (n >= 8 && sd > 0) {
+        const g1 = n / ((n - 1) * (n - 2)) * all.reduce((a, b) => a + ((b - mean) / sd) ** 3, 0);
+        if (Math.abs(g1) >= 1) badm(`偏態係數 ${g1.toFixed(2)}：分布明顯偏斜，Cpk（假設常態）會失真，不建議直接用來判定是否達標*。可先做資料轉換或改用非常態的能力分析。`);
+        else if (Math.abs(g1) >= 0.5) warn(`偏態係數 ${g1.toFixed(2)}：分布有些偏斜，Cpk 結果要保守解讀*。`);
+      }
+      if (M.goal === "cap" && n < 100) warn(`總共 ${n} 個值：Cpk 信賴區間偏寬（常見建議 100 個以上*）。`);
+    }
+    // 帶入 SPC 頁
+    setChip("spcKind", SP_DT[M.dataType].kind);
+    const k = SP_DT[M.dataType].kind; $("spcFormat").textContent = SPC_FMT[k]; document.querySelectorAll(".spc-spec").forEach(f => { f.hidden = k !== "var"; });
+    $("spcType").value = S.chart;
+    if (M.dataType === "continuous") { $("spcLsl").value = M.lsl; $("spcUsl").value = M.usl; $("spcTgt").value = M.target; }
+    $("spcData").value = vals.map(r => r.join(", ")).join("\n");
+    spcDetect(); spcRun();
+    const w = $("spDataWarn"); w.hidden = !o.length; w.innerHTML = o.map(x => `<li class="mp-${x.lv}"><b>${x.lv === "bad" ? "✗" : "⚠"}</b> ${esc(x.m)}</li>`).join("");
+    if (o.length) $("spcHint").insertAdjacentHTML("beforeend", `<span class="status ng"> 資料規劃的檢查有 ${o.length} 項提醒，請看上方「資料規劃」。</span>`);
+    spNote(o.some(x => x.lv === "bad") ? "已帶入並分析，但資料檢查發現嚴重問題（見記錄表下方）。" : o.length ? "已帶入並分析；資料檢查有提醒，見記錄表下方。" : "已帶入並分析，結果在下方。", o.some(x => x.lv === "bad"));
+    $("spcData").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  $("spMeta").addEventListener("change", e => {
+    spRead(); const k = e.target.dataset.sm;
+    if (k === "dataType" || k === "goal") { SP.sheet = null; $("spSheet").hidden = true; spNote(""); spRenderForm(); return; }
+    spRenderCheck();
+  });
+  $("spMeta").addEventListener("input", e => { if (e.target.tagName === "INPUT" && e.target.type !== "checkbox") { spRead(); spRenderCheck(); } });
+  $("spAi").addEventListener("click", spAsk);
+  $("spGen").addEventListener("click", spGen);
+  $("spReset").addEventListener("click", () => { SP.m = Object.assign({}, SP_DEF); SP.sheet = null; $("spSheet").hidden = true; $("spWhy").hidden = true; spNote(""); spRenderForm(); });
+  spRenderForm();
 
   // =====================================================================
   // 田口方法 介面（計算在 taguchi.js：window.TG）
@@ -8296,6 +8591,770 @@ else root.runValidation = runValidation;
     ["DOE", "用本頁「DOE 重複次數」計算", "", "—"],
     ["田口方法 · 確認實驗", "≥ 1 組；建議 3 組以上", "用來確認預測值是否落在區間內", "常見做法*"]
   ].map(r => r.map(esc)));
+  // =====================================================================
+  // 通用 AI 規劃卡：樣本數規劃、假設檢定、DOE、田口方法
+  // 流程：AI 建議設計參數（不產生量測數值）→ 程式限制範圍並檢查 → 人員修改 → 帶入下方工具（統計由 JS 計算）
+  // 聊天視窗回答若附上對應的規劃區塊，回答下方會出現「帶入」按鈕。
+  // =====================================================================
+  var PLANS = {};
+  const pkNum = v => { const s = String(v == null ? "" : v).trim(); if (s === "") return null; const x = Number(s); return isFinite(x) ? x : NaN; };
+  const pkInt = (v, lo, hi, d) => { const x = Math.round(Number(v)); return isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
+  const pkClick = (sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
+  const pkSet = (id, v, ev) => { const el = $(id); if (!el) return; el.value = v == null ? "" : String(v); el.dispatchEvent(new Event(ev || "input", { bubbles: true })); };
+  const PK_SRC = { ai: "AI 建議", fb: "魚骨圖", user: "手動" };
+  const pkCheckHtml = ck => ck.map(x => `<li class="mp-${x.lv}"><b>${x.lv === "bad" ? "✗ 不可行" : x.lv === "warn" ? "⚠ 提醒" : "✓"}</b> ${esc(x.m)}${x.go ? ` <button type="button" class="linkbtn" data-go="${x.go[0]}"${x.go[1] ? ` data-sub="${x.go[1]}"` : ""}>${esc(x.go[2])}</button>` : ""}</li>`).join("") + `<li class="hint">標 * 的是一般慣例或推論，不是法規硬性規定；以公司程序為準。</li>`;
+  const PK_COMMON = "規則：1. 全程使用繁體中文。2. 不要產生、猜測或舉例任何量測數值或實驗結果；只給設計參數。3. 標準差 σ、預期平均、不良率、因子水準等「需要使用者決定或歷史資料」的數字，只在使用者有提供時才填，否則留空（\"\" 或 null），並在文字中說明要去哪裡找或怎麼決定。4. 規格、目標值只在使用者提供時填。5. 不確定的地方標 * 並說明要使用者確認什麼。6. 不要要求或重複客戶、病患、批號等可識別資訊。";
+  const PK_FORMAT = "回答格式：先用最多 6 點說明為什麼這樣設計（每點一行，以「- 」開頭），口語、短句，具體到可以照做；常見做法的數量標 *。最後附一個規劃區塊（JSON），格式如下：";
+
+  function makePlanner(c) {
+    const P = { m: JSON.parse(JSON.stringify(c.def)), busy: false, src: "" };
+    const id = s => c.id + s, blocks = c.blocks || [c.block];
+    const card = document.createElement("details");
+    card.className = "card mp-card"; card.id = id("Plan"); card.open = true;
+    card.innerHTML = `<summary><span class="qref copper">規劃</span> <b>${esc(c.title)}</b> <span class="pk-src" id="${id("Src")}" hidden></span><span class="hint"> ${esc(c.sub)}</span></summary>
+      <div class="mp-body">
+        <p class="help">${c.help} 請不要輸入客戶、病患、批號等可識別資訊。</p>
+        <div class="field"><label for="${id("Desc")}">情境（選填給 AI 看）</label><textarea id="${id("Desc")}" rows="2" placeholder="${esc(c.descPh)}" spellcheck="false"></textarea></div>
+        <div class="run-row"><button class="btn" type="button" id="${id("Ai")}">請 AI 建議設計</button><span class="hint" id="${id("Hint")}"></span></div>
+        <div class="pk-ask" id="${id("Ask")}" hidden></div>
+        <div class="mp-why" id="${id("Why")}" hidden></div>
+        <div id="${id("Form")}" class="mp-meta"></div>
+        <ul class="mp-check" id="${id("Check")}"></ul>
+        <div class="run-row"><button class="btn primary" type="button" id="${id("Go")}">${esc(c.goLabel)}</button><button class="btn ghost" type="button" id="${id("Reset")}">恢復預設值</button></div>
+        <div id="${id("Sheet")}" hidden></div>
+      </div>`;
+    const view = $(c.view), anchor = view.querySelector(c.before);
+    anchor.parentNode.insertBefore(card, anchor);
+    const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
+    const setSrc = s => { P.src = s || ""; const el = $(id("Src")); el.hidden = !s; el.textContent = s ? `來源：${PK_SRC[s] || s}・待確認` : ""; };
+    // 確認列：取代／加入／取消
+    function ask(msg, opts) {
+      const box = $(id("Ask"));
+      box.innerHTML = `<p>${esc(msg)}</p><div class="run-row">${opts.map((o, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-ask="${i}">${esc(o.label)}</button>`).join("")}</div>`;
+      box.hidden = false; box.scrollIntoView({ behavior: "smooth", block: "center" });
+      box.onclick = e => { const b = e.target.closest("[data-ask]"); if (!b) return; box.hidden = true; box.onclick = null; const o = opts[+b.dataset.ask]; if (o.fn) o.fn(); };
+    }
+    function tableHtml(f) {
+      const rows = P.m[f.k] || [], lab = typeof f.lab === "function" ? f.lab(P.m) : f.lab;
+      const cell = (r, i, col) => {
+        const v = r[col.k] == null ? "" : r[col.k], miss = col.req && (!col.reqIf || col.reqIf(r)) && String(v).trim() === "" ? " pk-miss" : "";
+        if (col.k === "src") return `<td class="pk-srccell">${esc(PK_SRC[v] || "手動")}</td>`;
+        if (col.type === "select") return `<td><select class="mp-in${miss}" data-tk="${f.k}" data-ti="${i}" data-tc="${col.k}">${col.opts.map(o => `<option value="${o[0]}"${String(v) === o[0] ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select></td>`;
+        return `<td><input class="mp-in${miss}" data-tk="${f.k}" data-ti="${i}" data-tc="${col.k}" value="${esc(v)}" type="text" autocomplete="off" placeholder="${esc(col.ph || "")}"></td>`;
+      };
+      return `<div class="field pk-wide"><label>${lab}</label><div class="scroll-x"><table class="mp-tbl pk-tbl"><thead><tr>${f.cols.map(col => `<th>${esc(col.lab)}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr>${f.cols.map(col => cell(r, i, col)).join("")}<td><button type="button" class="btn small ghost" data-tdel="${f.k}" data-ti="${i}" aria-label="刪除這一列">刪除</button></td></tr>`).join("")}</tbody></table></div><div class="run-row"><button type="button" class="btn small" data-tadd="${f.k}">＋ 新增一列</button>${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}</div></div>`;
+    }
+    function fieldHtml(f) {
+      const M = P.m, v = M[f.k], fid = id("_" + f.k), lab = typeof f.lab === "function" ? f.lab(M) : f.lab;
+      if (f.type === "table") return tableHtml(f);
+      if (f.type === "select") { const opts = typeof f.opts === "function" ? f.opts(M) : f.opts; return `<div class="field"><label for="${fid}">${lab}</label><select id="${fid}" data-pk="${f.k}"${f.req && String(v) === "" ? ' class="pk-miss"' : ""}>${opts.map(o => `<option value="${o[0]}"${String(v) === String(o[0]) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select></div>`; }
+      if (f.type === "bool") return `<div class="mp-opts"><label><input type="checkbox" data-pk="${f.k}"${v ? " checked" : ""}> ${lab}</label></div>`;
+      if (f.type === "area") return `<div class="field pk-wide"><label for="${fid}">${lab}</label><textarea id="${fid}" data-pk="${f.k}" rows="${f.rows || 4}" spellcheck="false" placeholder="${esc(f.ph || "")}">${esc(v || "")}</textarea></div>`;
+      if (f.type === "int") return `<div class="field"><label for="${fid}">${lab}</label><input id="${fid}" data-pk="${f.k}" data-int="${f.lo},${f.hi}" type="number" min="${f.lo}" max="${f.hi}" step="1" inputmode="numeric" value="${esc(v)}"></div>`;
+      return `<div class="field"><label for="${fid}">${lab}</label><input id="${fid}" data-pk="${f.k}" type="${f.type === "num" ? "number" : "text"}" ${f.type === "num" ? 'step="any" inputmode="decimal"' : 'autocomplete="off"'} value="${esc(v == null ? "" : v)}" placeholder="${esc(f.ph || "")}"></div>`;
+    }
+    function render() {
+      const vis = c.fields.filter(f => !f.show || f.show(P.m));
+      const plain = vis.filter(f => !["bool", "area", "table"].includes(f.type)), wide = vis.filter(f => f.type === "area" || f.type === "table"), bools = vis.filter(f => f.type === "bool");
+      $(id("Form")).innerHTML = `<div class="fields">${plain.map(fieldHtml).join("")}</div>${wide.map(fieldHtml).join("")}${bools.map(fieldHtml).join("")}`;
+      check();
+    }
+    function read() {
+      $(id("Form")).querySelectorAll("[data-pk]").forEach(el => {
+        const k = el.dataset.pk;
+        if (el.type === "checkbox") P.m[k] = el.checked;
+        else if (el.dataset.int) { const [lo, hi] = el.dataset.int.split(",").map(Number); P.m[k] = pkInt(el.value, lo, hi, c.def[k]); }
+        else P.m[k] = el.value.trim();
+      });
+      $(id("Form")).querySelectorAll("[data-tk]").forEach(el => { const r = (P.m[el.dataset.tk] || [])[+el.dataset.ti]; if (!r) return; const v = el.value.trim(); if (r[el.dataset.tc] !== v && /^(low|high|lv\d)$/.test(el.dataset.tc)) delete r.aiLv; r[el.dataset.tc] = v; });
+    }
+    function check() {
+      const ck = c.check(P.m), hasBad = ck.some(x => x.lv === "bad"); $(id("Check")).innerHTML = pkCheckHtml(ck); $(id("Go")).disabled = hasBad;
+      const h = $(id("Hint")); if (!hasBad && /還有缺少或不可行/.test(h.textContent)) note("設定已齊全，確認後按「" + c.goLabel + "」。");
+      $(id("Form")).querySelectorAll("[data-tk]").forEach(el => { const f = c.fields.find(x => x.k === el.dataset.tk), col = f && f.cols.find(x => x.k === el.dataset.tc), row = (P.m[el.dataset.tk] || [])[+el.dataset.ti]; el.classList.toggle("pk-miss", !!(col && col.req && (!col.reqIf || (row && col.reqIf(row))) && !el.value.trim())); });
+      return ck;
+    }
+    const dirty = () => { read(); return JSON.stringify(P.m) !== JSON.stringify(c.def); };
+    // 草稿進來（AI 或魚骨圖）：確認區已有內容時先詢問
+    function load(j, src) {
+      const base = JSON.parse(JSON.stringify(c.def)), r = c.fromJson(j, base, src) || {};
+      if (r.error) { note(r.error, true); return false; }
+      const fresh = r.m || base;
+      const doIt = mode => {
+        if (mode === "add" && c.merge) c.merge(P.m, fresh); else P.m = fresh;
+        $(id("Sheet")).hidden = true; setSrc(src); render();
+        const bad = c.check(P.m).some(x => x.lv === "bad");
+        note((r.notes || []).concat([bad ? "已放進確認區，但還有缺少或不可行的設定（紅色或 ✗），請補上。" : "已放進確認區，請確認或修改後按「" + c.goLabel + "」。"]).join(" "), bad);
+      };
+      if (dirty()) ask("確認區已經有內容。要怎麼處理新的建議？", [{ label: "取代", fn: () => doIt("replace") }].concat(c.merge ? [{ label: "加入（把新的因子加在後面）", fn: () => doIt("add") }] : []).concat([{ label: "取消" }]));
+      else doIt("replace");
+      return true;
+    }
+    const blockRe = new RegExp("```(?:" + blocks.join("|") + ")[ \\t]*\\n([\\s\\S]*?)```"), stripRe = new RegExp("```(?:" + blocks.join("|") + ")[ \\t]*\\n[\\s\\S]*?(```|$)", "g");
+    function parse(text) { const m = String(text).match(blockRe); if (!m) return null; try { const j = JSON.parse(m[1]); return j && typeof j === "object" ? j : null; } catch (_) { return null; } }
+    const schema = "```" + blocks[0] + "\n" + c.example + "\n```\n" + c.schemaNote;
+    async function askAI() {
+      const q = $(id("Desc")).value.trim(); if (!q && !(c.ctxExtra && c.ctxExtra(P.m))) { note("請先描述情境。", true); return; }
+      if (!sample) { note("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
+      if (P.busy) return; P.busy = true; $(id("Ai")).disabled = true; note("AI 規劃中…");
+      read();
+      const ctx = ($(c.problemId).value || "").trim(), newbie = styleFor(c.chatKey).persp === "teach";
+      const msg = [c.role, PK_COMMON, PK_FORMAT, schema].join("\n") + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (ctx ? "\n\n【問題描述】" + ctx : "") + "\n【目前確認區的內容】" + JSON.stringify(c.toJson ? c.toJson(P.m) : P.m) + (c.ctxExtra ? c.ctxExtra(P.m) : "") + "\n【情境】" + (q || "請依目前確認區的內容補上設計建議。");
+      try {
+        const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
+        const j = parse(res.text), why = res.text.replace(stripRe, "").trim();
+        $(id("Why")).innerHTML = j ? `<b>AI 的設計理由（推論，請自行判斷是否適用）</b>${mdLite(why)}` : mdLite(why || res.text); $(id("Why")).hidden = false;
+        if (!j) { note("AI 的回答沒有附上可用的設計參數，請參考說明自己填寫。", true); return; }
+        load(j, "ai");
+      } catch (e) { note((ERR[e && e.code] || ERR.upstream_error) + (e && e.message ? "（" + e.message + "）" : ""), true); }
+      finally { P.busy = false; $(id("Ai")).disabled = false; }
+    }
+    $(id("Form")).addEventListener("change", e => { read(); if (e.target.tagName === "SELECT" && !e.target.dataset.tk || e.target.type === "checkbox") render(); else check(); });
+    $(id("Form")).addEventListener("input", e => { if (e.target.type !== "checkbox" && e.target.tagName !== "SELECT") { read(); check(); } });
+    $(id("Form")).addEventListener("click", e => {
+      const add = e.target.closest("[data-tadd]"), del = e.target.closest("[data-tdel]"); if (!add && !del) return;
+      read();
+      if (add) { const f = c.fields.find(x => x.k === add.dataset.tadd); (P.m[f.k] = P.m[f.k] || []).push(Object.assign({}, f.blank, { src: "user" })); }
+      else P.m[del.dataset.tdel].splice(+del.dataset.ti, 1);
+      render();
+    });
+    card.addEventListener("click", e => { const g = e.target.closest(".mp-check [data-go]"); if (g) gotoTool(g.dataset.go, g.dataset.sub); });
+    $(id("Ai")).addEventListener("click", askAI);
+    $(id("Reset")).addEventListener("click", () => { P.m = JSON.parse(JSON.stringify(c.def)); $(id("Why")).hidden = true; $(id("Sheet")).hidden = true; $(id("Ask")).hidden = true; setSrc(""); note(""); render(); });
+    $(id("Go")).addEventListener("click", () => {
+      read(); if (check().some(x => x.lv === "bad")) return;
+      const run = mode => { const r = c.go(P.m, { sheet: $(id("Sheet")), note, ask, mode, src: P.src }); if (r) { note(r.msg || "", r.bad); if (!r.bad) setSrc(""); } };
+      if (c.toolHas && c.toolHas(P.m)) ask("下方工具已經有內容。要怎麼處理？", [{ label: "取代", fn: () => run("replace") }].concat(c.toolMerge && c.toolMerge(P.m) ? [{ label: "加入（把這些因子加在工具原有的因子後面）", fn: () => run("add") }] : []).concat([{ label: "取消" }]));
+      else run("replace");
+    });
+    PLANS[c.chatKey] = {
+      parse, block: blocks[0], stripRe,
+      _fromJson: j => { const base = JSON.parse(JSON.stringify(c.def)), r = c.fromJson(j, base, "ai") || {}; return r.error ? r : { m: r.m || base }; },
+      chatRule: `【${c.title}】${c.chatWhen || "回答中如果有建議具體的設計參數"}，最後附一個 \`\`\`${blocks[0]} 區塊，讓使用者按按鈕帶入網頁的確認區。區塊內只放設計參數，不放任何量測數值或結果。${PK_COMMON}\n格式：\n${schema}`,
+      html: j => { const pv = c.preview ? c.preview(j) : { html: "", ok: true }; return `<div class="pk-preview">${pv.html}${pv.ok ? `<div class="fb-sug"><button type="button" class="btn small primary" data-pkplan="${c.chatKey}" data-pkjson="${esc(JSON.stringify(j))}">${esc(c.chatBtn || "帶入「" + c.title + "」確認區")}</button></div>` : ""}</div>`; },
+      apply: (j, src) => { closePanel(); route(c.route); card.open = true; if (load(j, src || "ai")) card.scrollIntoView({ behavior: "smooth", block: "start" }); },
+      state: () => { read(); return JSON.parse(JSON.stringify(P.m)); },
+      restore: m => { P.m = Object.assign(JSON.parse(JSON.stringify(c.def)), m || {}); $(id("Why")).hidden = true; $(id("Sheet")).hidden = true; setSrc(""); note(""); render(); }
+    };
+    render();
+    return P;
+  }
+  $("msgs").addEventListener("click", e => {
+    const b = e.target.closest("[data-pkplan]"); if (!b) return;
+    const pl = PLANS[b.dataset.pkplan]; let j; try { j = JSON.parse(b.dataset.pkjson); } catch (_) { return; }
+    if (pl && j) { pl.apply(j, "ai"); b.textContent = "已帶入確認區"; }
+  });
+
+  // ---------------- 樣本數規劃 ----------------
+  const SS_CALC = [["power", "計量型比較（t 檢定：平均值）"], ["attr", "通過／不通過（信心度／可靠度）"], ["prop", "不良率比較"], ["tolp", "允差區間（涵蓋比例）"]];
+  makePlanner({
+    id: "pks", view: "viewSample", before: ".subtabs", route: "sample", chatKey: "sample", problemId: "sampleProblem", block: "sampleplan",
+    title: "樣本數規劃", sub: "先決定要用哪種算法、條件是什麼；程式計算樣本數",
+    help: "流程：① 描述要證明什麼，請 AI 建議用哪種算法與條件（AI 不提供標準差等歷史數據）→ ② 程式檢查，你補上或修改 → ③ 按「帶入並計算」，由下方工具計算樣本數。",
+    descPh: "例如：轉廠後要證明封口拉力平均沒有下降超過 2 N，歷史標準差約 1.5 N",
+    goLabel: "帶入並計算",
+    role: "你是樣本數規劃的助手。依使用者描述，建議用哪一種樣本數算法與條件：power（計量型 t 檢定）、attr（通過／不通過：信心度與可靠度，例如 95/95）、prop（不良率比較）、tolp（統計允差區間）。",
+    example: '{"calc":"power","design":"two","alt":"two-sided","alpha":0.05,"power":0.9,"sd":null,"delta":2,"conf":0.95,"rel":0.95,"fails":0,"p0":null,"p1":null,"cover":0.99,"tconf":0.95,"side":"lower","method":"norm"}',
+    schemaNote: "calc＝power、attr、prop、tolp。power 用 design（one＝單組或成對，two＝兩組獨立）、alt（two-sided 或 greater）、alpha、power、sd（標準差，使用者沒提供就 null）、delta（要偵測的最小差異，使用者沒提供就 null）；attr 用 conf（0.9／0.95／0.99）、rel（0.9／0.95／0.99／0.999）、fails（允許失效數 0／1／2／3／5）；prop 用 design、p0、p1（百分比數字，例如 1 代表 1%）、alpha、power；tolp 用 cover（涵蓋比例 0.9／0.95／0.99／0.999）、tconf（0.9／0.95／0.99）、side（lower／upper／two）、method（norm 常態或 np 無母數）。",
+    def: { calc: "power", design: "two", alt: "two-sided", alpha: "0.05", power: "0.9", sd: "", delta: "", conf: "0.95", rel: "0.95", fails: "0", p0: "", p1: "", cover: "0.99", tconf: "0.95", side: "lower", method: "norm" },
+    fields: [
+      { k: "calc", lab: "算法", type: "select", opts: SS_CALC },
+      { k: "design", lab: "試驗設計", type: "select", opts: [["one", "單組或成對"], ["two", "兩組獨立"]], show: m => m.calc === "power" || m.calc === "prop" },
+      { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾（只關心一個方向）"]], show: m => m.calc === "power" },
+      { k: "sd", lab: "標準差 σ（來自歷史資料或預試驗）", type: "num", ph: "必填", show: m => m.calc === "power" },
+      { k: "delta", lab: "要偵測的最小差異 Δ", type: "num", ph: "必填", show: m => m.calc === "power" },
+      { k: "p0", lab: m => m.design === "one" ? "目標不良率 p₀（%）" : "第 1 組不良率（%）", type: "num", ph: "必填", show: m => m.calc === "prop" },
+      { k: "p1", lab: m => m.design === "one" ? "預期實際不良率 p₁（%）" : "第 2 組不良率（%）", type: "num", ph: "必填", show: m => m.calc === "prop" },
+      { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]], show: m => m.calc === "power" || m.calc === "prop" },
+      { k: "power", lab: "目標檢定力", type: "select", opts: [["0.8", "0.80"], ["0.9", "0.90"], ["0.95", "0.95"]], show: m => m.calc === "power" || m.calc === "prop" },
+      { k: "conf", lab: "信心水準", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"]], show: m => m.calc === "attr" },
+      { k: "rel", lab: "要宣稱的可靠度", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"], ["0.999", "99.9%"]], show: m => m.calc === "attr" },
+      { k: "fails", lab: "允許失效數", type: "select", opts: [["0", "0"], ["1", "1"], ["2", "2"], ["3", "3"], ["5", "5"]], show: m => m.calc === "attr" },
+      { k: "cover", lab: "涵蓋比例", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"], ["0.999", "99.9%"]], show: m => m.calc === "tolp" },
+      { k: "tconf", lab: "信心水準", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"]], show: m => m.calc === "tolp" },
+      { k: "side", lab: "單邊或雙邊", type: "select", opts: [["lower", "只有下限"], ["upper", "只有上限"], ["two", "雙邊"]], show: m => m.calc === "tolp" },
+      { k: "method", lab: "方法", type: "select", opts: [["norm", "常態（資料近似常態）"], ["np", "無母數（不假設分布，樣本數較多）"]], show: m => m.calc === "tolp" }
+    ],
+    check: m => {
+      const o = [], bad = x => o.push({ lv: "bad", m: x }), warn = x => o.push({ lv: "warn", m: x }), ok = x => o.push({ lv: "ok", m: x });
+      if (m.calc === "power") {
+        const s = pkNum(m.sd), d = pkNum(m.delta);
+        if (s == null) bad("請填標準差 σ：要來自歷史資料、SPC 紀錄或預試驗。AI 不會、也不應該替你猜這個數字。"); else if (Number.isNaN(s) || s <= 0) bad("標準差要是大於 0 的數字。");
+        if (d == null) bad("請填要偵測的最小差異 Δ：這是工程或品質上「差多少才有意義」的判斷，要由你們決定。"); else if (Number.isNaN(d) || d === 0) bad("Δ 要是不等於 0 的數字。");
+        if (s > 0 && d) { const e = Math.abs(d) / s; if (e < 0.25) warn(`Δ／σ ＝ ${e.toFixed(2)}，差異比雜訊小很多，需要的樣本數會非常大*。`); else if (e > 3) warn(`Δ／σ ＝ ${e.toFixed(2)}，差異很大，算出的樣本數可能很少；仍建議每組至少 5～10 個*。`); else ok(`Δ／σ ＝ ${e.toFixed(2)}。`); }
+        if (m.alt === "greater") warn("單尾檢定只在「事先」確定只關心一個方向時才用，不能看完資料再決定*。");
+        warn("t 檢定假設資料近似常態；拉力、強度等偏態資料要先確認分布*。");
+      } else if (m.calc === "attr") {
+        ok(`${Math.round(m.conf * 100)}% 信心、${(m.rel * 100).toFixed(m.rel === "0.999" ? 1 : 0)}% 可靠度、允許 ${m.fails} 個失效。`);
+        if (+m.fails > 0) warn("允許失效數越多，需要的樣本數越多；試驗時出現的失效數超過設定就不能宣稱達標。");
+        warn("信心度／可靠度的組合（例如 95/95）應依風險等級（ISO 14971）與公司程序決定*。");
+      } else if (m.calc === "prop") {
+        const a = pkNum(m.p0), b = pkNum(m.p1);
+        if (a == null || b == null) bad("請填兩個不良率（%）：p₀ 是目標或第 1 組，p₁ 是預期或第 2 組；要來自歷史資料或規格。");
+        else if ([a, b].some(x => Number.isNaN(x) || x <= 0 || x >= 100)) bad("不良率要介於 0 和 100（%）之間。");
+        else if (a === b) bad("兩個不良率相同，沒有差異可以偵測。");
+        else if (Math.min(a, b) < 1) warn("不良率低於 1% 時，需要的樣本數通常很大（數百到數千件）*。");
+      } else if (m.calc === "tolp") {
+        if (m.method === "np") warn("無母數方法不假設分布，但樣本數通常比常態方法多很多*。");
+        else warn("常態方法要先確認資料近似常態；偏態資料改用無母數方法或先轉換*。");
+      }
+      return o;
+    },
+    fromJson: (j, m) => {
+      const pick = (k, list) => { if (j[k] != null && list.includes(String(j[k]))) m[k] = String(j[k]); };
+      pick("calc", ["power", "attr", "prop", "tolp"]); pick("design", ["one", "two"]); pick("alt", ["two-sided", "greater"]);
+      if (j.alpha != null) m.alpha = String(+j.alpha === 0.1 ? "0.10" : +j.alpha); pick("power", ["0.8", "0.9", "0.95"]);
+      ["sd", "delta", "p0", "p1"].forEach(k => { if (j[k] !== undefined) { const x = Number(j[k]); m[k] = j[k] == null || !isFinite(x) ? "" : String(x); } });
+      pick("conf", ["0.9", "0.95", "0.99"]); pick("rel", ["0.9", "0.95", "0.99", "0.999"]); pick("fails", ["0", "1", "2", "3", "5"]);
+      pick("cover", ["0.9", "0.95", "0.99", "0.999"]); pick("tconf", ["0.9", "0.95", "0.99"]); pick("side", ["lower", "upper", "two"]); pick("method", ["norm", "np"]);
+      if (!["0.01", "0.05", "0.10"].includes(m.alpha)) m.alpha = "0.05";
+    },
+    go: m => {
+      pkClick(`#ssTabs [data-tsub="${m.calc}"]`);
+      if (m.calc === "power") {
+        pkClick(`#pwDesign [data-v="${m.design}"]`); pkClick('#pwSolve [data-v="n"]'); pkClick(`#pwAlt [data-v="${m.alt}"]`);
+        pkSet("pwSd", m.sd); pkSet("pwDelta", Math.abs(+m.delta)); pkSet("pwTarget", m.power, "change"); pkSet("pwAlpha", m.alpha, "change"); $("pwRun").click();
+      } else if (m.calc === "attr") {
+        pkClick('#atMode [data-v="plan"]'); pkSet("atC", m.conf, "change"); pkSet("atR", m.rel, "change"); pkSet("atCc", m.fails, "change"); $("atRun").click();
+      } else if (m.calc === "prop") {
+        pkClick(`#prDesign [data-v="${m.design}"]`); pkClick('#prSolve [data-v="n"]'); pkSet("prP0", m.p0); pkSet("prP1", m.p1); pkSet("prTarget", m.power, "change"); pkSet("prAlpha", m.alpha, "change"); $("prRun").click();
+      } else {
+        pkClick(`#tpMethod [data-v="${m.method}"]`); pkClick(`#tpSide [data-v="${m.side}"]`); pkSet("tpP", m.cover, "change"); pkSet("tpG", m.tconf, "change"); $("tpRun").click();
+      }
+      $("ssTabs").scrollIntoView({ behavior: "smooth", block: "start" });
+      return { msg: "已帶入下方工具並計算。" };
+    }
+  });
+
+  // ---------------- 假設檢定 ----------------
+  let pkHypTouched = false; $("pasteBox").addEventListener("input", () => { pkHypTouched = true; });
+  document.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => { pkHypTouched = false; }));
+  makePlanner({
+    id: "pkh", view: "viewAnalyze", before: ".subtabs", route: "hypothesis", chatKey: "hyp", problemId: "hypProblem", block: "hypplan",
+    title: "比較試驗規劃", sub: "先決定比什麼、分幾組、每組幾個；產生記錄表，填完再分析",
+    help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
+    descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
+    goLabel: "產生記錄表",
+    role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。",
+    example: '{"purpose":"two","relation":"ind","groups":["轉廠前","轉廠後"],"n":15,"alt":"two-sided","alpha":0.05,"target":null,"lsl":null,"usl":null}',
+    schemaNote: "purpose＝one、two、multi；relation＝ind 或 paired（只有 two 用）；groups＝組別名稱（one 為 1 個、two 為 2 個、multi 為 3～8 個）；n＝每組樣本數（建議值，常見做法標 *）；alt＝two-sided、greater（第 1 組較大或大於目標）、less；alpha；target＝單組要比較的目標值；lsl／usl＝規格（使用者提供才填）。",
+    def: { purpose: "two", relation: "ind", groups: "A, B", n: 10, alt: "two-sided", alpha: "0.05", target: "", lsl: "", usl: "" },
+    toJson: m => Object.assign({}, m, { groups: String(m.groups).split(/[,，、]+/).map(s => s.trim()).filter(Boolean) }),
+    fields: [
+      { k: "purpose", lab: "要比較什麼", type: "select", opts: [["one", "單組對目標值"], ["two", "兩組比較"], ["multi", "3 組以上"]] },
+      { k: "relation", lab: "樣本關係", type: "select", opts: [["ind", "獨立（兩組是不同的樣品）"], ["paired", "成對（同一個樣品量兩次）"]], show: m => m.purpose === "two" },
+      { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 轉廠前, 轉廠後" },
+      { k: "n", lab: "每組樣本數", type: "int", lo: 2, hi: 500 },
+      { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾：第 1 組較大／大於目標"], ["less", "單尾：第 1 組較小／小於目標"]], show: m => m.purpose !== "multi" },
+      { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]] },
+      { k: "target", lab: "目標值", type: "num", ph: "單組必填", show: m => m.purpose === "one" },
+      { k: "lsl", lab: "規格下限 LSL（選填）", type: "num" },
+      { k: "usl", lab: "規格上限 USL（選填）", type: "num" }
+    ],
+    check: m => {
+      const o = [], bad = x => o.push({ lv: "bad", m: x }), warn = x => o.push({ lv: "warn", m: x }), ok = x => o.push({ lv: "ok", m: x });
+      const g = String(m.groups).split(/[,，、]+/).map(s => s.trim()).filter(Boolean), need = m.purpose === "one" ? 1 : m.purpose === "two" ? 2 : 3;
+      if (m.purpose === "multi" ? g.length < 3 || g.length > 8 : g.length !== need) bad(m.purpose === "multi" ? "3 組以上要填 3～8 個組別名稱。" : `要填 ${need} 個組別名稱。`);
+      if (new Set(g).size !== g.length) bad("組別名稱不能重複。");
+      if (m.purpose === "one") { const t = pkNum(m.target); if (t == null || Number.isNaN(t)) bad("單組對目標值要填目標值。"); }
+      const L = pkNum(m.lsl), U = pkNum(m.usl); if (Number.isNaN(L) || Number.isNaN(U)) bad("規格要是數字。"); else if (L != null && U != null && L >= U) bad("規格下限必須小於上限。");
+      if (m.n < 3) bad("每組至少 3 個。"); else if (m.n < 10) warn("每組少於 10 個：檢定力低，「沒有顯著差異」不代表「相同」*。要證明相同，請用樣本數規劃或等效性檢定的思路決定 n。"); else ok(`共 ${m.n * Math.max(need, g.length)} 個量測值。`);
+      if (m.relation === "paired" && m.purpose === "two") warn("成對：記錄表的同一列必須是同一個樣品（或同一對），順序不能錯。");
+      if (m.alt !== "two-sided" && m.purpose !== "multi") warn("單尾檢定只在事先確定只關心一個方向時才用*。");
+      warn("每組的樣品要隨機抽取，量測順序最好交錯（不要先量完 A 再量 B），避免時間或量具漂移混進組別差異*。");
+      warn("樣本數的依據建議先用「樣本數規劃」計算，並把計算條件寫進試驗計畫書。");
+      return o;
+    },
+    fromJson: (j, m) => {
+      if (["one", "two", "multi"].includes(j.purpose)) m.purpose = j.purpose;
+      if (["ind", "paired"].includes(j.relation)) m.relation = j.relation;
+      if (Array.isArray(j.groups) && j.groups.length) m.groups = j.groups.map(s => String(s).slice(0, 16)).slice(0, 8).join(", ");
+      if (j.n != null) m.n = pkInt(j.n, 2, 500, 10);
+      if (["two-sided", "greater", "less"].includes(j.alt)) m.alt = j.alt;
+      if (j.alpha != null) { const a = +j.alpha; m.alpha = a === 0.01 ? "0.01" : a === 0.1 ? "0.10" : "0.05"; }
+      ["target", "lsl", "usl"].forEach(k => { if (j[k] !== undefined) { const x = Number(j[k]); m[k] = j[k] == null || !isFinite(x) ? "" : String(x); } });
+    },
+    go: (m, ui) => {
+      const g = String(m.groups).split(/[,，、]+/).map(s => s.trim()).filter(Boolean), n = m.n;
+      const S = { m: Object.assign({}, m), g, v: Array.from({ length: n }, () => g.map(() => "")) };
+      const draw = () => {
+        ui.sheet.innerHTML = `<h3>記錄表（${g.length} 組 × ${n} 個）</h3><p class="help">${m.relation === "paired" && m.purpose === "two" ? "同一列是同一個樣品的兩次量測。" : "每一欄是一組，由上往下填。"}填好後按「帶入下方分析」。統計全部由程式計算，AI 不參與。</p>
+          <div class="scroll-x mp-tblwrap"><table class="mp-tbl"><thead><tr><th>#</th>${g.map(x => `<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${S.v.map((r, i) => `<tr><td>${i + 1}</td>${r.map((v, j) => `<td><input class="mp-in" data-r="${i}" data-c="${j}" value="${esc(v)}" type="text" inputmode="decimal" autocomplete="off"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+          <details class="mp-paste"><summary>從 Excel 一次貼上數值</summary><p class="hint">貼上 ${g.length} 欄 × ${n} 列的數值（不含標題）。</p><textarea class="pk-bulk" rows="3" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" data-act="bulk">填入表格</button></div></details>
+          <div class="run-row"><button class="btn primary" type="button" data-act="apply">帶入下方分析</button><button class="btn" type="button" data-act="csv">下載空白記錄表（CSV）</button><span class="hint pk-prog"></span></div>`;
+        ui.sheet.hidden = false; prog();
+      };
+      const prog = () => { const f = [].concat(...S.v).filter(v => String(v).trim() !== "").length; const el = ui.sheet.querySelector(".pk-prog"); if (el) el.textContent = `已填 ${f} / ${n * g.length}`; };
+      ui.sheet.oninput = e => { const t = e.target; if (t.dataset.r != null) { S.v[+t.dataset.r][+t.dataset.c] = t.value; prog(); } };
+      ui.sheet.onclick = e => {
+        const a = e.target.dataset.act; if (!a) return;
+        if (a === "bulk") { const lines = ui.sheet.querySelector(".pk-bulk").value.split(/\r?\n/).map(l => l.trim()).filter(Boolean); lines.slice(0, n).forEach((l, i) => l.split(/[\s,，;\t]+/).filter(Boolean).slice(0, g.length).forEach((v, j) => { S.v[i][j] = v; })); draw(); ui.note("已填入表格，請檢查。"); }
+        else if (a === "csv") {
+          if (!downloads) { ui.note("這個檢視無法下載檔案。", true); return; }
+          const L = [["#"].concat(g).map(x => `"${String(x).replace(/"/g, '""')}"`).join(",")].concat(S.v.map((r, i) => [i + 1].concat(r.map(() => "")).join(",")));
+          Promise.resolve().then(() => downloads.save({ filename: `比較試驗_記錄表_${new Date().toISOString().slice(0, 10)}.csv`, data: "﻿" + L.join("\r\n") })).catch(er => { if (!(er && er.code === "declined")) ui.note("無法下載檔案。", true); });
+        } else if (a === "apply") {
+          const cells = [].concat(...S.v).map(v => String(v).trim()), miss = cells.filter(v => v === "").length;
+          if (miss) { ui.note(`還有 ${miss} 格沒填。`, true); return; }
+          const bad = cells.find(v => !isFinite(Number(v))); if (bad != null) { ui.note(`「${bad}」不是數字。`, true); return; }
+          const doApply = () => {
+          setSub("compare");
+          pkSet("pasteBox", [g.join("\t")].concat(S.v.map(r => r.map(v => String(v).trim()).join("\t"))).join("\n"));
+          reparse(false);
+          if (m.purpose === "two") pkClick(`#modeChips [data-mode="${m.relation}"]`);
+          if (m.purpose !== "multi") pkClick(`#altChips [data-alt="${m.alt}"]`);
+          pkSet("alphaSel", m.alpha, "change"); pkSet("target", m.purpose === "one" ? m.target : ""); pkSet("lsl", m.lsl); pkSet("usl", m.usl);
+          $("runBtn").click(); $("pasteBox").scrollIntoView({ behavior: "smooth", block: "center" });
+          ui.note("已帶入並分析，結果在下方。");
+          };
+          if (pkHypTouched && ($("pasteBox").value || "").trim()) ui.ask("下方假設檢定已經有資料，帶入會取代原本的資料。要取代嗎？", [{ label: "取代", fn: doApply }, { label: "取消" }]); else doApply();
+        }
+      };
+      draw();
+      return { msg: "記錄表已產生，在下方。" };
+    }
+  });
+
+
+  // ---------------- DOE（因子設計／混合設計） ----------------
+  const DOE_MODE = { full: "全因子 2^k（2～5 因子）", frac: "部分因子 2^(k−p)（4～7 因子）", pb: "Plackett-Burman 篩選（5～11 因子，12 次）", mix: "混合設計（配方比例，3～4 成分）" };
+  const DOE_RANGE = { full: [2, 5], frac: [4, 7], pb: [5, 11], mix: [3, 4] };
+  const MIX_DESIGN = [["lat2c", "{q,2} 單形格子＋中心點"], ["lat2", "{q,2} 單形格子"], ["lat3", "{q,3} 單形格子"], ["cen", "單形重心設計"]];
+  function pkFracKey(k) { const c = Object.entries(QQ.FRACTIONS).filter(([, f]) => f.k === k).sort((a, b) => a[1].p - b[1].p)[0]; return c ? Object.assign({ key: c[0] }, c[1]) : { key: "", p: 0, res: "", gens: [] }; }
+  const pkGenStr = k => { const f = pkFracKey(k), base = f.k - f.p; return (f.gens || []).map((g, i) => QQ.LETTERS[base + i] + "=" + g).join(", "); };
+  const pkGenNorm = s => String(s || "").toUpperCase().replace(/\s+/g, "").replace(/[；;、，]/g, ",").split(",").filter(Boolean).sort().join(",");
+  const pkModeOf = j => { const v = String(j.mode || j.kind || "").trim(); if (DOE_MODE[v]) return v; if (/混合|mix/i.test(v)) return "mix"; if (/plackett|pb/i.test(v)) return "pb"; if (/部分|frac|k\s*[−-]\s*p/i.test(v)) return "frac"; if (/全因子|full|2\^k/i.test(v)) return "full"; return ""; };
+  const pkRuns = m => { const k = (m.mode === "mix" ? m.comps : m.factors).length; if (m.mode === "full") return 1 << k; if (m.mode === "frac") return 1 << (k - pkFracKey(k).p); if (m.mode === "pb") return 12; try { return mixPoints(k, m.mixdesign).length; } catch (_) { return null; } };
+  const pkDoeName = r => { const n = String(r.name || "").trim(), u = String(r.unit || "").trim(); return u && !n.includes(u) ? `${n} (${u})` : n; };
+  const pkDoeDefault = i => doeF[i] && doeF[i].name === "因子 " + QQ.LETTERS[i] && doeF[i].lo === "-1" && doeF[i].hi === "+1";
+  function pkBadge(elId, anchorId, text) {
+    let b = $(elId); if (!b) { const a = $(anchorId); if (!a) return; b = document.createElement("p"); b.id = elId; b.className = "pk-badge"; a.parentNode.insertBefore(b, a.nextSibling); }
+    b.hidden = !text; b.textContent = text || "";
+  }
+  makePlanner({
+    id: "pkd", view: "viewDOE", before: ".subtabs", route: "doe", chatKey: "doe", problemId: "doeProblem", blocks: ["doeplan", "doe"],
+    title: "DOE 規劃", sub: "決定模式、因子與水準；確認後填入下方 DOE 工具",
+    help: "這裡是確認區：魚骨圖的待驗證原因、AI 的建議都先放在這裡，由程式檢查；你確認或修改後按「填入 DOE 工具」，再到工具按「產生實驗矩陣」。實驗矩陣與別名一律由工具計算，不用 AI 給的表格。",
+    descPh: "例如：無菌包裝封口拉力偏低，想調封口溫度、壓力、時間；目前設定 150°C、0.3 MPa、1.5 秒",
+    goLabel: "填入 DOE 工具", chatBtn: "帶入 DOE（先放進確認區）",
+    chatWhen: "只有在使用者明確要求規劃或舉例 DOE（實驗設計）時才附區塊；回答中如果有建議具體的 DOE 設計",
+    role: "你是 DOE（實驗設計）的設計助手。依使用者描述，建議模式（mode：full 全因子 2～5 因子、frac 部分因子 4～7 因子、pb Plackett-Burman 5～11 因子、mix 混合設計 3～4 成分）、因子名稱與單位、回應名稱。水準的數值只有使用者提供時才填，否則留空，並在文字說明怎麼決定範圍（例如現行值上下多少、安全或可操作的製程視窗）。重複次數留 null，並提醒用網站的「樣本數規劃 → DOE 重複次數」估算。文字中說明別名（混淆）與注意事項。",
+    example: '{"mode":"frac","k":4,"p":1,"generator":"D=ABC","factors":[{"name":"熱定型溫度","low":"","high":"","unit":"°C"},{"name":"熱定型時間","low":"","high":"","unit":"s"},{"name":"拉伸速度","low":"","high":"","unit":"mm/min"},{"name":"冷卻方式","low":"","high":"","unit":""}],"responses":["抽芯力峰值 (N)"],"goal":"max","replicates":null,"randomize":true}',
+    schemaNote: "mode 只能是 full、frac、pb、mix。factors 的 low／high 使用者沒提供就留空字串，不准自己編數字。mix 時改用 components（成分名稱陣列）與 mixDesign（lat2c、lat2、lat3、cen）。responses 是回應名稱陣列（工具一次分析一個，放第一個）。goal＝max、min、target（target 需 target 值）。replicates 留 null。randomize 固定 true。矩陣、別名由網站工具計算，不要放進區塊。",
+    def: { mode: "full", factors: [], comps: [], reps: "", response: "", goal: "max", target: "", generator: "", mixdesign: "lat2c", mixmodel: "auto", extraResp: "", norandom: false },
+    toJson: m => Object.assign({}, m),
+    fields: [
+      { k: "mode", lab: "模式", type: "select", opts: Object.entries(DOE_MODE) },
+      { k: "factors", lab: "因子與水準（水準請填實際範圍；紅色是還沒填的）", type: "table", show: m => m.mode !== "mix", blank: { name: "", low: "", high: "", unit: "" },
+        cols: [{ k: "name", lab: "因子名稱", req: true }, { k: "low", lab: "低水準（−）", req: true, ph: "實際數值" }, { k: "high", lab: "高水準（+）", req: true, ph: "實際數值" }, { k: "unit", lab: "單位" }, { k: "src", lab: "來源" }] },
+      { k: "comps", lab: "成分（比例加總 100%）", type: "table", show: m => m.mode === "mix", blank: { name: "" }, cols: [{ k: "name", lab: "成分名稱", req: true }, { k: "src", lab: "來源" }] },
+      { k: "mixdesign", lab: "混合設計", type: "select", opts: MIX_DESIGN, show: m => m.mode === "mix" },
+      { k: "mixmodel", lab: "模型", type: "select", opts: [["auto", "自動"], ["linear", "線性"], ["quadratic", "二次"], ["cubic", "特殊三次"]], show: m => m.mode === "mix" },
+      { k: "reps", lab: "每組重複次數", type: "select", req: true, opts: m => [["", "請選擇"], ["1", "1（不重複）"], ["2", "2"]].concat(m.mode === "mix" ? [] : [["3", "3"]]) },
+      { k: "response", lab: "回應（含單位）", type: "text", ph: "例如 抽芯力峰值 (N)" },
+      { k: "goal", lab: "目標", type: "select", opts: [["max", "越大越好"], ["min", "越小越好"], ["target", "越接近目標值越好"]] },
+      { k: "target", lab: "目標值", type: "num", show: m => m.goal === "target" }
+    ],
+    check: m => {
+      const o = [], bad = (x, go) => o.push({ lv: "bad", m: x, go }), warn = (x, go) => o.push({ lv: "warn", m: x, go }), ok = x => o.push({ lv: "ok", m: x });
+      const mix = m.mode === "mix", rows = mix ? m.comps : m.factors, k = rows.length, [lo, hi] = DOE_RANGE[m.mode];
+      if (k < lo || k > hi) bad(`${DOE_MODE[m.mode]}：目前 ${k} 個${mix ? "成分" : "因子"}，要 ${lo}～${hi} 個。${!mix && k > 5 && m.mode === "full" ? "因子多時改用部分因子或 Plackett-Burman 先篩選。" : ""}`);
+      const names = rows.map(r => String(r.name || "").trim());
+      if (names.some(n => !n)) bad("有空白的名稱。");
+      if (new Set(names.filter(Boolean)).size !== names.filter(Boolean).length) bad("名稱有重複。");
+      if (!mix) {
+        const miss = m.factors.filter(r => !String(r.low).trim() || !String(r.high).trim()).map(r => r.name || "（未命名）");
+        if (miss.length) bad(`請填實際範圍：${miss.join("、")} 的低／高水準還沒填（紅色格子）。`);
+        m.factors.forEach(r => { if (String(r.low).trim() && String(r.low).trim() === String(r.high).trim()) bad(`「${r.name}」的低水準和高水準相同。`); });
+        if (m.factors.some(r => r.aiLv)) warn("AI 帶入了水準數值：請確認這是你們提供或決定的範圍，不是 AI 猜的*。");
+        if (m.mode === "frac" && k >= 4 && k <= 7) { const g = pkGenStr(k), f = pkFracKey(k); warn(`部分因子 2^(${f.key})，產生器 ${g}，解析度 ${f.res}：${f.res === "III" ? "主效應會和二因子交互作用混淆，只適合篩選" : f.res === "IV" ? "主效應不會和二因子交互作用混淆，但二因子交互作用之間會混淆" : "主效應與二因子交互作用都不會互相混淆"}。`); if (m.generator && pkGenNorm(m.generator) !== pkGenNorm(g)) warn(`建議寫的產生器「${m.generator}」和工具使用的「${g}」不同，以工具為準（工具目前不支援自訂產生器）。`); }
+        if (m.mode === "pb") warn("Plackett-Burman 只能看主效應，交互作用會混在主效應裡；用來從很多因子中挑出重要的幾個*。");
+        warn("目前不支援中心點；若懷疑有曲率（最佳點在中間），分析後再做追加實驗*。");
+      } else {
+        warn("混合設計的每個成分範圍是 0～100%（全單形）；若某成分有上下限，目前工具不支援，請先確認*。");
+        if (m.reps === "3") bad("混合設計的重複次數只能 1 或 2。");
+      }
+      if (m.reps === "") bad("請選擇重複次數。不確定時，可用「樣本數規劃 → DOE 重複次數」估算。", ["sample", "doer", "到樣本數規劃估算"]);
+      else if (m.reps === "1" && !mix) warn("不重複時無法直接估計實驗誤差，程式會用 Lenth 法判斷顯著性；結果較不穩*。");
+      if (!o.some(x => x.lv === "bad")) { const R = pkRuns(m); if (R) ok(`${R} 組 × ${m.reps} 次 ＝ ${R * m.reps} 次實驗。`); }
+      if (!String(m.response).trim()) warn("建議填回應名稱（含單位）。");
+      if (m.extraResp) warn(`其他回應（${m.extraResp}）：工具一次只分析一個回應，可另存案件分次分析。`);
+      if (m.norandom) warn("建議寫了不隨機化：工具一律隨機排序執行順序，以避免時間漂移混進因子效應。");
+      if (m.goal === "target") { const t = pkNum(m.target); if (t == null || Number.isNaN(t)) bad("「越接近目標值越好」要填目標值。"); }
+      return o;
+    },
+    fromJson: (j, m, src) => {
+      const mode = pkModeOf(j); if (!mode) return { error: "建議的模式不是 DOE 工具現有的模式（全因子、部分因子、Plackett-Burman、混合設計），沒有帶入。" };
+      m.mode = mode; src = src || "ai";
+      const str = v => String(v == null ? "" : v).replace(/[\n]/g, " ").trim().slice(0, 40);
+      if (mode === "mix") {
+        const comps = Array.isArray(j.components) ? j.components : Array.isArray(j.factors) ? j.factors.map(f => f && (f.name || f)) : [];
+        m.comps = comps.slice(0, 8).map(n => ({ name: str(typeof n === "object" ? n.name : n), src }));
+        if (MIX_DESIGN.some(x => x[0] === j.mixDesign)) m.mixdesign = j.mixDesign;
+      } else {
+        let fs = Array.isArray(j.factors) ? j.factors : [];
+        if (!fs.length && +j.k > 0) fs = Array.from({ length: +j.k }, (_, i) => ({ name: "因子 " + QQ.LETTERS[i] }));
+        m.factors = fs.slice(0, 15).map(f => { const r = { name: str(f.name), low: str(f.low ?? f.lo), high: str(f.high ?? f.hi), unit: str(f.unit), src }; if (src === "ai" && (r.low || r.high)) r.aiLv = true; return r; });
+        if (j.generator) m.generator = Array.isArray(j.generator) ? j.generator.join(", ") : str(j.generator);
+      }
+      const k = (mode === "mix" ? m.comps : m.factors).length, [lo, hi] = DOE_RANGE[mode];
+      if (k < lo || k > hi) return { error: `${DOE_MODE[mode]}要 ${lo}～${hi} 個${mode === "mix" ? "成分" : "因子"}，建議中有 ${k} 個，沒有帶入。請在對話中請 AI 改用其他模式，或自己在確認區調整。` };
+      const resp = Array.isArray(j.responses) ? j.responses.map(str).filter(Boolean) : j.response ? [str(j.response)] : [];
+      m.response = resp[0] || ""; m.extraResp = resp.slice(1).join("、");
+      const rp = j.replicates ?? j.reps; m.reps = rp != null && [1, 2, 3].includes(+rp) && !(mode === "mix" && +rp === 3) ? String(+rp) : "";
+      if (["max", "min", "target"].includes(j.goal)) m.goal = j.goal;
+      if (j.target != null && isFinite(Number(j.target))) m.target = String(Number(j.target));
+      m.norandom = j.randomize === false;
+      return { m };
+    },
+    merge: (cur, fresh) => { const key = fresh.mode === "mix" ? "comps" : "factors"; if (cur.mode !== fresh.mode) { cur.mode = fresh.mode; } const have = new Set((cur[key] || []).map(r => r.name)); cur[key] = (cur[key] || []).concat(fresh[key].filter(r => !have.has(r.name))); ["response", "reps", "generator"].forEach(x => { if (!cur[x] && fresh[x]) cur[x] = fresh[x]; }); },
+    preview: j => {
+      const r = PLANS.doe && PLANS.doe._fromJson ? PLANS.doe._fromJson(j) : null;
+      if (!r || r.error) return { ok: false, html: `<p class="hint"><span class="status ng">${esc((r && r.error) || "無法讀取這個 DOE 建議。")}</span></p>` };
+      const m = r.m, mix = m.mode === "mix", R = pkRuns(m);
+      const rows = mix ? m.comps.map(x => `<tr><td>${esc(x.name)}</td></tr>`).join("") : m.factors.map(x => `<tr><td>${esc(pkDoeName(x))}</td><td>${x.low ? esc(x.low) : '<span class="status ng">待填</span>'}</td><td>${x.high ? esc(x.high) : '<span class="status ng">待填</span>'}</td></tr>`).join("");
+      const gen = m.mode === "frac" ? `<br>產生器（工具）：${esc(pkGenStr(m.factors.length))}${m.generator && pkGenNorm(m.generator) !== pkGenNorm(pkGenStr(m.factors.length)) ? `<span class="hint">（建議寫的 ${esc(m.generator)} 不同，以工具為準）</span>` : ""}` : "";
+      return { ok: true, html: `<div class="pk-pv"><b>DOE 建議預覽</b>（AI 建議，待確認）<br>模式：${esc(DOE_MODE[m.mode])}；${mix ? "成分" : "因子"} ${(mix ? m.comps : m.factors).length} 個；${R ? R + " 組" : ""}；重複次數：${m.reps || "待定（建議用樣本數規劃估算）"}；回應：${esc(m.response || "未填")}${gen}
+        <div class="scroll-x"><table class="mini"><thead><tr><th>${mix ? "成分" : "因子"}</th>${mix ? "" : "<th>低水準</th><th>高水準</th>"}</tr></thead><tbody>${rows}</tbody></table></div></div>` };
+    },
+    toolHas: m => m.mode === "mix" ? !!mix || mixNamesArr.slice(0, +$("mixQ").value).some((n, i) => n !== ["樹脂", "溶劑", "添加劑", "成分 D"][i]) : !!doe || doeF.slice(0, doeKNow()).some((f, i) => !pkDoeDefault(i)),
+    toolMerge: m => m.mode !== "mix" && !!doeF.slice(0, doeKNow()).some((f, i) => !pkDoeDefault(i)),
+    go: (m, ui) => {
+      const srcTxt = { ai: "AI 建議", fb: "魚骨圖" }[ui.src] || "確認區";
+      if (m.mode === "mix") {
+        pkClick('#doeTabs [data-tsub="mix"]');
+        $("mixQ").value = String(m.comps.length); mixNamesArr.splice(0, m.comps.length, ...m.comps.map(r => r.name)); mixNamesUI();
+        $("mixDesign").value = m.mixdesign; $("mixRep").value = m.reps; pkSet("mixY", m.response); $("mixModel").value = m.mixmodel;
+        $("mixGoal").value = m.goal; $("mixTgtF").hidden = m.goal !== "target"; pkSet("mixTgt", m.target);
+        mix = null; $("mixMatrix").innerHTML = ""; TQ.mix = null;
+        pkBadge("mixSrcBadge", "mixGenHint", `來源：${srcTxt}（已填入，尚未產生實驗點）。請確認後按「產生實驗點」。`);
+        $("mixQ").scrollIntoView({ behavior: "smooth", block: "center" });
+        return { msg: "已填入下方混合設計工具（尚未產生實驗點）。" };
+      }
+      let rows = m.factors.map(r => ({ name: pkDoeName(r), lo: String(r.low).trim(), hi: String(r.high).trim() }));
+      if (ui.mode === "add") { const cur = doeF.slice(0, doeKNow()).filter((f, i) => !pkDoeDefault(i)).map(f => Object.assign({}, f)); const have = new Set(cur.map(f => f.name)); rows = cur.concat(rows.filter(r => !have.has(r.name))); }
+      const k = rows.length, [lo, hi] = DOE_RANGE[m.mode];
+      if (k < lo || k > hi) return { msg: `加入後共 ${k} 個因子，超出${DOE_MODE[m.mode]}的範圍（${lo}～${hi}），沒有填入。`, bad: true };
+      pkClick('#doeTabs [data-tsub="fact"]'); pkClick(`#doeKind [data-v="${m.mode}"]`);
+      $("doeK").value = m.mode === "frac" ? pkFracKey(k).key : String(k);
+      rows.forEach((r, i) => { doeF[i] = r; }); doeFactorsUI();
+      $("doeRep").value = m.reps; pkSet("doeY", m.response);
+      $("doeGoal").value = m.goal; $("doeTgtF").hidden = m.goal !== "target"; pkSet("doeTgt", m.target);
+      doe = null; TQ.doe = null; $("doeMatrix").innerHTML = ""; $("doeSheets").hidden = true; $("doeTitle").textContent = "尚未分析"; $("doeGenHint").textContent = "";
+      pkBadge("doeSrcBadge", "doeGenHint", `來源：${srcTxt}（已填入，尚未產生實驗矩陣）。請確認因子與水準後按「產生實驗矩陣」。`);
+      $("doeFactors").scrollIntoView({ behavior: "smooth", block: "center" });
+      return { msg: "已填入下方 DOE 工具（尚未產生實驗矩陣）。請確認後按「產生實驗矩陣」。" };
+    }
+  });
+
+  // ---------------- 田口方法 ----------------
+  const pkTgDefault = i => tgF[i] && tgF[i].name === "因子 " + TGE.LETTERS[i];
+  makePlanner({
+    id: "pkt", view: "viewTaguchi", before: ".grid", route: "taguchi", chatKey: "taguchi", problemId: "taguchiProblem", blocks: ["tgplan"],
+    title: "穩健設計規劃", sub: "決定控制因子、雜音因子與品質特性；確認後填入下方田口工具",
+    help: "這裡是確認區：魚骨圖的原因、AI 的建議都先放在這裡，由程式檢查；你決定每個因子是「控制因子」（可以設定水準）還是「雜音因子」（難以控制，用雜音條件模擬），確認後按「填入田口工具」，再到工具按「產生直交表」。",
+    descPh: "例如：封口拉力在不同膜材批號與室溫下變化很大，想找出對這些變化不敏感的封口溫度、壓力、時間設定",
+    goLabel: "填入田口工具", chatBtn: "帶入田口（先放進確認區）",
+    role: "你是田口方法（穩健設計）的設計助手。依使用者描述，建議：品質特性類型（larger 望大、smaller 望小、nominal 望目）、控制因子（2～15 個，每個 2 或 3 水準）、雜音因子與雜音條件數（通常 2 個：N1 不利組合、N2 有利組合）。水準數值只有使用者提供時才填，否則留空，並說明怎麼決定。",
+    example: '{"type":"larger","response":"封口拉力 (N/15mm)","target":null,"factors":[{"name":"封口溫度 (°C)","levels":["","",""]},{"name":"壓力 (MPa)","levels":["","",""]}],"noiseFactors":["膜材批號","環境溫度"],"noiseN":2,"noise":"N1＝不利組合；N2＝有利組合"}',
+    schemaNote: "type＝larger、smaller、nominal（望目需 target）；factors＝控制因子陣列（name 含單位、levels 為 2 或 3 個水準，數值使用者沒提供就留空字串）；noiseFactors＝雜音因子名稱陣列；noiseN＝雜音條件數 1～4；noise＝雜音組合方式的說明。動態特性請在文字說明，不放進區塊。",
+    def: { type: "larger", response: "", target: "", factors: [], noiseN: 2, noise: "" },
+    fields: [
+      { k: "type", lab: "品質特性", type: "select", opts: [["larger", "望大（越大越好）"], ["smaller", "望小（越小越好）"], ["nominal", "望目（越接近目標越好）"]] },
+      { k: "response", lab: "品質特性名稱（含單位）", type: "text", ph: "例如 封口拉力 (N/15mm)" },
+      { k: "target", lab: "目標值", type: "num", show: m => m.type === "nominal" },
+      { k: "noiseN", lab: "雜音條件數", type: "int", lo: 1, hi: 4 },
+      { k: "factors", lab: "因子（控制因子要填 2 或 3 個水準；紅色是還沒填的）", type: "table", blank: { name: "", role: "control", lv1: "", lv2: "", lv3: "" },
+        cols: [{ k: "name", lab: "名稱（含單位）", req: true }, { k: "role", lab: "角色", type: "select", opts: [["control", "控制因子"], ["noise", "雜音因子"]] }, { k: "lv1", lab: "水準 1", req: true, reqIf: r => r.role !== "noise" }, { k: "lv2", lab: "水準 2", req: true, reqIf: r => r.role !== "noise" }, { k: "lv3", lab: "水準 3（選填）" }, { k: "src", lab: "來源" }] },
+      { k: "noise", lab: "雜音組合方式（記錄用）", type: "area", rows: 2, ph: "例如 N1＝舊批膜材＋15°C；N2＝新批膜材＋30°C" }
+    ],
+    check: m => {
+      const o = [], bad = x => o.push({ lv: "bad", m: x }), warn = x => o.push({ lv: "warn", m: x }), ok = x => o.push({ lv: "ok", m: x });
+      const C = m.factors.filter(r => r.role !== "noise"), N = m.factors.filter(r => r.role === "noise"), k = C.length;
+      if (m.factors.some(r => !String(r.name).trim())) bad("有空白的名稱。");
+      if (k < 2 || k > 15) bad(`控制因子要 2～15 個，目前 ${k} 個。`);
+      const lv = C.map(r => [r.lv1, r.lv2, r.lv3].map(x => String(x || "").trim()).filter(Boolean));
+      C.forEach((r, i) => { if (!String(r.lv1).trim() || !String(r.lv2).trim()) bad(`請填實際水準：「${r.name || "（未命名）"}」至少要填水準 1、2（紅色格子）。`); else if (new Set(lv[i]).size !== lv[i].length) bad(`「${r.name}」的水準有重複。`); });
+      if (!o.some(x => x.lv === "bad") && k) { const s = TGE.suggest(lv.map(x => x.length)); if (!s) bad("找不到適合的直交表：請減少因子或調整水準數（2 水準與 3 水準混合時，L18 最多 1 個 2 水準＋7 個 3 水準）。"); else ok(`會自動選用 ${s}：${TGE.ARR[s].runs} 組 × ${m.noiseN} 個雜音條件 ＝ ${TGE.ARR[s].runs * m.noiseN} 次實驗。`); }
+      if (N.length) warn(`雜音因子（${N.map(r => r.name).join("、")}）不放進直交表，會寫進雜音說明；請把它們組合成 N1（不利）、N2（有利）等雜音條件。`);
+      if (m.noiseN < 2) warn("只有 1 個雜音條件：S/N 比主要反映重複誤差，看不出對雜音的穩健性*。常見做法是 2 個（不利、有利的組合）*。");
+      if (m.factors.some(r => r.aiLv)) warn("AI 帶入了水準數值：請確認這是你們提供或決定的，不是 AI 猜的*。");
+      if (m.type === "nominal") { const t = pkNum(m.target); if (t == null || Number.isNaN(t)) warn("望目建議填目標值，分析時才能把平均調回目標。"); }
+      warn("直交表通常不估計交互作用；若懷疑有強交互作用，確認實驗要做，或改用 DOE 全因子*。");
+      return o;
+    },
+    fromJson: (j, m, src) => {
+      src = src || "ai"; const str = v => String(v == null ? "" : v).replace(/[\n]/g, " ").trim().slice(0, 30);
+      if (["larger", "smaller", "nominal"].includes(j.type)) m.type = j.type;
+      if (j.response != null) m.response = str(j.response);
+      if (j.target != null && isFinite(Number(j.target))) m.target = String(Number(j.target));
+      const C = (Array.isArray(j.factors) ? j.factors : []).slice(0, 15).map(f => { const L = Array.isArray(f.levels) ? f.levels.slice(0, 3).map(str) : []; const r = { name: str(f.name), role: f.role === "noise" ? "noise" : "control", lv1: L[0] || "", lv2: L[1] || "", lv3: L[2] || "", src }; if (src === "ai" && L.some(Boolean)) r.aiLv = true; return r; });
+      const N = (Array.isArray(j.noiseFactors) ? j.noiseFactors : []).slice(0, 8).map(n => ({ name: str(typeof n === "object" ? n.name : n), role: "noise", lv1: "", lv2: "", lv3: "", src }));
+      m.factors = C.concat(N);
+      if (j.noiseN != null) m.noiseN = pkInt(j.noiseN, 1, 4, 2);
+      if (j.noise != null) m.noise = String(j.noise).slice(0, 200);
+      if (m.factors.filter(r => r.role !== "noise").length > 15) return { error: "控制因子超過 15 個，沒有帶入。" };
+      return { m };
+    },
+    merge: (cur, fresh) => { const have = new Set(cur.factors.map(r => r.name)); cur.factors = cur.factors.concat(fresh.factors.filter(r => !have.has(r.name))); ["response", "noise"].forEach(x => { if (!cur[x] && fresh[x]) cur[x] = fresh[x]; }); },
+    toolHas: () => !!tg || tgF.slice(0, +$("tgK").value).some((f, i) => !pkTgDefault(i)),
+    toolMerge: () => tgF.slice(0, +$("tgK").value).some((f, i) => !pkTgDefault(i)),
+    go: (m, ui) => {
+      const srcTxt = { ai: "AI 建議", fb: "魚骨圖" }[ui.src] || "確認區";
+      let C = m.factors.filter(r => r.role !== "noise").map(r => { const L = [r.lv1, r.lv2, r.lv3].map(x => String(x || "").trim()).filter(Boolean); return { name: r.name, L: L.length, lab: L.concat(["水準 3"]).slice(0, 3) }; });
+      if (ui.mode === "add") { const cur = tgF.slice(0, +$("tgK").value).filter((f, i) => !pkTgDefault(i)).map(f => JSON.parse(JSON.stringify(f))); const have = new Set(cur.map(f => f.name)); C = cur.concat(C.filter(f => !have.has(f.name))); }
+      if (C.length > 15) return { msg: `加入後共 ${C.length} 個控制因子，超過 15 個，沒有填入。`, bad: true };
+      if (!TGE.suggest(C.map(f => f.L))) return { msg: "加入後找不到適合的直交表，沒有填入。", bad: true };
+      const N = m.factors.filter(r => r.role === "noise").map(r => r.name);
+      pkClick(`#tgType [data-v="${m.type}"]`);
+      C.forEach((f, i) => { tgF[i] = f; }); $("tgK").value = String(C.length); tgFactorsUI(); $("tgArr").value = "auto";
+      $("tgNoiseN").value = String(m.noiseN); tgNoiseUI();
+      pkSet("tgY", m.response); pkSet("tgNoiseDesc", [N.length ? "雜音因子：" + N.join("、") + "。" : "", m.noise].filter(Boolean).join(" ")); if (m.type === "nominal") pkSet("tgTarget", m.target);
+      tg = null; $("tgMatrix").innerHTML = ""; tgGenHint();
+      pkBadge("tgSrcBadge", "tgGenHint", `來源：${srcTxt}（已填入，尚未產生直交表）。請確認後按「產生直交表」。`);
+      $("tgFactors").scrollIntoView({ behavior: "smooth", block: "center" });
+      return { msg: "已填入下方田口工具（尚未產生直交表）。請確認後按「產生直交表」。" };
+    }
+  });
+
+  // ---------------- 魚骨圖 → 確認區 ----------------
+  function pkFbList() {
+    const v = fb.factors.filter(f => f.verify && f.st !== "excl");
+    return v.length ? v : fb.factors.filter(f => f.key && f.st === "use");
+  }
+  function pkFromFb(tool, fid) {
+    const list = pkFbList();
+    if (!list.length && tool !== "hyp") { fbNote("還沒有標記「◇ 待驗證」（或「★ 重要」）的原因。先在 STEP 2 標記，再帶入。"); return; }
+    if (tool === "doe") PLANS.doe.apply({ mode: list.length > 5 ? (list.length > 7 ? "pb" : "frac") : "full", factors: list.map(f => ({ name: f.text, low: "", high: "", unit: "" })) }, "fb");
+    else if (tool === "taguchi") PLANS.taguchi.apply({ factors: list.map(f => ({ name: f.text, levels: [] })) }, "fb");
+    else if (tool === "hyp") { const f = fb.factors.find(x => x.id === fid); if (!f) return; PLANS.hyp.apply({ purpose: "two", relation: "ind", groups: [f.text.slice(0, 12) + "：條件 A", f.text.slice(0, 12) + "：條件 B"] }, "fb"); }
+    else if (tool === "spc") {
+      const cats = [...new Set(list.map(f => fbCatName(f)).filter(Boolean))].slice(0, 4);
+      const cur = String(SP.m.strata || "").split(/[,，、]+/).map(s => s.trim()).filter(Boolean);
+      SP.m.strata = [...new Set(cur.concat(cats))].slice(0, 4).join(", ");
+      route("spc"); spRenderForm(); $("spcPlan").open = true; spNote(`已從魚骨圖帶入分層欄位：${cats.join("、")}。${SP.m.dataType ? "" : "請先選「資料型態」，分層欄位就會顯示。"}`);
+      $("spcPlan").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+  $("fbVerify").addEventListener("click", e => { const b = e.target.closest("[data-pkfb]"); if (b) pkFromFb(b.dataset.pkfb, b.dataset.fid); });
+  // 田口頁原本的「從魚骨圖帶入」改成先放進確認區
+  (function () { const b = $("tgFromFb"); if (!b) return; const nb = b.cloneNode(true); b.replaceWith(nb); nb.textContent = "從魚骨圖帶入（先放進確認區）"; nb.addEventListener("click", () => { const box = $("tgFbPick"); if (box) box.hidden = true; pkFromFb("taguchi"); }); })();
+  // DOE 工具：產生矩陣前檢查水準是否空白（手動流程預設 −1／+1，不受影響）
+  $("doeFactors").addEventListener("input", e => { const t = e.target.closest('[data-fk="lo"], [data-fk="hi"]'); if (t) t.classList.toggle("pk-miss", !t.value.trim()); });
+  // =====================================================================
+  // 內建範例案件（教學用；數據全部為模擬，產品與批號為代號）
+  // 情境參考 FDA MAUDE 同類產品（product code KPE，I.V. container）常見的問題類型：Fluid Leak、Seal、底部封邊漏液
+  // =====================================================================
+  const CASE_DEMOS = [{ id: "demo-ivbag", name: "點滴軟袋底部熱封破裂（客訴範例）",
+    desc: "500 mL 非 PVC 點滴軟袋，B 線換熱封刀後出現底部封邊破裂漏液。依序用到：定義問題 → 魚骨圖 → MSA（熱封寬度 Gage R&R、目視漏液屬性一致性）→ 樣本數規劃 → 假設檢定（A/B 線熱封強度）→ SPC（B 線 X̄-R）→ DOE（溫度／時間／壓力 2³）→ 田口（L9，低溫運送雜音）。數據全部為模擬。",
+    c: {"format": "mdqs-case", "version": 1, "name": "範例：IVB-500 點滴軟袋底部熱封破裂（模擬）", "savedAt": "2026-10-10T11:45:28.507Z", "data": {"fields": {"homeQ": "【範例案件・數據為模擬】產品：IVB-500（代號）500 mL 非 PVC 多層膜點滴軟袋。\n客訴：醫院端用加壓袋輸注時，軟袋「底部熱封邊」破裂漏液。2026 Q3 共 6 件客訴，追溯批號（代號）全部是 B 線生產；B 線 7 月更換熱封刀後才開始出現，A 線沒有。\n規格：熱封強度 ≥ 15 N/15mm；熱封寬度 8.0 ± 1.0 mm。出貨抽樣的加壓漏液測試沒有抓到。\n想知道：根本原因是什麼、怎麼驗證、改善後要抽多少驗證。", "homePdfImg": false, "extChk": false, "hypProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "pkhDesc": "", "pasteBox": "A 線\tB 線\n19.9\t18.7\n18.2\t18.1\n18.2\t19\n19.3\t20.1\n18.3\t16.9\n18.4\t16.9\n17\t16.9\n19.8\t18.6\n16.4\t17.4\n19.1\t18.1\n21\t17.7\n20.4\t18.5\n19\t18.2\n18.3\t18.8\n18.4\t16.3\n19.8\t16.6\n19\t15.8\n18.8\t19.9\n18.7\t14.7\n21.1\t18\n16.5\t18.2\n21.6\t18.9\n18.9\t16.7\n17.1\t16.7\n16.8\t16.1", "alphaSel": "0.05", "target": "", "delta0": "0", "lsl": "15", "usl": "", "pairA": "", "pairB": "", "oneSel": "", "tlBox": "", "tlP": "0.99", "tlG": "0.95", "tlLsl": "", "tlUsl": "", "sampleProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "pksDesc": "", "pwSd": "1.6", "pwDelta": "1.5", "pwN": "", "pwTarget": "0.9", "pwAlpha": "0.05", "atC": "0.95", "atR": "0.95", "atCc": "0", "atN": "", "atAc": "0", "atAql": "", "prP0": "5", "prP1": "1", "prRatio": "1", "prN": "", "prTarget": "0.9", "prAlpha": "0.05", "tpP": "0.99", "tpG": "0.95", "tpMu": "", "tpSd": "", "tpLsl": "", "tpUsl": "", "drDesign": "f3", "drRuns": "8", "drTerms": "7", "drCp": "0", "drSd": "", "drDelta": "", "drTarget": "0.8", "drAlpha": "0.05", "spcProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "spDesc": "", "spcData": "x1\tx2\tx3\tx4\tx5\n17.9\t19.8\t19.2\t19.5\t18\n18\t20\t19.2\t19.5\t20\n17.9\t18.9\t19.1\t20.2\t17.4\n19.5\t18.2\t20\t17.9\t19\n18.6\t18.7\t17.6\t17.6\t17.5\n19.6\t18.9\t18.7\t19.9\t17.9\n19\t20.5\t16.5\t19.1\t19.4\n19.7\t19.2\t18.2\t19.1\t17.9\n18.5\t20.5\t21.2\t19.6\t20.7\n20.5\t21.2\t20.1\t19.3\t18.9\n19\t19.2\t19.6\t19.5\t19\n19\t19.4\t18\t18.9\t20.4\n16.7\t17.3\t15.6\t19.7\t15.8\n15.1\t16.1\t17.8\t17\t18\n18.2\t19.7\t18.2\t16.6\t18.8\n15.6\t19.9\t15.5\t19.3\t16.4\n15.9\t16.3\t18\t16.3\t17\n16.8\t14.8\t16.7\t18.9\t19.5\n16.9\t19.3\t16.3\t17.3\t17.7\n16.8\t16.2\t18.3\t15.4\t16.6\n17.7\t14.9\t18.2\t14.7\t16.2\n18\t20\t17.5\t17.8\t16.7\n18.7\t18.8\t16.9\t16.3\t18.3\n17.6\t19.4\t15.5\t16.2\t16.5\n16.3\t15.9\t15.2\t16.5\t18", "spcType": "xbarr", "spcLsl": "15", "spcTgt": "", "spcUsl": "", "msaProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "mpDesc": "", "grrData": "操作員,樣品,第1次,第2次\n甲,P1,7.76,7.87\n甲,P2,7.58,7.64\n甲,P3,8.36,8.3\n甲,P4,7.87,7.93\n甲,P5,7.93,8.09\n甲,P6,6.62,6.69\n甲,P7,7.49,7.5\n甲,P8,7.84,7.95\n甲,P9,7.53,7.52\n甲,P10,7.74,7.86\n乙,P1,7.8,7.84\n乙,P2,7.69,7.55\n乙,P3,8.38,8.44\n乙,P4,7.95,7.96\n乙,P5,8.07,8.01\n乙,P6,6.73,6.65\n乙,P7,7.5,7.47\n乙,P8,7.95,7.9\n乙,P9,7.68,7.62\n乙,P10,7.78,7.81\n丙,P1,7.68,7.8\n丙,P2,7.6,7.52\n丙,P3,8.29,8.32\n丙,P4,7.82,7.89\n丙,P5,7.97,7.93\n丙,P6,6.62,6.74\n丙,P7,7.49,7.5\n丙,P8,7.91,7.86\n丙,P9,7.53,7.53\n丙,P10,7.71,7.79", "grrMethod": "anova", "grrTol": "2", "grrK": "6", "grrAlpha": "0.05", "biasRef": "", "biasTol": "", "biasData": "", "linData": "", "linTol": "", "stabData": "", "stabRef": "", "attrA": "3", "attrT": "2", "attrData": "樣本,標準,甲1,甲2,乙1,乙2,丙1,丙2\n1,OK,OK,OK,OK,NG,OK,OK\n2,NG,NG,NG,NG,NG,NG,NG\n3,OK,OK,OK,OK,OK,OK,OK\n4,OK,OK,OK,OK,OK,OK,OK\n5,NG,NG,NG,NG,NG,NG,NG\n6,OK,OK,OK,OK,OK,OK,OK\n7,NG,NG,NG,NG,NG,NG,NG\n8,OK,OK,OK,OK,OK,OK,OK\n9,OK,OK,OK,NG,OK,OK,OK\n10,NG,NG,NG,NG,NG,NG,NG\n11,OK,OK,OK,OK,OK,OK,OK\n12,OK,OK,OK,OK,OK,OK,OK\n13,NG,NG,NG,OK,OK,NG,NG\n14,OK,OK,OK,OK,OK,OK,OK\n15,OK,OK,OK,OK,OK,OK,OK\n16,NG,NG,OK,NG,NG,NG,NG\n17,OK,OK,NG,OK,OK,OK,OK\n18,NG,NG,NG,OK,OK,NG,NG\n19,OK,OK,OK,OK,OK,OK,OK\n20,OK,OK,OK,OK,OK,OK,OK", "doeProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "pkdDesc": "", "doeK": "3", "doeRep": "2", "doeY": "熱封強度 (N/15mm)", "doePaste": "", "doeGoal": "max", "doeTgt": "", "mixQ": "3", "mixDesign": "lat2c", "mixRep": "1", "mixY": "接觸角 (°)", "mixModel": "auto", "mixGoal": "max", "mixTgt": "", "taguchiProblem": "IVB-500 軟袋底部熱封破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "pktDesc": "", "tgY": "爆破壓力 (kPa)", "tgNom": "nominal", "tgTarget": "", "tgSigName": "流量設定 (mL/s)", "tgSignals": "1, 3, 5", "tgDynFormula": "std", "tgK": "4", "tgArr": "L9", "tgNoiseN": "2", "tgNoiseDesc": "雜音：低溫運送會讓膜材變硬、封邊應力集中（推論*，需驗證）。", "tgPaste": ""}, "chips": {"homePersp": ["v", "improve"], "modeChips": ["mode", "ind"], "altChips": ["alt", "two-sided"], "tlSide": ["v", "two"], "pwDesign": ["v", "two"], "pwSolve": ["v", "n"], "pwAlt": ["v", "two-sided"], "atMode": ["v", "plan"], "prDesign": ["v", "one"], "prSolve": ["v", "n"], "prAlt": ["v", "less"], "tpMethod": ["v", "norm"], "tpSide": ["v", "lower"], "spcKind": ["v", "var"], "doeKind": ["v", "full"], "tgType": ["v", "larger"]}, "subs": {"viewAnalyze:0": "compare", "ssTabs": "attr", "msaTabs": "grr", "doeTabs": "fact"}, "ran": {"hyp": true, "spc": true, "grr": true, "bias": false, "lin": false, "stab": false, "attr": true, "doe": true, "tg": true, "pw": true, "at": true, "prop": false, "tolp": false, "doer": false}, "sampleSub": "attr", "fb": {"v": 1, "problem": "IVB-500 點滴軟袋底部熱封邊破裂漏液（B 線換熱封刀後；範例・數據為模擬）", "detail": {"prod": "IVB-500 500 mL 非 PVC 軟袋／B 線批（代號）", "when": "2026 Q3，B 線 7 月換熱封刀後", "rate": "客訴 6 件（模擬）", "spec": "熱封強度 ≥ 15 N/15mm；熱封寬度 8.0 ± 1.0 mm"}, "set": "m6", "cats": {"m6": [{"id": "xmv2bv5rm0", "name": "人員"}, {"id": "xmv2bv5rm1", "name": "機器"}, {"id": "xmv2bv5rm2", "name": "材料"}, {"id": "xmv2bv5rm3", "name": "方法"}, {"id": "xmv2bv5rm4", "name": "環境"}, {"id": "xmv2bv5rm5", "name": "量測"}], "med": [{"id": "xmv2bv5rm6", "name": "設計"}, {"id": "xmv2bv5rm7", "name": "材料"}, {"id": "xmv2bv5rm8", "name": "製程"}, {"id": "xmv2bv5rm9", "name": "滅菌"}, {"id": "xmv2bv5rma", "name": "包裝"}, {"id": "xmv2bv5rmb", "name": "使用"}]}, "factors": [{"id": "demo1", "ref": "", "text": "新熱封刀刀面溫度不均（中段偏低）", "st": "use", "src": "user", "key": true, "verify": true, "reason": "", "cat": {"m6": "xmv2bv5rm1", "med": "xmv2bv5rm8"}, "subs": [{"id": "demo1s0", "text": "換刀後未做刀面溫度分布量測", "st": "use", "src": "user"}, {"id": "demo1s1", "text": "加熱棒與刀座接觸不良*", "st": "use", "src": "user"}]}, {"id": "demo2", "ref": "", "text": "換刀後熱封時間被縮短以提高產能", "st": "use", "src": "user", "key": true, "verify": true, "reason": "", "cat": {"m6": "xmv2bv5rm3", "med": "xmv2bv5rm8"}, "subs": [{"id": "demo2s0", "text": "SOP 允許範圍過寬", "st": "use", "src": "user"}]}, {"id": "demo3", "ref": "", "text": "熱封壓力設定漂移", "st": "use", "src": "user", "key": false, "verify": true, "reason": "", "cat": {"m6": "xmv2bv5rm1", "med": "xmv2bv5rm8"}, "subs": []}, {"id": "demo4", "ref": "", "text": "膜材熱封層厚度批間變異", "st": "use", "src": "user", "key": false, "verify": false, "reason": "", "cat": {"m6": "xmv2bv5rm2", "med": "xmv2bv5rm7"}, "subs": [{"id": "demo4s0", "text": "供應商 COA 只給總厚度", "st": "use", "src": "user"}]}, {"id": "demo5", "ref": "", "text": "低溫運送使膜材變硬、封邊應力集中", "st": "use", "src": "user", "key": false, "verify": true, "reason": "", "cat": {"m6": "xmv2bv5rm4", "med": "xmv2bv5rma"}, "subs": [{"id": "demo5s0", "text": "冬季冷藏運輸", "st": "use", "src": "user"}, {"id": "demo5s1", "text": "運送振動", "st": "use", "src": "user"}]}, {"id": "demo6", "ref": "", "text": "熱封寬度量測與目視漏液判定不一致", "st": "use", "src": "user", "key": false, "verify": true, "reason": "", "cat": {"m6": "xmv2bv5rm5", "med": "xmv2bv5rm8"}, "subs": [{"id": "demo6s0", "text": "邊界樣品（微滲漏）判定標準不明確", "st": "use", "src": "user"}]}, {"id": "demo7", "ref": "", "text": "換刀後首件確認未執行", "st": "excl", "src": "user", "key": false, "verify": false, "reason": "首件紀錄齊全，換刀當天有簽核（模擬）", "cat": {"m6": "xmv2bv5rm0", "med": "xmv2bv5rm8"}, "subs": []}, {"id": "demo8", "ref": "", "text": "醫院加壓袋壓力過高", "st": "excl", "src": "user", "key": false, "verify": false, "reason": "同院使用 A 線產品同一加壓袋未發生（模擬）", "cat": {"m6": "xmv2bv5rm3", "med": "xmv2bv5rmb"}, "subs": []}, {"id": "demo9", "ref": "", "text": "出貨抽樣加壓測試條件太寬鬆", "st": "cand", "src": "user", "key": false, "verify": false, "reason": "", "cat": {"m6": "xmv2bv5rm5", "med": "xmv2bv5rm8"}, "subs": [{"id": "demo9s0", "text": "抽樣數未依可靠度計算", "st": "use", "src": "user"}]}], "ext": null}, "toolProblems": {}, "doeF": [{"name": "熱封溫度 (°C)", "lo": "170", "hi": "185"}, {"name": "熱封時間 (s)", "lo": "2.0", "hi": "3.0"}, {"name": "熱封壓力 (MPa)", "lo": "0.3", "hi": "0.5"}, {"name": "因子 D", "lo": "-1", "hi": "+1"}, {"name": "因子 E", "lo": "-1", "hi": "+1"}, {"name": "因子 F", "lo": "-1", "hi": "+1"}, {"name": "因子 G", "lo": "-1", "hi": "+1"}, {"name": "因子 H", "lo": "-1", "hi": "+1"}, {"name": "因子 J", "lo": "-1", "hi": "+1"}, {"name": "因子 K", "lo": "-1", "hi": "+1"}, {"name": "因子 L", "lo": "-1", "hi": "+1"}], "doeY": {"0_0": "16.2", "0_1": "14.6", "1_0": "16.4", "1_1": "16.4", "2_0": "17.8", "2_1": "16.8", "3_0": "19.6", "3_1": "22", "4_0": "16.1", "4_1": "16.2", "5_0": "18.6", "5_1": "18", "6_0": "15.8", "6_1": "16.6", "7_0": "20.9", "7_1": "20.5"}, "tgF": [{"name": "熱封溫度 (°C)", "L": 3, "lab": ["175", "180", "185"]}, {"name": "熱封時間 (s)", "L": 3, "lab": ["2.5", "3.0", "3.5"]}, {"name": "冷卻時間 (s)", "L": 3, "lab": ["1.0", "1.5", "2.0"]}, {"name": "熱封刀處理", "L": 3, "lab": ["原刀", "研磨", "研磨＋鐵氟龍"]}, {"name": "因子 E", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 F", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 G", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 H", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 J", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 K", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 L", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 M", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 N", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 O", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}, {"name": "因子 P", "L": 2, "lab": ["水準 1", "水準 2", "水準 3"]}], "tgNoise": ["N1 常溫 25°C 直接加壓", "N2 5°C 冷藏＋運送振動後加壓", "N3", "N4"], "tgY": {"0_0": "49.2", "0_1": "19.9", "1_0": "65.6", "1_1": "44.8", "2_0": "70.3", "2_1": "56.5", "3_0": "73.8", "3_1": "65.1", "4_0": "64.8", "4_1": "39.4", "5_0": "75.1", "5_1": "59.4", "6_0": "77.5", "6_1": "63.1", "7_0": "85.3", "7_1": "77.9", "8_0": "73.3", "8_1": "47.5"}, "msa": {"type": "grr", "p": {"grr": {"parts": 10, "ops": 3, "reps": 3, "names": ""}, "bias": {"n": 15}, "lin": {"refs": 5, "reps": 10, "min": "", "max": ""}, "stab": {"times": 20, "reps": 3}, "attr": {"samples": 50, "raters": 3, "reps": 3, "names": ""}}, "m": {"dataType": "", "unit": "", "resolution": "", "lsl": "", "usl": "", "censorLimit": "", "levels": 5, "hasStd": true, "destructive": false, "randomize": true, "blind": true, "purpose": "msa"}, "sheet": null, "desc": ""}, "spc": {"m": {"dataType": "", "goal": "cap", "cpkTarget": "1.33", "unit": "", "resolution": "", "lsl": "", "target": "", "usl": "", "subgroupSize": 5, "subgroups": 25, "frequency": "", "sampleSize": 200, "sizeVaries": false, "units": 1, "unitsVary": false, "strata": "", "skewed": false}, "sheet": null, "desc": ""}, "plans": {"sample": {"calc": "power", "design": "two", "alt": "two-sided", "alpha": "0.05", "power": "0.9", "sd": "", "delta": "", "conf": "0.95", "rel": "0.95", "fails": "0", "p0": "", "p1": "", "cover": "0.99", "tconf": "0.95", "side": "lower", "method": "norm"}, "hyp": {"purpose": "two", "relation": "ind", "groups": "A, B", "n": 10, "alt": "two-sided", "alpha": "0.05", "target": "", "lsl": "", "usl": ""}, "doe": {"mode": "full", "factors": [], "comps": [], "reps": "", "response": "", "goal": "max", "target": "", "generator": "", "mixdesign": "lat2c", "mixmodel": "auto", "extraResp": "", "norandom": false}, "taguchi": {"type": "larger", "response": "", "target": "", "factors": [], "noiseN": 2, "noise": ""}}}} }];
+  // =====================================================================
+  // 案件存取：把目前整個網站的內容（定義問題、魚骨圖、各工具的資料與設定、規劃表單）存成一個「案件」
+  // A. 匯出成 .json 檔、再匯入；B. 存在這個瀏覽器的案件清單（可切換、刪除）
+  // 分析結果不存：載入後由程式重新計算。附件不存。AI 對話紀錄預設不存（勾選才存）。
+  // 載入、開新案件時重新整理頁面，從乾淨的狀態還原，避免上一個案件的結果殘留。
+  // =====================================================================
+  const CASE_LIST = "mdqs.cases.v1", CASE_PENDING = "mdqs.case.pending", CASE_CUR = "mdqs.case.current", CASE_FMT = "mdqs-case", CASE_VER = 1;
+  const CASE_VIEWS = ["viewHome", "viewAnalyze", "viewSample", "viewSPC", "viewMSA", "viewDOE", "viewTaguchi"];
+  const caseSkip = el => !el.id || /^km/.test(el.id) || el.type === "file" || el.type === "button" || el.type === "password" || el.closest("#aiPanel") || (el.closest(".mp-card") && !/Desc$/.test(el.id));
+  const caseLoadList = () => { try { const a = JSON.parse(localStorage.getItem(CASE_LIST) || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
+  const caseSaveList = a => { localStorage.setItem(CASE_LIST, JSON.stringify(a)); };
+  const caseNow = () => new Date().toLocaleString("zh-TW", { hour12: false });
+  const caseId = () => "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  let caseCur = null; try { caseCur = JSON.parse(sessionStorage.getItem(CASE_CUR) || "null"); } catch (_) { caseCur = null; }
+  function caseNote(m, bad) { $("caseHint").innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; }
+  function caseDefaultName() {
+    const t = (fb && fb.problem || "").trim() || ($("homeQ").value || "").trim() || CASE_VIEWS.map(v => { const b = document.querySelector(`#${v} textarea[id$="Problem"]`); return b ? b.value.trim() : ""; }).find(Boolean) || "";
+    return (t ? t.replace(/\s+/g, " ").slice(0, 24) : "未命名案件") + "（" + new Date().toISOString().slice(0, 10) + "）";
+  }
+
+  // ---- 擷取目前內容 ----
+  function caseCapture(withChat) {
+    const fields = {}, chips = {}, subs = {};
+    CASE_VIEWS.forEach(vid => {
+      const v = $(vid); if (!v) return;
+      v.querySelectorAll("input, select, textarea").forEach(el => { if (caseSkip(el)) return; fields[el.id] = el.type === "checkbox" ? !!el.checked : el.value; });
+      v.querySelectorAll(".chips[id]").forEach(g => { if (g.closest(".mp-card") || g.closest("#aiPanel")) return; const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt"].find(x => b.dataset[x] != null); if (a) chips[g.id] = [a, b.dataset[a]]; });
+      v.querySelectorAll(".subtabs").forEach((s, i) => { const b = s.querySelector('[aria-selected="true"]'); if (!b) return; const key = s.id || vid + ":" + i; subs[key] = b.dataset.tsub || b.dataset.sub || ""; });
+    });
+    const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer };
+    const data = {
+      fields, chips, subs, ran, sampleSub,
+      fb: JSON.parse(JSON.stringify(fb)),
+      toolProblems: JSON.parse(JSON.stringify(toolProblems)),
+      doeF: JSON.parse(JSON.stringify(doeF)), doeY: doe ? JSON.parse(JSON.stringify(doe.y)) : null,
+      tgF: JSON.parse(JSON.stringify(tgF)), tgNoise: tgNoise.slice(), tgY: tg ? JSON.parse(JSON.stringify(tg.y)) : null,
+      msa: { type: MP.type, p: JSON.parse(JSON.stringify(MP.p)), m: Object.assign({}, MP.m), sheet: MP.sheet ? JSON.parse(JSON.stringify(MP.sheet)) : null, desc: $("mpDesc").value },
+      spc: { m: Object.assign({}, SP.m), sheet: SP.sheet ? JSON.parse(JSON.stringify(SP.sheet)) : null, desc: $("spDesc").value },
+      plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()]))
+    };
+    if (withChat) {
+      const all = Object.assign({}, chats); all[chatKey] = { turns, log: chatLog };
+      data.chats = Object.fromEntries(Object.entries(all).filter(([, c]) => c && Array.isArray(c.log) && c.log.length).map(([k, c]) => [k, { turns: c.turns || [], log: c.log }]));
+    }
+    return data;
+  }
+  function caseWrap(name, data) { return { format: CASE_FMT, version: CASE_VER, name, savedAt: new Date().toISOString(), data }; }
+
+  // ---- 還原（在剛載入的乾淨頁面上執行） ----
+  function caseRestore(c) {
+    const d = c.data || {}, step = (lab, f) => { try { f(); } catch (e) { console.warn("case restore", lab, e); } };
+    step("objects", () => {
+      if (Array.isArray(d.doeF)) d.doeF.forEach((f, i) => { if (doeF[i] && f) doeF[i] = { name: String(f.name || ""), lo: String(f.lo ?? ""), hi: String(f.hi ?? "") }; });
+      if (Array.isArray(d.tgF)) d.tgF.forEach((f, i) => { if (tgF[i] && f) tgF[i] = { name: String(f.name || ""), L: f.L === 3 ? 3 : 2, lab: Array.isArray(f.lab) ? f.lab.map(String).slice(0, 3) : tgF[i].lab }; });
+      if (Array.isArray(d.tgNoise)) d.tgNoise.forEach((x, i) => { if (i < tgNoise.length) tgNoise[i] = String(x); });
+    });
+    step("subtabs", () => Object.entries(d.subs || {}).forEach(([key, val]) => {
+      const box = key.includes(":") ? $(key.split(":")[0]).querySelectorAll(".subtabs")[+key.split(":")[1]] : $(key);
+      const b = box && box.querySelector(`[data-tsub="${val}"], [data-sub="${val}"]`); if (b) b.click();
+    }));
+    step("chips", () => Object.entries(d.chips || {}).forEach(([id, [a, v]]) => { const g = $(id); const b = g && g.querySelector(`[data-${a}="${v}"]`); if (b && b.getAttribute("aria-pressed") !== "true") b.click(); }));
+    step("fields", () => {
+      const F = d.fields || {}, ids = Object.keys(F).filter(id => $(id));
+      const order = id => $(id).tagName === "SELECT" ? 0 : $(id).tagName === "INPUT" ? 1 : 2;
+      ids.sort((a, b) => order(a) - order(b)).forEach(id => {
+        const el = $(id), v = F[id];
+        if (el.type === "checkbox") { if (el.checked !== !!v) { el.checked = !!v; el.dispatchEvent(new Event("change", { bubbles: true })); } return; }
+        if (el.value === String(v)) return;
+        el.value = String(v); if (id !== "pasteBox" && id !== "tlBox") el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+      });
+    });
+    step("fishbone", () => { if (d.fb && fbValid(d.fb)) { fb = fbRepair(JSON.parse(JSON.stringify(d.fb))); popClose(); fbRenderEditor(); fbSaveNow(); } });
+    step("problems", () => Object.entries(d.toolProblems || {}).forEach(([k, v]) => { toolProblems[k] = v; }));
+    step("msa", () => { const s = d.msa; if (!s) return; Object.keys(MP.p).forEach(t => { if (s.p && s.p[t]) MP.p[t] = Object.assign({}, MP.p[t], s.p[t]); }); MP.m = Object.assign({}, MP.m, s.m || {}); $("mpDesc").value = s.desc || ""; setMpType(MP_NAME[s.type] ? s.type : "grr", true); if (s.sheet && s.sheet.t === MP.type) { MP.sheet = s.sheet; mpSheetHtml(); } });
+    step("spc", () => { const s = d.spc; if (!s) return; SP.m = Object.assign({}, SP.m, s.m || {}); $("spDesc").value = s.desc || ""; spRenderForm(); if (s.sheet) { SP.sheet = s.sheet; spSheetHtml(); } });
+    step("plans", () => Object.entries(d.plans || {}).forEach(([k, m]) => { if (PLANS[k]) PLANS[k].restore(m); }));
+    const R = d.ran || {};
+    step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
+    step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
+    step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
+    step("msaRun", () => { [["grr", grrRun], ["bias", biasRun], ["lin", linRun], ["stab", stabRun], ["attr", attrRun]].forEach(([k, f]) => { if (R[k]) f(); }); });
+    step("sample", () => { if (R.pw) $("pwRun").click(); if (R.at) $("atRun").click(); if (R.prop) $("prRun").click(); if (R.tolp) $("tpRun").click(); if (R.doer) $("drRun").click(); if (d.sampleSub) { const b = $("ssTabs").querySelector(`[data-tsub="${d.sampleSub}"]`); if (b) b.click(); } });
+    step("chats", () => {
+      if (!d.chats) return;
+      Object.entries(d.chats).forEach(([k, ch]) => {
+        if (!ch || !Array.isArray(ch.log)) return;
+        if (k === "fishbone") { fbLoadChat({ turns: ch.turns || [], log: ch.log }); return; }
+        const c = { turns: Array.isArray(ch.turns) ? ch.turns : [], log: ch.log, lastCtx: "", prefix: "", html: logHtml(ch.log, k) };
+        if (k === chatKey) { chatGen++; turns = c.turns; chatLog = c.log; chatLastCtx = ""; chatPrefix = ""; $("msgs").innerHTML = c.html; } else chats[k] = c;
+      });
+      updateChatControls();
+    });
+    route("home");
+  }
+
+  // ---- 載入／開新：重新整理頁面後再還原 ----
+  function caseOpen(entry) {
+    try { sessionStorage.setItem(CASE_PENDING, JSON.stringify(entry ? (entry.demo ? { demo: entry.id } : { id: entry.id }) : { blank: true })); } catch (_) {}
+    let reloaded = false; window.addEventListener("pagehide", () => { reloaded = true; }, { once: true });
+    try { location.reload(); } catch (_) {}
+    // 若這個檢視不允許重新整理，改成直接在頁面上還原（上一案件的部分結果畫面可能殘留，重新分析即更新）
+    setTimeout(() => { if (reloaded) return; try { sessionStorage.removeItem(CASE_PENDING); } catch (_) {} caseApplyHere(entry); }, 1800);
+  }
+  function caseApplyHere(entry) {
+    newProblemReset(false);
+    if (entry) { caseRestore(entry.c); caseSetCur(entry.demo ? null : entry); caseNote(`已載入「${entry.name}」。（這個檢視無法重新整理頁面，若看到上一個案件的結果，請重新分析一次）`); }
+    else { caseSetCur(null); caseNote("已開新案件。各工具的數據請用各頁的「清除」或直接覆蓋。"); }
+    caseRender();
+  }
+  function caseSetCur(entry) { caseCur = entry ? { id: entry.id, name: entry.name } : null; try { if (caseCur) sessionStorage.setItem(CASE_CUR, JSON.stringify(caseCur)); else sessionStorage.removeItem(CASE_CUR); } catch (_) {} caseBadge(); }
+  function caseBadge() { const b = $("caseBadge"); if (b) { b.hidden = !caseCur; b.textContent = caseCur ? "案件：" + caseCur.name : ""; } }
+
+  // ---- 儲存到瀏覽器清單 ----
+  function caseStore(asNew) {
+    const name = ($("caseName").value || "").trim() || caseDefaultName(), withChat = $("caseChat").checked;
+    const c = caseWrap(name, caseCapture(withChat)), list = caseLoadList();
+    let entry;
+    if (!asNew && caseCur && list.some(x => x.id === caseCur.id)) { entry = list.find(x => x.id === caseCur.id); entry.name = name; entry.c = c; entry.savedAt = c.savedAt; }
+    else { entry = { id: caseId(), name, savedAt: c.savedAt, c }; list.unshift(entry); }
+    try { caseSaveList(list); } catch (e) { caseNote("瀏覽器空間不足，無法存入清單。請先「匯出」成檔案保存，或刪除舊案件。", true); return false; }
+    caseSetCur(entry); caseRender(); caseNote(`已儲存「${name}」${withChat ? "（含 AI 對話）" : "（不含 AI 對話）"}。這份只存在這個瀏覽器，建議另外「匯出」備份。`);
+    return true;
+  }
+  function caseExport(c) {
+    const data = JSON.stringify(c, null, 1), fn = `案件_${String(c.name).replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 40)}.json`;
+    if (!downloads) { caseNote("這個檢視無法下載檔案。", true); return; }
+    Promise.resolve().then(() => downloads.save({ filename: fn, data })).then(() => caseNote("已匯出。檔案在你的電腦，請依公司規定保管。")).catch(e => { if (!(e && e.code === "declined")) caseNote("無法下載檔案。", true); });
+  }
+  function caseValid(o) { return o && o.format === CASE_FMT && typeof o.version === "number" && o.data && typeof o.data === "object"; }
+  async function caseImport(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { caseNote("檔案太大（超過 5 MB），不像是案件檔。", true); return; }
+    let o; try { o = JSON.parse(await file.text()); } catch (_) { caseNote("讀不到這個檔案：不是有效的案件檔（.json）。", true); return; }
+    if (!caseValid(o)) { caseNote("這不是本網站匯出的案件檔。", true); return; }
+    if (o.version > CASE_VER) { caseNote("這個案件檔來自較新版本的網站，請先更新網頁。", true); return; }
+    const entry = { id: caseId(), name: String(o.name || "匯入的案件").slice(0, 60), savedAt: o.savedAt || new Date().toISOString(), c: o }, list = caseLoadList();
+    list.unshift(entry);
+    try { caseSaveList(list); } catch (_) { caseNote("瀏覽器空間不足，無法加入清單；請刪除舊案件後再匯入。", true); return; }
+    caseRender(); caseNote(`已匯入「${entry.name}」到清單。按「載入」即可使用。`);
+  }
+  function caseRender() {
+    const list = caseLoadList();
+    $("caseCurLine").innerHTML = caseCur ? `目前案件：<b>${esc(caseCur.name)}</b>` : "";
+    $("caseSaveOver").hidden = !(caseCur && list.some(x => x.id === caseCur.id));
+    if (!$("caseName").value && caseCur) $("caseName").value = caseCur.name;
+    const size = s => { const n = JSON.stringify(s).length; return n > 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " KB"; };
+    $("caseList").innerHTML = list.length ? `<table class="mini"><thead><tr><th>案件</th><th>儲存時間</th><th>大小</th><th></th></tr></thead><tbody>${list.map(x => `<tr${caseCur && caseCur.id === x.id ? ' class="case-cur"' : ""}><td>${esc(x.name)}${x.c && x.c.data && x.c.data.chats ? '<span class="hint">（含 AI 對話）</span>' : ""}</td><td>${esc(new Date(x.savedAt).toLocaleString("zh-TW", { hour12: false }))}</td><td>${size(x.c)}</td><td class="case-btns"><button type="button" class="btn small" data-case="load" data-id="${x.id}">載入</button><button type="button" class="btn small" data-case="export" data-id="${x.id}">匯出</button><button type="button" class="btn small ghost" data-case="del" data-id="${x.id}">刪除</button></td></tr>`).join("")}</tbody></table>` : `<p class="hint">清單是空的。</p>`;
+  }
+  $("caseList").addEventListener("click", e => {
+    const b = e.target.closest("[data-case]"); if (!b) return;
+    const list = caseLoadList(), x = list.find(y => y.id === b.dataset.id); if (!x) { caseRender(); return; }
+    if (b.dataset.case === "export") caseExport(x.c);
+    else if (b.dataset.case === "load") {
+      if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "確定載入？"; caseNote(`載入「${x.name}」會取代目前網頁上所有內容（尚未儲存的會遺失）。再按一次「確定載入？」。`); setTimeout(() => { if (b.isConnected) { delete b.dataset.ok; b.textContent = "載入"; } }, 5000); return; }
+      caseNote("載入中…"); caseOpen(x);
+    } else if (b.dataset.case === "del") {
+      if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "確定刪除？"; caseNote(`刪除「${x.name}」只會刪掉這個瀏覽器裡的這一筆，已匯出的檔案不受影響。再按一次「確定刪除？」。`); setTimeout(() => { if (b.isConnected) { delete b.dataset.ok; b.textContent = "刪除"; } }, 5000); return; }
+      try { caseSaveList(list.filter(y => y.id !== x.id)); } catch (_) {}
+      if (caseCur && caseCur.id === x.id) caseSetCur(null);
+      caseRender(); caseNote(`已刪除「${x.name}」。`);
+    }
+  });
+  $("caseSaveNew").addEventListener("click", () => caseStore(true));
+  $("caseSaveOver").addEventListener("click", () => caseStore(false));
+  $("caseExportNow").addEventListener("click", () => caseExport(caseWrap(($("caseName").value || "").trim() || caseDefaultName(), caseCapture($("caseChat").checked))));
+  $("caseImportBtn").addEventListener("click", () => $("caseFile").click());
+  $("caseFile").addEventListener("change", e => { caseImport(e.target.files && e.target.files[0]); e.target.value = ""; });
+  $("caseNew").addEventListener("click", () => {
+    const b = $("caseNew"); if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "確定清空？"; caseNote("開新案件會清空網頁上所有內容（定義問題、魚骨圖、各工具的資料、AI 對話）；尚未儲存的會遺失。再按一次「確定清空？」。"); setTimeout(() => { delete b.dataset.ok; b.textContent = "開新案件（清空全部）"; }, 5000); return; }
+    caseOpen(null);
+  });
+
+  // ---- 內建範例：下拉選單選取 → 先警告存檔 → 載入 ----
+  const demoBy = id => CASE_DEMOS.find(x => x.id === id);
+  $("demoSel").innerHTML = `<option value="">— 選擇範例 —</option>` + CASE_DEMOS.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
+  function demoAskHide() { $("demoAsk").hidden = true; $("demoAsk").innerHTML = ""; }
+  $("demoSel").addEventListener("change", () => {
+    const x = demoBy($("demoSel").value);
+    $("demoDesc").textContent = x ? x.desc : "";
+    if (!x) { demoAskHide(); return; }
+    $("demoAsk").innerHTML = `<p>⚠ 載入範例會取代目前網頁上所有內容（定義問題、魚骨圖、各工具的資料、AI 對話）。目前的內容如果還沒存檔，會遺失。</p>
+      <div class="run-row" style="margin:0"><button class="btn primary small" type="button" data-demo="save">先存成案件，再載入範例</button><button class="btn small" type="button" data-demo="go">不存檔，直接載入</button><button class="btn small ghost" type="button" data-demo="cancel">取消</button></div>`;
+    $("demoAsk").hidden = false;
+  });
+  $("demoAsk").addEventListener("click", e => {
+    const b = e.target.closest("[data-demo]"); if (!b) return;
+    const x = demoBy($("demoSel").value);
+    if (b.dataset.demo === "cancel" || !x) { demoAskHide(); $("demoSel").value = ""; $("demoDesc").textContent = ""; return; }
+    if (b.dataset.demo === "save" && !caseStore(true)) return;
+    demoAskHide(); caseNote("載入範例中…"); caseOpen({ demo: true, id: x.id, name: x.name, c: x.c });
+  });
+
+  // ---- 開啟頁面時：處理待還原的案件 ----
+  (function caseBoot() {
+    let p = null; try { p = JSON.parse(sessionStorage.getItem(CASE_PENDING) || "null"); sessionStorage.removeItem(CASE_PENDING); } catch (_) { p = null; }
+    if (p && p.blank) { caseSetCur(null); setTimeout(() => { try { newProblemReset(false); } catch (_) {} caseNote("已開新案件。"); }, 0); }
+    else if (p && p.demo) {
+      const x = demoBy(p.demo);
+      if (x) setTimeout(() => { caseRestore(x.c); caseSetCur(null); caseRender(); caseNote(`已載入範例「${x.name}」。數據全部為模擬；要保留你的修改，請按「另存新案件」。`); }, 0);
+    }
+    else if (p && p.id) {
+      const x = caseLoadList().find(y => y.id === p.id);
+      if (x) setTimeout(() => { caseRestore(x.c); caseSetCur(x); caseRender(); caseNote(`已載入「${x.name}」（${caseNow()}）。分析結果已由程式重新計算。`); }, 0);
+    }
+    caseRender(); caseBadge();
+  })();
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;

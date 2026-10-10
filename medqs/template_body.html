@@ -6,11 +6,10 @@
       <div>
         <div class="eyebrow">Medical Device Quality Statistics</div>
         <h1>醫材品質統計工作台</h1>
-        <p class="lede">醫療器材研發與品質工作常用的統計與品質分析工具。資料只在瀏覽器內計算；需要解讀時，用你自己的 Claude 帳號直接請 AI 說明結果、回答追問。</p>
       </div>
     </div>
     <nav class="tabs toolnav" role="tablist" aria-label="工具">
-      <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定</button>
+      <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
       <button type="button" role="tab" data-route="home" aria-selected="true">定義問題</button>
       <button type="button" role="tab" data-route="fishbone" aria-selected="false">魚骨圖</button>
       <button type="button" role="tab" data-route="sample" aria-selected="false">樣本數規劃</button>
@@ -21,6 +20,7 @@
       <button type="button" role="tab" data-route="taguchi" aria-selected="false">田口方法</button>
       <button type="button" role="tab" data-route="validation" aria-selected="false">確效</button>
     </nav>
+    <p class="case-badge" id="caseBadge" hidden></p>
   </header>
 
   <section id="viewHome" role="tabpanel" data-view="home">
@@ -551,6 +551,19 @@
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
     <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
     <div class="tool-problem"><label for="spcProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
+    <details class="card mp-card" id="spcPlan" open>
+      <summary><span class="qref copper">規劃</span> <b>資料規劃</b><span class="hint"> 先決定資料怎麼收、怎麼分組；收完把數值填回，再分析</span></summary>
+      <div class="mp-body">
+        <p class="help">流程：① 描述要監控的製程與特性，請 AI 建議資料結構（AI 只給規劃，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生依時間順序的記錄表 → ④ 現場依序填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊；分層欄位用代號。</p>
+        <div class="field"><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
+        <div class="run-row"><button class="btn" type="button" id="spAi">請 AI 建議資料結構</button><span class="hint" id="spHint"></span></div>
+        <div class="mp-why" id="spWhy" hidden></div>
+        <div id="spMeta" class="mp-meta"></div>
+        <ul class="mp-check" id="spCheck"></ul>
+        <div class="run-row"><button class="btn primary" type="button" id="spGen">產生記錄表</button><button class="btn ghost" type="button" id="spReset">恢復預設值</button></div>
+        <div id="spSheet" hidden></div>
+      </div>
+    </details>
     <div class="grid">
       <main class="card">
         <div class="step">
@@ -824,8 +837,22 @@
   </section>
 
   <section id="viewAISettings" role="tabpanel" data-view="aisettings" hidden>
-    <div class="tool-head"><h2 class="tool-title">AI 設定</h2><span class="hint" id="asState"></span></div>
+    <div class="tool-head"><h2 class="tool-title">AI 設定與案件存取</h2><span class="hint" id="asState"></span></div>
     <div class="sheets" style="margin-top:0">
+      <section class="card sheet" id="caseSheet">
+        <h3>案件存取</h3>
+        <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
+        <p class="hint" id="demoDesc"></p>
+        <div class="pk-ask" id="demoAsk" hidden></div>
+        <p id="caseCurLine"></p>
+        <div class="fields"><div class="field"><label for="caseName">案件名稱</label><input type="text" id="caseName" autocomplete="off" placeholder="例如：客訴 C-001 封口拉力偏低（請用代號）"></div></div>
+        <div class="mp-opts"><label><input type="checkbox" id="caseChat"> 一起儲存 AI 對話紀錄（可能含敏感內容，預設不存）</label></div>
+        <div class="run-row"><button class="btn primary" type="button" id="caseSaveNew">另存新案件</button><button class="btn" type="button" id="caseSaveOver" hidden>覆蓋目前案件</button><button class="btn" type="button" id="caseExportNow">匯出目前內容（.json）</button><button class="btn" type="button" id="caseImportBtn">匯入案件檔</button><input type="file" id="caseFile" accept=".json,application/json" hidden><button class="btn ghost" type="button" id="caseNew">開新案件（清空全部）</button></div>
+        <p class="hint" id="caseHint" aria-live="polite"></p>
+        <h4 style="margin:14px 0 6px">這個瀏覽器的案件清單</h4>
+        <div class="scroll-x" id="caseList"></div>
+        <p class="hint">清單存在這台電腦的這個瀏覽器；清除瀏覽器資料、換電腦或用無痕視窗時就看不到，重要案件請另外匯出。請不要在案件名稱或內容中輸入客戶、病患、批號等可識別資訊。</p>
+      </section>
       <section class="card sheet" id="byokSheet">
         <h3>AI 連線方式</h3>
         <p class="help" id="aiModeLine"></p>
@@ -857,7 +884,6 @@
       </section>
       <section class="card sheet">
         <h3>回答風格</h3>
-        <p class="help">設定所有分頁的 AI 說明怎麼回答（各分頁的 AI 說明視窗也可以臨時改用其他視角）。個人設定只存在你的瀏覽器；按「回到公司預設」可還原。改了之後，下一個問題就照新風格回答，不用清除對話。</p>
         <div class="as-grid">
           <div class="as-row"><span class="group-label">視角</span><div class="chips" id="asPersp" role="group" aria-label="視角"></div></div>
           <div class="as-row"><span class="group-label">長度</span><div class="chips" id="asDetail" role="group" aria-label="長度"><button class="chip" type="button" data-v="short">精簡</button><button class="chip" type="button" data-v="std">標準</button><button class="chip" type="button" data-v="long">詳細</button></div></div>
@@ -869,26 +895,8 @@
         <div class="run-row"><button class="btn small" type="button" id="asReset">回到公司預設</button><span class="hint">固定不變的三條：繁體中文、推論在句尾標 *、不編造數字與法規條文。</span></div>
       </section>
       <section class="card sheet">
-        <h3>AI 層級怎麼選</h3>
-        <p class="help">網站只能指定「等級」，無法指定特定的模型名稱；實際由哪個模型回答由 claude.ai 平台決定。帳號方案沒有所選的等級時，平台會改用相近的等級，每則回答下方會標示實際使用的等級。</p>
-        <div class="scroll-x"><table class="mini as-tier-table">
-          <thead><tr><th>等級</th><th>特色</th><th>適合</th><th>注意</th></tr></thead>
-          <tbody>
-            <tr><td><b>快速</b></td><td>不先思考就直接回答，幾秒內出現文字，用量最少</td><td>名詞解釋、簡單追問、改寫一句話</td><td>容易漏掉樣板段落、推理較淺*；定義問題的 AI 診斷分析不使用這一級（會自動用「標準」）</td></tr>
-            <tr><td><b>標準</b>（建議）</td><td>先思考再回答，通常 5～60 秒開始出現文字</td><td>大部分的結果說明、規劃說明、AI 診斷分析</td><td>—</td></tr>
-            <tr><td><b>深入思考</b></td><td>思考最久、推理能力最強，用量最多</td><td>附件很長、多個工具結果要一起判斷、需要仔細檢查統計方法的情況</td><td>可能要等一兩分鐘才開始出現文字</td></tr>
-          </tbody>
-        </table></div>
-      </section>
-      <section class="card sheet">
         <h3>五個視角的固定樣板</h3>
-        <p class="help">每個視角都有固定的小標題與順序，AI 回答後網站會自動檢查；缺段落或順序不對時會提醒，並可按「依樣板重寫」。追問時 AI 直接回答，不重複樣板。魚骨圖對話使用魚骨圖自己的格式。</p>
         <div class="scroll-x"><table class="mini" id="asTplTable"></table></div>
-      </section>
-      <section class="card sheet">
-        <h3>公司預設</h3>
-        <p class="help">所有人第一次打開網頁時套用的風格。要修改公司預設，請告訴網頁維護者，改完重新發布後生效。</p>
-        <ul class="reasons" id="asCompany"></ul>
       </section>
       <section class="card sheet">
         <h3>比較兩種視角</h3>
@@ -981,10 +989,9 @@
   </aside>
   <button class="sel-ask" id="selAsk" type="button" hidden>問 AI</button>
 
-  <div class="note warn disclaimer site-disclaimer">本網站的計算結果、確效資料與確效報告僅供參考。作者不擔保其正確性、完整性，或符合任何法規（例如 ISO 13485 對軟體確效的要求）；用於產品放行、法規申報或品質判定前，使用者應依公司程序自行確認。</div>
   <footer>
     <span><b>醫材品質統計工作台</b> · 統計引擎 <span id="engineVer"></span></span>
-    <span>資料只在你的瀏覽器中計算；使用 AI 說明時，結果摘要與數據會送給 Claude。計算結果僅供參考，不擔保符合法規要求。</span>
+    <span>資料只在你的瀏覽器中計算；使用 AI 說明時，結果摘要與數據會送給 Claude，請先去識別化（客戶、病患、批號等）。計算結果、確效資料與報告僅供參考，不擔保正確、完整或符合任何法規；用於產品放行、法規申報或品質判定前，請依公司程序自行確認。</span>
   </footer>
 </div>
 
@@ -1599,11 +1606,14 @@
   }
   function aiBody(text, final, key) {
     key = key || chatKey;
-    const mpj = key === "msa" ? mpParsePlan(text) : null;
+    const mpj = key === "msa" ? mpParsePlan(text) : null, spj = key === "spc" ? spParsePlan(text) : null;
+    const pkk = key === "home" ? "doe" : key, pkp = typeof PLANS !== "undefined" && PLANS && PLANS[pkk] ? PLANS[pkk] : null, pkj = pkp && final ? pkp.parse(text) : null;
+    if (pkp) text = String(text).replace(pkp.stripRe, "").trim();
     if (key === "msa") text = String(text).replace(/```msaplan[\s\S]*?(```|$)/g, "").trim();
+    if (key === "spc") text = String(text).replace(/```spcplan[\s\S]*?(```|$)/g, "").trim();
     const sp = fbSplit(text, final);
     if (key === "carried") return mdLite(sp.clean) + (final && sp.sug && sp.sug.factors.length ? `<p class="hint">（這則回答建議的 ${sp.sug.factors.length} 個原因，已在帶入時加進魚骨圖，請到 STEP 2「待決定」逐一採用或排除。）</p>` : "");
-    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") : "");
+    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (pkj ? pkp.html(pkj) : "") : "");
   }
   function homeGotoHtml(text, sug) {
     const m = String(text).match(/建議工具[:：]\s*([^\n]+)/);
@@ -1763,7 +1773,7 @@
     upstream_error: "連線中斷，請再試一次。",
     images_unavailable: "這個檢視無法把圖片傳給 AI，請移除照片後再試。",
     image_rejected: "有圖片格式不支援或檔案太大，請改用 JPG 或 PNG。",
-    byok_nokey: "尚未設定 API key 或模型名稱，請到「AI 設定」→「AI 連線方式」填寫。",
+    byok_nokey: "尚未設定 API key 或模型名稱，請到「AI 設定與案件存取」→「AI 連線方式」填寫。",
     byok_network: "連不到 AI 服務：可能是網址錯誤、網路被公司擋住，或這家服務不允許從瀏覽器直接呼叫（CORS）。",
     byok_auth: "API key 錯誤、已失效，或沒有使用這個模型的權限。",
     byok_model: "API 網址或模型名稱錯誤（找不到）。",
@@ -1775,9 +1785,11 @@
     if (!sample || busy || !hasData()) return;
     busy = true;
     const parts = [];
-    if (!turns.length) parts.push(chatKey === "home" ? GUIDE_RULES + "\n" + FB_HOME_RULE + "\n\n" + guideContext()
+    if (!turns.length) parts.push(chatKey === "home" ? GUIDE_RULES + "\n" + FB_HOME_RULE + (PLANS && PLANS.doe ? "\n\n" + PLANS.doe.chatRule : "") + "\n\n" + guideContext()
       : chatKey === "fishbone" ? FB_RULES + "\n\n" + fbToolsText()
       : chatKey === "msa" ? RULES + "\n\n" + MP_CHAT_RULE
+      : chatKey === "spc" ? RULES + "\n\n" + SP_CHAT_RULE
+      : PLANS && PLANS[chatKey] ? RULES + "\n\n" + PLANS[chatKey].chatRule
       : RULES);
     const prevPrefix = chatPrefix, prevCtx = chatLastCtx, prevStyle = styleSent[chatKey];
     { const sty = styleForAsk(chatKey, !turns.length); if (sty) parts.push(sty); }

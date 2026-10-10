@@ -136,7 +136,6 @@
     $("asPreview").textContent = styleText(st, "cmp");
     $("asState").textContent = myStyle ? "目前使用：你的個人設定" : "目前使用：公司預設";
     $("asReset").disabled = !myStyle;
-    $("asCompany").innerHTML = `<li>視角：${esc(perspName(COMPANY_STYLE))}</li><li>長度：${esc(DETAIL[COMPANY_STYLE.detail])}</li><li>格式：${esc(FORMAT[COMPANY_STYLE.format])}</li><li>用途：${esc(USE[COMPANY_STYLE.use])}</li><li>AI 層級：${TIER[COMPANY_STYLE.tier]}</li>`;
     $("asTplTable").innerHTML = "<thead><tr><th>視角</th><th>說明結果時的段落</th><th>還沒分析（規劃）時的段落</th><th>AI 診斷分析的專屬段落</th></tr></thead><tbody>" +
       Object.values(PERSP).map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${p.res.map(s => esc(s[0])).join(" → ")}</td><td>${p.plan.map(s => esc(s[0])).join(" → ")}</td><td>${esc(p.home[0])}</td></tr>`).join("") + "</tbody>";
     renderPanelPersp();

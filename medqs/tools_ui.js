@@ -593,7 +593,12 @@
   }
   function doeMatrixLabels() { $("doeMatrix").querySelectorAll("[data-fc]").forEach(s => { const c = +s.dataset.fc; s.textContent = +s.dataset.s > 0 ? doeF[c].hi : doeF[c].lo; }); $("doeMatrix").querySelectorAll("[data-fh]").forEach(s => { const i = +s.dataset.fh; s.textContent = QQ.LETTERS[i] + " " + doeF[i].name; }); }
   $("doeMatrix").addEventListener("input", e => { const t = e.target.closest("[data-run]"); if (t && doe) doe.y[t.dataset.run + "_" + t.dataset.rep] = t.value; });
-  $("doeGen").addEventListener("click", () => doeGenerate());
+  $("doeGen").addEventListener("click", () => {
+    const k = doeKNow(), miss = doeF.slice(0, k).map((f, i) => (!String(f.lo).trim() || !String(f.hi).trim()) ? i : -1).filter(i => i >= 0);
+    $("doeFactors").querySelectorAll('[data-fk="lo"], [data-fk="hi"]').forEach(el => el.classList.toggle("pk-miss", +el.dataset.fi < k && !el.value.trim()));
+    if (miss.length) { $("doeGenHint").innerHTML = `<span class="status ng">請填實際範圍：${esc(miss.map(i => QQ.LETTERS[i] + " " + doeF[i].name).join("、"))} 的低／高水準還沒填（紅色格子）。</span>`; return; }
+    doeGenerate(); const b = $("doeSrcBadge"); if (b) b.hidden = true;
+  });
   $("doeY").addEventListener("input", () => { if (doe) { const th = $("doeMatrix").querySelector("th:last-child"); if (th) th.textContent = $("doeY").value || "反應"; } });
   $("doeGoal").addEventListener("change", () => { $("doeTgtF").hidden = $("doeGoal").value !== "target"; });
   $("doePasteBtn").addEventListener("click", () => {
