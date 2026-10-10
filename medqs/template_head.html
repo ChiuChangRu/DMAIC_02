@@ -85,7 +85,7 @@ nav.tabs button:focus-visible { outline: 2px solid #D8995F; outline-offset: 2px;
 .qref.copper { background: var(--copper); }
 h2.q { font-family: var(--font-display); font-weight: 500; font-size: 24px; line-height: 1.25; margin: 0; text-wrap: balance; }
 .help { color: var(--muted); margin: 0; max-width: 62ch; font-size: 15px; }
-textarea, input[type="text"], input[type="number"], select { font: inherit; color: var(--ink); background: var(--code-bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; }
+textarea, input[type="text"], input[type="number"], input[type="password"], select { font: inherit; color: var(--ink); background: var(--code-bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; }
 textarea { font-family: var(--font-mono); font-size: 13.5px; min-height: 170px; resize: vertical; line-height: 1.5; tab-size: 12; }
 textarea:focus, input:focus, select:focus { border-color: var(--teal); outline: none; }
 textarea:focus-visible, input:focus-visible, select:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
@@ -458,6 +458,9 @@ g.fb-hit:hover rect { stroke-width: 3; }
 .ai-persp-row .hint { font-size: 12.5px; }
 .mini-chips { gap: 4px; }
 .mini-chips .chip { padding: 3px 9px; font-size: 12.5px; min-height: 0; }
+.byok-opts { display: grid; gap: 6px; margin: 12px 0 4px; font-size: 14px; }
+.byok-opts label { display: flex; gap: 8px; align-items: flex-start; }
+.byok-opts input { margin-top: 3px; }
 .tier-note { margin: 6px 0 0; font-size: 12px; }
 .tpl-warn { margin: 6px 0 0; font-size: 12.5px; color: var(--warn, #8a5a00); }
 .tpl-warn .btn { margin-left: 6px; }

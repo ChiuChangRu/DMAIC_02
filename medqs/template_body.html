@@ -812,6 +812,32 @@
   <section id="viewAISettings" role="tabpanel" data-view="aisettings" hidden>
     <div class="tool-head"><h2 class="tool-title">AI 設定</h2><span class="hint" id="asState"></span></div>
     <div class="sheets" style="margin-top:0">
+      <section class="card sheet" id="byokSheet">
+        <h3>AI 連線方式</h3>
+        <p class="help" id="aiModeLine"></p>
+        <ul class="reasons">
+          <li><b>模式 (1) claude.ai</b>：在 claude.ai 中開啟本頁時自動使用，用量算在開啟者自己的 Claude 帳號（需為發布者組織內的帳號）；可搭配 NyquistAI 連接器。</li>
+          <li><b>模式 (2) 自帶 API key</b>：在 claude.ai 以外開啟時（例如 GitHub 版）使用。key 只存在你的瀏覽器，直接送到你填的 AI 服務，不經過其他伺服器；費用由 key 的擁有者負擔。請選支援圖片（多模態）的模型，附件照片才看得到。</li>
+        </ul>
+        <p class="hint" id="byokInClaude" hidden>在 claude.ai 中無法使用自帶 key（平台的安全規則禁止網頁連到外部 API）。要用自己的 key，請開 GitHub 版：<a class="link" href="https://chiuchangru.github.io/DMAIC_02/medqs/" target="_blank" rel="noopener">chiuchangru.github.io/DMAIC_02/medqs</a></p>
+        <div id="byokForm" hidden>
+          <div class="fields">
+            <div class="field"><label for="byokProv">AI 提供者</label><select id="byokProv"></select></div>
+            <div class="field"><label for="byokModel">模型名稱</label><input type="text" id="byokModel" autocomplete="off" spellcheck="false"></div>
+          </div>
+          <div class="fields" style="margin-top:10px">
+            <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="byokKey" id="byokKeyLab">API key</label><input type="password" id="byokKey" autocomplete="off" spellcheck="false" placeholder="貼上後按「儲存並啟用」"><span class="hint" id="byokKeyState"></span></div>
+          </div>
+          <div class="byok-opts">
+            <label><input type="checkbox" id="byokKeep"> 把 key 記在這個瀏覽器（共用電腦請不要勾；不勾則關閉網頁就清除）</label>
+            <label><input type="checkbox" id="byokImgs"> 送出附件圖片（模型需支援多模態）</label>
+            <label><input type="checkbox" id="byokS2t"> 把回答自動轉成繁體（適合 Kimi 等常混入簡體字的模型）</label>
+          </div>
+          <div class="run-row"><button class="btn copper" type="button" id="byokSave">儲存並啟用</button><button class="btn small" type="button" id="byokTest">測試連線</button><button class="btn small" type="button" id="byokClear">清除 key</button><span class="hint" id="byokHint"></span></div>
+          <p class="hint">「AI 層級」設定在這個模式不適用，一律使用上面填的模型。送出前請先去識別化（客戶、病患、批號等資訊）。</p>
+        </div>
+      </section>
       <section class="card sheet">
         <h3>回答風格</h3>
         <p class="help">設定所有分頁的 AI 說明怎麼回答（各分頁的 AI 說明視窗也可以臨時改用其他視角）。個人設定只存在你的瀏覽器；按「回到公司預設」可還原。改了之後，下一個問題就照新風格回答，不用清除對話。</p>
@@ -1716,7 +1742,13 @@
     prompt_too_large: "資料太多，超過 AI 可讀取的長度。",
     upstream_error: "連線中斷，請再試一次。",
     images_unavailable: "這個檢視無法把圖片傳給 AI，請移除照片後再試。",
-    image_rejected: "有圖片格式不支援或檔案太大，請改用 JPG 或 PNG。"
+    image_rejected: "有圖片格式不支援或檔案太大，請改用 JPG 或 PNG。",
+    byok_nokey: "尚未設定 API key 或模型名稱，請到「AI 設定」→「AI 連線方式」填寫。",
+    byok_network: "連不到 AI 服務：可能是網址錯誤、網路被公司擋住，或這家服務不允許從瀏覽器直接呼叫（CORS）。",
+    byok_auth: "API key 錯誤、已失效，或沒有使用這個模型的權限。",
+    byok_model: "API 網址或模型名稱錯誤（找不到）。",
+    byok_bad: "AI 服務拒絕這個請求（可能是模型不支援圖片、內容太長或參數不符）。",
+    invalid_json: "AI 回傳的格式無法解析，請再試一次。"
   };
   async function ask(question, o) {
     o = o || {};
@@ -1782,7 +1814,7 @@
       if (e && e.text && code !== "refused") { T.push({ role: "assistant", content: e.text }); LOG.push({ role: "ai", text: e.text }); answered = true; }
       if (code === "cancelled") { if (!e.text) bubble.remove(); }
       else {
-        body.insertAdjacentHTML("beforeend", `<p class="hint">${esc(ERR[code] || ERR.upstream_error)}</p>`);
+        body.insertAdjacentHTML("beforeend", `<p class="hint">${esc((ERR[code] || ERR.upstream_error) + (/^byok|^rate_limited$/.test(code || "") && aiMode === "byok" && e.message ? "（" + e.message + "）" : ""))}</p>`);
         if (code === "not_granted" || code === "sampling_disabled") { sample = null; aiErr = ERR[code]; }
       }
     } finally {
@@ -1826,7 +1858,7 @@
   }
   setHelpText();
   updateChatControls();
-  (async () => {
+  const aiReadyP = (async () => {
     const inClaude = !!(window.claude && window.claude.use);
     try { sample = inClaude ? await window.claude.use("sample") : null; } catch (_) { sample = null; }
     if (!sample && !aiErr) aiErr = inClaude

@@ -616,7 +616,9 @@
   }
   // ---- export / import ----
   let downloads = null;
-  (async () => { try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (_) { downloads = null; } $("fbDl").hidden = !downloads; $("fbNoDl").hidden = !!downloads; })();
+  // 不在 claude.ai 中（例如 GitHub Pages）時，用一般瀏覽器下載
+  const plainDownloads = { save: async ({ filename, data }) => { const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" }); const u = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); } };
+  (async () => { try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : plainDownloads; } catch (_) { downloads = null; } $("fbDl").hidden = !downloads; $("fbNoDl").hidden = !!downloads; })();
   const fbName = ext => `魚骨圖_${(fb.problem.trim() || "未命名").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 24)}_${new Date().toISOString().slice(0, 10)}.${ext}`;
   async function fbSaveFile(filename, data) {
     if (!downloads) { fbNote("這個檢視無法下載檔案。"); return; }
