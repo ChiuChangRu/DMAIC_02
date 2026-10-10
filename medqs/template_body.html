@@ -108,6 +108,15 @@
           <div class="run-row"><button class="btn small" type="button" id="fbCheckProblem">請 AI 檢查問題點</button></div>
         </div>
       </section>
+      <section class="card fb-edit">
+        <div class="step">
+          <span class="qref copper">STEP 2</span>
+          <h2 class="q">待決定與已排除</h2>
+          <p class="help">已採用的原因直接在下方魚骨圖修改。這裡放圖上看不到的兩種：<b>待決定</b>（AI 建議的候選，按「採用」才畫進圖）與<b>已排除</b>（確認不是原因，連同理由保留，可恢復）。</p>
+          <div class="fb-candbar" id="fbCandBar" hidden><span>有 <b id="fbCandN">0</b> 個候選原因還沒決定</span><button class="btn small" type="button" id="fbAllUse">全部採用</button><button class="btn small" type="button" id="fbClearCand">全部刪除</button><button class="btn small" type="button" id="fbClearTpl" hidden>只刪除舊範本候選</button></div>
+          <div id="fbCats" class="fb-cats" data-filter="all"></div>
+        </div>
+      </section>
       <aside class="card fb-preview" aria-label="魚骨圖">
         <div class="preview-head"><span class="filename"><span class="tag">DIAGRAM</span> <b id="fbCounts"></b></span><button type="button" class="btn small ghost-light" id="fbZoom" aria-pressed="false">原始大小</button></div>
         <div class="fb-toolbar">
@@ -118,15 +127,6 @@
         <div class="fb-svgwrap" id="fbSvgWrap"><div class="fb-svg scroll-x" id="fbSvg"></div><div class="fb-pop" id="fbPop" hidden role="dialog" aria-label="修改"></div></div>
         <p class="hint fb-legend">點圖上的文字可直接修改：點原因可改文字、排除（含理由）、移動分類、加子因子；點分類名稱可新增原因；點問題點可改寫。★ 重要　◇ 待驗證　· 子因子</p>
       </aside>
-      <section class="card fb-edit">
-        <div class="step">
-          <span class="qref copper">STEP 2</span>
-          <h2 class="q">待決定與已排除</h2>
-          <p class="help">已採用的原因直接在上方魚骨圖修改。這裡放圖上看不到的兩種：<b>待決定</b>（AI 建議的候選，按「採用」才畫進圖）與<b>已排除</b>（確認不是原因，連同理由保留，可恢復）。</p>
-          <div class="fb-candbar" id="fbCandBar" hidden><span>有 <b id="fbCandN">0</b> 個候選原因還沒決定</span><button class="btn small" type="button" id="fbAllUse">全部採用</button><button class="btn small" type="button" id="fbClearCand">全部刪除</button><button class="btn small" type="button" id="fbClearTpl" hidden>只刪除舊範本候選</button></div>
-          <div id="fbCats" class="fb-cats" data-filter="all"></div>
-        </div>
-      </section>
       <section class="card fb-edit">
         <div class="step">
           <span class="qref">STEP 3</span>
@@ -1593,7 +1593,7 @@
     const ids = m ? toolsFromText(m[1]) : [];
     if (sug && !ids.includes("fishbone")) ids.unshift("fishbone");
     if (!ids.length) return "";
-    const peek = sug && sug.factors.length ? `<details class="sug-peek"><summary>查看 AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時會列為候選）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
+    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時會列為候選）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
     return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>`;
   }
   function addMsg(role, text, extra) {

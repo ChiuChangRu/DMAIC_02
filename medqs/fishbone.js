@@ -403,7 +403,7 @@
       const c = pop.c, n = fb.factors.filter(f => f.cat[fb.set] === c.id).length;
       if (n && !b.dataset.ok) { b.dataset.ok = "1"; b.textContent = `確定刪除？${n} 個原因會移到「需要指定分類」，再按一次`; return; }
       fb.cats[fb.set] = fbCats().filter(x => x.id !== c.id);
-      popClose(); fbRenderEditor(); fbNote(`已刪除分類「${c.name}」${n ? `，其中 ${n} 個原因請在下方重新指定分類` : ""}。`);
+      popClose(); fbRenderEditor(); fbNote(`已刪除分類「${c.name}」${n ? `，其中 ${n} 個原因請重新指定分類` : ""}。`);
     }
     else if (b.dataset.pst) {
       o.st = b.dataset.pst;
@@ -412,8 +412,8 @@
       b.parentElement.querySelectorAll("[data-pst]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
       const r = $("fbPop").querySelector(".fb-pop-reason");
       if (r) { r.hidden = o.st !== "excl"; if (o.st === "excl") r.querySelector("input").focus(); }
-      if (o.st === "cand") fbNote(`「${o.text}」改為候選，移到下方「待決定」。`);
-      else if (o.st === "excl" && pop.sub) fbNote(`子因子「${o.text}」已排除，保留在下方「已排除」。`);
+      if (o.st === "cand") fbNote(`「${o.text}」改為候選，移到「待決定」。`);
+      else if (o.st === "excl" && pop.sub) fbNote(`子因子「${o.text}」已排除，保留在「已排除」。`);
     }
     else if (b.dataset.p === "key" || b.dataset.p === "verify") { pop.f[b.dataset.p] = !pop.f[b.dataset.p]; b.setAttribute("aria-pressed", String(pop.f[b.dataset.p])); fbRenderEditor(); }
     else if (b.dataset.p === "del") {
@@ -445,8 +445,8 @@
       f.st = b.dataset.st;
       if (f.st === "use") f.subs.forEach(x => { if (x.st === "cand") x.st = "use"; });
       fbRenderEditor();
-      if (f.st === "use") fbNote(f.cat[fb.set] ? `「${f.text}」已採用，畫進魚骨圖（${fbCatName(f)}）。` : `「${f.text}」已採用，請在上方指定分類。`);
-      else if (f.st === "excl") { fbNote(`「${f.text}」已排除，建議在下方填寫排除理由。`); const inp = $("fbCats").querySelector(`[data-f="${f.id}"]:not([data-s]) .fb-reason`); if (inp) inp.focus(); }
+      if (f.st === "use") fbNote(f.cat[fb.set] ? `「${f.text}」已採用，畫進魚骨圖（${fbCatName(f)}）。` : `「${f.text}」已採用，請指定分類。`);
+      else if (f.st === "excl") { fbNote(`「${f.text}」已排除，建議填寫排除理由。`); const inp = $("fbCats").querySelector(`[data-f="${f.id}"]:not([data-s]) .fb-reason`); if (inp) inp.focus(); }
       else fbNote(`「${f.text}」改回候選。`);
     }
     else if (act === "sst" && f) { const x = f.subs.find(y => y.id === sid); if (x) { x.st = b.dataset.st; fbRenderEditor(); } }
@@ -494,7 +494,7 @@
   function sugButton(sug, key) {
     if (!sug) return "";
     const n = sug.factors.length, data = esc(JSON.stringify(sug));
-    if (key === "home") return `<div class="fb-sug">${n ? `<details class="sug-peek"><summary>查看 AI 建議的 ${n} 個原因</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : ""}<button class="btn small primary" type="button" data-sug="${data}" data-mode="cand">帶入魚骨圖${n ? `（${n} 項候選）` : ""}</button></div>`;
+    if (key === "home") return `<div class="fb-sug">${n ? `<details class="sug-peek" open><summary>AI 建議的 ${n} 個原因</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : ""}<button class="btn small primary" type="button" data-sug="${data}" data-mode="cand">帶入魚骨圖${n ? `（${n} 項候選）` : ""}</button></div>`;
     if (!n) return `<div class="fb-sug"><button class="btn small primary" type="button" data-sug="${data}" data-mode="cand">查看建議的問題點</button></div>`;
     // 列出每個原因（依分類），可勾選後再加入；已在魚骨圖的不勾
     const groups = []; sug.factors.forEach((f, i) => { const c = f.cat || "未分類"; let g = groups.find(x => x[0] === c); if (!g) groups.push(g = [c, []]); g[1].push([f, i]); });
