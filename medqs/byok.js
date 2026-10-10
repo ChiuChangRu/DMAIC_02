@@ -135,7 +135,11 @@
     $("byokModel").placeholder = P.model || "例如 gpt-4.1、kimi-k2.6，或公司提供的模型名稱"; if (document.activeElement !== $("byokModel")) $("byokModel").value = byokCfg.model;
     $("byokKeyLab").textContent = P.needKey ? "API key" : "API key（公司私有雲不需要時可留空）";
     $("byokKeep").checked = !!byokCfg.keep; $("byokImgs").checked = !!byokCfg.imgs; $("byokS2t").checked = !!byokCfg.s2t;
-    $("byokKeyState").textContent = byokKeyMem ? (byokCfg.keep ? "已儲存 key（存在這個瀏覽器）" : "已輸入 key（只用在這次開啟，關閉網頁就清除）") : "尚未輸入 key";
+    const kf = $("byokKey");
+    kf.placeholder = byokKeyMem ? "••••••••••••••••（已輸入，結尾 " + byokKeyMem.slice(-4) + "；要更換再貼新的）" : "貼上後按「儲存並啟用」";
+    kf.classList.toggle("key-set", !!byokKeyMem);
+    $("byokKeyState").textContent = byokKeyMem ? (byokCfg.keep ? "✓ 已輸入 key，並記在這個瀏覽器" : "✓ 已輸入 key（只用在這次開啟，關閉網頁就清除）") : "尚未輸入 key";
+    $("byokKeyState").classList.toggle("key-ok", !!byokKeyMem);
     $("byokClear").disabled = !byokKeyMem;
   }
   function byokSaveCfg() { try { localStorage.setItem(BYOK_CFG, JSON.stringify(byokCfg)); if (byokCfg.keep && byokKeyMem) localStorage.setItem(BYOK_KEY, byokKeyMem); else localStorage.removeItem(BYOK_KEY); } catch (_) {} }
