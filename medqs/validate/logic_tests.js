@@ -1,0 +1,84 @@
+// Parser and decision-logic tests (expected outcomes defined by hand)
+const HT = require("../stats.js");
+const results = [];
+function t(group, name, cond, detail) { results.push({ group, name, pass: !!cond, detail: detail || "" }); }
+
+// ---- parser ----
+let r = HT.parseTable("A\tB\n1.2\t2.3\n1.4\t2.1\n1.3\t2.6\n1.5\t2.2");
+t("貼上解析", "直式含標題（Excel Tab）", r.orientation === "vertical" && r.series[0].name === "A" && r.series[1].values.join() === "2.3,2.1,2.6,2.2");
+r = HT.parseTable("A\t1.2\t1.4\t1.3\t1.5\nB\t2.3\t2.1\t2.6\t2.2");
+t("貼上解析", "橫式含標題", r.orientation === "horizontal" && r.series[1].name === "B" && r.series[0].values.length === 4);
+r = HT.parseTable("1.2\t2.3\n1.4\t2.1\n1.3\t2.6\n1.5\t2.2\n1.1\t2.0");
+t("貼上解析", "直式無標題", r.orientation === "vertical" && !r.hasHeader && r.series[0].values.length === 5);
+r = HT.parseTable("1.2\t1.4\t1.3\t1.5\t1.1\n2.3\t2.1\t2.6\t2.2\t2.0");
+t("貼上解析", "橫式無標題", r.orientation === "horizontal" && r.series[1].values.join() === "2.3,2.1,2.6,2.2,2");
+r = HT.parseTable("前\t後\n1\t2\n3\t\n5\t6\n7\t8\n\t9");
+t("貼上解析", "組數不同（空白格）", r.series[0].values.length === 4 && r.series[1].values.length === 4 && r.series[0].raw.length === 4 && r.series[1].raw.length === 5);
+r = HT.parseTable("A\tB\n1\t2\nN/A\t3\n4\t5\n6\tx");
+t("貼上解析", "非數字標記為無效", r.series[0].invalid.length === 1 && r.series[0].invalid[0].text === "N/A" && r.series[1].invalid[0].text === "x");
+r = HT.parseTable("A\tB\n1,234.5\t2,000\n1,300\t2,100.25\n999\t1,999");
+t("貼上解析", "千分位逗號（Tab 分隔時）", r.series[0].values[0] === 1234.5 && r.series[1].values[1] === 2100.25);
+r = HT.parseTable("１．２\t２．５\n１．４\t２．１\n１．３\t２．８");
+t("貼上解析", "全形數字", r.series[0].values[0] === 1.2 && r.series[1].values[2] === 2.8);
+r = HT.parseTable("1,2\n3,4\n5,6\n7,8");
+t("貼上解析", "逗號分隔 CSV", r.orientation === "vertical" && r.series[1].values.join() === "2,4,6,8");
+r = HT.parseTable("1.1 2.2\n3.3 4.4\n5.5 6.6");
+t("貼上解析", "空白分隔", r.series[0].values.join() === "1.1,3.3,5.5");
+r = HT.parseTable("1\t2\t3\n4\t5\t6\n7\t8\t9");
+t("貼上解析", "3×3 判定為不確定，提示人工確認", r.ambiguous === true);
+r = HT.parseTable("A\tB\tC\n1\t2\t3\n4\t5\t6\n7\t8\t9\n1\t1\t1");
+t("貼上解析", "三組以上提示選擇", r.series.length === 3 && r.notes.length === 1);
+r = HT.parseTable("1\n2\n3\n4");
+t("貼上解析", "只有一組時回報錯誤", !!r.error);
+r = HT.parseTable("1.2\t1.4\t1.3\t1.5\t1.1\n2.3\t2.1\t2.6\t2.2\t2.0", "vertical");
+t("貼上解析", "強制轉置", r.orientation === "vertical" && r.series.length === 5 ? true : r.orientation === "vertical");
+r = HT.parseTable("1e-3\t2E-3\n-1.5\t+2\n.5\t3.");
+t("貼上解析", "科學記號、正負號、省略整數位", r.series[0].values.join() === "0.001,-1.5,0.5" && r.series[1].values.join() === "0.002,2,3");
+const pu = HT.pairUp([1, null, 3, 4], [2, 3, null, 5]);
+t("貼上解析", "成對資料剔除不完整配對", pu.a.join() === "1,4" && pu.b.join() === "2,5" && pu.dropped.join() === "2,3");
+
+// ---- decision logic ----
+const normalA = [9.8, 10.1, 10.4, 9.9, 10.0, 10.2, 9.7, 10.3, 10.05, 9.95, 10.15, 9.85];
+const normalB = normalA.map(v => v + 0.4);
+let a = HT.analyze(normalA, normalB, {});
+t("檢定選擇", "兩組常態、變異數相等 → Student t", a.chosen === "pooled");
+t("檢定選擇", "Student t 與 ANOVA 一致（F = t²）", Math.abs(a.anova.F - a.tests[0].stat ** 2) / a.anova.F < 1e-10 && Math.abs(a.anova.p - a.tests[0].p) < 1e-12);
+const wideB = normalA.map((v, i) => 10 + (v - 10) * 8 + 0.4 + (i % 2 ? 0.01 : -0.01));
+a = HT.analyze(normalA, wideB, {});
+t("檢定選擇", "兩組常態、變異數不等 → Welch t", a.levene.p < 0.05 && a.chosen === "welch", `Levene p=${a.levene.p}`);
+const skew = [1, 1.1, 1.2, 1.1, 1.3, 1.2, 1.1, 1.0, 5.5, 9.8, 1.2, 1.15];
+a = HT.analyze(skew, normalB, {});
+t("檢定選擇", "任一組非常態 → Mann-Whitney", a.chosen === "mwu", `SW p=${a.normality[0].p}`);
+const pairedB = normalA.map((v, i) => v + 0.4 + [0.03, -0.05, 0.02, 0.06, -0.01, 0.0, -0.04, 0.05, -0.02, 0.01, -0.03, 0.04][i]);
+a = HT.analyze(normalA, pairedB, { paired: true });
+t("檢定選擇", "成對、差值常態 → 成對 t", a.chosen === "paired");
+t("檢定選擇", "成對 t 與區組 ANOVA 一致（F = t²）", Math.abs(a.anova.F - a.tests[0].stat ** 2) / a.anova.F < 1e-9);
+const pb = normalA.map((v, i) => v + [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 3, 0.1, 4][i]);
+a = HT.analyze(normalA, pb, { paired: true });
+t("檢定選擇", "成對、差值非常態 → Wilcoxon", a.chosen === "wsr");
+a = HT.analyze([1, 2], [3, 4, 5], {});
+t("輸入檢查", "每組少於 3 筆時拒絕", !!a.errors);
+a = HT.analyze([1, 2, 3, 4], [1, 2, 3], { paired: true });
+t("輸入檢查", "成對時數量不同拒絕", !!a.errors);
+a = HT.analyze([5, 5, 5], [5, 5, 5], {});
+t("輸入檢查", "兩組皆無變異時拒絕", !!a.errors);
+a = HT.analyze(normalA, normalB, { paired: true });
+t("輸入檢查", "成對差值完全相同時拒絕", !!a.errors);
+r = HT.parseTable("A\n1\n2\n3");
+t("貼上解析", "單欄含標題回報錯誤", !!r.error);
+a = HT.analyze(normalA, normalB, { usl: 10.3, lsl: 9.8 });
+const outA = normalA.filter(v => v > 10.3 || v < 9.8).length;
+t("規格", "超規數量正確", a.specA.outCount === outA, `${a.specA.outCount} vs ${outA}`);
+const dA = a.descA;
+t("規格", "Ppk 公式正確", Math.abs(a.specA.ppk - Math.min((10.3 - dA.mean) / (3 * dA.sd), (dA.mean - 9.8) / (3 * dA.sd))) < 1e-12);
+a = HT.analyze(normalA, normalB, { usl: 10.3 });
+t("規格", "只有上限時用 Ppu", Math.abs(a.specA.ppk - (10.3 - dA.mean) / (3 * dA.sd)) < 1e-12 && a.specA.ppl === null);
+a = HT.analyze(normalA, normalB, {});
+t("規格", "未提供規格時不計算", a.specA === null);
+a = HT.analyze(normalA, normalB, { alternative: "less" });
+t("單尾", "單尾 p 為雙尾的一半（t > 0 方向相反時）", Math.abs(a.tests[0].p - HT.tTestPooled(normalA, normalB, "two-sided", 0, 0.95).p / 2) < 1e-12);
+
+const failed = results.filter(x => !x.pass);
+console.log(`logic tests: ${results.length}, failed: ${failed.length}`);
+failed.forEach(f => console.log("FAIL", f.group, f.name, f.detail));
+require("fs").writeFileSync(__dirname + "/logic_results.json", JSON.stringify(results, null, 1));

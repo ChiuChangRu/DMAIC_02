@@ -1,0 +1,200 @@
+[
+ {
+  "group": "貼上解析",
+  "name": "直式含標題（Excel Tab）",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "橫式含標題",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "直式無標題",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "橫式無標題",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "組數不同（空白格）",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "非數字標記為無效",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "千分位逗號（Tab 分隔時）",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "全形數字",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "逗號分隔 CSV",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "空白分隔",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "3×3 判定為不確定，提示人工確認",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "三組以上提示選擇",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "只有一組時回報錯誤",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "強制轉置",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "科學記號、正負號、省略整數位",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "成對資料剔除不完整配對",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "檢定選擇",
+  "name": "兩組常態、變異數相等 → Student t",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "檢定選擇",
+  "name": "Student t 與 ANOVA 一致（F = t²）",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "檢定選擇",
+  "name": "兩組常態、變異數不等 → Welch t",
+  "pass": true,
+  "detail": "Levene p=0.00024617936379312173"
+ },
+ {
+  "group": "檢定選擇",
+  "name": "任一組非常態 → Mann-Whitney",
+  "pass": true,
+  "detail": "SW p=0.00002080655625366765"
+ },
+ {
+  "group": "檢定選擇",
+  "name": "成對、差值常態 → 成對 t",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "檢定選擇",
+  "name": "成對 t 與區組 ANOVA 一致（F = t²）",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "檢定選擇",
+  "name": "成對、差值非常態 → Wilcoxon",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "輸入檢查",
+  "name": "每組少於 3 筆時拒絕",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "輸入檢查",
+  "name": "成對時數量不同拒絕",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "輸入檢查",
+  "name": "兩組皆無變異時拒絕",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "輸入檢查",
+  "name": "成對差值完全相同時拒絕",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "貼上解析",
+  "name": "單欄含標題回報錯誤",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "規格",
+  "name": "超規數量正確",
+  "pass": true,
+  "detail": "2 vs 2"
+ },
+ {
+  "group": "規格",
+  "name": "Ppk 公式正確",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "規格",
+  "name": "只有上限時用 Ppu",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "規格",
+  "name": "未提供規格時不計算",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "group": "單尾",
+  "name": "單尾 p 為雙尾的一半（t > 0 方向相反時）",
+  "pass": true,
+  "detail": ""
+ }
+]
