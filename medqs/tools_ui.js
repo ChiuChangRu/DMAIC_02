@@ -164,16 +164,18 @@
   // ---------- 共用：AI 內容與狀態 ----------
   const TQ = { spc: null, grr: null, bias: null, lin: null, stab: null, attr: null, doe: null, mix: null };
   let msaSub = "grr", doeSub = "fact";
-  const TOOL_KEYS_AI = ["spc", "msa", "doe", "taguchi", "sample"];
-  function toolHas(k) { return k === "sample" ? sampleHas() : k === "taguchi" ? !!TQ.tg : k === "spc" ? !!TQ.spc : k === "msa" ? !!TQ[msaSub] : k === "doe" ? !!TQ[doeSub] : false; }
-  function toolName(k) { return k === "sample" ? "樣本數規劃 · " + SS_NAME[sampleSub] : k === "taguchi" ? "田口方法" : k === "spc" ? "SPC 管制圖" : k === "msa" ? "MSA · " + ({ grr: "Gage R&R", bias: "偏差", lin: "線性", stab: "穩定性", attr: "屬性一致性" }[msaSub]) : "DOE · " + (doeSub === "fact" ? "因子設計" : "混合設計"); }
+  const TOOL_KEYS_AI = ["spc", "msa", "doe", "taguchi", "sample", "regression"];
+  function toolHas(k) { return k === "regression" ? !!(REG && REG.res) : k === "sample" ? sampleHas() : k === "taguchi" ? !!TQ.tg : k === "spc" ? !!TQ.spc : k === "msa" ? !!TQ[msaSub] : k === "doe" ? !!TQ[doeSub] : false; }
+  function toolName(k) { return k === "regression" ? "相關與回歸" : k === "sample" ? "樣本數規劃 · " + SS_NAME[sampleSub] : k === "taguchi" ? "田口方法" : k === "spc" ? "SPC 管制圖" : k === "msa" ? "MSA · " + ({ grr: "Gage R&R", bias: "偏差", lin: "線性", stab: "穩定性", attr: "屬性一致性" }[msaSub]) : "DOE · " + (doeSub === "fact" ? "因子設計" : "混合設計"); }
   function toolContext(k) {
     const pd = (($(k + "Problem") || {}).value || "").trim();
+    if (k === "regression") return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + "【目前頁面：相關與回歸】\n" + regContext();
     const body = k === "sample" ? sampleBody() : k === "taguchi" ? (TQ.tg && TQ.tg.ctx) : k === "spc" ? (TQ.spc && TQ.spc.ctx) : k === "msa" ? (TQ[msaSub] && TQ[msaSub].ctx) : (TQ[doeSub] && TQ[doeSub].ctx);
     const view = { spc: "viewSPC", msa: "viewMSA", doe: "viewDOE", taguchi: "viewTaguchi", sample: "viewSample" }[k];
     return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + "【目前頁面：" + toolName(k) + "】\n" + (toolHas(k) && body ? "【計算結果】\n" + body : "【尚未分析】\n【頁面目前的設定】\n" + formSnapshot($(view)));
   }
   function toolExplainQ(k) {
+    if (k === "regression") return "請說明這個相關與迴歸結果：X 和 Y 的關係有多強、斜率的實務意義、R² 代表什麼、殘差檢查與分層有沒有問題、規格反推（如果有）怎麼用，以及為什麼舊資料的相關不等於因果、下一步要怎麼用 DOE 驗證。";
     if (k === "sample") return sampleExplainQ();
     if (k === "taguchi") return "請說明這個田口實驗結果：哪些因子影響穩健性（S/N）、哪些是調整因子、建議條件與預測的改善幅度、確認實驗要注意什麼，以及這個設計的限制（例如交互作用、雜音條件是否涵蓋實際變異）。";
     if (k === "spc") return "請說明這個管制圖結果：製程是否在統計管制內、判異點可能代表什麼（只列可能性，要標 *）、製程能力是否足夠，以及下一步建議。";

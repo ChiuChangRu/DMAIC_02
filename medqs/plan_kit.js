@@ -8,7 +8,7 @@
   const pkInt = (v, lo, hi, d) => { const x = Math.round(Number(v)); return isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
   const pkClick = (sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
   const pkSet = (id, v, ev) => { const el = $(id); if (!el) return; el.value = v == null ? "" : String(v); el.dispatchEvent(new Event(ev || "input", { bubbles: true })); };
-  const PK_SRC = { ai: "AI 建議", fb: "魚骨圖", user: "手動" };
+  const PK_SRC = { ai: "AI 建議", fb: "魚骨圖", user: "手動", reg: "相關與回歸" };
   const pkCheckHtml = ck => ck.map(x => `<li class="mp-${x.lv}"><b>${x.lv === "bad" ? "✗ 不可行" : x.lv === "warn" ? "⚠ 提醒" : "✓"}</b> ${esc(x.m)}${x.go ? ` <button type="button" class="linkbtn" data-go="${x.go[0]}"${x.go[1] ? ` data-sub="${x.go[1]}"` : ""}>${esc(x.go[2])}</button>` : ""}</li>`).join("") + `<li class="hint">標 * 的是一般慣例或推論，不是法規硬性規定；以公司程序為準。</li>`;
   const PK_COMMON = "規則：1. 全程使用繁體中文。2. 不要產生、猜測或舉例任何量測數值或實驗結果；只給設計參數。3. 標準差 σ、預期平均、不良率、因子水準等「需要使用者決定或歷史資料」的數字，只在使用者有提供時才填，否則留空（\"\" 或 null），並在文字中說明要去哪裡找或怎麼決定。4. 規格、目標值只在使用者提供時填。5. 不確定的地方標 * 並說明要使用者確認什麼。6. 不要要求或重複客戶、病患、批號等可識別資訊。";
   const PK_FORMAT = "回答格式：先用最多 6 點說明為什麼這樣設計（每點一行，以「- 」開頭），口語、短句，具體到可以照做；常見做法的數量標 *。最後附一個規劃區塊（JSON），格式如下：";

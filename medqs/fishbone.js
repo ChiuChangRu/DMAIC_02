@@ -567,7 +567,7 @@
       setChatPrefix("hyp", homeTranscript(log));
       return;
     }
-    if (name === "spc" || name === "msa" || name === "doe" || name === "taguchi" || name === "sample") { carryProblem(name, q, log); return; }
+    if (name === "spc" || name === "msa" || name === "doe" || name === "taguchi" || name === "sample" || name === "regression") { carryProblem(name, q, log); return; }
     toolProblems[name] = q;
   }
   function fbCarryFromButton(sug) { homeSug = sug; carried.fishbone = -1; route("fishbone"); }

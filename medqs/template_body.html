@@ -15,6 +15,7 @@
       <button type="button" role="tab" data-route="sample" aria-selected="false">樣本數規劃</button>
       <button type="button" role="tab" data-route="msa" aria-selected="false">MSA</button>
       <button type="button" role="tab" data-route="hypothesis" aria-selected="false">假設檢定</button>
+      <button type="button" role="tab" data-route="regression" aria-selected="false">相關與回歸</button>
       <button type="button" role="tab" data-route="spc" aria-selected="false">SPC</button>
       <button type="button" role="tab" data-route="doe" aria-selected="false">DOE</button>
       <button type="button" role="tab" data-route="taguchi" aria-selected="false">田口方法</button>
@@ -548,6 +549,53 @@
     </div>
   </section>
 
+  <section id="viewReg" role="tabpanel" data-view="regression" hidden>
+    <div class="tool-head"><h2 class="tool-title">相關與回歸</h2><span class="hint">用舊資料找關聯：相關係數、散佈圖、簡單線性迴歸</span></div>
+    <div class="tool-problem"><label for="regressionProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="regressionProblem" rows="2" placeholder="例如：歷年批次紀錄中，熱封溫度和熱封強度有沒有關係"></textarea><span class="hint" id="regressionProblemSrc"></span></div>
+    <div class="grid">
+      <main class="card">
+        <div class="step">
+          <span class="qref">STEP 1</span>
+          <h2 class="q">貼上或匯入資料</h2>
+          <p class="help">每欄一個變數、每列一筆紀錄，第一列是欄名。可以從 Excel 直接複製貼上；文字欄（例如膜材批代號）可以用來分層。請用代號，不要放客戶、病患、批號等可識別資訊。</p>
+          <div class="run-row" style="margin-top:0"><button class="btn" type="button" id="regImpBtn">匯入檔案（Excel、CSV、Word、PDF、照片）</button><input type="file" id="regFile" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><button class="chip" type="button" id="regEx">範例：熱封批次紀錄</button><button class="btn ghost small" type="button" id="regClear">清除</button></div>
+          <div class="reg-imp" id="regImp" hidden></div>
+          <textarea id="regData" spellcheck="false" aria-label="相關與回歸數據" placeholder="熱封溫度 (°C)&#9;熱封時間 (s)&#9;熱封強度 (N/15mm)&#10;178.2&#9;2.5&#9;18.4&#10;…"></textarea>
+          <p class="hint" id="regDetect"></p>
+          <div id="regCols" hidden></div>
+        </div>
+        <div class="step">
+          <span class="qref copper">STEP 2</span>
+          <h2 class="q">設定</h2>
+          <div class="fields">
+            <div class="field"><label for="regY">Y（結果，例如強度）</label><select id="regY"></select></div>
+            <div class="field"><label for="regX">X（可能的影響因素）</label><select id="regX"></select></div>
+            <div class="field"><label for="regGroup">分層（選填，文字欄）</label><select id="regGroup"><option value="">不分層</option></select></div>
+            <div class="field"><label for="regConf">信賴水準</label><select id="regConf"><option value="0.95">95%</option><option value="0.99">99%</option><option value="0.9">90%</option></select></div>
+            <div class="field"><label for="regLsl">Y 規格下限 LSL</label><input id="regLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field"><label for="regUsl">Y 規格上限 USL</label><input id="regUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+          </div>
+          <div class="mp-opts"><label><input type="checkbox" id="regOrder" checked> 資料列是依時間（生產）順序排列（會檢查殘差有沒有時間趨勢）</label></div>
+          <p class="hint" id="regSrc" hidden></p>
+          <div class="run-row"><button class="btn primary" id="regRun" type="button">執行分析</button><button class="btn" type="button" id="regAi">請 AI 建議該看哪幾欄</button><span class="hint" id="regHint"></span></div>
+        </div>
+      </main>
+      <aside class="card preview" data-ask="相關與回歸結果">
+        <div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="regTitle">尚未分析</b></span><span class="ask-slot"></span></div>
+        <div class="preview-body" id="regOut"><p class="help">貼上資料、選好 X 與 Y 後，按「執行分析」。</p></div>
+      </aside>
+    </div>
+    <div class="sheets" id="regSheets" hidden>
+      <section class="card sheet" data-ask="散佈圖"><h3>散佈圖與迴歸線</h3><div id="regScatter"></div><p class="hint">實線：迴歸線；淺色帶：平均值的信賴區間；虛線：預測區間（單一個體可能落的範圍）。滑鼠停在點上可看數值。</p></section>
+      <section class="card sheet" data-ask="相關係數矩陣"><h3>相關係數矩陣</h3><div class="chips" id="regCorrKind" role="group" aria-label="相關係數"><button class="chip" type="button" data-v="pearson" aria-pressed="true">Pearson（線性）</button><button class="chip" type="button" data-v="spearman" aria-pressed="false">Spearman（等級，不受離群值影響）</button></div><div class="scroll-x"><table id="regCorr" class="mini reg-corr"></table></div><p class="hint" id="regCorrNote"></p></section>
+      <section class="card sheet" data-ask="迴歸係數"><h3>迴歸係數與變異數分析</h3><div class="scroll-x"><table id="regCoef" class="mini"></table></div><div class="scroll-x" style="margin-top:10px"><table id="regAnova" class="mini"></table></div></section>
+      <section class="card sheet" data-ask="殘差檢查"><h3>殘差檢查</h3><div id="regResid"></div><div class="scroll-x"><table id="regFlags" class="mini"></table></div></section>
+      <section class="card sheet" id="regGroupSheet" data-ask="分層結果" hidden><h3>分層結果</h3><div class="scroll-x"><table id="regGroupTbl" class="mini"></table></div><p class="hint" id="regGroupNote"></p></section>
+      <section class="card sheet" id="regSpecSheet" data-ask="規格反推" hidden><h3>規格反推</h3><div id="regSpec"></div></section>
+      <section class="card sheet" data-ask="預測"><h3>預測</h3><div class="fields"><div class="field"><label for="regPredX">X 值</label><input id="regPredX" type="number" step="any" inputmode="decimal" placeholder="輸入 X"></div></div><div id="regPredOut" class="hint"></div></section>
+    </div>
+  </section>
+
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
     <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
     <div class="tool-problem"><label for="spcProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
@@ -702,7 +750,7 @@
         </div></main>
         <aside class="card preview" data-ask="一致性結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="attrTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="attrOut"><p class="help">貼上數據並按「執行分析」。</p></div></aside>
       </div>
-      <div class="sheets" id="attrSheets" hidden><section class="card sheet" data-ask="一致性明細"><h3>一致性明細</h3><div class="scroll-x"><table id="attrTable"></table></div><p class="hint">κ（Kappa）判斷常用經驗值：≥ 0.90 良好、0.70～0.90 尚可、&lt; 0.70 不足（各公司標準可能不同）。</p></section></div>
+      <div class="sheets" id="attrSheets" hidden><section class="card sheet" data-ask="一致性明細"><h3>一致性明細</h3><div class="scroll-x"><table id="attrTable"></table></div><p class="hint">κ（Kappa）判斷常用經驗值：≥ 0.90 良好、0.70～0.90 尚可、&lt; 0.70 不足（各公司標準可能不同）。算法：自身重複一致與評估員之間用 Fleiss κ；與標準答案用 Cohen κ，把該評估員（或全體）所有次的判定和標準合併成一張交叉表計算（AIAG MSA 的交叉表做法*）。Minitab 的「與標準」κ 是每一次判定分別和標準算 Fleiss κ 再平均，數值可能略有差異。</p></section></div>
     </div>
   </section>
 
@@ -1479,9 +1527,9 @@
   let hypSub = "compare";
   let chatKey = "home";
   const chats = {};
-  function modeKey() { return currentView === "home" ? "home" : currentView === "hypothesis" ? "hyp" : currentView === "fishbone" ? "fishbone" : ["spc", "msa", "doe", "taguchi", "sample"].includes(currentView) ? currentView : "none"; }
-  const isTool = k => k === "spc" || k === "msa" || k === "doe" || k === "taguchi" || k === "sample";
-  const AI_VIEWS = ["hypothesis", "home", "fishbone", "spc", "msa", "doe", "taguchi", "sample"];
+  function modeKey() { return currentView === "home" ? "home" : currentView === "hypothesis" ? "hyp" : currentView === "fishbone" ? "fishbone" : ["spc", "msa", "doe", "taguchi", "sample", "regression"].includes(currentView) ? currentView : "none"; }
+  const isTool = k => k === "spc" || k === "msa" || k === "doe" || k === "taguchi" || k === "sample" || k === "regression";
+  const AI_VIEWS = ["hypothesis", "home", "fishbone", "spc", "msa", "doe", "taguchi", "sample", "regression"];
   // AI 在各工具分頁隨時可用：沒有結果時用於規劃與教學（看頁面目前的設定），有結果時解讀結果
   function hasData(k) {
     k = k || chatKey;
@@ -1538,7 +1586,7 @@
     "5. 區分事實與推論：推論或判斷在句尾加上 *。",
     "6. 不要做統計計算或編造數字；樣本數等計算請引導使用者到對應工具。",
     "7. 回答精簡，使用短段落或條列。使用者質疑時依邏輯重新檢查，不要只是附和。",
-    "9. 只要給了工具建議，回答的最後一行固定寫「建議工具：工具名稱 → 工具名稱」（依使用順序，只寫網站工具名稱：魚骨圖、樣本數規劃、MSA、假設檢定、SPC、DOE、田口方法）。還在向使用者確認問題、尚未建議工具時不要寫這一行。",
+    "9. 只要給了工具建議，回答的最後一行固定寫「建議工具：工具名稱 → 工具名稱」（依使用順序，只寫網站工具名稱：魚骨圖、樣本數規劃、MSA、假設檢定、相關與回歸、SPC、DOE、田口方法）。還在向使用者確認問題、尚未建議工具時不要寫這一行。",
     "10. 輸出格式依【回答樣板】：小標題名稱與順序完全照樣板，不改名、不調換、不另加小標題。"
   ].join("\n");
   function guideContext() {
@@ -1606,14 +1654,15 @@
   }
   function aiBody(text, final, key) {
     key = key || chatKey;
-    const mpj = key === "msa" ? mpParsePlan(text) : null, spj = key === "spc" ? spParsePlan(text) : null;
+    const mpj = key === "msa" ? mpParsePlan(text) : null, spj = key === "spc" ? spParsePlan(text) : null, rgj = key === "regression" && final ? rgParsePlan(text) : null;
     const pkk = key === "home" ? "doe" : key, pkp = typeof PLANS !== "undefined" && PLANS && PLANS[pkk] ? PLANS[pkk] : null, pkj = pkp && final ? pkp.parse(text) : null;
     if (pkp) text = String(text).replace(pkp.stripRe, "").trim();
     if (key === "msa") text = String(text).replace(/```msaplan[\s\S]*?(```|$)/g, "").trim();
     if (key === "spc") text = String(text).replace(/```spcplan[\s\S]*?(```|$)/g, "").trim();
+    if (key === "regression") text = String(text).replace(/```regplan[\s\S]*?(```|$)/g, "").trim();
     const sp = fbSplit(text, final);
     if (key === "carried") return mdLite(sp.clean) + (final && sp.sug && sp.sug.factors.length ? `<p class="hint">（這則回答建議的 ${sp.sug.factors.length} 個原因，已在帶入時加進魚骨圖，請到 STEP 2「待決定」逐一採用或排除。）</p>` : "");
-    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (pkj ? pkp.html(pkj) : "") : "");
+    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (rgj ? rgChatHtml(rgj) : "") + (pkj ? pkp.html(pkj) : "") : "");
   }
   function homeGotoHtml(text, sug) {
     const m = String(text).match(/建議工具[:：]\s*([^\n]+)/);
@@ -1789,6 +1838,7 @@
       : chatKey === "fishbone" ? FB_RULES + "\n\n" + fbToolsText()
       : chatKey === "msa" ? RULES + "\n\n" + MP_CHAT_RULE
       : chatKey === "spc" ? RULES + "\n\n" + SP_CHAT_RULE
+      : chatKey === "regression" ? RULES + "\n\n" + RG_CHAT_RULE
       : PLANS && PLANS[chatKey] ? RULES + "\n\n" + PLANS[chatKey].chatRule
       : RULES);
     const prevPrefix = chatPrefix, prevCtx = chatLastCtx, prevStyle = styleSent[chatKey];
@@ -2309,7 +2359,7 @@
     $("valHint").textContent = "計算中…";
     setTimeout(() => {
       const t0 = performance.now();
-      const r = runValidation(HT, loadRef(), window.QT, window.TG, window.SS);
+      const r = runValidation(HT, loadRef(), window.QT, window.TG, window.SS, window.RG);
       const ms = performance.now() - t0;
       const ok = arr => arr.filter(x => x.pass).length;
       const tile = (lab, a, n) => `<div class="tile"><span>${lab}</span><b>${a} / ${n}</b> <span class="badge ${a === n ? "ok" : "ng"}">${a === n ? "全部通過" : `${n - a} 項未通過`}</span></div>`;
@@ -2396,6 +2446,10 @@
       { q: "EO 殘留量能不能宣稱低於允許限值？", tool: "假設檢定", mode: "統計允差區間（單邊上限）", data: "一欄殘留量 + 允許限值", refs: ["iso10993_7", "iso16269_6"], go: { ...H, sub: "tol", side: "upper" } },
       { q: "通過／不通過的試驗結果（例如 59 個 0 失效），可以宣稱多少可靠度？", tool: "樣本數規劃", mode: "通過／不通過 · 評估試驗結果", data: "樣本數與失效數", refs: ["iso13485_736", "fdaBench"], go: { route: "sample", sub: "attr", at: "eval" } }
     ]},
+    { cat: "舊資料初步分析", items: [
+      { q: "歷年批次紀錄裡，哪些製程參數和品質特性有關？", tool: "相關與回歸", mode: "相關係數矩陣 + 散佈圖", data: "每列一批、每欄一個參數或特性（Excel 可直接貼上或匯入）", refs: ["iso13485_84", "qms74"], go: { route: "regression" } },
+      { q: "參數要設在什麼範圍，品質特性才會符合規格？", tool: "相關與回歸", mode: "簡單線性迴歸 + 規格反推（初步，需 DOE 驗證）", data: "參數與品質特性的成對資料 + 規格", refs: ["iso13485_84"], go: { route: "regression" } }
+    ]},
     { cat: "製程穩不穩定", items: [
       { q: "製程穩不穩定？有沒有異常點？", tool: "SPC 管制圖", mode: "計量值管制圖（I-MR、X̄-R）", data: "依時間順序的量測值", refs: ["iso7870", "iso13485_84", "qms74"], go: { route: "spc" } },
       { q: "不良率、破裂率有沒有異常升高？", tool: "SPC 管制圖", mode: "計數值管制圖（p、np）", data: "每批抽樣數與不良數", refs: ["iso7870", "iso13485_84"], go: { route: "spc" } },
@@ -2412,6 +2466,7 @@
     { id: "sample", name: "樣本數規劃", status: "ready", modes: ["計量型（t 檢定）：樣本數、檢定力、可偵測差值", "通過／不通過：信心度／可靠度樣本數、抽樣方案（AQL）評估", "不良率比較：單組（精確二項）、兩組", "允差區間樣本數（常態、無母數）", "DOE 重複次數", "MSA、SPC 等工具的建議數量"], desc: "試驗前決定要測多少個：依要偵測的差異、信心水準、可靠度或檢定力，估算所需樣本數，供計畫書的樣本數理由使用。" },
     { id: "msa", name: "MSA 量測系統分析", status: "ready", modes: ["Gage R&R（ANOVA 法、平均全距法）", "偏差（Bias）", "線性（Linearity）", "穩定性（Stability）", "屬性一致性（Kappa）"], desc: "評估量測系統的變異是否可接受：重複性與再現性、偏差、線性、穩定性，以及目視判定的一致性。" },
     { id: "hypothesis", name: "假設檢定", status: "ready", modes: ["單組對目標值", "兩組獨立", "兩組成對", "多組獨立（含指定比較）", "多組重複量測", "統計允差區間（用數據計算）"], desc: "拿到數據後做判定：單組對目標值、兩組比較、3 組以上（含重複量測），自動判斷常態性與變異數並選擇檢定；統計允差區間。試驗前的樣本數請用「樣本數規劃」。" },
+    { id: "regression", name: "相關與回歸", status: "ready", modes: ["貼上或匯入舊資料（Excel、CSV 由程式讀取；PDF、照片可請 AI 轉錄，須人工核對）", "相關係數矩陣（Pearson、Spearman）", "散佈圖（可分層）", "簡單線性迴歸（信賴區間、預測區間、殘差檢查）", "規格反推：X 在什麼範圍內 Y 仍符合規格"], desc: "用舊資料做初步分析：哪些參數和品質特性有關、關係有多強；找到的關聯要再用 DOE 驗證因果。" },
     { id: "spc", name: "SPC 管制圖", status: "ready", modes: ["自動選擇管制圖（X̄-R、X̄-S、I-MR、p、np、c、u）", "Nelson 8 條判異規則", "製程能力（Cp、Cpk、Pp、Ppk、Cpm、ppm）"], desc: "統計製程管制：依資料型態自動選管制圖、標出判異點，並計算製程能力。" },
     { id: "doe", name: "DOE 實驗設計", status: "ready", modes: ["全因子 2^k（2～5 因子）", "部分因子 2^(k−p)（4～7 因子，含別名）", "Plackett-Burman 篩選（5～11 因子）", "混合設計（3～4 成分配方，單形格子／質心）"], desc: "規劃實驗並分析因子效應：實驗矩陣、效應柏拉圖、半常態圖、主效應與交互作用圖、ANOVA、建議設定；配方比例用混合設計。" },
     { id: "taguchi", name: "田口方法", status: "ready", modes: ["直交表 L4、L8、L9、L12、L16、L18（自動建議，L4/L8/L16 可配置交互作用）", "望大、望小、望目、動態特性 S/N 比", "簡易雜音條件（N1、N2 複合雜音）", "回應表、主效應圖、S/N 與平均的 ANOVA（併入與貢獻率）", "兩步驟最佳化（穩健因子、調整因子）、預測與確認實驗信賴區間"], desc: "穩健設計：用直交表與 S/N 比，找出讓產品對原料、環境、操作等雜音不敏感的設定，再用調整因子把平均拉到目標。" }
@@ -2421,7 +2476,7 @@
       <span class="tile-img"><img src="${TILE_IMG[t.id]}" alt="" decoding="async"></span>
       <span class="pill tile-pill ${t.status === "ready" ? "ready" : "soon"}">${t.status === "ready" ? "可使用" : "建置中"}</span></button>`).join("");
   $("toolCards").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) route(b.dataset.go); });
-  const TOOL_KEYS = [["fishbone", /魚骨|特性要因/], ["msa", /MSA|量測系統|Gage|屬性一致/i], ["sample", /樣本數規劃|樣本數|檢定力|計數型抽樣|可靠度|要測幾/], ["hypothesis", /假設檢定|允差區間|t 檢定|ANOVA/], ["spc", /SPC|管制圖|製程能力/], ["doe", /DOE|實驗設計|混合設計/], ["taguchi", /田口|S\/N|直交表/]];
+  const TOOL_KEYS = [["fishbone", /魚骨|特性要因/], ["msa", /MSA|量測系統|Gage|屬性一致/i], ["sample", /樣本數規劃|樣本數|檢定力|計數型抽樣|可靠度|要測幾/], ["hypothesis", /假設檢定|允差區間|t 檢定|ANOVA/], ["regression", /相關與回歸|相關係數|回歸|迴歸|散佈圖/], ["spc", /SPC|管制圖|製程能力/], ["doe", /DOE|實驗設計|混合設計/], ["taguchi", /田口|S\/N|直交表/]];
   function toolsFromText(t) {
     const out = [];
     String(t).split(/→|->|、|，|,|;|；|\/|／|\n/).forEach(seg => { for (const [id, re] of TOOL_KEYS) if (re.test(seg) && !out.includes(id)) out.push(id); });
@@ -2443,7 +2498,7 @@
   let valRan = false, currentView = "home";
   function route(name) {
     const tool = TOOLS.find(t => t.id === name);
-    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample"].includes(name) ? name : (tool ? "placeholder" : "home");
+    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression"].includes(name) ? name : (tool ? "placeholder" : "home");
     if (view === "home" && name !== "home") name = "home";
     document.querySelectorAll(".toolnav [data-route]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.route === name)));
     document.querySelectorAll("[data-view]").forEach(sec => { sec.hidden = sec.dataset.view !== view; });
@@ -2502,6 +2557,6 @@
   renderGuide();
   loadExample(2);
   const start = (location.hash || "").replace("#", "");
-  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings"].includes(start) ? start : "home");
+  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression"].includes(start) ? start : "home");
 })();
 </script>

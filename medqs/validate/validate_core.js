@@ -1,7 +1,7 @@
 /* Shared validation suite: runs identically in Node (offline) and in the page (確效頁). */
 (function (root) {
 "use strict";
-function runValidation(HT, ref, QT, TG, SS) {
+function runValidation(HT, ref, QT, TG, SS, RG) {
 const rows = [];
 
 function relErr(a, b) {
@@ -442,6 +442,59 @@ if (SS) {
   t("樣本數規劃", "單一比例：雙尾判定規則中無法拒絕的一側不列出（下側臨界值為 −1）", SS.prop1Power(0.01, 0.05, 50, 0.05, "two-sided").lo === -1);
   t("樣本數規劃", "允差區間：需要的樣本數超過上限時回報 overMax，而非「無法達成」", (() => { const r = SS.tolN(0.99, 0.95, "one", 2.3264 + 0.01, 3000); return isNaN(r.n) && r.overMax === 3000; })());
   t("樣本數規劃", "無母數允差區間：經典值 95%/95% 雙邊 93 個、99%/95% 單邊 299 個", SS.npTolN(0.95, 0.95, "two") === 93 && SS.npTolN(0.99, 0.95, "lower") === 299);
+}
+
+// ---------- 相關與迴歸 ----------
+if (RG && ref.reg) {
+  ref.reg.cases.forEach(c => {
+    const G = "相關與迴歸", lab = c.label, pe = RG.pearson(c.x, c.y), sp = RG.spearman(c.x, c.y), L = RG.linreg(c.x, c.y), R = c.lin;
+    check(G, lab, "Pearson r", pe.r, c.pearson.r, 1e-10); check(G, lab, "Pearson p", pe.p, c.pearson.p, 1e-8);
+    check(G, lab, "Pearson r 95% CI 下限", pe.ci[0], c.pearson.ci[0], 1e-9); check(G, lab, "Pearson r 95% CI 上限", pe.ci[1], c.pearson.ci[1], 1e-9);
+    check(G, lab, "Spearman ρ", sp.rho, c.spearman.rho, 1e-10); check(G, lab, "Spearman p", sp.p, c.spearman.p, 1e-8);
+    check(G, lab, "截距 b0", L.b0, R.b0, 1e-9); check(G, lab, "斜率 b1", L.b1, R.b1, 1e-10);
+    check(G, lab, "截距標準誤", L.seB0, R.seB0, 1e-9); check(G, lab, "斜率標準誤", L.seB1, R.seB1, 1e-9);
+    check(G, lab, "斜率 p", L.pB1, R.p, 1e-8); check(G, lab, "截距 p", L.pB0, R.pB0, 1e-8);
+    check(G, lab, "斜率 95% CI 下限", L.ciB1[0], R.ciB1[0], 1e-9); check(G, lab, "斜率 95% CI 上限", L.ciB1[1], R.ciB1[1], 1e-9);
+    check(G, lab, "截距 95% CI 下限", L.ciB0[0], R.ciB0[0], 1e-9); check(G, lab, "截距 95% CI 上限", L.ciB0[1], R.ciB0[1], 1e-9);
+    check(G, lab, "R²", L.r2, R.r2, 1e-10); check(G, lab, "調整 R²", L.r2adj, R.r2adj, 1e-9);
+    check(G, lab, "F", L.F, R.F, 1e-9); check(G, lab, "F 的 p", L.pF, R.pF, 1e-8); check(G, lab, "殘差標準差 s", L.s, R.s, 1e-10);
+    check(G, lab, "Durbin-Watson", L.dw, R.dw, 1e-10);
+    const tolR = /大數值/.test(lab) ? 1e-8 : 1e-9; // 病態資料：與 NIST 判定同樣用 1e-8
+    [0, Math.floor(c.x.length / 2), c.x.length - 1].forEach(i => {
+      check(G, lab, `槓桿值 h（第 ${i + 1} 筆）`, L.lev[i], R.lev[i], 1e-10);
+      check(G, lab, `標準化殘差（第 ${i + 1} 筆）`, L.sres[i], R.sres[i], tolR);
+      check(G, lab, `學生化刪除殘差（第 ${i + 1} 筆）`, L.tres[i], R.tres[i], tolR);
+    });
+    c.pred.forEach(q => { const P = L.predict(q.x);
+      check(G, lab, `x=${q.x} 預測值`, P.fit, q.fit, 1e-10);
+      check(G, lab, `x=${q.x} 平均值 95% CI 下限`, P.ci[0], q.ci[0], 1e-9); check(G, lab, `x=${q.x} 平均值 95% CI 上限`, P.ci[1], q.ci[1], 1e-9);
+      check(G, lab, `x=${q.x} 95% 預測區間下限`, P.pi[0], q.pi[0], 1e-9); check(G, lab, `x=${q.x} 95% 預測區間上限`, P.pi[1], q.pi[1], 1e-9); });
+    if (c.quad) { const Q = RG.quadCheck(c.x, c.y); check(G, lab, "二次項 t", Q.t, c.quad.t, 1e-7); check(G, lab, "二次項 p", Q.p, c.quad.p, 1e-7); }
+  });
+  ref.reg.nist.forEach(c => {
+    const L = RG.linreg(c.x.map(Number), c.y.map(Number)), lreOf = (a, b) => { const re = relErr(a, b); return re === 0 ? 15 : Math.min(15, -Math.log10(re)); };
+    const vals = { "截距 B0": [L.b0, "b0"], "斜率 B1": [L.b1, "b1"], "B0 標準誤": [L.seB0, "seB0"], "B1 標準誤": [L.seB1, "seB1"], "殘差標準差": [L.s, "s"], "R²": [L.r2, "r2"], "迴歸 SS": [L.ssr, "ssr"], "殘差 SS": [L.sse, "sse"], "殘差 MS": [L.mse, "mse"], "F": [L.F, "F"] };
+    for (const [k, [js, key]] of Object.entries(vals)) {
+      const cert = c.cert[key], best = c.best[key];
+      nistRows.push({ dataset: c.name + "（線性迴歸）", qty: k, js, cert, best, lre: lreOf(js, cert), lreLimit: lreOf(best, cert), vsBest: relErr(js, best), pass: relErr(js, best) <= 1e-8 });
+    }
+  });
+}
+if (RG) {
+  const G = "相關與迴歸";
+  t(G, "完全線性 y = 2x + 1：r = 1、斜率 2、截距 1、殘差 0", (() => { const x = [1, 2, 3, 4, 5], L = RG.linreg(x, x.map(v => 2 * v + 1)), P = RG.pearson(x, x.map(v => 2 * v + 1)); return Math.abs(L.b1 - 2) < 1e-12 && Math.abs(L.b0 - 1) < 1e-12 && P.r === 1 && P.p === 0 && L.sse < 1e-20; })());
+  t(G, "X 全部相同時回報錯誤，不給數字", !!RG.linreg([3, 3, 3, 3], [1, 2, 3, 4]).error && !!RG.pearson([3, 3, 3, 3], [1, 2, 3, 4]).error);
+  t(G, "成對資料少於 3 組時回報錯誤", !!RG.linreg([1, 2], [3, 4]).error && !!RG.spearman([1, 2], [3, 4]).error);
+  t(G, "缺值成對刪除：只用兩欄都有值的列", (() => { const p = RG.pairs([1, 2, NaN, 4, 5], [2, NaN, 6, 8, 10]); return p.x.join() === "1,4,5" && p.y.join() === "2,8,10" && p.idx.join() === "0,3,4"; })());
+  t(G, "單調但非線性（y = x³）：Spearman ρ = 1、Pearson r < 1", (() => { const x = [1, 2, 3, 4, 5, 6], y = x.map(v => v ** 3); return RG.spearman(x, y).rho === 1 && RG.pearson(x, y).r < 1; })());
+  t(G, "相關矩陣對稱、對角為自身", (() => { const M = RG.corrMatrix([{ name: "a", v: [1, 2, 3, 4, 6] }, { name: "b", v: [2, 1, 4, 3, 5] }, { name: "c", v: [5, 3, 4, 1, 2] }]); return M[0][0].self && M[0][1] === M[1][0] && Math.abs(M[1][2].pearson.r - M[2][1].pearson.r) === 0; })());
+  t(G, "規格反推：邊界上的單邊 95% 預測下限等於規格下限，且不超出資料範圍", (() => {
+    const x = [], y = []; for (let i = 0; i < 30; i++) { const v = 170 + i * 0.7; x.push(v); y.push(0.3 * v - 38 + 0.6 * Math.sin(i * 1.7)); }
+    const L = RG.linreg(x, y), w = RG.specWindow(L, 15.5, null, 0.95); if (!w || w.none) return false;
+    const t1 = HT.tInv(0.95, L.df), lowAt = x0 => L.b0 + L.b1 * x0 - t1 * L.s * Math.sqrt(1 + 1 / L.n + (x0 - L.xb) ** 2 / L.sxx);
+    return w.lo >= L.xmin && w.hi <= L.xmax && Math.abs(lowAt(w.lo) - 15.5) < 1e-6 && w.edgeHi; })());
+  t(G, "規格反推：整個資料範圍都達不到規格時回報「無可行範圍」", (() => { const x = [1, 2, 3, 4, 5, 6], L = RG.linreg(x, [1, 2.1, 2.9, 4.2, 5, 6.1]); const w = RG.specWindow(L, 100, null, 0.95); return w && w.none; })());
+  t(G, "二次項檢查：明顯曲線時 p < 0.05，直線時 p 不顯著", (() => { const x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], nz = [0.1, -0.2, 0.15, -0.1, 0.05, 0.2, -0.15, 0.1, -0.05, 0]; const qc = RG.quadCheck(x, x.map((v, i) => 10 - (v - 4.5) ** 2 + nz[i])), ql = RG.quadCheck(x, x.map((v, i) => 2 * v + nz[i])); return qc.p < 0.05 && ql.p > 0.05; })());
 }
 
 return { rows, nistRows, logic: results };

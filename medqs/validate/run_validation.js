@@ -3,7 +3,7 @@ const { runValidation } = require("./validate_core.js");
 const raw = require("fs").readFileSync(__dirname + "/ref.json", "utf8").replace(/-?Infinity/g, m => `"${m}"`);
 const ref = JSON.parse(raw, (k, v) => (v === "Infinity" ? Infinity : v === "-Infinity" ? -Infinity : v));
 const t0 = Date.now();
-const r = runValidation(HT, ref, require("../quality.js"), require("../taguchi.js"), require("../sample.js"));
+const r = runValidation(HT, ref, require("../quality.js"), require("../taguchi.js"), require("../sample.js"), require("../regress.js"));
 const f1 = r.rows.filter(x => !x.pass), f2 = r.nistRows.filter(x => !x.pass), f3 = r.logic.filter(x => !x.pass);
 console.log(`SciPy ${r.rows.length} (fail ${f1.length}) | NIST ${r.nistRows.length} (fail ${f2.length}) | logic ${r.logic.length} (fail ${f3.length}) | ${Date.now() - t0} ms`);
 [...f1, ...f2, ...f3].forEach(x => console.log("FAIL", JSON.stringify(x)));

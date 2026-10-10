@@ -5,8 +5,8 @@
   // 載入、開新案件時重新整理頁面，從乾淨的狀態還原，避免上一個案件的結果殘留。
   // =====================================================================
   const CASE_LIST = "mdqs.cases.v1", CASE_PENDING = "mdqs.case.pending", CASE_CUR = "mdqs.case.current", CASE_FMT = "mdqs-case", CASE_VER = 1;
-  const CASE_VIEWS = ["viewHome", "viewAnalyze", "viewSample", "viewSPC", "viewMSA", "viewDOE", "viewTaguchi"];
-  const caseSkip = el => !el.id || /^km/.test(el.id) || el.type === "file" || el.type === "button" || el.type === "password" || el.closest("#aiPanel") || (el.closest(".mp-card") && !/Desc$/.test(el.id));
+  const CASE_VIEWS = ["viewHome", "viewAnalyze", "viewSample", "viewSPC", "viewMSA", "viewDOE", "viewTaguchi", "viewReg"];
+  const caseSkip = el => !el.id || /^(km|regImp)/.test(el.id) || el.closest("#regCols") || el.type === "file" || el.type === "button" || el.type === "password" || el.closest("#aiPanel") || (el.closest(".mp-card") && !/Desc$/.test(el.id));
   const caseLoadList = () => { try { const a = JSON.parse(localStorage.getItem(CASE_LIST) || "[]"); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
   const caseSaveList = a => { localStorage.setItem(CASE_LIST, JSON.stringify(a)); };
   const caseNow = () => new Date().toLocaleString("zh-TW", { hour12: false });
@@ -27,7 +27,7 @@
       v.querySelectorAll(".chips[id]").forEach(g => { if (g.closest(".mp-card") || g.closest("#aiPanel")) return; const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt"].find(x => b.dataset[x] != null); if (a) chips[g.id] = [a, b.dataset[a]]; });
       v.querySelectorAll(".subtabs").forEach((s, i) => { const b = s.querySelector('[aria-selected="true"]'); if (!b) return; const key = s.id || vid + ":" + i; subs[key] = b.dataset.tsub || b.dataset.sub || ""; });
     });
-    const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer };
+    const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer, reg: !!REG.res };
     const data = {
       fields, chips, subs, ran, sampleSub,
       fb: JSON.parse(JSON.stringify(fb)),
@@ -36,6 +36,7 @@
       tgF: JSON.parse(JSON.stringify(tgF)), tgNoise: tgNoise.slice(), tgY: tg ? JSON.parse(JSON.stringify(tg.y)) : null,
       msa: { type: MP.type, p: JSON.parse(JSON.stringify(MP.p)), m: Object.assign({}, MP.m), sheet: MP.sheet ? JSON.parse(JSON.stringify(MP.sheet)) : null, desc: $("mpDesc").value },
       spc: { m: Object.assign({}, SP.m), sheet: SP.sheet ? JSON.parse(JSON.stringify(SP.sheet)) : null, desc: $("spDesc").value },
+      reg: { src: REG.src, excl: [...REG.excl] },
       plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()]))
     };
     if (withChat) {
@@ -78,6 +79,7 @@
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
     step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
     step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
     step("msaRun", () => { [["grr", grrRun], ["bias", biasRun], ["lin", linRun], ["stab", stabRun], ["attr", attrRun]].forEach(([k, f]) => { if (R[k]) f(); }); });
     step("sample", () => { if (R.pw) $("pwRun").click(); if (R.at) $("atRun").click(); if (R.prop) $("prRun").click(); if (R.tolp) $("tpRun").click(); if (R.doer) $("drRun").click(); if (d.sampleSub) { const b = $("ssTabs").querySelector(`[data-tsub="${d.sampleSub}"]`); if (b) b.click(); } });
