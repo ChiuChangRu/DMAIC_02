@@ -1402,9 +1402,11 @@ g.fb-hit:hover rect { stroke-width: 3; }
           </div>
           <p class="hint" id="byokKeyState" style="margin:6px 0 0"></p>
           <div class="fields" style="margin-top:10px;align-items:start">
-            <div class="field"><label for="byokModel">模型名稱</label><input type="text" id="byokModel" name="byok-model" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
+            <div class="field"><label for="byokModelSel">模型名稱</label><select id="byokModelSel" name="byok-model-sel"></select></div>
             <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" name="byok-endpoint" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
           </div>
+          <div class="field" id="byokModelCustomWrap" hidden style="margin-top:10px"><label for="byokModel">自訂模型名稱</label><input type="text" id="byokModel" name="byok-model" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="例如 gpt-4.1，或公司提供的模型名稱"></div>
+          <p class="hint" id="byokModelNote" style="margin:8px 0 0"></p>
           <div class="byok-opts">
             <label><input type="checkbox" id="byokKeep"> 把 key 記在這個瀏覽器（共用電腦請不要勾；不勾則關閉網頁就清除）</label>
             <label><input type="checkbox" id="byokImgs"> 送出附件圖片（模型需支援多模態）</label>
@@ -6434,6 +6436,27 @@ else root.runValidation = runValidation;
     anthropic: { name: "Claude API（Anthropic）", base: "https://api.anthropic.com", model: "claude-sonnet-5-5", needKey: true },
     openai: { name: "OpenAI 相容格式（GPT、Kimi、Azure OpenAI、公司私有雲等）", base: "https://api.openai.com/v1", model: "", needKey: false }
   };
+
+  // 模型清單：特性說明。價格來自第三方整理頁（2026-10 查到，未逐一對官方核實*），實際以各服務官網為準。
+  const BYOK_MODELS = {
+    anthropic: [
+      { model: "claude-sonnet-5-5", label: "Claude Sonnet 5.5（建議預設）", note: "速度與品質平衡，支援圖片。輸入約 $2、輸出約 $10／百萬 token。適合日常魚骨圖、問題改善、統計說明。" },
+      { model: "claude-haiku-5-5", label: "Claude Haiku 5.5（最省*）", note: "最快、最便宜*（價格未核實），支援圖片*。適合快速測試、簡單詢問；複雜的根因推論與長篇樣板可能較淺*。" },
+      { model: "claude-opus-5-5", label: "Claude Opus 5.5（複雜問題）", note: "針對複雜問題的較強模型，費用高於 Sonnet*（價格未核實）。適合查廠答辯、多證據交叉比對等重要案件。" },
+      { model: "claude-fable-5-1", label: "Claude Fable 5.1（最強、最貴*）", note: "Anthropic 最高階層級，價格未核實*。一般統計輔助說明通常用不到；先用 Sonnet，不夠再升級。" }
+    ],
+    openai: [
+      { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", base: "https://api.moonshot.ai/v1", note: "約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
+      { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", base: "https://api.moonshot.ai/v1", note: "上下文 1M，支援圖片；輸出約 $13–15／百萬 token*，比 K2.6 貴很多。需要長文件或較強推論時才選。網址規則同 K2.6。" },
+      { model: "gpt-6.1-sol", label: "GPT-6.1 Sol（OpenAI，通用）", base: "https://api.openai.com/v1", note: "約 $2／$10（百萬 token）*，與 Sonnet 同級。是否支援圖片未確認*，請先「測試連線」並附一張圖試試。公司以 GPT 為主時，這項最容易導入。瀏覽器直連是否可行未驗證*。" },
+      { model: "gpt-6-luna", label: "GPT-6 Luna（OpenAI，最省*）", base: "https://api.openai.com/v1", note: "約 $0.10／$0.50（百萬 token）*，最便宜。適合簡單詢問；複雜根因推論可能較淺*。圖片支援未確認*。" },
+      { model: "gpt-5.6-terra", label: "GPT-5.6 Terra（OpenAI，中階）", base: "https://api.openai.com/v1", note: "約 $2／$12（百萬 token）*，中階。圖片支援未確認*。" }
+    ]
+  };
+  let byokCustomMode = false;
+  const BYOK_CUSTOM = "__custom__";
+  const CUSTOM_NOTE = "自訂模型（公司私有雲、Azure 等）：請同時填 API 網址，並確認該模型支援圖片輸入（需要上傳照片時）。費用依該服務計價。";
+  const byokPreset = () => (BYOK_MODELS[byokCfg.provider] || []).find(m => m.model === byokModel());
   const OPENCC_URL = "https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js";
   let byokCfg = { provider: "anthropic", base: "", model: "", imgs: true, s2t: false, keep: false };
   try { Object.assign(byokCfg, JSON.parse(localStorage.getItem(BYOK_CFG) || "{}")); } catch (_) {}
@@ -6557,7 +6580,15 @@ else root.runValidation = runValidation;
     $("byokProv").value = byokCfg.provider;
     const P = BYOK_PROV[byokCfg.provider];
     $("byokBase").placeholder = P.base; if (document.activeElement !== $("byokBase")) $("byokBase").value = byokCfg.base;
-    $("byokModel").placeholder = P.model || "例如 gpt-4.1、kimi-k2.6，或公司提供的模型名稱"; if (document.activeElement !== $("byokModel")) $("byokModel").value = byokCfg.model;
+    const ms = BYOK_MODELS[byokCfg.provider] || [], pr = byokPreset(), cur = byokModel();
+    const sel = $("byokModelSel");
+    sel.innerHTML = (cur || byokCustomMode ? "" : '<option value="">請選擇模型…</option>') +
+      ms.map(m => `<option value="${esc(m.model)}">${esc(m.label)}</option>`).join("") + `<option value="${BYOK_CUSTOM}">自訂（手動輸入）</option>`;
+    const custom = byokCustomMode || (!pr && !!cur);
+    sel.value = custom ? BYOK_CUSTOM : pr ? pr.model : "";
+    $("byokModelCustomWrap").hidden = !custom;
+    if (document.activeElement !== $("byokModel")) $("byokModel").value = custom ? byokCfg.model : "";
+    $("byokModelNote").textContent = custom ? CUSTOM_NOTE : pr ? pr.note : "請先選擇模型。標 * 的是第三方資料或推論，未逐一核實；費用與功能以各服務官網為準。";
     $("byokKeyLab").textContent = P.needKey ? "API key" : "API key（公司私有雲不需要時可留空）";
     $("byokKeep").checked = !!byokCfg.keep; $("byokImgs").checked = !!byokCfg.imgs; $("byokS2t").checked = !!byokCfg.s2t;
     const kf = $("byokKey");
@@ -6569,9 +6600,17 @@ else root.runValidation = runValidation;
   }
   function byokSaveCfg() { try { localStorage.setItem(BYOK_CFG, JSON.stringify(byokCfg)); if (byokCfg.keep && byokKeyMem) localStorage.setItem(BYOK_KEY, byokKeyMem); else localStorage.removeItem(BYOK_KEY); } catch (_) {} }
   $("byokProv").innerHTML = Object.entries(BYOK_PROV).map(([k, v]) => `<option value="${k}">${esc(v.name)}</option>`).join("");
-  $("byokProv").addEventListener("change", e => { byokCfg.provider = e.target.value; byokCfg.base = ""; byokCfg.model = ""; byokRender(); });
+  $("byokProv").addEventListener("change", e => { byokCfg.provider = e.target.value; byokCfg.base = ""; byokCfg.model = ""; byokCustomMode = false; byokRender(); });
+  $("byokModelSel").addEventListener("change", e => {
+    const v = e.target.value;
+    if (v === BYOK_CUSTOM) { byokCustomMode = true; byokCfg.model = ""; byokRender(); $("byokModel").focus(); return; }
+    byokCustomMode = false; byokCfg.model = v;
+    const m = (BYOK_MODELS[byokCfg.provider] || []).find(x => x.model === v);
+    if (m) { byokCfg.base = m.base || ""; $("byokBase").value = byokCfg.base; }
+    byokRender();
+  });
   $("byokSave").addEventListener("click", async () => {
-    byokCfg.base = $("byokBase").value.trim(); byokCfg.model = $("byokModel").value.trim();
+    byokCfg.base = $("byokBase").value.trim(); byokCfg.model = ($("byokModelSel").value === BYOK_CUSTOM ? $("byokModel").value : $("byokModelSel").value).trim();
     byokCfg.keep = $("byokKeep").checked; byokCfg.imgs = $("byokImgs").checked; byokCfg.s2t = $("byokS2t").checked;
     const k = $("byokKey").value.trim(); if (k) byokKeyMem = k; $("byokKey").value = "";
     byokSaveCfg();
