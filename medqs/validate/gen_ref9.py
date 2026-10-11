@@ -62,3 +62,39 @@ for design, n, d, sd, D in [("two", 9, 0.02, 0.012, 0.0), ("two", 6, 0.02, 0.012
 ref["eq"] = dict(tp=tp, tn=tn, nip=nip, nin=nin, sim=sim)
 json.dump(ref, open(os.path.join(here, "ref.json"), "w"), ensure_ascii=False)
 print(len(tp), len(tn), len(nip), len(nin), [c["n"] for c in tn], [c["n"] for c in nin])
+
+# ---- 判定：statsmodels ttost_ind／ttost_paired 與單邊 t 檢定 ----
+from statsmodels.stats.weightstats import ttost_ind, ttost_paired, ttest_ind
+rng2 = np.random.default_rng(20261012); tt = []
+for k, (n1, n2, mu, sd, d, a, paired) in enumerate([(30, 30, 0.007, 0.012, 0.02, 0.05, False), (5, 5, 0.007, 0.012, 0.02, 0.05, False), (12, 15, -0.3, 1.0, 1.0, 0.05, False), (10, 10, 0.2, 0.5, 0.5, 0.025, True), (25, 25, 1.2, 1.0, 1.0, 0.05, True), (8, 11, 0.0, 2.0, 1.5, 0.05, False)]):
+    x = np.round(rng2.normal(5.0, sd, n1), 4); y = np.round(rng2.normal(5.0 + mu, sd, n2 if not paired else n1), 4)
+    if paired:
+        p, r1, r2 = ttost_paired(y, x, -d, d)
+        dd = y - x; se = dd.std(ddof=1) / np.sqrt(len(dd)); dfv = len(dd) - 1; dm = dd.mean()
+    else:
+        p, r1, r2 = ttost_ind(y, x, -d, d, usevar="pooled")
+        dfv = n1 + n2 - 2; sp = np.sqrt(((n1 - 1) * x.var(ddof=1) + (n2 - 1) * y.var(ddof=1)) / dfv); se = sp * np.sqrt(1 / n1 + 1 / n2); dm = y.mean() - x.mean()
+    tc = stats.t.ppf(1 - a, dfv)
+    ni_hi = float(stats.t.sf((dm + d) / se, dfv)); ni_lo = float(stats.t.cdf((dm - d) / se, dfv))
+    tt.append(dict(x=x.tolist(), y=y.tolist(), paired=paired, delta=d, alpha=a, pLow=float(r1[1]), pUp=float(r2[1]), p=float(p), d=float(dm), se=float(se), df=int(dfv), lo=float(dm - tc * se), hi=float(dm + tc * se), niHigher=ni_hi, niLower=ni_lo))
+ref["eq"]["tests"] = tt
+json.dump(ref, open(os.path.join(here, "ref.json"), "w"), ensure_ascii=False)
+print("tests", [(round(c["p"], 4), c["lo"] > -c["delta"] and c["hi"] < c["delta"]) for c in tt])
+
+# ---- 不良率判定：scipy binomtest、statsmodels proportions_ztest、scipy fisher_exact、Wald 信賴區間 ----
+from statsmodels.stats.proportion import proportions_ztest, confint_proportions_2indep
+p1t = []
+for x, n, p0 in [(0, 59, 0.05), (2, 153, 0.05), (4, 153, 0.05), (7, 40, 0.1), (12, 100, 0.08), (1, 20, 0.2), (30, 60, 0.5)]:
+    for alt in ("less", "greater", "two-sided"):
+        r = stats.binomtest(x, n, p0, alternative=alt); ci = r.proportion_ci(confidence_level=0.95 if alt == "two-sided" else 0.95, method="exact") if alt == "two-sided" else stats.binomtest(x, n, p0, alternative=alt).proportion_ci(confidence_level=0.95, method="exact")
+        p1t.append(dict(x=x, n=n, p0=p0, alt=alt, p=float(r.pvalue), lo=float(ci.low), hi=float(ci.high)))
+p2t = []
+for x1, n1, x2, n2 in [(5, 100, 15, 100), (2, 50, 9, 60), (0, 30, 6, 30), (40, 200, 30, 220), (3, 12, 8, 14)]:
+    for alt, sm, fa in (("two-sided", "two-sided", "two-sided"), ("larger", "larger", "greater"), ("smaller", "smaller", "less")):
+        z, pz = proportions_ztest([x1, x2], [n1, n2], alternative=sm)
+        pf = stats.fisher_exact([[x1, n1 - x1], [x2, n2 - x2]], alternative=fa).pvalue
+        lo, hi = confint_proportions_2indep(x1, n1, x2, n2, method="wald", compare="diff", alpha=0.05)
+        p2t.append(dict(x1=x1, n1=n1, x2=x2, n2=n2, alt=alt, z=float(z), pz=float(pz), pf=float(pf), lo=float(lo), hi=float(hi)))
+ref["eq"]["p1t"] = p1t; ref["eq"]["p2t"] = p2t
+json.dump(ref, open(os.path.join(here, "ref.json"), "w"), ensure_ascii=False)
+print("prop tests", len(p1t), len(p2t))

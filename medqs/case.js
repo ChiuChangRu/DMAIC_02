@@ -29,7 +29,7 @@
     });
     const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer, tost: !!TQ.tost, ni: !!TQ.ni, reg: !!REG.res };
     const data = {
-      fields, chips, subs, ran, sampleSub, ssQ: ssCurQ, ssPlans: { tost: TQ.tost ? TQ.tost.plan : null, ni: TQ.ni ? TQ.ni.plan : null },
+      fields, chips, subs, ran, sampleSub, ssQ: ssCurQ, dc: { q: DC.q, stage: DC.stage }, ssPlans: { tost: TQ.tost ? TQ.tost.plan : null, ni: TQ.ni ? TQ.ni.plan : null },
       fb: JSON.parse(JSON.stringify(fb)),
       toolProblems: JSON.parse(JSON.stringify(toolProblems)),
       doeF: JSON.parse(JSON.stringify(doeF)), doeY: doe ? JSON.parse(JSON.stringify(doe.y)) : null,
@@ -82,7 +82,7 @@
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
     step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
     step("msaRun", () => { [["grr", grrRun], ["bias", biasRun], ["lin", linRun], ["stab", stabRun], ["attr", attrRun]].forEach(([k, f]) => { if (R[k]) f(); }); });
-    step("sample", () => { if (R.pw) $("pwRun").click(); if (R.at) $("atRun").click(); if (R.prop) $("prRun").click(); if (R.tolp) $("tpRun").click(); if (R.doer) $("drRun").click(); if (R.tost) $("eqRun").click(); if (R.ni) $("niRun").click(); if (d.sampleSub) { const b = $("ssTabs").querySelector(`[data-tsub="${d.sampleSub}"]`); if (b) b.click(); } ssRestoreQ(d.ssQ, d.sampleSub); });
+    step("sample", () => { if (R.pw) $("pwRun").click(); if (R.at) $("atRun").click(); if (R.prop) $("prRun").click(); if (R.tolp) $("tpRun").click(); if (R.doer) $("drRun").click(); if (R.tost) $("eqRun").click(); if (R.ni) $("niRun").click(); if (d.sampleSub) { const b = $("ssTabs").querySelector(`[data-tsub="${d.sampleSub}"]`); if (b) b.click(); } if (!["power", "tost", "ni"].includes(d.sampleSub) && !/^q[1-4]$/.test(d.ssQ || "")) ssRestoreQ(d.ssQ, d.sampleSub); dcRestore(d.dc, d.sampleSub, d.ssQ); });
     step("chats", () => {
       if (!d.chats) return;
       Object.entries(d.chats).forEach(([k, ch]) => {
