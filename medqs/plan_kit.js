@@ -14,7 +14,7 @@
   const PK_FORMAT = "回答格式：先用最多 6 點說明為什麼這樣設計（每點一行，以「- 」開頭），口語、短句，具體到可以照做；常見做法的數量標 *。最後附一個規劃區塊（JSON），格式如下：";
 
   // 樣本數規劃：AI 建議直接填進工具時，在工具的「計算」按鈕上方顯示來源與程式檢查；按「計算」後收起
-  const PK_RUNS = { power: "pwRun", attr: "atRun", prop: "prRun", tolp: "tpRun" };
+  const PK_RUNS = { power: "pwRun", attr: "atRun", prop: "prRun", tolp: "tpRun", tost: "eqRun", ni: "niRun" };
   function pkInline(calc, html) {
     Object.keys(PK_RUNS).forEach(k => { const b = document.querySelector(`[data-pkin="${k}"]`); if (b) b.hidden = true; });
     if (!html) return;
@@ -170,16 +170,21 @@
   });
 
   // ---------------- 樣本數規劃 ----------------
-  const SS_CALC = [["power", "計量型比較（t 檢定：平均值）"], ["attr", "通過／不通過（信心度／可靠度）"], ["prop", "不良率比較"], ["tolp", "允差區間（涵蓋比例）"]];
+  const SS_CALC = [["tost", "變更後一樣嗎（同等性 TOST）"], ["ni", "換了不會變差（不劣性）"], ["power", "有沒有差（t 檢定：平均值）"], ["attr", "通過／不通過（信心度／可靠度）"], ["prop", "不良率比較"], ["tolp", "允差區間（涵蓋比例）"]];
   makePlanner({
-    id: "pks", view: "viewSample", before: ".subtabs", route: "sample", chatKey: "sample", problemId: "sampleProblem", block: "sampleplan",
-    title: "樣本數規劃", sub: "描述情境，請 AI 建議算法與條件，直接填進下方工具；計算由程式執行",
-    help: "流程：① 描述要證明什麼，請 AI 建議用哪種算法與條件（AI 不提供標準差等歷史數據）→ ② 建議直接填進下方工具，標示「AI 建議・待確認」，程式同時檢查 → ③ 你補上或修改後按工具的「計算」。也可以不用 AI，直接在下方填寫。",
+    id: "pks", view: "viewSample", before: "#ssQ", route: "sample", chatKey: "sample", problemId: "sampleProblem", block: "sampleplan",
+    title: "樣本數規劃", sub: "用一句話描述情境，AI 建議要回答哪一題與條件；計算由程式執行",
+    help: "流程：① 用一句話描述情境，請 AI 建議要選下方哪一題、條件是什麼（AI 不提供標準差、δ 等數值）→ ② 建議直接選好題目並填進下方表單，標示「AI 建議・待確認」，程式同時檢查 → ③ 你補上或修改後按「計算」。也可以不用 AI，直接在下方選題。",
     direct: true,
-    toolHas: m => { const r = { power: pw.result, attr: at.result, prop: TQ.prop, tolp: TQ.tolp }[m.calc]; return !!r; },
+    toolHas: m => { const r = { power: pw.result, attr: at.result, prop: TQ.prop, tolp: TQ.tolp, tost: TQ.tost, ni: TQ.ni }[m.calc]; return !!r; },
     fill: m => {
-      pkClick(`#ssTabs [data-tsub="${m.calc}"]`);
-      if (m.calc === "power") {
+      ssPick({ power: m.design === "one" ? "q4" : "q1", attr: "q5", prop: "q7", tolp: "q8", tost: "q2", ni: "q3" }[m.calc], { noScroll: true });
+      if (m.calc === "tost" || m.calc === "ni") {
+        const p = m.calc === "tost" ? "eq" : "ni";
+        pkSet(p + "D", m.design, "change"); if (m.calc === "ni") pkSet("niDir", m.dir, "change");
+        pkSet(p + "Sd", m.sd); pkSet(p + "Delta", m.delta === "" ? "" : Math.abs(+m.delta)); pkSet(p + "True", m.trueDiff === "" ? "0" : m.trueDiff);
+        pkSet(p + "Alpha", m.alpha === "0.01" ? "0.025" : m.alpha, "change"); pkSet(p + "Power", m.power, "change");
+      } else if (m.calc === "power") {
         pkClick(`#pwDesign [data-v="${m.design}"]`); pkClick('#pwSolve [data-v="n"]'); pkClick(`#pwAlt [data-v="${m.alt}"]`);
         pkSet("pwSd", m.sd); pkSet("pwDelta", m.delta === "" ? "" : Math.abs(+m.delta)); pkSet("pwTarget", m.power, "change"); pkSet("pwAlpha", m.alpha, "change");
       } else if (m.calc === "attr") {
@@ -191,26 +196,28 @@
       }
       const ck = PLANS.sample._check(m), bad = ck.some(x => x.lv === "bad");
       pkInline(m.calc, `<span class="pk-src">來源：AI 建議・待確認</span><ul class="mp-check">${pkCheckHtml(ck)}</ul><p class="hint">確認或修改上面的數值後，按「計算」。</p>`);
-      const run = $({ power: "pwRun", attr: "atRun", prop: "prRun", tolp: "tpRun" }[m.calc]);
+      const run = $(PK_RUNS[m.calc]);
       run.closest(".card").scrollIntoView({ behavior: "smooth", block: "start" });
       return { bad };
     },
     descPh: "例如：轉廠後要證明封口拉力平均沒有下降超過 2 N，歷史標準差約 1.5 N",
     goLabel: "帶入並計算",
-    role: "你是樣本數規劃的助手。依使用者描述，建議用哪一種樣本數算法與條件：power（計量型 t 檢定）、attr（通過／不通過：信心度與可靠度，例如 95/95）、prop（不良率比較）、tolp（統計允差區間）。",
-    example: '{"calc":"power","design":"two","alt":"two-sided","alpha":0.05,"power":0.9,"sd":null,"delta":2,"conf":0.95,"rel":0.95,"fails":0,"p0":null,"p1":null,"cover":0.99,"tconf":0.95,"side":"lower","method":"norm"}',
-    schemaNote: "calc＝power、attr、prop、tolp。power 用 design（one＝單組或成對，two＝兩組獨立）、alt（two-sided 或 greater）、alpha、power、sd（標準差，使用者沒提供就 null）、delta（要偵測的最小差異，使用者沒提供就 null）；attr 用 conf（0.9／0.95／0.99）、rel（0.9／0.95／0.99／0.999）、fails（允許失效數 0／1／2／3／5）；prop 用 design、p0、p1（百分比數字，例如 1 代表 1%）、alpha、power；tolp 用 cover（涵蓋比例 0.9／0.95／0.99／0.999）、tconf（0.9／0.95／0.99）、side（lower／upper／two）、method（norm 常態或 np 無母數）。",
-    def: { calc: "power", design: "two", alt: "two-sided", alpha: "0.05", power: "0.9", sd: "", delta: "", conf: "0.95", rel: "0.95", fails: "0", p0: "", p1: "", cover: "0.99", tconf: "0.95", side: "lower", method: "norm" },
+    role: "你是樣本數規劃的助手。先判斷使用者要回答哪一類問題：要證明「變更後（轉廠、換料、換設備、換方法）一樣」用 tost（同等性 TOST，不能用 p > 0.05 證明一樣）；只在意「換了之後不會變差」用 ni（不劣性，dir＝higher 越大越好或 lower 越小越好）；要證明「有差、改善有效」用 power。其他算法：power（計量型 t 檢定）、attr（通過／不通過：信心度與可靠度，例如 95/95）、prop（不良率比較）、tolp（統計允差區間）。",
+    example: '{"calc":"tost","design":"two","alt":"two-sided","dir":"higher","alpha":0.05,"power":0.9,"sd":null,"delta":null,"trueDiff":0,"conf":0.95,"rel":0.95,"fails":0,"p0":null,"p1":null,"cover":0.99,"tconf":0.95,"side":"lower","method":"norm"}',
+    schemaNote: "calc＝tost、ni、power、attr、prop、tolp。tost 與 ni 用 design（two＝兩組獨立，one＝成對）、delta（δ：可接受的差異，是工程判斷，使用者沒提供就 null，不要自己訂）、sd、trueDiff（預期真實差異，不知道用 0）、alpha（0.05 或 0.025）、power；ni 另用 dir（higher 或 lower）。power 用 design（one＝單組或成對，two＝兩組獨立）、alt（two-sided 或 greater）、alpha、power、sd（標準差，使用者沒提供就 null）、delta（要偵測的最小差異，使用者沒提供就 null）；attr 用 conf（0.9／0.95／0.99）、rel（0.9／0.95／0.99／0.999）、fails（允許失效數 0／1／2／3／5）；prop 用 design、p0、p1（百分比數字，例如 1 代表 1%）、alpha、power；tolp 用 cover（涵蓋比例 0.9／0.95／0.99／0.999）、tconf（0.9／0.95／0.99）、side（lower／upper／two）、method（norm 常態或 np 無母數）。",
+    def: { calc: "power", dir: "higher", trueDiff: "0", design: "two", alt: "two-sided", alpha: "0.05", power: "0.9", sd: "", delta: "", conf: "0.95", rel: "0.95", fails: "0", p0: "", p1: "", cover: "0.99", tconf: "0.95", side: "lower", method: "norm" },
     fields: [
       { k: "calc", lab: "算法", type: "select", opts: SS_CALC },
-      { k: "design", lab: "試驗設計", type: "select", opts: [["one", "單組或成對"], ["two", "兩組獨立"]], show: m => m.calc === "power" || m.calc === "prop" },
+      { k: "design", lab: "試驗設計", type: "select", opts: [["one", "單組或成對"], ["two", "兩組獨立"]], show: m => ["power", "prop", "tost", "ni"].includes(m.calc) },
+      { k: "dir", lab: "特性方向", type: "select", opts: [["higher", "越大越好"], ["lower", "越小越好"]], show: m => m.calc === "ni" },
+      { k: "trueDiff", lab: "預期真實差異", type: "num", show: m => m.calc === "tost" || m.calc === "ni" },
       { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾（只關心一個方向）"]], show: m => m.calc === "power" },
-      { k: "sd", lab: "標準差 σ（來自歷史資料或預試驗）", type: "num", ph: "必填", show: m => m.calc === "power" },
-      { k: "delta", lab: "要偵測的最小差異 Δ", type: "num", ph: "必填", show: m => m.calc === "power" },
+      { k: "sd", lab: "標準差 σ（來自歷史資料或預試驗）", type: "num", ph: "必填", show: m => ["power", "tost", "ni"].includes(m.calc) },
+      { k: "delta", lab: m => m.calc === "power" ? "要偵測的最小差異 Δ" : "可接受的差異 δ", type: "num", ph: "必填", show: m => ["power", "tost", "ni"].includes(m.calc) },
       { k: "p0", lab: m => m.design === "one" ? "目標不良率 p₀（%）" : "第 1 組不良率（%）", type: "num", ph: "必填", show: m => m.calc === "prop" },
       { k: "p1", lab: m => m.design === "one" ? "預期實際不良率 p₁（%）" : "第 2 組不良率（%）", type: "num", ph: "必填", show: m => m.calc === "prop" },
-      { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]], show: m => m.calc === "power" || m.calc === "prop" },
-      { k: "power", lab: "目標檢定力", type: "select", opts: [["0.8", "0.80"], ["0.9", "0.90"], ["0.95", "0.95"]], show: m => m.calc === "power" || m.calc === "prop" },
+      { k: "alpha", lab: "顯著水準 α", type: "select", opts: m => m.calc === "tost" || m.calc === "ni" ? [["0.025", "0.025"], ["0.05", "0.05"], ["0.10", "0.10"]] : [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]], show: m => ["power", "prop", "tost", "ni"].includes(m.calc) },
+      { k: "power", lab: "目標檢定力", type: "select", opts: [["0.8", "0.80"], ["0.9", "0.90"], ["0.95", "0.95"]], show: m => ["power", "prop", "tost", "ni"].includes(m.calc) },
       { k: "conf", lab: "信心水準", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"]], show: m => m.calc === "attr" },
       { k: "rel", lab: "要宣稱的可靠度", type: "select", opts: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"], ["0.999", "99.9%"]], show: m => m.calc === "attr" },
       { k: "fails", lab: "允許失效數", type: "select", opts: [["0", "0"], ["1", "1"], ["2", "2"], ["3", "3"], ["5", "5"]], show: m => m.calc === "attr" },
@@ -221,7 +228,12 @@
     ],
     check: m => {
       const o = [], bad = x => o.push({ lv: "bad", m: x }), warn = x => o.push({ lv: "warn", m: x }), ok = x => o.push({ lv: "ok", m: x });
-      if (m.calc === "power") {
+      if (m.calc === "tost" || m.calc === "ni") {
+        const s = pkNum(m.sd), d = pkNum(m.delta);
+        if (d == null) bad("請填 δ（差多少以內可以接受）：這是工程判斷，要由你們決定並寫下依據；AI 不提供。"); else if (Number.isNaN(d) || d <= 0) bad("δ 要是大於 0 的數字。");
+        if (s == null) bad("請填標準差 σ：要來自歷史數據、SPC、MSA 或預試驗。AI 不會、也不應該替你猜這個數字。"); else if (Number.isNaN(s) || s <= 0) bad("標準差要是大於 0 的數字。");
+        warn(m.calc === "tost" ? "同等性：量完後要看平均差的 90% 信賴區間是否整條落在 ±δ 內，不能用 p > 0.05 判定一樣。" : "不劣性：方向（越大越好／越小越好）要在試驗前決定。");
+      } else if (m.calc === "power") {
         const s = pkNum(m.sd), d = pkNum(m.delta);
         if (s == null) bad("請填標準差 σ：要來自歷史資料、SPC 紀錄或預試驗。AI 不會、也不應該替你猜這個數字。"); else if (Number.isNaN(s) || s <= 0) bad("標準差要是大於 0 的數字。");
         if (d == null) bad("請填要偵測的最小差異 Δ：這是工程或品質上「差多少才有意義」的判斷，要由你們決定。"); else if (Number.isNaN(d) || d === 0) bad("Δ 要是不等於 0 的數字。");
@@ -246,12 +258,12 @@
     },
     fromJson: (j, m) => {
       const pick = (k, list) => { if (j[k] != null && list.includes(String(j[k]))) m[k] = String(j[k]); };
-      pick("calc", ["power", "attr", "prop", "tolp"]); pick("design", ["one", "two"]); pick("alt", ["two-sided", "greater"]);
+      pick("calc", ["power", "attr", "prop", "tolp", "tost", "ni"]); pick("dir", ["higher", "lower"]); if (j.trueDiff != null && isFinite(+j.trueDiff)) m.trueDiff = String(+j.trueDiff); pick("design", ["one", "two"]); pick("alt", ["two-sided", "greater"]);
       if (j.alpha != null) m.alpha = String(+j.alpha === 0.1 ? "0.10" : +j.alpha); pick("power", ["0.8", "0.9", "0.95"]);
       ["sd", "delta", "p0", "p1"].forEach(k => { if (j[k] !== undefined) { const x = Number(j[k]); m[k] = j[k] == null || !isFinite(x) ? "" : String(x); } });
       pick("conf", ["0.9", "0.95", "0.99"]); pick("rel", ["0.9", "0.95", "0.99", "0.999"]); pick("fails", ["0", "1", "2", "3", "5"]);
       pick("cover", ["0.9", "0.95", "0.99", "0.999"]); pick("tconf", ["0.9", "0.95", "0.99"]); pick("side", ["lower", "upper", "two"]); pick("method", ["norm", "np"]);
-      if (!["0.01", "0.05", "0.10"].includes(m.alpha)) m.alpha = "0.05";
+      if (!["0.01", "0.025", "0.05", "0.10"].includes(m.alpha)) m.alpha = "0.05";
     },
     go: m => {
       pkClick(`#ssTabs [data-tsub="${m.calc}"]`);

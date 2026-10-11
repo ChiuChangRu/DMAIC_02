@@ -86,6 +86,66 @@
   function npConf(n, p, side) { return side === "two" ? 1 - n * Math.pow(p, n - 1) + (n - 1) * Math.pow(p, n) : 1 - Math.pow(p, n); }
   function npTolN(p, conf, side) { let n = side === "two" ? 2 : 1; while (npConf(n, p, side) < conf) { n++; if (n > 1e6) return NaN; } return n; }
 
-  const api = { prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
+
+  // ---------- equivalence (TOST) and non-inferiority for means ----------
+  // design: "two" = two independent groups, n per group (SE = s·√(2/n), df = 2n−2)
+  //         "one" = one sample vs reference value, or paired differences (SE = s/√n, df = n−1)
+  // TOST concludes equivalence when (d̄ − t·SE, d̄ + t·SE) ⊂ (−δ, +δ), t = t_{1−α, df} (the 1−2α CI rule).
+  // Exact power (σ known only to the planner): integrate over the sampling distribution of s.
+  //   v = √(df·s²/σ²) ~ chi(df);  lim(v) = δ − t·σ·√k·v/√df;  P = Φ((lim−Δ)/c) − Φ((−lim−Δ)/c), c = σ√k
+  const GL = (() => {   // 20-point Gauss–Legendre nodes/weights on [−1, 1]
+    const m = 20, x = [], w = [];
+    for (let i = 1; i <= m; i++) {
+      let z = Math.cos(Math.PI * (i - 0.25) / (m + 0.5)), pp = 0;
+      for (let it = 0; it < 100; it++) { let p1 = 1, p2 = 0; for (let j = 1; j <= m; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; } pp = m * (z * p1 - p2) / (z * z - 1); const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-15) break; }
+      x.push(z); w.push(2 / ((1 - z * z) * pp * pp));
+    }
+    return { x, w };
+  })();
+  const eqDesign = (design, n) => design === "two" ? { k: 2 / n, df: 2 * n - 2 } : { k: 1 / n, df: n - 1 };
+  function tostPower(design, n, delta, sd, alpha, trueDiff) {
+    const { k, df } = eqDesign(design, n);
+    if (!(df >= 1) || !(delta > 0) || !(sd > 0)) return NaN;
+    const D = trueDiff || 0, c = sd * Math.sqrt(k), t = tInv(1 - alpha, df);
+    const vmax = delta * Math.sqrt(df) / (t * c);
+    const logC = Math.log(2) - (df / 2) * Math.log(2) - HT.lgamma(df / 2);
+    const dens = v => v <= 0 ? (df === 1 ? Math.exp(logC) : 0) : Math.exp(logC + (df - 1) * Math.log(v) - v * v / 2);   // chi(df) pdf
+    const f = v => { const lim = delta - t * c * v / Math.sqrt(df); if (lim <= 0) return 0; return (normCdf((lim - D) / c) - normCdf((-lim - D) / c)) * dens(v); };
+    const mid = Math.sqrt(Math.max(df - 0.5, 0)), a = Math.max(0, mid - 10), b = Math.min(vmax, mid + 10);
+    if (b <= a) return 0;
+    const P = 40, h = (b - a) / P; let s = 0;
+    for (let p = 0; p < P; p++) { const lo = a + p * h; for (let i = 0; i < GL.x.length; i++) s += GL.w[i] * f(lo + (GL.x[i] + 1) * h / 2); }
+    return Math.min(1, Math.max(0, s * h / 2));
+  }
+  // non-inferiority: dir "higher" (higher is better; H0: μ_new − μ_ref ≤ −δ) or "lower" (lower is better; H0: μ_new − μ_ref ≥ +δ)
+  function niPower(design, n, delta, sd, alpha, trueDiff, dir) {
+    const { k, df } = eqDesign(design, n);
+    if (!(df >= 1) || !(delta > 0) || !(sd > 0)) return NaN;
+    const D = trueDiff || 0, c = sd * Math.sqrt(k), t = tInv(1 - alpha, df);
+    return dir === "lower" ? nctCdf(-t, df, (D - delta) / c) : nctSf(t, df, (D + delta) / c);
+  }
+  function eqN(fn, target, maxN) {   // smallest n (≥ 2) with power ≥ target; power is increasing in n
+    maxN = maxN || 100000;
+    if (!(fn(maxN) >= target)) return NaN;
+    let n = 2;
+    for (; n < 200; n++) if (fn(n) >= target) return n;
+    let lo = 199, hi = 200;
+    while (!(fn(hi) >= target)) { lo = hi; hi = Math.min(maxN, hi * 2); }
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (fn(m) >= target) hi = m; else lo = m; }
+    return hi;
+  }
+  const tostN = (design, delta, sd, alpha, target, trueDiff, maxN) => Math.abs(trueDiff || 0) >= delta ? NaN : eqN(n => tostPower(design, n, delta, sd, alpha, trueDiff), target, maxN);
+  const niN = (design, delta, sd, alpha, target, trueDiff, dir, maxN) => eqN(n => niPower(design, n, delta, sd, alpha, trueDiff, dir), target, maxN);
+  // smallest δ that reaches the target power with a fixed n (for "如果只能量 M 件")
+  function eqDelta(fn, target, sd) {
+    let lo = 0, hi = sd;
+    while (!(fn(hi) >= target)) { lo = hi; hi *= 2; if (hi > 1e6 * sd) return NaN; }
+    for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; if (fn(m) >= target) hi = m; else lo = m; }
+    return hi;
+  }
+  const tostDelta = (design, n, sd, alpha, target, trueDiff) => eqDelta(d => d > Math.abs(trueDiff || 0) ? tostPower(design, n, d, sd, alpha, trueDiff) : 0, target, sd);
+  const niDelta = (design, n, sd, alpha, target, trueDiff, dir) => eqDelta(d => niPower(design, n, d, sd, alpha, trueDiff, dir), target, sd);
+
+  const api = { tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SS = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -358,15 +358,44 @@
   <section id="viewSample" role="tabpanel" data-view="sample" hidden>
     <div class="tool-head"><h2 class="tool-title">樣本數規劃</h2><span class="hint" id="ssSubHint"></span></div>
     <div class="tool-problem"><label for="sampleProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠後的拉伸強度驗證要測幾支"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
-    <div class="subtabs" role="tablist" aria-label="樣本數規劃功能" id="ssTabs">
+    <section class="card ss-qcard" id="ssQ">
+      <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
+      <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
+      <div class="ss-qgrid">
+        <div class="ss-qgrp"><div class="ss-qgl">變更／比較</div>
+          <button type="button" class="ssq" data-q="q1"><span class="ssq-t">① 改善後有沒有變好？兩條線、兩家料有沒有差？</span><span class="ssq-s">找原因、驗證改善效果（證明有差）</span></button>
+          <button type="button" class="ssq" data-q="q2"><span class="ssq-t">② 轉廠、換料、換設備後，一樣嗎？<span class="ssq-new">新增</span></span><span class="ssq-s">證明相當（同等性 TOST）</span></button>
+          <button type="button" class="ssq" data-q="q3"><span class="ssq-t">③ 換了之後，不會變差吧？<span class="ssq-new">新增</span></span><span class="ssq-s">只怕變差（不劣性）</span></button>
+          <button type="button" class="ssq" data-q="q4"><span class="ssq-t">④ 平均有沒有達到目標值？</span><span class="ssq-s">單組對目標值</span></button>
+        </div>
+        <div class="ss-qgrp"><div class="ss-qgl">合格／不合格</div>
+          <button type="button" class="ssq" data-q="q5"><span class="ssq-t">⑤ 要測幾個全過，才能宣稱可靠度（例如 95/95）？</span><span class="ssq-s">破裂、洩漏、外觀等通過／不通過試驗</span></button>
+          <button type="button" class="ssq" data-q="q6"><span class="ssq-t">⑥ 現有抽樣方案（n、Ac）能宣稱什麼？</span><span class="ssq-s">評估既有方案或已完成的試驗</span></button>
+          <button type="button" class="ssq" data-q="q7"><span class="ssq-t">⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？</span><span class="ssq-s">比例資料</span></button>
+        </div>
+        <div class="ss-qgrp"><div class="ss-qgl">符合規格</div>
+          <button type="button" class="ssq" data-q="q8"><span class="ssq-t">⑧ 要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
+          <div class="ss-qgl" style="margin-top:10px">實驗與其他工具</div>
+          <button type="button" class="ssq" data-q="q9"><span class="ssq-t">⑨ 實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
+          <button type="button" class="ssq" data-q="q10"><span class="ssq-t">⑩ MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
+        </div>
+        <div class="ss-qgrp"><div class="ss-qgl">進階</div>
+          <button type="button" class="ssq ssq-adv" id="ssAdvBtn" aria-expanded="false"><span class="ssq-t">直接選統計方法 ▸</span><span class="ssq-s">原本的計算機分頁，給熟悉統計方法的人使用</span></button>
+        </div>
+      </div>
+    </section>
+    <div class="ss-qbanner" id="ssQBanner" hidden></div>
+    <div class="subtabs" role="tablist" aria-label="樣本數規劃功能（進階：直接選統計方法）" id="ssTabs" hidden>
       <button type="button" role="tab" data-tsub="power" aria-selected="true">計量型（t 檢定）</button>
       <button type="button" role="tab" data-tsub="attr" aria-selected="false">通過／不通過</button>
       <button type="button" role="tab" data-tsub="prop" aria-selected="false">不良率比較</button>
       <button type="button" role="tab" data-tsub="tolp" aria-selected="false">允差區間</button>
+      <button type="button" role="tab" data-tsub="tost" aria-selected="false">同等性（TOST）</button>
+      <button type="button" role="tab" data-tsub="ni" aria-selected="false">不劣性</button>
       <button type="button" role="tab" data-tsub="doer" aria-selected="false">DOE 重複次數</button>
       <button type="button" role="tab" data-tsub="guide" aria-selected="false">其他工具建議數量</button>
     </div>
-    <div id="subPower" data-tview="power">
+    <div id="subPower" data-tview="power" hidden>
       <div class="grid">
         <main class="card" id="pwPanel" style="border-top:6px solid var(--copper)">
           <div class="step">

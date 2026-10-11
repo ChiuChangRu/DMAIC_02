@@ -173,4 +173,29 @@
     fxAttach("drOut", fxHtml("DOE 效應的檢定力", steps, "非中心 t 分布的機率以數值方法計算。"));
   }
 
-  [["tpEx", fxTolp], ["pwRun", fxPower], ["atRun", fxAttr], ["prRun", fxProp], ["tpRun", fxTolp], ["drRun", fxDoer]].forEach(([b, f]) => $(b).addEventListener("click", () => { try { f(); } catch (e) { console.warn("formula", e); } }));
+  // ---------- 同等性（TOST）與不劣性 ----------
+  function fxEq(kind) {
+    const r = TQ[kind]; if (!r) return;
+    const two = r.design === "two", D = r.tr || 0, a = r.alpha, n = r.n, k = two ? 2 : 1;
+    const kL = two ? "\\sqrt{2/n}" : "\\sqrt{1/n}", nuT = two ? "\\nu=2n-2" : "\\nu=n-1";
+    const za = HT.normInv(1 - a), steps = [];
+    if (kind === "tost") {
+      steps.push(["假設：要證明的是「差異在 ±δ 內」，所以把「差太多」放在 H₀（μ 為新 − 舊的平均差；成對時為差值的平均）", `H_0:\\ |\\mu|\\ge\\delta \\qquad H_1:\\ |\\mu|<\\delta`]);
+      steps.push([`判定：兩個單尾檢定都顯著，等同 ${fmt((1 - 2 * a) * 100, 0)}% 信賴區間整條落在 ±δ 內（SE 為平均差的標準誤）`, `\\bar d - t_{1-\\alpha,\\nu}\\,SE > -\\delta \\quad\\text{and}\\quad \\bar d + t_{1-\\alpha,\\nu}\\,SE < \\delta,\\qquad ${nuT}`]);
+      steps.push(["精確檢定力（程式採用）：對樣本標準差 s 的分布積分，c 為平均差的標準差", `c=\\sigma${kL},\\quad L(s)=\\delta-t_{1-\\alpha,\\nu}\\,s${kL} \\\\ 1-\\beta=\\int_0^{\\infty}\\left[\\Phi\\!\\left(\\tfrac{L(s)-\\Delta}{c}\\right)-\\Phi\\!\\left(\\tfrac{-L(s)-\\Delta}{c}\\right)\\right]^{+} f(s)\\,ds`]);
+      const zb = HT.normInv(D === 0 ? 1 - (1 - r.target) / 2 : r.target), den = D === 0 ? r.delta : r.delta - Math.abs(D), ap = k * Math.pow(za + zb, 2) * Math.pow(r.sd / den, 2);
+      steps.push([`常態近似（手算參考）${D === 0 ? "：真實差異為 0 時用 z₁₋β/₂" : "：真實差異不為 0 時用 z₁₋β，分母為 δ − |Δ|"}`, `n\\approx\\frac{${two ? "2\\," : ""}(z_{1-\\alpha}+z_{${D === 0 ? "1-\\beta/2" : "1-\\beta"}})^2\\sigma^2}{${D === 0 ? "\\delta^2" : "(\\delta-|\\Delta|)^2"}} \\\\ =\\frac{${two ? "2\\times" : ""}(${fxN(za, 5)}+${fxN(zb, 5)})^2\\times ${fxN(r.sd, 6)}^2}{${fxN(den, 6)}^2}=${fxN(ap, 4)}\\;\\Rightarrow\\;${Math.ceil(ap - 1e-9)}`]);
+    } else {
+      const hi = r.dir !== "lower";
+      steps.push([`假設：特性${hi ? "越大越好" : "越小越好"}，要證明新的沒有比現行差超過 δ（μ 為新 − 舊的平均差）`, hi ? `H_0:\\ \\mu\\le-\\delta \\qquad H_1:\\ \\mu>-\\delta` : `H_0:\\ \\mu\\ge\\delta \\qquad H_1:\\ \\mu<\\delta`]);
+      steps.push([`判定：單邊 t 檢定，等同 ${fmt((1 - a) * 100, 1).replace(/\.0$/, "")}% 單邊信賴界限沒有越過 ${hi ? "−δ" : "+δ"}`, hi ? `\\frac{\\bar d+\\delta}{SE}>t_{1-\\alpha,\\nu},\\qquad ${nuT}` : `\\frac{\\bar d-\\delta}{SE}<-t_{1-\\alpha,\\nu},\\qquad ${nuT}`]);
+      steps.push(["精確檢定力（程式採用）：非中心 t 分布", hi ? `\\lambda=\\frac{\\Delta+\\delta}{\\sigma${kL}},\\qquad 1-\\beta=P\\!\\left(T'_{\\nu,\\lambda}>t_{1-\\alpha,\\nu}\\right)` : `\\lambda=\\frac{\\Delta-\\delta}{\\sigma${kL}},\\qquad 1-\\beta=P\\!\\left(T'_{\\nu,\\lambda}<-t_{1-\\alpha,\\nu}\\right)`]);
+      const zb = HT.normInv(r.target), den = hi ? r.delta + D : r.delta - D, ap = k * Math.pow(za + zb, 2) * Math.pow(r.sd / den, 2);
+      steps.push(["常態近似（手算參考）", `n\\approx\\frac{${two ? "2\\," : ""}(z_{1-\\alpha}+z_{1-\\beta})^2\\sigma^2}{(\\delta${hi ? "+" : "-"}\\Delta)^2} \\\\ =\\frac{${two ? "2\\times" : ""}(${fxN(za, 5)}+${fxN(zb, 5)})^2\\times ${fxN(r.sd, 6)}^2}{${fxN(den, 6)}^2}=${fxN(ap, 4)}\\;\\Rightarrow\\;${Math.ceil(ap - 1e-9)}`]);
+    }
+    const row = m => `n=${m}:\\ 1-\\beta=${fxN(kind === "tost" ? SSE.tostPower(r.design, m, r.delta, r.sd, a, D) : SSE.niPower(r.design, m, r.delta, r.sd, a, D, r.dir), 5)}`;
+    steps.push([`代入 δ = ${fxN(r.delta, 6)}、σ = ${fxN(r.sd, 6)}、Δ = ${fxN(D, 6)}、α = ${a}，從小到大逐一試算，取第一個達到 ${r.target} 的 n`, (n > 2 ? row(n - 1) + ` < ${r.target}\\\\` : "") + row(n) + ` \\ge ${r.target}\\;\\Rightarrow\\; n=${n}`]);
+    fxAttach(kind === "tost" ? "eqOut" : "niOut", fxHtml(kind === "tost" ? "同等性（TOST）的樣本數" : "不劣性的樣本數", steps, kind === "tost" ? "f(s) 為樣本標準差的抽樣分布；積分以數值方法計算，已與 SciPy 獨立計算及 40 萬次模擬比對。近似式在小樣本時會偏少，以精確值為準。" : "非中心 t 分布的機率以數值方法計算；近似式在小樣本時會偏少，以精確值為準。"));
+  }
+
+  [["eqRun", () => fxEq("tost")], ["niRun", () => fxEq("ni")], ["tpEx", fxTolp], ["pwRun", fxPower], ["atRun", fxAttr], ["prRun", fxProp], ["tpRun", fxTolp], ["drRun", fxDoer]].forEach(([b, f]) => $(b).addEventListener("click", () => { try { f(); } catch (e) { console.warn("formula", e); } }));

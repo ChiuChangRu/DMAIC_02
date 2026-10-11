@@ -417,6 +417,23 @@ if (TG) {
   t("田口", "預測值 = 總平均 + 各未併入因子最佳水準效果", (() => { const an = TG.analyze({ array: "L4", cols: [0, 1], inter: [] }, [2, 2], [1, 3, 2, 6], { pool: "none" }); return Math.abs(TG.predict(an, [2, 2]).pred - (3 + (4.5 - 3) + (4 - 3))) < 1e-12; })());
 }
 
+// ---------- equivalence (TOST) & non-inferiority sample size ----------
+if (SS && SS.tostPower && ref.eq) {
+  const R = ref.eq, G = "同等性與不劣性", dn = d => d === "two" ? "兩組獨立" : "單組／成對";
+  R.tp.forEach(c => check(G, `TOST ${dn(c.design)} n=${c.n} δ=${c.delta} σ=${c.sd} α=${c.alpha} 真實差=${+c.D.toFixed(4)}`, "檢定力", SS.tostPower(c.design, c.n, c.delta, c.sd, c.alpha, c.D), c.power, 1e-7));
+  R.tn.forEach(c => check(G, `TOST ${dn(c.design)} δ=${c.delta} σ=${c.sd} α=${c.alpha} 真實差=${c.D} 目標 ${c.target}`, "最小樣本數", SS.tostN(c.design, c.delta, c.sd, c.alpha, c.target, c.D), c.n, 0));
+  R.nip.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} n=${c.n} δ=${c.delta} 真實差=${c.D}`, "檢定力", SS.niPower(c.design, c.n, c.delta, c.sd, c.alpha, c.D, c.dir), c.power, 1e-9));
+  R.nin.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} δ=${c.delta} σ=${c.sd} α=${c.alpha} 目標 ${c.target}`, "最小樣本數", SS.niN(c.design, c.delta, c.sd, c.alpha, c.target, c.D, c.dir), c.n, 0));
+  R.sim.forEach(c => check(G, `TOST 模擬 40 萬次 ${dn(c.design)} n=${c.n} δ=${c.delta} σ=${c.sd} 真實差=${c.D}（容許 4 個模擬標準誤）`, "檢定力", SS.tostPower(c.design, c.n, c.delta, c.sd, 0.05, c.D), c.power, 4 * c.se));
+  t(G, "TOST：真實差異 ≥ δ 時無法規劃（回傳無解）", isNaN(SS.tostN("two", 1, 1, 0.05, 0.9, 1)));
+  t(G, "TOST：在可用的範圍（檢定力 ≥ 5%）樣本數增加檢定力不下降（極小樣本時 TOST 檢定力本來就非單調）", [20, 30, 40, 60, 100, 200].map(n => SS.tostPower("two", n, 0.5, 1, 0.05, 0.1)).every((v, i, a) => i === 0 || v >= a[i - 1] - 1e-12));
+  t(G, "TOST：δ 很大時檢定力趨近 1、δ 很小時趨近 0", SS.tostPower("two", 30, 10, 1, 0.05, 0) > 0.9999 && SS.tostPower("two", 30, 0.01, 1, 0.05, 0) < 1e-6);
+  t(G, "TOST：真實差異 ±D 對稱", Math.abs(SS.tostPower("two", 10, 1, 1, 0.05, 0.3) - SS.tostPower("two", 10, 1, 1, 0.05, -0.3)) < 1e-12);
+  t(G, "不劣性：越大越好與越小越好鏡像對稱", Math.abs(SS.niPower("two", 10, 0.5, 1, 0.05, 0.1, "higher") - SS.niPower("two", 10, 0.5, 1, 0.05, -0.1, "lower")) < 1e-12);
+  t(G, "不劣性所需樣本數不超過同條件的 TOST（只檢一側）", SS.niN("two", 0.5, 1, 0.05, 0.9, 0, "higher") <= SS.tostN("two", 0.5, 1, 0.05, 0.9, 0));
+  t(G, "反推 δ：以反推的 δ 計算剛好達到目標檢定力", (() => { const d = SS.tostDelta("two", 6, 0.012, 0.05, 0.9, 0); return Math.abs(SS.tostPower("two", 6, d, 0.012, 0.05, 0) - 0.9) < 1e-6; })());
+}
+
 // ---------- sample-size planning ----------
 if (SS && ref.ss) {
   const R = ref.ss, G = "樣本數規劃";
