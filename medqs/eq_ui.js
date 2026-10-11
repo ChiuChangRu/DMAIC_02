@@ -8,13 +8,12 @@
     q2: { sub: "tost", title: "② 轉廠、換料、換設備後，一樣嗎？", prep: ["差多少以內算一樣（δ）：工程判斷，要寫下依據", "這個特性平常的波動（σ）：舊廠歷史數據、SPC、預試驗", "量完後看平均差的 90% 信賴區間是否整條落在 ±δ 內"], note: "不能用「p > 0.05」證明一樣；要用同等性（TOST）。" },
     q3: { sub: "ni", title: "③ 換了之後，不會變差吧？", prep: ["這個特性是越大越好（強度）還是越小越好（洩漏、毛邊）", "最多可以接受變差多少（δ）：工程判斷，要寫下依據", "這個特性平常的波動（σ）"], note: "只在意「不能變差」、變好沒關係時用；比同等性需要的數量少。" },
     q4: { sub: "power", title: "④ 平均有沒有達到目標值？", prep: ["這個特性平常的波動（σ）", "和目標差多少才算有意義（Δ）", "成對資料（同一件前後量測）也用這題，σ 為差值的標準差"], note: "", set: () => { pkClick('#pwDesign [data-v="one"]'); pkClick('#pwSolve [data-v="n"]'); } },
-    q5: { sub: "attr", title: "⑥ 要測幾個全過，才能宣稱可靠度？", prep: ["要宣稱的可靠度與信心水準（例如 95/95），依風險等級與公司程序決定", "允許失效數：0 個最常用；允許越多，要測越多"], note: "", set: () => pkClick('#atMode [data-v="plan"]') },
-    q6: { sub: "attr", title: "⑦ 現有抽樣方案（n、Ac）能宣稱什麼？", prep: ["抽樣方案的樣本數 n 與允收數 Ac（例如從 ISO 2859-1 查出）", "AQL（選填）"], note: "AQL 不是可宣稱的可靠度，結果頁會分開說明。", set: () => pkClick('#atMode [data-v="eval"]') },
-    q7: { sub: "prop", title: "⑧ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
-    q8: { sub: "tolp", title: "⑨ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "數據量完後，在本頁下方「統計允差區間」計算。" },
-    q9: { sub: "doer", title: "⑩ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
-    q11: { sub: null, rec: "multi", title: "⑤ 三組以上有沒有差？", prep: ["各組的組別名稱（例如三台機台）", "每組數量：可先用 ① 以「最在意的兩組差異」估算*"], note: "3 組以上沒有專用的數量計算；量完後在本頁下方做整體檢定（ANOVA 或無母數），有差再看兩兩比較。" },
-    q10: { sub: "guide", title: "⑪ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" }
+    q5: { sub: "attr", title: "⑤ 要測幾個全過，才能宣稱可靠度？", prep: ["要宣稱的可靠度與信心水準（例如 95/95），依風險等級與公司程序決定", "允許失效數：0 個最常用；允許越多，要測越多"], note: "", set: () => pkClick('#atMode [data-v="plan"]') },
+    q6: { sub: "attr", title: "⑥ 現有抽樣方案（n、Ac）能宣稱什麼？", prep: ["抽樣方案的樣本數 n 與允收數 Ac（例如從 ISO 2859-1 查出）", "AQL（選填）"], note: "AQL 不是可宣稱的可靠度，結果頁會分開說明。", set: () => pkClick('#atMode [data-v="eval"]') },
+    q7: { sub: "prop", title: "⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
+    q8: { sub: "tolp", title: "⑧ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "數據量完後，到「假設檢定・統計允差區間」計算。" },
+    q9: { sub: "doer", title: "⑨ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
+    q10: { sub: "guide", title: "⑩ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" }
   };
   let ssCurQ = "", ssQBusy = false;
   function ssBanner() {
@@ -27,13 +26,10 @@
     const d = SSQ[q]; if (!d) return;
     ssCurQ = q;
     $("ssQ").querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.q === q)));
-    ssQBusy = true;
-    if (d.sub) setSampleSub(d.sub); else $("viewAnalyze").querySelectorAll("[data-tview]").forEach(v => { v.hidden = true; });
-    ssQBusy = false;
+    ssQBusy = true; setSampleSub(d.sub); ssQBusy = false;
     if (d.set && !(opts && opts.keep)) d.set();
     ssBanner();
     if (!(opts && opts.noScroll)) $("ssQBanner").scrollIntoView({ behavior: "smooth", block: "start" });
-    setTimeout(dcSyncRecord, 0); dcAfterRun();
   }
   // 從進階分頁或其他頁面切換時，同步到對應的問題
   function ssSyncFromSub(s) {
@@ -218,119 +214,3 @@
     $(p + "Run").addEventListener("click", () => eqRun(p));
     $(p + "RecCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($(p + "Rec").dataset.tsv || ""); $(p + "RecHint").textContent = "已複製，可直接貼到 Excel。"; } catch (_) { $(p + "RecHint").textContent = "無法自動複製，請選取表格後手動複製。"; } });
   });
-
-  // =====================================================================
-  // 「差異比較與樣本數規劃」：樣本數規劃的內容移到假設檢定同一頁
-  // 順序：描述框 → AI 規劃 → 1 選問題 → 2 規劃數量 → 3 記錄表（每組數量自動帶入）→ 4 輸入數據與判定
-  // =====================================================================
-  (() => {
-    const vs = $("viewSample"), tabs = $("hypTabs");
-    [...vs.children].forEach(ch => { if (ch.classList.contains("tool-head") || ch.classList.contains("tool-problem")) return; tabs.before(ch); });
-    const head = (n, t, h) => { const d = document.createElement("div"); d.className = "dc-step"; d.innerHTML = `<span class="ss-step">${n}</span><b>${t}</b>${h ? `<span class="hint">${h}</span>` : ""}`; return d; };
-    $("ssQBanner").before(head(2, "規劃數量", "依選的問題計算要測幾個"));
-    tabs.before(head(3, "記錄表", "每組數量由上面的計算帶入，可修改"));
-    setTimeout(() => tabs.before(head(4, "輸入數據與判定", "貼上數據或由記錄表帶入；比較類題目會用對的方法判定")), 0);   // 記錄表卡片建立後再插入
-  })();
-
-  const DC_REC = { q1: "two", q2: "two", q3: "two", q4: "one", q11: "multi" };
-  // 把目前的問題與計算出的每組數量帶到「記錄表」
-  function dcSyncRecord() {
-    const purpose = DC_REC[ssCurQ]; if (!purpose || !PLANS.hyp) return "";
-    const cur = PLANS.hyp.state(), m = Object.assign({}, cur, { purpose });
-    let n = null, msg = "";
-    if (ssCurQ === "q1" || ssCurQ === "q4") {
-      const r = pw.result; m.relation = "ind";
-      if (r && (r.design === "two") === (purpose === "two")) { n = r.n; m.alt = r.alt === "two-sided" ? "two-sided" : "greater"; m.alpha = r.alpha === 0.01 ? "0.01" : r.alpha === 0.1 ? "0.10" : "0.05"; if (purpose === "one" && r.design === "one") m.relation = "ind"; }
-    } else if (ssCurQ === "q2" || ssCurQ === "q3") {
-      const k = ssCurQ === "q2" ? "tost" : "ni", p = ssCurQ === "q2" ? "eq" : "ni", r = TQ[k];
-      m.relation = $(p + "D").value === "one" ? "paired" : "ind"; m.alt = "two-sided";
-      if (r) { n = r.n; m.alpha = r.alpha === 0.1 ? "0.10" : "0.05"; }
-    }
-    const g = String(m.groups || "").split(/[,，、]+/).map(x => x.trim()).filter(Boolean);
-    if (purpose === "one" && g.length !== 1) m.groups = "樣本";
-    else if (purpose === "two" && (g.length !== 2 || /^(A, B|樣本)$/.test(String(cur.groups)))) m.groups = ssCurQ === "q2" || ssCurQ === "q3" ? "現行, 新" : "A, B";
-    else if (purpose === "multi" && g.length < 3) m.groups = "A, B, C";
-    if (n) { m.n = Math.min(500, Math.max(3, n)); msg = `已帶入 STEP 3 記錄表：${purpose === "two" ? (m.relation === "paired" ? `${m.n} 對` : `每組 ${m.n} 件`) : `${m.n} 件`}${n > 500 ? "（記錄表上限 500，請分批）" : ""}。`; }
-    if (JSON.stringify(m) !== JSON.stringify(cur)) PLANS.hyp.restore(m);
-    return msg;
-  }
-  const dcPushNote = (outId, msg) => { const o = $(outId); if (!o || !msg) return; const old = o.querySelector(".dc-pushed"); if (old) old.remove(); o.insertAdjacentHTML("afterbegin", `<p class="dc-pushed">✓ ${esc(msg)}</p>`); };
-  [["pwRun", "pwOut"], ["eqRun", "eqOut"], ["niRun", "niOut"]].forEach(([b, o]) => $(b).addEventListener("click", () => setTimeout(() => dcPushNote(o, dcSyncRecord()), 0)));
-
-  // ---------------- 判定（量完之後） ----------------
-  function dcCiSvg(r, kind) {
-    const D = r.delta, lo = kind === "ni" ? (r.dir === "lower" ? r.d - (r.bound - r.d) : r.bound) : r.lo, hi = kind === "ni" ? (r.dir === "lower" ? r.bound : r.d + (r.d - r.bound)) : r.hi;
-    const span = Math.max(1.6 * D, Math.abs(lo) * 1.15, Math.abs(hi) * 1.15), W = 560, H = 150, L = 30, R = 30, X = v => L + (v + span) / (2 * span) * (W - L - R);
-    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="信賴區間與可接受範圍">`;
-    const bandL = kind === "ni" && r.dir !== "lower" ? -D : -D, bandR = kind === "ni" && r.dir === "lower" ? D : D;
-    if (kind === "ni") s += r.dir === "lower" ? `<rect x="${X(-span)}" y="22" width="${X(D) - X(-span)}" height="78" fill="var(--good)" fill-opacity=".12"/>` : `<rect x="${X(-D)}" y="22" width="${X(span) - X(-D)}" height="78" fill="var(--good)" fill-opacity=".12"/>`;
-    else s += `<rect x="${X(-D)}" y="22" width="${X(D) - X(-D)}" height="78" fill="var(--good)" fill-opacity=".12"/>`;
-    [[bandL, kind === "ni" && r.dir === "lower" ? null : "−δ"], [bandR, kind === "ni" && r.dir !== "lower" ? null : "+δ"]].forEach(([v, t]) => { if (t) s += `<line x1="${X(v)}" x2="${X(v)}" y1="18" y2="104" stroke="var(--good)" stroke-width="2" stroke-dasharray="6 4"/><text x="${X(v)}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="var(--good)">${t} = ${t[0] === "−" ? "−" : "+"}${nf(D, 4)}</text>`; });
-    s += `<line x1="${X(0)}" x2="${X(0)}" y1="22" y2="104" stroke="var(--muted)" stroke-width="1"/><line x1="${L}" x2="${W - R}" y1="104" y2="104" stroke="var(--line)"/>`;
-    const col = r.ok ? "var(--chart-a)" : "var(--bad)", cy = 62;
-    if (kind === "ni") s += r.dir === "lower" ? `<line x1="${L}" x2="${X(r.bound)}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 6"/><line x1="${X(r.d)}" x2="${X(r.bound)}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="6" stroke-linecap="round"/>` : `<line x1="${X(r.bound)}" x2="${W - R}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 6"/><line x1="${X(r.bound)}" x2="${X(r.d)}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="6" stroke-linecap="round"/>`;
-    else s += `<line x1="${X(r.lo)}" x2="${X(r.hi)}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="6" stroke-linecap="round"/>`;
-    s += `<circle cx="${X(r.d)}" cy="${cy}" r="7" fill="var(--surface)" stroke="${col}" stroke-width="3"/>`;
-    s += `<text x="${X(0)}" y="122" text-anchor="middle" font-size="12" fill="var(--muted)">0</text><text x="${(L + W - R) / 2}" y="142" text-anchor="middle" font-size="12" fill="var(--muted)">平均差（第 2 組 − 第 1 組）</text>`;
-    return s + "</svg>";
-  }
-  function dcPlanCompare(planN, planSd, paired, n1, n2, s, unit) {
-    if (!planN && !planSd) return "";
-    const rows = [], u = unit ? " " + unit : "";
-    if (planN) { const short = paired ? n1 < planN : Math.min(n1, n2) < planN; rows.push(`<tr><td>樣本數</td><td class="num">${paired ? planN + " 對" : "每組 " + planN}</td><td class="num">${paired ? n1 + " 對" : n1 + "／" + n2}</td><td>${short ? `<span class="status ng">少於規劃</span>` : `<span class="status ok">符合</span>`}</td></tr>`); }
-    if (planSd) { const ratio = s / planSd; rows.push(`<tr><td>${paired ? "差值的標準差" : "合併標準差"}</td><td class="num">σ = ${nf(planSd)}${esc(u)}</td><td class="num">s = ${nf(s)}${esc(u)}</td><td>${ratio > 1.2 ? `<span class="status ng">實際波動大 ${fmt((ratio - 1) * 100, 0)}%：這次的把握低於規劃</span>` : `<span class="status ok">在規劃範圍內</span>`}</td></tr>`); }
-    return `<h3 style="margin-top:14px">與規劃比對</h3><div class="scroll-x"><table><thead><tr><th>項目</th><th class="num">規劃</th><th class="num">實際</th><th>判讀</th></tr></thead><tbody>${rows.join("")}</tbody></table></div><p class="hint">只比較規劃假設的 σ 與實際的 s；不用實際數據回推「事後檢定力」（那只是 p 值的換算，不能用來解釋結果）*。</p>`;
-  }
-  let dcLast = null;
-  function dcAfterRun() {
-    let box = $("dcJudge");
-    if (!box) { box = document.createElement("section"); box.className = "card sheet dc-judge"; box.id = "dcJudge"; box.dataset.ask = "同等性／不劣性判定"; box.hidden = true; $("subCompare").querySelector(".grid").after(box); }
-    const pb = $("previewBody"), oldB = pb && pb.querySelector(".dc-banner"); if (oldB) oldB.remove();
-    dcLast = null;
-    const R = state.result, q = ssCurQ;
-    if (!R || !state.data || !DC_REC[q]) { box.hidden = true; return; }
-    const two = state.data.length === 2, paired = !!(state.opts && state.opts.paired);
-    // 規劃值
-    const plan = q === "q2" ? TQ.tost : q === "q3" ? TQ.ni : (q === "q1" || q === "q4") ? pw.result : null;
-    if (q === "q2" || q === "q3") {
-      const kind = q === "q2" ? "tost" : "ni", p = q === "q2" ? "eq" : "ni", f = eqRead(p);
-      if (pb) pb.insertAdjacentHTML("afterbegin", `<div class="dc-banner">這題要證明${kind === "tost" ? "「一樣」" : "「沒有變差」"}：請看下方「${kind === "tost" ? "同等性" : "不劣性"}判定」。這裡的差異檢定 p 值不能用來證明一樣，只供參考。</div>`);
-      if (!two) { box.innerHTML = `<h3>${kind === "tost" ? "同等性" : "不劣性"}判定</h3><p class="help">需要剛好 2 組數據（第 1 組＝現行、第 2 組＝新）。</p>`; box.hidden = false; return; }
-      if (!(f.delta > 0)) { box.innerHTML = `<h3>${kind === "tost" ? "同等性" : "不劣性"}判定</h3><p class="help" style="color:var(--bad)">請先在上方「規劃數量」填寫 δ（並寫下依據），才能判定。δ 要在量測前決定。</p>`; box.hidden = false; return; }
-      const x = state.data[0], y = state.data[1], a = f.alpha;
-      const r = kind === "tost" ? SSE.tostTest(x, y, f.delta, a, paired) : SSE.niTest(x, y, f.delta, a, paired, f.dir);
-      const g1 = state.groups[0].name, g2 = state.groups[1].name, u = f.unit ? " " + f.unit : "", dec = Math.min((state.dec || 2) + 2, 8);
-      const cl = kind === "tost" ? `${fmt((1 - 2 * a) * 100, 0)}% 信賴區間` : `${fmt((1 - a) * 100, 1).replace(/\.0$/, "")}% 單邊信賴界限`;
-      const verdict = kind === "tost"
-        ? (r.ok ? `平均差的 ${cl}（${fmt(r.lo, dec)} ～ ${fmt(r.hi, dec)}${u}）整條落在 ±${nf(f.delta)}${u} 內，可以宣稱「${g2}」與「${g1}」同等。` : `平均差的 ${cl}（${fmt(r.lo, dec)} ～ ${fmt(r.hi, dec)}${u}）沒有整條落在 ±${nf(f.delta)}${u} 內，不能宣稱同等。${r.hi - r.lo > 2 * f.delta ? "區間比 ±δ 還寬，數據不足以判定，需要更多樣本或更小的波動。" : ""}`)
-        : (r.ok ? `平均差的 ${cl}（${fmt(r.bound, dec)}${u}）沒有越過 ${f.dir === "lower" ? "+" : "−"}${nf(f.delta)}${u}，可以宣稱「${g2}」沒有比「${g1}」差超過 δ。` : `平均差的 ${cl}（${fmt(r.bound, dec)}${u}）越過 ${f.dir === "lower" ? "+" : "−"}${nf(f.delta)}${u}，不能宣稱沒有變差。`);
-      const rows = kind === "tost"
-        ? [["平均差（" + g2 + " − " + g1 + "）", fmt(r.d, dec)], ["標準誤 SE", fmt(r.se, dec)], ["自由度", r.df], [cl, `${fmt(r.lo, dec)} ～ ${fmt(r.hi, dec)}`], ["檢定 1：H₀ 差異 ≤ −δ 的 p", fmtP(r.pLow)], ["檢定 2：H₀ 差異 ≥ +δ 的 p", fmtP(r.pUp)], ["TOST p（取較大者）", fmtP(r.p)]]
-        : [["平均差（" + g2 + " − " + g1 + "）", fmt(r.d, dec)], ["標準誤 SE", fmt(r.se, dec)], ["自由度", r.df], [cl, fmt(r.bound, dec)], [`H₀：差異 ${f.dir === "lower" ? "≥ +δ" : "≤ −δ"} 的 p`, fmtP(r.p)]];
-      box.innerHTML = `<h3>${kind === "tost" ? "同等性判定（TOST）" : "不劣性判定"}</h3>
-        <div class="verdict">${r.ok ? `<span class="pill sig" style="background:var(--good-soft);color:var(--good)">${kind === "tost" ? "同等" : "沒有變差"}</span>` : `<span class="pill sig" style="background:var(--bad-soft);color:var(--bad)">${kind === "tost" ? "不能宣稱同等" : "不能宣稱沒有變差"}</span>`}<p class="big">${esc(verdict)}</p></div>
-        <div class="chart-wrap" style="max-width:640px">${dcCiSvg(Object.assign({}, r, { delta: f.delta }), kind)}</div>
-        <div class="scroll-x"><table><tbody>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${v}</td></tr>`).join("")}</tbody></table></div>
-        <p class="hint">${paired ? "成對：以每對的差值計算。" : "兩組獨立：合併標準差（假設兩組標準差相近）。"}δ = ${kind === "tost" ? "±" : ""}${nf(f.delta)}${esc(u)}${f.basis ? "，依據：" + esc(EQ_BASIS.find(o => o[0] === f.basis)[1]) + (f.basisNote ? "——" + esc(f.basisNote) : "") : "（尚未填寫依據）"}；α = ${a}。計算方法：${kind === "tost" ? "兩個單尾 t 檢定（Schuirmann 1987）" : "單邊 t 檢定"}，已與 statsmodels 比對確效。</p>
-        ${dcPlanCompare(plan && plan.n, plan && plan.sd, paired, r.n1, r.n2, r.s, f.unit)}`;
-      box.hidden = false;
-      dcLast = { kind, r, f, g1, g2, paired };
-      return;
-    }
-    // ①④⑤：判定沿用上面的差異檢定，這裡只做「與規劃比對」
-    if (!plan) { box.hidden = true; return; }
-    let s = NaN, n1 = state.data[0].length, n2 = state.data[1] ? state.data[1].length : n1;
-    const sdOf = a => { const m = a.reduce((t, v) => t + v, 0) / a.length; return Math.sqrt(a.reduce((t, v) => t + (v - m) ** 2, 0) / (a.length - 1)); };
-    if (state.data.length === 1) s = sdOf(state.data[0]);
-    else if (state.data.length === 2) s = paired ? sdOf(state.data[1].map((v, i) => v - state.data[0][i])) : SSE.eqStats(state.data[0], state.data[1], false).s;
-    box.innerHTML = `<h3>與規劃比對</h3>${dcPlanCompare(plan.n, plan.sd, paired || state.data.length === 1, n1, n2, s, "").replace(/^<h3[^>]*>與規劃比對<\/h3>/, "")}`;
-    box.hidden = !isFinite(s);
-  }
-  function dcHasPlan() { return !!(ssCurQ && (TQ.tost || TQ.ni || pw.result || at.result || TQ.prop || TQ.tolp)); }
-  function dcPlanContext() {
-    const q = SSQ[ssCurQ]; if (!q) return "";
-    let t = `【使用者選的問題】${q.title}\n`;
-    const body = sampleBody(); if (body) t += "【規劃數量的計算結果】\n" + body + "\n";
-    if (dcLast) { const { kind, r, f, g1, g2 } = dcLast; t += `【${kind === "tost" ? "同等性" : "不劣性"}判定（程式計算）】${g2} − ${g1}：平均差 ${fmtSig(r.d, 6)}、SE ${fmtSig(r.se, 6)}、df ${r.df}、` + (kind === "tost" ? `${(1 - 2 * f.alpha) * 100}% CI ${fmtSig(r.lo, 6)} ～ ${fmtSig(r.hi, 6)}、兩個單尾 p ${fmtP(r.pLow)}／${fmtP(r.pUp)}` : `單邊界限 ${fmtSig(r.bound, 6)}、p ${fmtP(r.p)}`) + `；δ=${f.delta}；結論：${r.ok ? (kind === "tost" ? "同等" : "沒有變差超過 δ") : (kind === "tost" ? "不能宣稱同等" : "不能宣稱沒有變差")}\n`; }
-    return t;
-  }

@@ -62,21 +62,3 @@ for design, n, d, sd, D in [("two", 9, 0.02, 0.012, 0.0), ("two", 6, 0.02, 0.012
 ref["eq"] = dict(tp=tp, tn=tn, nip=nip, nin=nin, sim=sim)
 json.dump(ref, open(os.path.join(here, "ref.json"), "w"), ensure_ascii=False)
 print(len(tp), len(tn), len(nip), len(nin), [c["n"] for c in tn], [c["n"] for c in nin])
-
-# ---- 判定：statsmodels ttost_ind／ttost_paired 與單邊 t 檢定 ----
-from statsmodels.stats.weightstats import ttost_ind, ttost_paired, ttest_ind
-rng2 = np.random.default_rng(20261012); tt = []
-for k, (n1, n2, mu, sd, d, a, paired) in enumerate([(30, 30, 0.007, 0.012, 0.02, 0.05, False), (5, 5, 0.007, 0.012, 0.02, 0.05, False), (12, 15, -0.3, 1.0, 1.0, 0.05, False), (10, 10, 0.2, 0.5, 0.5, 0.025, True), (25, 25, 1.2, 1.0, 1.0, 0.05, True), (8, 11, 0.0, 2.0, 1.5, 0.05, False)]):
-    x = np.round(rng2.normal(5.0, sd, n1), 4); y = np.round(rng2.normal(5.0 + mu, sd, n2 if not paired else n1), 4)
-    if paired:
-        p, r1, r2 = ttost_paired(y, x, -d, d)
-        dd = y - x; se = dd.std(ddof=1) / np.sqrt(len(dd)); dfv = len(dd) - 1; dm = dd.mean()
-    else:
-        p, r1, r2 = ttost_ind(y, x, -d, d, usevar="pooled")
-        dfv = n1 + n2 - 2; sp = np.sqrt(((n1 - 1) * x.var(ddof=1) + (n2 - 1) * y.var(ddof=1)) / dfv); se = sp * np.sqrt(1 / n1 + 1 / n2); dm = y.mean() - x.mean()
-    tc = stats.t.ppf(1 - a, dfv)
-    ni_hi = float(stats.t.sf((dm + d) / se, dfv)); ni_lo = float(stats.t.cdf((dm - d) / se, dfv))
-    tt.append(dict(x=x.tolist(), y=y.tolist(), paired=paired, delta=d, alpha=a, pLow=float(r1[1]), pUp=float(r2[1]), p=float(p), d=float(dm), se=float(se), df=int(dfv), lo=float(dm - tc * se), hi=float(dm + tc * se), niHigher=ni_hi, niLower=ni_lo))
-ref["eq"]["tests"] = tt
-json.dump(ref, open(os.path.join(here, "ref.json"), "w"), ensure_ascii=False)
-print("tests", [(round(c["p"], 4), c["lo"] > -c["delta"] and c["hi"] < c["delta"]) for c in tt])
