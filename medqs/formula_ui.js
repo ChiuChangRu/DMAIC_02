@@ -9,7 +9,7 @@
     if (window.katex) return Promise.resolve(window.katex);
     if (katexP) return katexP;
     katexP = new Promise((ok, no) => {
-      const l = document.createElement("link"); l.rel = "stylesheet"; l.href = KATEX + "katex.min.css"; document.head.appendChild(l);
+      // 只載入 JS、輸出 MathML（瀏覽器原生排版）：claude.ai 頁面不允許載入外部樣式表，KaTeX 的 HTML 輸出少了 CSS 會撐爆版面
       const s = document.createElement("script"); s.src = KATEX + "katex.min.js"; s.onload = () => window.katex ? ok(window.katex) : no(); s.onerror = () => { katexP = null; no(); };
       document.head.appendChild(s);
     });
@@ -20,7 +20,7 @@
     if (!els.length) return;
     try {
       const K = await katexLib();
-      els.forEach(el => { K.render(el.dataset.tex, el, { displayMode: el.tagName === "DIV", throwOnError: false, strict: "ignore" }); el.dataset.done = "1"; });
+      els.forEach(el => { K.render(el.dataset.tex, el, { displayMode: el.tagName === "DIV", throwOnError: false, strict: "ignore", output: "mathml" }); el.dataset.done = "1"; });
     } catch (_) {
       els.forEach(el => { el.innerHTML = `<code>${esc(el.dataset.tex)}</code>`; });
       const w = box.querySelector(".fx-warn"); if (w) w.hidden = false;

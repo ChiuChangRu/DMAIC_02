@@ -631,6 +631,10 @@ details.fx > summary { cursor: pointer; padding: 10px 14px; font-weight: 700; fo
 .fx-steps { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
 .fx-lab { font-size: 14px; color: var(--muted); margin-bottom: 4px; }
 .fx-math { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 14px; }
+details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%; }
+.fx-math math { font-size: 16px; }
+.fx-math svg { max-width: 100%; }
+.preview-body { min-width: 0; }
 .fx-math code { white-space: pre-wrap; word-break: break-all; font-size: 13px; }
 
 .pk-badge { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 8px; padding: 6px 10px; }

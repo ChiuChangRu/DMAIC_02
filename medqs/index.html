@@ -631,6 +631,10 @@ details.fx > summary { cursor: pointer; padding: 10px 14px; font-weight: 700; fo
 .fx-steps { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
 .fx-lab { font-size: 14px; color: var(--muted); margin-bottom: 4px; }
 .fx-math { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 14px; }
+details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%; }
+.fx-math math { font-size: 16px; }
+.fx-math svg { max-width: 100%; }
+.preview-body { min-width: 0; }
 .fx-math code { white-space: pre-wrap; word-break: break-all; font-size: 13px; }
 
 .pk-badge { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 8px; padding: 6px 10px; }
@@ -8879,7 +8883,7 @@ else root.runValidation = runValidation;
     if (window.katex) return Promise.resolve(window.katex);
     if (katexP) return katexP;
     katexP = new Promise((ok, no) => {
-      const l = document.createElement("link"); l.rel = "stylesheet"; l.href = KATEX + "katex.min.css"; document.head.appendChild(l);
+      // 只載入 JS、輸出 MathML（瀏覽器原生排版）：claude.ai 頁面不允許載入外部樣式表，KaTeX 的 HTML 輸出少了 CSS 會撐爆版面
       const s = document.createElement("script"); s.src = KATEX + "katex.min.js"; s.onload = () => window.katex ? ok(window.katex) : no(); s.onerror = () => { katexP = null; no(); };
       document.head.appendChild(s);
     });
@@ -8890,7 +8894,7 @@ else root.runValidation = runValidation;
     if (!els.length) return;
     try {
       const K = await katexLib();
-      els.forEach(el => { K.render(el.dataset.tex, el, { displayMode: el.tagName === "DIV", throwOnError: false, strict: "ignore" }); el.dataset.done = "1"; });
+      els.forEach(el => { K.render(el.dataset.tex, el, { displayMode: el.tagName === "DIV", throwOnError: false, strict: "ignore", output: "mathml" }); el.dataset.done = "1"; });
     } catch (_) {
       els.forEach(el => { el.innerHTML = `<code>${esc(el.dataset.tex)}</code>`; });
       const w = box.querySelector(".fx-warn"); if (w) w.hidden = false;
