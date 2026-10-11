@@ -12,9 +12,9 @@
       <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
       <button type="button" role="tab" data-route="home" aria-selected="true">定義問題</button>
       <button type="button" role="tab" data-route="fishbone" aria-selected="false">魚骨圖</button>
-      <button type="button" role="tab" data-route="sample" aria-selected="false">樣本數規劃</button>
+      <button type="button" role="tab" data-route="sample" aria-selected="false" hidden>樣本數規劃</button>
       <button type="button" role="tab" data-route="msa" aria-selected="false">MSA</button>
-      <button type="button" role="tab" data-route="hypothesis" aria-selected="false">假設檢定</button>
+      <button type="button" role="tab" data-route="hypothesis" aria-selected="false">差異比較與樣本數規劃</button>
       <button type="button" role="tab" data-route="regression" aria-selected="false">相關與回歸</button>
       <button type="button" role="tab" data-route="spc" aria-selected="false">SPC</button>
       <button type="button" role="tab" data-route="doe" aria-selected="false">DOE</button>
@@ -159,9 +159,9 @@
 
 
   <section id="viewAnalyze" role="tabpanel" data-view="hypothesis" hidden>
-    <div class="tool-head"><h2 class="tool-title">假設檢定</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
+    <div class="tool-head"><h2 class="tool-title">差異比較與樣本數規劃</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
     <div class="tool-problem"><label for="hypProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
-    <div class="subtabs" role="tablist" aria-label="假設檢定功能">
+    <div class="subtabs" role="tablist" aria-label="假設檢定功能" id="hypTabs">
       <button type="button" role="tab" data-sub="compare" aria-selected="true">比較檢定</button>
       <button type="button" role="tab" data-sub="tol" aria-selected="false">統計允差區間</button>
     </div>
@@ -360,24 +360,25 @@
     <div class="tool-problem"><label for="sampleProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠到新廠區，要證明射出件內徑跟舊廠一樣，要測幾件"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
     <section class="card ss-qcard" id="ssQ">
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
-      <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
+      <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」；比較類的題目量完後，在本頁下方用對的方法判定。不確定選哪一題，可以在上方描述情境，請 AI 建議。</p>
       <div class="ss-qgrid">
-        <div class="ss-qgrp"><div class="ss-qgl">變更／比較</div>
+        <div class="ss-qgrp"><div class="ss-qgl">比較（量完在本頁下方判定）</div>
           <button type="button" class="ssq" data-q="q1"><span class="ssq-t">① 改善後有沒有變好？兩條線、兩家料有沒有差？</span><span class="ssq-s">找原因、驗證改善效果（證明有差）</span></button>
           <button type="button" class="ssq" data-q="q2"><span class="ssq-t">② 轉廠、換料、換設備後，一樣嗎？<span class="ssq-new">新增</span></span><span class="ssq-s">證明相當（同等性 TOST）</span></button>
           <button type="button" class="ssq" data-q="q3"><span class="ssq-t">③ 換了之後，不會變差吧？<span class="ssq-new">新增</span></span><span class="ssq-s">只怕變差（不劣性）</span></button>
           <button type="button" class="ssq" data-q="q4"><span class="ssq-t">④ 平均有沒有達到目標值？</span><span class="ssq-s">單組對目標值</span></button>
+          <button type="button" class="ssq" data-q="q11"><span class="ssq-t">⑤ 三組以上有沒有差？</span><span class="ssq-s">例如三台機台、三家供應商</span></button>
         </div>
         <div class="ss-qgrp"><div class="ss-qgl">合格／不合格</div>
-          <button type="button" class="ssq" data-q="q5"><span class="ssq-t">⑤ 要測幾個全過，才能宣稱可靠度（例如 95/95）？</span><span class="ssq-s">破裂、洩漏、外觀等通過／不通過試驗</span></button>
-          <button type="button" class="ssq" data-q="q6"><span class="ssq-t">⑥ 現有抽樣方案（n、Ac）能宣稱什麼？</span><span class="ssq-s">評估既有方案或已完成的試驗</span></button>
-          <button type="button" class="ssq" data-q="q7"><span class="ssq-t">⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？</span><span class="ssq-s">比例資料</span></button>
+          <button type="button" class="ssq" data-q="q5"><span class="ssq-t">⑥ 要測幾個全過，才能宣稱可靠度（例如 95/95）？</span><span class="ssq-s">破裂、洩漏、外觀等通過／不通過試驗</span></button>
+          <button type="button" class="ssq" data-q="q6"><span class="ssq-t">⑦ 現有抽樣方案（n、Ac）能宣稱什麼？</span><span class="ssq-s">評估既有方案或已完成的試驗</span></button>
+          <button type="button" class="ssq" data-q="q7"><span class="ssq-t">⑧ 不良率有沒有低於目標？兩邊不良率有沒有差？</span><span class="ssq-s">比例資料</span></button>
         </div>
         <div class="ss-qgrp"><div class="ss-qgl">符合規格</div>
-          <button type="button" class="ssq" data-q="q8"><span class="ssq-t">⑧ 要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
+          <button type="button" class="ssq" data-q="q8"><span class="ssq-t">⑨ 要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
           <div class="ss-qgl" style="margin-top:10px">實驗與其他工具</div>
-          <button type="button" class="ssq" data-q="q9"><span class="ssq-t">⑨ 實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
-          <button type="button" class="ssq" data-q="q10"><span class="ssq-t">⑩ MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
+          <button type="button" class="ssq" data-q="q9"><span class="ssq-t">⑩ 實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
+          <button type="button" class="ssq" data-q="q10"><span class="ssq-t">⑪ MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
         </div>
         <div class="ss-qgrp"><div class="ss-qgl">進階</div>
           <button type="button" class="ssq ssq-adv" id="ssAdvBtn" aria-expanded="false"><span class="ssq-t">直接選統計方法 ▸</span><span class="ssq-s">原本的計算機分頁，給熟悉統計方法的人使用</span></button>
@@ -1292,6 +1293,7 @@
     state.lastKey = settingsKey();
     renderResult();
     noteResultChanged();
+    if (typeof dcAfterRun === "function") dcAfterRun();
     $("sheets").hidden = false;
     $("sheets").classList.remove("is-stale");
   }
@@ -1587,8 +1589,8 @@
     const out = L.join("\n"); return out.length > 3000 ? out.slice(0, 3000) + "…" : out;
   }
   const PLAN_Q = "我還沒有分析結果。請依我目前頁面上的設定，說明：這個工具適合解決什麼問題、要怎麼規劃（要收集什麼資料、資料格式、樣本數或水準怎麼決定、要控制什麼條件），以及常見錯誤。必要時先問我 1～2 個關鍵問題。";
-  function hypHas() { return hypSub === "compare" ? !!state.result : hypSub === "power" ? !!pw.result : hypSub === "tol" ? !!tl.result : hypSub === "attr" ? !!at.result : false; }
-  function hypContext() { const pd = ($("hypProblem").value || "").trim(); return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + "【目前頁面：假設檢定 · " + ({ compare: "比較檢定", power: "樣本數與檢定力", tol: "統計允差區間", attr: "計數型抽樣" }[hypSub]) + "】\n" + (!hypHas() ? "【尚未分析】\n【頁面目前的設定】\n" + formSnapshot($("viewAnalyze")) : hypSub === "power" ? powerContext() : hypSub === "tol" ? tolContext() : hypSub === "attr" ? attrContext() : contextText()); }
+  function hypHas() { if (typeof dcHasPlan === "function" && dcHasPlan()) return true; return hypSub === "compare" ? !!state.result : hypSub === "power" ? !!pw.result : hypSub === "tol" ? !!tl.result : hypSub === "attr" ? !!at.result : false; }
+  function hypContext() { const pd = ($("hypProblem").value || "").trim(); return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + (typeof dcPlanContext === "function" ? dcPlanContext() : "") + "【目前頁面：差異比較 · " + ({ compare: "比較檢定", power: "樣本數與檢定力", tol: "統計允差區間", attr: "計數型抽樣" }[hypSub]) + "】\n" + (!(hypSub === "compare" ? state.result : hypSub === "tol" ? tl.result : hypSub === "power" ? pw.result : at.result) ? "【尚未分析】\n【頁面目前的設定】\n" + formSnapshot($("viewAnalyze")) : hypSub === "power" ? powerContext() : hypSub === "tol" ? tolContext() : hypSub === "attr" ? attrContext() : contextText()); }
   function noteResultChanged() {
     setTimeout(updateChatControls, 0);
     if (chatKey === "hyp" && turns.length) { appendLog([{ role: "note", text: "結果已更新，下一個問題 AI 會依最新結果回答" }]); }
@@ -1868,7 +1870,7 @@
       : chatKey === "msa" ? RULES + "\n\n" + MP_CHAT_RULE
       : chatKey === "spc" ? RULES + "\n\n" + SP_CHAT_RULE
       : chatKey === "regression" ? RULES + "\n\n" + RG_CHAT_RULE
-      : PLANS && PLANS[chatKey] ? RULES + "\n\n" + PLANS[chatKey].chatRule
+      : PLANS && PLANS[chatKey] ? RULES + "\n\n" + PLANS[chatKey].chatRule + (chatKey === "hyp" && PLANS.sample ? "\n\n" + PLANS.sample.chatRule : "")
       : RULES);
     const prevPrefix = chatPrefix, prevCtx = chatLastCtx, prevStyle = styleSent[chatKey];
     { const sty = styleForAsk(chatKey, !turns.length); if (sty) parts.push(sty); }
@@ -2526,6 +2528,7 @@
   $("recLine").addEventListener("click", e => { if (e.target.closest("#recReset")) { setRecommend(null); return; } const b = e.target.closest("[data-rec]"); if (b) { closePanel(); route(b.dataset.rec); } });
   let valRan = false, currentView = "home";
   function route(name) {
+    if (name === "sample") name = "hypothesis";   // 樣本數規劃已併入「差異比較與樣本數規劃」
     const tool = TOOLS.find(t => t.id === name);
     const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression"].includes(name) ? name : (tool ? "placeholder" : "home");
     if (view === "home" && name !== "home") name = "home";
@@ -2574,7 +2577,7 @@
   document.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => loadExample(b.dataset.example)));
   $("clearBtn").addEventListener("click", () => {
     $("pasteBox").value = ""; ["lsl", "usl", "target"].forEach(id => { $(id).value = ""; }); $("delta0").value = "0";
-    state.result = null; state.parsed = null; state.included = [];
+    state.result = null; state.parsed = null; state.included = []; if (typeof dcAfterRun === "function") setTimeout(dcAfterRun, 0);
     $("sheets").hidden = true; $("runHint").textContent = "";
     $("resultTitle").textContent = "尚未分析";
     $("previewBody").innerHTML = `<p class="help">貼上資料並按「執行分析」後，這裡會顯示結論與箱型圖。</p>`;

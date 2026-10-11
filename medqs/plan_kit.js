@@ -42,6 +42,7 @@
       </div>`;
     if (c.direct) { [id("Form"), id("Check")].forEach(k => { card.querySelector("#" + k).hidden = true; }); card.querySelector("#" + id("Go")).closest(".run-row").hidden = true; }
     card.querySelector("#" + id("Desc")).closest(".field").hidden = true;   // 只留頁面上方一個描述框
+    if (c.noAi) { card.querySelector("#" + id("Ai")).hidden = true; }
     const view = $(c.view), anchor = view.querySelector(c.before);
     anchor.parentNode.insertBefore(card, anchor);
     const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
@@ -173,13 +174,14 @@
   // ---------------- 樣本數規劃 ----------------
   const SS_CALC = [["tost", "變更後一樣嗎（同等性 TOST）"], ["ni", "換了不會變差（不劣性）"], ["power", "有沒有差（t 檢定：平均值）"], ["attr", "通過／不通過（信心度／可靠度）"], ["prop", "不良率比較"], ["tolp", "允差區間（涵蓋比例）"]];
   makePlanner({
-    id: "pks", view: "viewSample", before: "#ssQ", route: "sample", chatKey: "sample", problemId: "sampleProblem", block: "sampleplan",
-    title: "樣本數規劃", sub: "用一句話描述情境，AI 建議要回答哪一題與條件；計算由程式執行",
+    id: "pks", view: "viewAnalyze", before: "#ssQ", route: "hypothesis", chatKey: "sample", problemId: "hypProblem", block: "sampleplan",
+    title: "AI 規劃（選填）", sub: "用一句話描述情境，AI 建議要回答哪一題與條件；計算由程式執行",
     help: "流程：① 用一句話描述情境，請 AI 建議要選下方哪一題、條件是什麼（AI 不提供標準差、δ 等數值）→ ② 建議直接選好題目並填進下方表單，標示「AI 建議・待確認」，程式同時檢查 → ③ 你補上或修改後按「計算」。也可以不用 AI，直接在下方選題。",
     direct: true,
     toolHas: m => { const r = { power: pw.result, attr: at.result, prop: TQ.prop, tolp: TQ.tolp, tost: TQ.tost, ni: TQ.ni }[m.calc]; return !!r; },
     fill: m => {
       ssPick({ power: m.design === "one" ? "q4" : "q1", attr: "q5", prop: "q7", tolp: "q8", tost: "q2", ni: "q3" }[m.calc], { noScroll: true });
+      setTimeout(() => { if (typeof dcSyncRecord === "function") dcSyncRecord(); }, 0);
       if (m.calc === "tost" || m.calc === "ni") {
         const p = m.calc === "tost" ? "eq" : "ni";
         pkSet(p + "D", m.design, "change"); if (m.calc === "ni") pkSet("niDir", m.dir, "change");
@@ -287,9 +289,9 @@
   let pkHypTouched = false; $("pasteBox").addEventListener("input", () => { pkHypTouched = true; });
   document.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => { pkHypTouched = false; }));
   makePlanner({
-    id: "pkh", view: "viewAnalyze", before: ".subtabs", route: "hypothesis", chatKey: "hyp", problemId: "hypProblem", block: "hypplan",
-    title: "比較試驗規劃", sub: "先決定比什麼、分幾組、每組幾個；產生記錄表，填完再分析",
-    help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
+    id: "pkh", view: "viewAnalyze", before: "#hypTabs", route: "hypothesis", chatKey: "hyp", problemId: "hypProblem", block: "hypplan", noAi: true,
+    title: "記錄表", sub: "組別與每組數量（由上面的規劃帶入，可修改）；產生記錄表，填完帶入下方判定",
+    help: "每組數量會由上面「規劃數量」的計算結果自動帶入，也可以手動修改 → 產生記錄表 → 填入量測值 → 帶入下方分析與判定（統計全部由程式計算）。",
     descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
     goLabel: "產生記錄表",
     role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。",

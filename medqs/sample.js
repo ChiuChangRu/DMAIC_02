@@ -146,6 +146,25 @@
   const tostDelta = (design, n, sd, alpha, target, trueDiff) => eqDelta(d => d > Math.abs(trueDiff || 0) ? tostPower(design, n, d, sd, alpha, trueDiff) : 0, target, sd);
   const niDelta = (design, n, sd, alpha, target, trueDiff, dir) => eqDelta(d => niPower(design, n, d, sd, alpha, trueDiff, dir), target, sd);
 
-  const api = { tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
+  // ---------- 量完後的判定：同等性（TOST）與不劣性（平均差 d = y − x：第 2 組 − 第 1 組） ----------
+  function eqStats(x, y, paired) {
+    const m = a => a.reduce((s, v) => s + v, 0) / a.length, v = a => { const mu = m(a); return a.reduce((s, t) => s + (t - mu) ** 2, 0) / (a.length - 1); };
+    if (paired) { const dd = y.map((t, i) => t - x[i]), n = dd.length; return { d: m(dd), se: Math.sqrt(v(dd) / n), df: n - 1, s: Math.sqrt(v(dd)), n1: n, n2: n }; }
+    const n1 = x.length, n2 = y.length, sp = Math.sqrt(((n1 - 1) * v(x) + (n2 - 1) * v(y)) / (n1 + n2 - 2));
+    return { d: m(y) - m(x), se: sp * Math.sqrt(1 / n1 + 1 / n2), df: n1 + n2 - 2, s: sp, n1, n2 };
+  }
+  function tostTest(x, y, delta, alpha, paired) {
+    const r = eqStats(x, y, paired), t = tInv(1 - alpha, r.df);
+    const pLow = HT.tSf((r.d + delta) / r.se, r.df), pUp = HT.tCdf((r.d - delta) / r.se, r.df);   // H0: d ≤ −δ ； H0: d ≥ +δ
+    const lo = r.d - t * r.se, hi = r.d + t * r.se;
+    return Object.assign(r, { delta, alpha, tcrit: t, lo, hi, pLow, pUp, p: Math.max(pLow, pUp), ok: lo > -delta && hi < delta });
+  }
+  function niTest(x, y, delta, alpha, paired, dir) {
+    const r = eqStats(x, y, paired), t = tInv(1 - alpha, r.df);
+    if (dir === "lower") { const p = HT.tCdf((r.d - delta) / r.se, r.df), bound = r.d + t * r.se; return Object.assign(r, { delta, alpha, dir, tcrit: t, bound, p, ok: bound < delta }); }
+    const p = HT.tSf((r.d + delta) / r.se, r.df), bound = r.d - t * r.se; return Object.assign(r, { delta, alpha, dir: "higher", tcrit: t, bound, p, ok: bound > -delta });
+  }
+
+  const api = { tostTest, niTest, eqStats, tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SS = api;
 })(typeof window !== "undefined" ? window : globalThis);
