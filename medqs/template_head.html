@@ -621,6 +621,18 @@ tr.case-cur td { background: var(--teal-soft); }
 .pk-miss, .mp-in.pk-miss, select.pk-miss { border-color: var(--bad) !important; box-shadow: 0 0 0 1px var(--bad) inset; }
 .pk-src { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 999px; padding: 2px 10px; }
 .pk-src[hidden] { display: none; }
+.pk-inline { border: 1px dashed var(--copper); border-radius: 10px; padding: 10px 12px; margin: 12px 0 4px; display: grid; gap: 8px; background: var(--copper-soft); }
+.pk-inline[hidden] { display: none; }
+.pk-inline .pk-src { justify-self: start; background: var(--surface); }
+details.fx { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+details.fx > summary { cursor: pointer; padding: 10px 14px; font-weight: 700; font-size: 15px; }
+.fx-body { padding: 0 14px 12px; overflow-x: auto; }
+.fx-title { font-weight: 700; margin: 4px 0 8px; }
+.fx-steps { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
+.fx-lab { font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+.fx-math { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 14px; }
+.fx-math code { white-space: pre-wrap; word-break: break-all; font-size: 13px; }
+
 .pk-badge { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--copper-text); background: var(--copper-soft); border-radius: 8px; padding: 6px 10px; }
 .pk-badge[hidden] { display: none; }
 .pk-ask { border: 1.5px solid var(--copper); border-radius: 10px; padding: 10px 14px; background: var(--copper-soft); }

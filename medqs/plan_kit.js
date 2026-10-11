@@ -13,6 +13,16 @@
   const PK_COMMON = "規則：1. 全程使用繁體中文。2. 不要產生、猜測或舉例任何量測數值或實驗結果；只給設計參數。3. 標準差 σ、預期平均、不良率、因子水準等「需要使用者決定或歷史資料」的數字，只在使用者有提供時才填，否則留空（\"\" 或 null），並在文字中說明要去哪裡找或怎麼決定。4. 規格、目標值只在使用者提供時填。5. 不確定的地方標 * 並說明要使用者確認什麼。6. 不要要求或重複客戶、病患、批號等可識別資訊。";
   const PK_FORMAT = "回答格式：先用最多 6 點說明為什麼這樣設計（每點一行，以「- 」開頭），口語、短句，具體到可以照做；常見做法的數量標 *。最後附一個規劃區塊（JSON），格式如下：";
 
+  // 樣本數規劃：AI 建議直接填進工具時，在工具的「計算」按鈕上方顯示來源與程式檢查；按「計算」後收起
+  const PK_RUNS = { power: "pwRun", attr: "atRun", prop: "prRun", tolp: "tpRun" };
+  function pkInline(calc, html) {
+    Object.keys(PK_RUNS).forEach(k => { const b = document.querySelector(`[data-pkin="${k}"]`); if (b) b.hidden = true; });
+    if (!html) return;
+    const run = $(PK_RUNS[calc]); if (!run) return;
+    let box = document.querySelector(`[data-pkin="${calc}"]`);
+    if (!box) { box = document.createElement("div"); box.className = "pk-inline"; box.dataset.pkin = calc; run.closest(".run-row").before(box); run.addEventListener("click", () => { box.hidden = true; }); }
+    box.innerHTML = html; box.hidden = false;
+  }
   function makePlanner(c) {
     const P = { m: JSON.parse(JSON.stringify(c.def)), busy: false, src: "" };
     const id = s => c.id + s, blocks = c.blocks || [c.block];
@@ -30,6 +40,7 @@
         <div class="run-row"><button class="btn primary" type="button" id="${id("Go")}">${esc(c.goLabel)}</button><button class="btn ghost" type="button" id="${id("Reset")}">恢復預設值</button></div>
         <div id="${id("Sheet")}" hidden></div>
       </div>`;
+    if (c.direct) { [id("Form"), id("Check")].forEach(k => { card.querySelector("#" + k).hidden = true; }); card.querySelector("#" + id("Go")).closest(".run-row").hidden = true; }
     const view = $(c.view), anchor = view.querySelector(c.before);
     anchor.parentNode.insertBefore(card, anchor);
     const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
@@ -87,6 +98,11 @@
       const base = JSON.parse(JSON.stringify(c.def)), r = c.fromJson(j, base, src) || {};
       if (r.error) { note(r.error, true); return false; }
       const fresh = r.m || base;
+      if (c.direct) {   // 直接填進下方工具（不經過確認區表單），由人確認後按工具的「計算」
+        const fillIt = () => { P.m = fresh; render(); const f = c.fill(P.m, { src }); note((r.notes || []).concat([f.bad ? "已填入下方工具，但還有缺少或不可行的設定（✗），請補上後再按「計算」。" : "已填入下方工具，請確認數值後按「計算」。"]).join(" "), f.bad); };
+        if (c.toolHas && c.toolHas(fresh)) ask("下方工具已經有計算結果。要用 AI 的建議取代目前的設定嗎？", [{ label: "取代", fn: fillIt }, { label: "取消" }]); else fillIt();
+        return true;
+      }
       const doIt = mode => {
         if (mode === "add" && c.merge) c.merge(P.m, fresh); else P.m = fresh;
         $(id("Sheet")).hidden = true; setSrc(src); render();
@@ -136,10 +152,11 @@
     });
     PLANS[c.chatKey] = {
       parse, block: blocks[0], stripRe,
+      _check: c.check,
       _fromJson: j => { const base = JSON.parse(JSON.stringify(c.def)), r = c.fromJson(j, base, "ai") || {}; return r.error ? r : { m: r.m || base }; },
       chatRule: `【${c.title}】${c.chatWhen || "回答中如果有建議具體的設計參數"}，最後附一個 \`\`\`${blocks[0]} 區塊，讓使用者按按鈕帶入網頁的確認區。區塊內只放設計參數，不放任何量測數值或結果。${PK_COMMON}\n格式：\n${schema}`,
       html: j => { const pv = c.preview ? c.preview(j) : { html: "", ok: true }; return `<div class="pk-preview">${pv.html}${pv.ok ? `<div class="fb-sug"><button type="button" class="btn small primary" data-pkplan="${c.chatKey}" data-pkjson="${esc(JSON.stringify(j))}">${esc(c.chatBtn || "帶入「" + c.title + "」確認區")}</button></div>` : ""}</div>`; },
-      apply: (j, src) => { closePanel(); route(c.route); card.open = true; if (load(j, src || "ai")) card.scrollIntoView({ behavior: "smooth", block: "start" }); },
+      apply: (j, src) => { closePanel(); route(c.route); card.open = true; if (load(j, src || "ai") && !c.direct) card.scrollIntoView({ behavior: "smooth", block: "start" }); },
       state: () => { read(); return JSON.parse(JSON.stringify(P.m)); },
       restore: m => { P.m = Object.assign(JSON.parse(JSON.stringify(c.def)), m || {}); $(id("Why")).hidden = true; $(id("Sheet")).hidden = true; setSrc(""); note(""); render(); }
     };
@@ -156,8 +173,28 @@
   const SS_CALC = [["power", "計量型比較（t 檢定：平均值）"], ["attr", "通過／不通過（信心度／可靠度）"], ["prop", "不良率比較"], ["tolp", "允差區間（涵蓋比例）"]];
   makePlanner({
     id: "pks", view: "viewSample", before: ".subtabs", route: "sample", chatKey: "sample", problemId: "sampleProblem", block: "sampleplan",
-    title: "樣本數規劃", sub: "先決定要用哪種算法、條件是什麼；程式計算樣本數",
-    help: "流程：① 描述要證明什麼，請 AI 建議用哪種算法與條件（AI 不提供標準差等歷史數據）→ ② 程式檢查，你補上或修改 → ③ 按「帶入並計算」，由下方工具計算樣本數。",
+    title: "樣本數規劃", sub: "描述情境，請 AI 建議算法與條件，直接填進下方工具；計算由程式執行",
+    help: "流程：① 描述要證明什麼，請 AI 建議用哪種算法與條件（AI 不提供標準差等歷史數據）→ ② 建議直接填進下方工具，標示「AI 建議・待確認」，程式同時檢查 → ③ 你補上或修改後按工具的「計算」。也可以不用 AI，直接在下方填寫。",
+    direct: true,
+    toolHas: m => { const r = { power: pw.result, attr: at.result, prop: TQ.prop, tolp: TQ.tolp }[m.calc]; return !!r; },
+    fill: m => {
+      pkClick(`#ssTabs [data-tsub="${m.calc}"]`);
+      if (m.calc === "power") {
+        pkClick(`#pwDesign [data-v="${m.design}"]`); pkClick('#pwSolve [data-v="n"]'); pkClick(`#pwAlt [data-v="${m.alt}"]`);
+        pkSet("pwSd", m.sd); pkSet("pwDelta", m.delta === "" ? "" : Math.abs(+m.delta)); pkSet("pwTarget", m.power, "change"); pkSet("pwAlpha", m.alpha, "change");
+      } else if (m.calc === "attr") {
+        pkClick('#atMode [data-v="plan"]'); pkSet("atC", m.conf, "change"); pkSet("atR", m.rel, "change"); pkSet("atCc", m.fails, "change");
+      } else if (m.calc === "prop") {
+        pkClick(`#prDesign [data-v="${m.design}"]`); pkClick('#prSolve [data-v="n"]'); pkSet("prP0", m.p0); pkSet("prP1", m.p1); pkSet("prTarget", m.power, "change"); pkSet("prAlpha", m.alpha, "change");
+      } else {
+        pkClick(`#tpMethod [data-v="${m.method}"]`); pkClick(`#tpSide [data-v="${m.side}"]`); pkSet("tpP", m.cover, "change"); pkSet("tpG", m.tconf, "change");
+      }
+      const ck = PLANS.sample._check(m), bad = ck.some(x => x.lv === "bad");
+      pkInline(m.calc, `<span class="pk-src">來源：AI 建議・待確認</span><ul class="mp-check">${pkCheckHtml(ck)}</ul><p class="hint">確認或修改上面的數值後，按「計算」。</p>`);
+      const run = $({ power: "pwRun", attr: "atRun", prop: "prRun", tolp: "tpRun" }[m.calc]);
+      run.closest(".card").scrollIntoView({ behavior: "smooth", block: "start" });
+      return { bad };
+    },
     descPh: "例如：轉廠後要證明封口拉力平均沒有下降超過 2 N，歷史標準差約 1.5 N",
     goLabel: "帶入並計算",
     role: "你是樣本數規劃的助手。依使用者描述，建議用哪一種樣本數算法與條件：power（計量型 t 檢定）、attr（通過／不通過：信心度與可靠度，例如 95/95）、prop（不良率比較）、tolp（統計允差區間）。",
