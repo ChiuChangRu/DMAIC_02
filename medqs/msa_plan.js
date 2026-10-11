@@ -142,13 +142,13 @@
   ].join("\n");
   const MP_CHAT_RULE = "【MSA 實驗參數】回答中如果有建議具體的實驗設計，最後附一個 ```msaplan 區塊，讓使用者按按鈕帶入網頁的規劃表單。區塊內只放設計參數，不放任何量測數值。格式：\n" + MP_SCHEMA;
   async function mpAsk() {
-    const q = $("mpDesc").value.trim(); if (!q) { mpNote("請先描述量測情境。", true); return; }
+    const q = (($("msaProblem").value || "").trim() || $("mpDesc").value.trim()); if (!q) { mpNote("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
     if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (MP.busy) return; MP.busy = true; $("mpAi").disabled = true; mpNote("AI 規劃中…");
     mpRead();
     const ctx = ($("msaProblem").value || "").trim(), M = MP.m;
     const newbie = styleFor("msa").persp === "teach";
-    const msg = MP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋，理由要說到新人聽得懂為什麼要這樣做。" : "") + "\n\n【目前選擇的分析】" + MP_NAME[MP.type] + (MP_DT[M.dataType] ? "\n【使用者選的輸出資料型態】" + MP_DT[M.dataType].name : "") + (ctx ? "\n【問題描述】" + ctx : "") + "\n【量測情境】" + q;
+    const msg = MP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋，理由要說到新人聽得懂為什麼要這樣做。" : "") + "\n\n【目前選擇的分析】" + MP_NAME[MP.type] + (MP_DT[M.dataType] ? "\n【使用者選的輸出資料型態】" + MP_DT[M.dataType].name : "") + (ctx && ctx !== q ? "\n【問題描述】" + ctx : "") + "\n【量測情境】" + q;
     try {
       const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
       const j = mpParsePlan(res.text), why = res.text.replace(/```msaplan[\s\S]*?```/g, "").trim();

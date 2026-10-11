@@ -856,7 +856,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewAnalyze" role="tabpanel" data-view="hypothesis" hidden>
     <div class="tool-head"><h2 class="tool-title">假設檢定</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
-    <div class="tool-problem"><label for="hypProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
+    <div class="tool-problem"><label for="hypProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="假設檢定功能">
       <button type="button" role="tab" data-sub="compare" aria-selected="true">比較檢定</button>
       <button type="button" role="tab" data-sub="tol" aria-selected="false">統計允差區間</button>
@@ -1053,7 +1053,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewSample" role="tabpanel" data-view="sample" hidden>
     <div class="tool-head"><h2 class="tool-title">樣本數規劃</h2><span class="hint" id="ssSubHint"></span></div>
-    <div class="tool-problem"><label for="sampleProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠後的拉伸強度驗證要測幾支"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
+    <div class="tool-problem"><label for="sampleProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠到新廠區，要證明射出件內徑跟舊廠一樣，要測幾件"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
     <section class="card ss-qcard" id="ssQ">
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
       <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
@@ -1276,7 +1276,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewReg" role="tabpanel" data-view="regression" hidden>
     <div class="tool-head"><h2 class="tool-title">相關與回歸</h2><span class="hint">用舊資料找關聯：相關係數、散佈圖、簡單線性迴歸</span></div>
-    <div class="tool-problem"><label for="regressionProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="regressionProblem" rows="2" placeholder="例如：歷年批次紀錄中，熱封溫度和熱封強度有沒有關係"></textarea><span class="hint" id="regressionProblemSrc"></span></div>
+    <div class="tool-problem"><label for="regressionProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="regressionProblem" rows="2" placeholder="例如：歷年批次紀錄中，熱封溫度和熱封強度有沒有關係"></textarea><span class="hint" id="regressionProblemSrc"></span></div>
     <div class="grid">
       <main class="card">
         <div class="step">
@@ -1323,12 +1323,12 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
     <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
-    <div class="tool-problem"><label for="spcProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
+    <div class="tool-problem"><label for="spcProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
     <details class="card mp-card" id="spcPlan" open>
       <summary><span class="qref copper">規劃</span> <b>資料規劃</b><span class="hint"> 先決定資料怎麼收、怎麼分組；收完把數值填回，再分析</span></summary>
       <div class="mp-body">
-        <p class="help">流程：① 描述要監控的製程與特性，請 AI 建議資料結構（AI 只給規劃，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生依時間順序的記錄表 → ④ 現場依序填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊；分層欄位用代號。</p>
-        <div class="field"><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
+        <p class="help">流程：① 在上方「描述情境或問題」寫一句話，請 AI 建議資料結構（AI 只給規劃，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生依時間順序的記錄表 → ④ 現場依序填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊；分層欄位用代號。</p>
+        <div class="field" hidden><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="spAi">請 AI 建議資料結構</button><span class="hint" id="spHint"></span></div>
         <div class="mp-why" id="spWhy" hidden></div>
         <div id="spMeta" class="mp-meta"></div>
@@ -1377,7 +1377,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewMSA" role="tabpanel" data-view="msa" hidden>
     <div class="tool-head"><h2 class="tool-title">MSA 量測系統分析</h2><span class="hint" id="msaSubHint"></span></div>
-    <div class="tool-problem"><label for="msaProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="msaProblem" rows="2" placeholder="例如：拉力機量測導管拉伸強度的變異是否可接受"></textarea><span class="hint" id="msaProblemSrc"></span></div>
+    <div class="tool-problem"><label for="msaProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="msaProblem" rows="2" placeholder="例如：拉力機量測導管拉伸強度的變異是否可接受"></textarea><span class="hint" id="msaProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="MSA 功能" id="msaTabs">
       <button type="button" role="tab" data-tsub="grr" aria-selected="true">Gage R&amp;R</button>
       <button type="button" role="tab" data-tsub="bias" aria-selected="false">偏差</button>
@@ -1388,8 +1388,8 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
     <details class="card mp-card" id="msaPlan" open>
       <summary><span class="qref copper">規劃</span> <b id="mpTitle">實驗規劃</b><span class="hint"> 先規劃要量多少、怎麼量；量完把數值填回，再分析</span></summary>
       <div class="mp-body">
-        <p class="help">流程：① 描述量測情境，請 AI 建議實驗設計（AI 只給設計，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生隨機順序的記錄表 → ④ 人員量測並填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊。</p>
-        <div class="field"><label for="mpDesc">量測情境（選填給 AI 看）</label><textarea id="mpDesc" rows="2" placeholder="例如：用游標卡尺量導管外徑，規格 3.0±0.1 mm，品管有 3 位人員會使用這支卡尺" spellcheck="false"></textarea></div>
+        <p class="help">流程：① 在上方「描述情境或問題」寫一句話，請 AI 建議實驗設計（AI 只給設計，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生隨機順序的記錄表 → ④ 人員量測並填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊。</p>
+        <div class="field" hidden><label for="mpDesc">量測情境（選填給 AI 看）</label><textarea id="mpDesc" rows="2" placeholder="例如：用游標卡尺量導管外徑，規格 3.0±0.1 mm，品管有 3 位人員會使用這支卡尺" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="mpAi">請 AI 建議實驗設計</button><span class="hint" id="mpHint"></span></div>
         <div class="mp-why" id="mpWhy" hidden></div>
         <div id="mpMeta" class="mp-meta"></div>
@@ -1481,7 +1481,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewDOE" role="tabpanel" data-view="doe" hidden>
     <div class="tool-head"><h2 class="tool-title">DOE 實驗設計</h2><span class="hint" id="doeSubHint"></span></div>
-    <div class="tool-problem"><label for="doeProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="doeProblem" rows="2" placeholder="例如：找出射出成型參數對 Luer 破裂力的影響"></textarea><span class="hint" id="doeProblemSrc"></span></div>
+    <div class="tool-problem"><label for="doeProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="doeProblem" rows="2" placeholder="例如：找出射出成型參數對 Luer 破裂力的影響"></textarea><span class="hint" id="doeProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="DOE 功能" id="doeTabs">
       <button type="button" role="tab" data-tsub="fact" aria-selected="true">因子設計（製程參數）</button>
       <button type="button" role="tab" data-tsub="mix" aria-selected="false">混合設計（配方比例）</button>
@@ -1558,7 +1558,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 
   <section id="viewTaguchi" role="tabpanel" data-view="taguchi" hidden>
     <div class="tool-head"><h2 class="tool-title">田口方法（穩健設計）</h2><span class="hint">找出讓產品對原料、環境、操作等雜音不敏感的設定：直交表 + S/N 比 + 兩步驟最佳化</span></div>
-    <div class="tool-problem"><label for="taguchiProblem" class="group-label">問題描述（選填，AI 說明時會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="taguchiProblem" rows="2" placeholder="例如：UV 膠接合拉脫力在不同批零件與照度衰減下要穩定"></textarea><span class="hint" id="taguchiProblemSrc"></span></div>
+    <div class="tool-problem"><label for="taguchiProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="taguchiProblem" rows="2" placeholder="例如：UV 膠接合拉脫力在不同批零件與照度衰減下要穩定"></textarea><span class="hint" id="taguchiProblemSrc"></span></div>
     <div class="grid">
       <main class="card">
         <div class="step">
@@ -8071,13 +8071,13 @@ else root.runValidation = runValidation;
   ].join("\n");
   const MP_CHAT_RULE = "【MSA 實驗參數】回答中如果有建議具體的實驗設計，最後附一個 ```msaplan 區塊，讓使用者按按鈕帶入網頁的規劃表單。區塊內只放設計參數，不放任何量測數值。格式：\n" + MP_SCHEMA;
   async function mpAsk() {
-    const q = $("mpDesc").value.trim(); if (!q) { mpNote("請先描述量測情境。", true); return; }
+    const q = (($("msaProblem").value || "").trim() || $("mpDesc").value.trim()); if (!q) { mpNote("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
     if (!sample) { mpNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (MP.busy) return; MP.busy = true; $("mpAi").disabled = true; mpNote("AI 規劃中…");
     mpRead();
     const ctx = ($("msaProblem").value || "").trim(), M = MP.m;
     const newbie = styleFor("msa").persp === "teach";
-    const msg = MP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋，理由要說到新人聽得懂為什麼要這樣做。" : "") + "\n\n【目前選擇的分析】" + MP_NAME[MP.type] + (MP_DT[M.dataType] ? "\n【使用者選的輸出資料型態】" + MP_DT[M.dataType].name : "") + (ctx ? "\n【問題描述】" + ctx : "") + "\n【量測情境】" + q;
+    const msg = MP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋，理由要說到新人聽得懂為什麼要這樣做。" : "") + "\n\n【目前選擇的分析】" + MP_NAME[MP.type] + (MP_DT[M.dataType] ? "\n【使用者選的輸出資料型態】" + MP_DT[M.dataType].name : "") + (ctx && ctx !== q ? "\n【問題描述】" + ctx : "") + "\n【量測情境】" + q;
     try {
       const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
       const j = mpParsePlan(res.text), why = res.text.replace(/```msaplan[\s\S]*?```/g, "").trim();
@@ -8416,12 +8416,12 @@ else root.runValidation = runValidation;
     spNote(bad ? "已帶入 AI 的建議，但程式檢查發現不可行的設定，請看下方說明並修改。" : "已帶入 AI 的建議，下方可修改；程式檢查會即時更新。", bad);
   }
   async function spAsk() {
-    const q = $("spDesc").value.trim(); if (!q) { spNote("請先描述要監控的製程與特性。", true); return; }
+    const q = (($("spcProblem").value || "").trim() || $("spDesc").value.trim()); if (!q) { spNote("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
     if (!sample) { spNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (SP.busy) return; SP.busy = true; $("spAi").disabled = true; spNote("AI 規劃中…");
     spRead();
     const ctx = ($("spcProblem").value || "").trim(), newbie = styleFor("spc").persp === "teach";
-    const msg = SP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (SP_DT[SP.m.dataType] ? "\n\n【使用者選的資料型態】" + SP_DT[SP.m.dataType].name : "") + (ctx ? "\n【問題描述】" + ctx : "") + "\n【製程與特性】" + q;
+    const msg = SP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (SP_DT[SP.m.dataType] ? "\n\n【使用者選的資料型態】" + SP_DT[SP.m.dataType].name : "") + (ctx && ctx !== q ? "\n【問題描述】" + ctx : "") + "\n【製程與特性】" + q;
     try {
       const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
       const j = spParsePlan(res.text), why = res.text.replace(/```spcplan[\s\S]*?```/g, "").trim();
@@ -9459,7 +9459,7 @@ else root.runValidation = runValidation;
     card.className = "card mp-card"; card.id = id("Plan"); card.open = true;
     card.innerHTML = `<summary><span class="qref copper">規劃</span> <b>${esc(c.title)}</b> <span class="pk-src" id="${id("Src")}" hidden></span><span class="hint"> ${esc(c.sub)}</span></summary>
       <div class="mp-body">
-        <p class="help">${c.help} 請不要輸入客戶、病患、批號等可識別資訊。</p>
+        <p class="help">${c.help.replace(/^流程：① [^，]*，/, "流程：① 在上方「描述情境或問題」寫一句話，")} 請不要輸入客戶、病患、批號等可識別資訊。</p>
         <div class="field"><label for="${id("Desc")}">情境（選填給 AI 看）</label><textarea id="${id("Desc")}" rows="2" placeholder="${esc(c.descPh)}" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="${id("Ai")}">請 AI 建議設計</button><span class="hint" id="${id("Hint")}"></span></div>
         <div class="pk-ask" id="${id("Ask")}" hidden></div>
@@ -9470,6 +9470,7 @@ else root.runValidation = runValidation;
         <div id="${id("Sheet")}" hidden></div>
       </div>`;
     if (c.direct) { [id("Form"), id("Check")].forEach(k => { card.querySelector("#" + k).hidden = true; }); card.querySelector("#" + id("Go")).closest(".run-row").hidden = true; }
+    card.querySelector("#" + id("Desc")).closest(".field").hidden = true;   // 只留頁面上方一個描述框
     const view = $(c.view), anchor = view.querySelector(c.before);
     anchor.parentNode.insertBefore(card, anchor);
     const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
@@ -9546,12 +9547,12 @@ else root.runValidation = runValidation;
     function parse(text) { const m = String(text).match(blockRe); if (!m) return null; try { const j = JSON.parse(m[1]); return j && typeof j === "object" ? j : null; } catch (_) { return null; } }
     const schema = "```" + blocks[0] + "\n" + c.example + "\n```\n" + c.schemaNote;
     async function askAI() {
-      const q = $(id("Desc")).value.trim(); if (!q && !(c.ctxExtra && c.ctxExtra(P.m))) { note("請先描述情境。", true); return; }
+      const q = (($(c.problemId).value || "").trim() || $(id("Desc")).value.trim()); if (!q && !(c.ctxExtra && c.ctxExtra(P.m))) { note("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
       if (!sample) { note("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
       if (P.busy) return; P.busy = true; $(id("Ai")).disabled = true; note("AI 規劃中…");
       read();
       const ctx = ($(c.problemId).value || "").trim(), newbie = styleFor(c.chatKey).persp === "teach";
-      const msg = [c.role, PK_COMMON, PK_FORMAT, schema].join("\n") + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (ctx ? "\n\n【問題描述】" + ctx : "") + "\n【目前確認區的內容】" + JSON.stringify(c.toJson ? c.toJson(P.m) : P.m) + (c.ctxExtra ? c.ctxExtra(P.m) : "") + "\n【情境】" + (q || "請依目前確認區的內容補上設計建議。");
+      const msg = [c.role, PK_COMMON, PK_FORMAT, schema].join("\n") + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (ctx && ctx !== q ? "\n\n【問題描述】" + ctx : "") + "\n【目前確認區的內容】" + JSON.stringify(c.toJson ? c.toJson(P.m) : P.m) + (c.ctxExtra ? c.ctxExtra(P.m) : "") + "\n【情境】" + (q || "請依目前確認區的內容補上設計建議。");
       try {
         const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
         const j = parse(res.text), why = res.text.replace(stripRe, "").trim();

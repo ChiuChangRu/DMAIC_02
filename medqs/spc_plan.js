@@ -137,12 +137,12 @@
     spNote(bad ? "已帶入 AI 的建議，但程式檢查發現不可行的設定，請看下方說明並修改。" : "已帶入 AI 的建議，下方可修改；程式檢查會即時更新。", bad);
   }
   async function spAsk() {
-    const q = $("spDesc").value.trim(); if (!q) { spNote("請先描述要監控的製程與特性。", true); return; }
+    const q = (($("spcProblem").value || "").trim() || $("spDesc").value.trim()); if (!q) { spNote("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
     if (!sample) { spNote("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
     if (SP.busy) return; SP.busy = true; $("spAi").disabled = true; spNote("AI 規劃中…");
     spRead();
     const ctx = ($("spcProblem").value || "").trim(), newbie = styleFor("spc").persp === "teach";
-    const msg = SP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (SP_DT[SP.m.dataType] ? "\n\n【使用者選的資料型態】" + SP_DT[SP.m.dataType].name : "") + (ctx ? "\n【問題描述】" + ctx : "") + "\n【製程與特性】" + q;
+    const msg = SP_RULE + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (SP_DT[SP.m.dataType] ? "\n\n【使用者選的資料型態】" + SP_DT[SP.m.dataType].name : "") + (ctx && ctx !== q ? "\n【問題描述】" + ctx : "") + "\n【製程與特性】" + q;
     try {
       const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
       const j = spParsePlan(res.text), why = res.text.replace(/```spcplan[\s\S]*?```/g, "").trim();

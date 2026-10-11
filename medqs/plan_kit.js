@@ -30,7 +30,7 @@
     card.className = "card mp-card"; card.id = id("Plan"); card.open = true;
     card.innerHTML = `<summary><span class="qref copper">規劃</span> <b>${esc(c.title)}</b> <span class="pk-src" id="${id("Src")}" hidden></span><span class="hint"> ${esc(c.sub)}</span></summary>
       <div class="mp-body">
-        <p class="help">${c.help} 請不要輸入客戶、病患、批號等可識別資訊。</p>
+        <p class="help">${c.help.replace(/^流程：① [^，]*，/, "流程：① 在上方「描述情境或問題」寫一句話，")} 請不要輸入客戶、病患、批號等可識別資訊。</p>
         <div class="field"><label for="${id("Desc")}">情境（選填給 AI 看）</label><textarea id="${id("Desc")}" rows="2" placeholder="${esc(c.descPh)}" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="${id("Ai")}">請 AI 建議設計</button><span class="hint" id="${id("Hint")}"></span></div>
         <div class="pk-ask" id="${id("Ask")}" hidden></div>
@@ -41,6 +41,7 @@
         <div id="${id("Sheet")}" hidden></div>
       </div>`;
     if (c.direct) { [id("Form"), id("Check")].forEach(k => { card.querySelector("#" + k).hidden = true; }); card.querySelector("#" + id("Go")).closest(".run-row").hidden = true; }
+    card.querySelector("#" + id("Desc")).closest(".field").hidden = true;   // 只留頁面上方一個描述框
     const view = $(c.view), anchor = view.querySelector(c.before);
     anchor.parentNode.insertBefore(card, anchor);
     const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
@@ -117,12 +118,12 @@
     function parse(text) { const m = String(text).match(blockRe); if (!m) return null; try { const j = JSON.parse(m[1]); return j && typeof j === "object" ? j : null; } catch (_) { return null; } }
     const schema = "```" + blocks[0] + "\n" + c.example + "\n```\n" + c.schemaNote;
     async function askAI() {
-      const q = $(id("Desc")).value.trim(); if (!q && !(c.ctxExtra && c.ctxExtra(P.m))) { note("請先描述情境。", true); return; }
+      const q = (($(c.problemId).value || "").trim() || $(id("Desc")).value.trim()); if (!q && !(c.ctxExtra && c.ctxExtra(P.m))) { note("請先在頁面上方的「描述情境或問題」寫一句話。", true); return; }
       if (!sample) { note("目前無法使用 AI，請在「AI 設定與案件存取」確認；也可以直接在下方自己選擇與調整。", true); return; }
       if (P.busy) return; P.busy = true; $(id("Ai")).disabled = true; note("AI 規劃中…");
       read();
       const ctx = ($(c.problemId).value || "").trim(), newbie = styleFor(c.chatKey).persp === "teach";
-      const msg = [c.role, PK_COMMON, PK_FORMAT, schema].join("\n") + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (ctx ? "\n\n【問題描述】" + ctx : "") + "\n【目前確認區的內容】" + JSON.stringify(c.toJson ? c.toJson(P.m) : P.m) + (c.ctxExtra ? c.ctxExtra(P.m) : "") + "\n【情境】" + (q || "請依目前確認區的內容補上設計建議。");
+      const msg = [c.role, PK_COMMON, PK_FORMAT, schema].join("\n") + (newbie ? "\n讀者是新人：每個名詞第一次出現就用括號白話解釋。" : "") + (ctx && ctx !== q ? "\n\n【問題描述】" + ctx : "") + "\n【目前確認區的內容】" + JSON.stringify(c.toJson ? c.toJson(P.m) : P.m) + (c.ctxExtra ? c.ctxExtra(P.m) : "") + "\n【情境】" + (q || "請依目前確認區的內容補上設計建議。");
       try {
         const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
         const j = parse(res.text), why = res.text.replace(stripRe, "").trim();
