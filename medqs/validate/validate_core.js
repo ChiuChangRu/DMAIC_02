@@ -425,16 +425,6 @@ if (SS && SS.tostPower && ref.eq) {
   R.nip.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} n=${c.n} δ=${c.delta} 真實差=${c.D}`, "檢定力", SS.niPower(c.design, c.n, c.delta, c.sd, c.alpha, c.D, c.dir), c.power, 1e-9));
   R.nin.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} δ=${c.delta} σ=${c.sd} α=${c.alpha} 目標 ${c.target}`, "最小樣本數", SS.niN(c.design, c.delta, c.sd, c.alpha, c.target, c.D, c.dir), c.n, 0));
   R.sim.forEach(c => check(G, `TOST 模擬 40 萬次 ${dn(c.design)} n=${c.n} δ=${c.delta} σ=${c.sd} 真實差=${c.D}（容許 4 個模擬標準誤）`, "檢定力", SS.tostPower(c.design, c.n, c.delta, c.sd, 0.05, c.D), c.power, 4 * c.se));
-  (R.tests || []).forEach((c, i) => {
-    const lab = `判定 #${i + 1} ${c.paired ? "成對" : "兩組獨立"} n=${c.x.length}/${c.y.length} δ=${c.delta} α=${c.alpha}（statsmodels ttost）`, r = SS.tostTest(c.x, c.y, c.delta, c.alpha, c.paired);
-    check(G, lab, "平均差", r.d, c.d, 1e-12); check(G, lab, "標準誤", r.se, c.se, 1e-12); check(G, lab, "下界檢定 p", r.pLow, c.pLow, 1e-9); check(G, lab, "上界檢定 p", r.pUp, c.pUp, 1e-9); check(G, lab, "TOST p", r.p, c.p, 1e-9);
-    check(G, lab, "信賴區間下限", r.lo, c.lo, 1e-10); check(G, lab, "信賴區間上限", r.hi, c.hi, 1e-10);
-    check(G, lab, "不劣性 p（越大越好）", SS.niTest(c.x, c.y, c.delta, c.alpha, c.paired, "higher").p, c.niHigher, 1e-9); check(G, lab, "不劣性 p（越小越好）", SS.niTest(c.x, c.y, c.delta, c.alpha, c.paired, "lower").p, c.niLower, 1e-9);
-  });
-  (R.p1t || []).forEach(c => { const r = SS.prop1Test(c.x, c.n, c.p0, c.alt, 0.05), lab = `單組不良率判定 x=${c.x}/${c.n} p0=${c.p0} ${c.alt}（scipy binomtest）`; check(G, lab, "p 值", r.p, c.p, 1e-9); check(G, lab, "Clopper-Pearson 下限", r.ci[0], c.lo, 1e-8); check(G, lab, "Clopper-Pearson 上限", r.ci[1], c.hi, 1e-8); });
-  (R.p2t || []).forEach(c => { const r = SS.prop2Test(c.x1, c.n1, c.x2, c.n2, c.alt, 0.05), lab = `兩組不良率判定 ${c.x1}/${c.n1} vs ${c.x2}/${c.n2} ${c.alt}`; check(G, lab, "z（statsmodels）", r.z, c.z, 1e-10); check(G, lab, "z 檢定 p（statsmodels）", r.pz, c.pz, 1e-10); check(G, lab, "Fisher p（scipy）", r.pFisher, c.pf, 1e-9); check(G, lab, "差異 95% Wald 下限", r.ci[0], c.lo, 1e-10); check(G, lab, "差異 95% Wald 上限", r.ci[1], c.hi, 1e-10); });
-  t(G, "單組不良率：判定規則與 p 值一致（x ≤ 臨界值 ⇔ p ≤ α）", [50, 153, 300].every(n => { const c = SS.prop1Power(0.05, 0.01, n, 0.05, "less").lo; return [c - 1, c, c + 1].filter(x => x >= 0).every(x => (x <= c) === (SS.prop1Test(x, n, 0.05, "less").p <= 0.05)); }));
-  t(G, "判定：信賴區間在 ±δ 內 ⇔ 兩個單尾 p 都 < α", (R.tests || []).every(c => { const r = SS.tostTest(c.x, c.y, c.delta, c.alpha, c.paired); return r.ok === (r.pLow < c.alpha && r.pUp < c.alpha); }));
   t(G, "TOST：真實差異 ≥ δ 時無法規劃（回傳無解）", isNaN(SS.tostN("two", 1, 1, 0.05, 0.9, 1)));
   t(G, "TOST：在可用的範圍（檢定力 ≥ 5%）樣本數增加檢定力不下降（極小樣本時 TOST 檢定力本來就非單調）", [20, 30, 40, 60, 100, 200].map(n => SS.tostPower("two", n, 0.5, 1, 0.05, 0.1)).every((v, i, a) => i === 0 || v >= a[i - 1] - 1e-12));
   t(G, "TOST：δ 很大時檢定力趨近 1、δ 很小時趨近 0", SS.tostPower("two", 30, 10, 1, 0.05, 0) > 0.9999 && SS.tostPower("two", 30, 0.01, 1, 0.05, 0) < 1e-6);

@@ -4,12 +4,16 @@
   // 統計計算全部在 sample.js（SS.tostPower / niPower …），這裡只處理介面。
   // =====================================================================
   const SSQ = {
-    q5: { sub: "attr", title: "⑥ 要測幾個全過，才能宣稱可靠度？", prep: ["要宣稱的可靠度與信心水準（例如 95/95），依風險等級與公司程序決定", "允許失效數：0 個最常用；允許越多，要測越多"], note: "", set: () => pkClick('#atMode [data-v="plan"]') },
-    q6: { sub: "attr", title: "⑦ 現有抽樣方案（n、Ac）能宣稱什麼？", prep: ["抽樣方案的樣本數 n 與允收數 Ac（例如從 ISO 2859-1 查出）", "AQL（選填）"], note: "AQL 不是可宣稱的可靠度，結果頁會分開說明。", set: () => pkClick('#atMode [data-v="eval"]') },
-    q7: { sub: "prop", title: "⑧ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
-    q8: { sub: "tolp", title: "⑨ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "量完後，在本題下方「統計允差區間」判定（算完按「量完後到允差區間判定」會帶入條件）。" },
-    q9: { sub: "doer", title: "⑩ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
-    q10: { sub: "guide", title: "⑪ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" }
+    q1: { sub: "power", title: "① 改善後有沒有變好？兩條線、兩家料有沒有差？", prep: ["這個特性平常的波動（σ）：歷史數據、SPC、預試驗", "要抓到的最小差異（Δ）：差多少才值得採取行動", "只關心變好（或變差）一個方向時選「單尾」，要在試驗前決定"], note: "這題是要「證明有差」。如果要證明轉廠、換料後「一樣」，請改選 ②。", set: () => { pkClick('#pwDesign [data-v="two"]'); pkClick('#pwSolve [data-v="n"]'); } },
+    q2: { sub: "tost", title: "② 轉廠、換料、換設備後，一樣嗎？", prep: ["差多少以內算一樣（δ）：工程判斷，要寫下依據", "這個特性平常的波動（σ）：舊廠歷史數據、SPC、預試驗", "量完後看平均差的 90% 信賴區間是否整條落在 ±δ 內"], note: "不能用「p > 0.05」證明一樣；要用同等性（TOST）。" },
+    q3: { sub: "ni", title: "③ 換了之後，不會變差吧？", prep: ["這個特性是越大越好（強度）還是越小越好（洩漏、毛邊）", "最多可以接受變差多少（δ）：工程判斷，要寫下依據", "這個特性平常的波動（σ）"], note: "只在意「不能變差」、變好沒關係時用；比同等性需要的數量少。" },
+    q4: { sub: "power", title: "④ 平均有沒有達到目標值？", prep: ["這個特性平常的波動（σ）", "和目標差多少才算有意義（Δ）", "成對資料（同一件前後量測）也用這題，σ 為差值的標準差"], note: "", set: () => { pkClick('#pwDesign [data-v="one"]'); pkClick('#pwSolve [data-v="n"]'); } },
+    q5: { sub: "attr", title: "⑤ 要測幾個全過，才能宣稱可靠度？", prep: ["要宣稱的可靠度與信心水準（例如 95/95），依風險等級與公司程序決定", "允許失效數：0 個最常用；允許越多，要測越多"], note: "", set: () => pkClick('#atMode [data-v="plan"]') },
+    q6: { sub: "attr", title: "⑥ 現有抽樣方案（n、Ac）能宣稱什麼？", prep: ["抽樣方案的樣本數 n 與允收數 Ac（例如從 ISO 2859-1 查出）", "AQL（選填）"], note: "AQL 不是可宣稱的可靠度，結果頁會分開說明。", set: () => pkClick('#atMode [data-v="eval"]') },
+    q7: { sub: "prop", title: "⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
+    q8: { sub: "tolp", title: "⑧ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "數據量完後，到「假設檢定・統計允差區間」計算。" },
+    q9: { sub: "doer", title: "⑨ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
+    q10: { sub: "guide", title: "⑩ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" }
   };
   let ssCurQ = "", ssQBusy = false;
   function ssBanner() {
@@ -31,8 +35,9 @@
   function ssSyncFromSub(s) {
     if (ssQBusy) return;
     if (SSQ[ssCurQ] && SSQ[ssCurQ].sub === s) return;
-    const q = s === "attr" ? ((($("atMode").querySelector('[aria-pressed="true"]') || {}).dataset || {}).v === "eval" ? "q6" : "q5")
-      : { prop: "q7", tolp: "q8", doer: "q9", guide: "q10" }[s];
+    const q = s === "power" ? (($("pwDesign").querySelector('[aria-pressed="true"]') || {}).dataset || {}).v === "one" ? "q4" : "q1"
+      : s === "attr" ? ((($("atMode").querySelector('[aria-pressed="true"]') || {}).dataset || {}).v === "eval" ? "q6" : "q5")
+      : { tost: "q2", ni: "q3", prop: "q7", tolp: "q8", doer: "q9", guide: "q10" }[s];
     if (q) { ssCurQ = q; $("ssQ").querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.q === q))); ssBanner(); }
   }
   function ssRestoreQ(q, sub) {
@@ -40,12 +45,11 @@
     else if (sub) { ssSyncFromSub(sub); }
   }
   $("ssQ").addEventListener("click", e => {
-    if (e.target.closest('[data-go="hypothesis"]')) { route("hypothesis"); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const b = e.target.closest("[data-q]"); if (b) { ssPick(b.dataset.q); return; }
     if (e.target.closest("#ssAdvBtn")) {
       const t = $("ssTabs"), open = t.hidden; t.hidden = !open; $("ssAdvBtn").setAttribute("aria-expanded", String(open));
       $("ssAdvBtn").querySelector(".ssq-t").textContent = open ? "直接選統計方法 ▾" : "直接選統計方法 ▸";
-      if (open && !ssCurQ) ssPick("q5", { noScroll: true });
+      if (open && !ssCurQ) ssPick("q1", { noScroll: true });
     }
   });
   $("ssTabs").addEventListener("click", e => { const b = e.target.closest("[data-tsub]"); if (b) ssSyncFromSub(b.dataset.tsub); });

@@ -146,59 +146,6 @@
   const tostDelta = (design, n, sd, alpha, target, trueDiff) => eqDelta(d => d > Math.abs(trueDiff || 0) ? tostPower(design, n, d, sd, alpha, trueDiff) : 0, target, sd);
   const niDelta = (design, n, sd, alpha, target, trueDiff, dir) => eqDelta(d => niPower(design, n, d, sd, alpha, trueDiff, dir), target, sd);
 
-  // ---------- 量完後的判定：同等性（TOST）與不劣性（平均差 d = y − x：第 2 組 − 第 1 組） ----------
-  function eqStats(x, y, paired) {
-    const m = a => a.reduce((s, v) => s + v, 0) / a.length, v = a => { const mu = m(a); return a.reduce((s, t) => s + (t - mu) ** 2, 0) / (a.length - 1); };
-    if (paired) { const dd = y.map((t, i) => t - x[i]), n = dd.length; return { d: m(dd), se: Math.sqrt(v(dd) / n), df: n - 1, s: Math.sqrt(v(dd)), n1: n, n2: n }; }
-    const n1 = x.length, n2 = y.length, sp = Math.sqrt(((n1 - 1) * v(x) + (n2 - 1) * v(y)) / (n1 + n2 - 2));
-    return { d: m(y) - m(x), se: sp * Math.sqrt(1 / n1 + 1 / n2), df: n1 + n2 - 2, s: sp, n1, n2 };
-  }
-  function tostTest(x, y, delta, alpha, paired) {
-    const r = eqStats(x, y, paired), t = tInv(1 - alpha, r.df);
-    const pLow = HT.tSf((r.d + delta) / r.se, r.df), pUp = HT.tCdf((r.d - delta) / r.se, r.df);   // H0: d ≤ −δ ； H0: d ≥ +δ
-    const lo = r.d - t * r.se, hi = r.d + t * r.se;
-    return Object.assign(r, { delta, alpha, tcrit: t, lo, hi, pLow, pUp, p: Math.max(pLow, pUp), ok: lo > -delta && hi < delta });
-  }
-  function niTest(x, y, delta, alpha, paired, dir) {
-    const r = eqStats(x, y, paired), t = tInv(1 - alpha, r.df);
-    if (dir === "lower") { const p = HT.tCdf((r.d - delta) / r.se, r.df), bound = r.d + t * r.se; return Object.assign(r, { delta, alpha, dir, tcrit: t, bound, p, ok: bound < delta }); }
-    const p = HT.tSf((r.d + delta) / r.se, r.df), bound = r.d - t * r.se; return Object.assign(r, { delta, alpha, dir: "higher", tcrit: t, bound, p, ok: bound > -delta });
-  }
-
-  // ---------- 量完後的判定：不良率 ----------
-  const lchoose = (n, k) => HT.lgamma(n + 1) - HT.lgamma(k + 1) - HT.lgamma(n - k + 1);
-  const binomPmf = (k, n, p) => k < 0 || k > n ? 0 : p <= 0 ? (k === 0 ? 1 : 0) : p >= 1 ? (k === n ? 1 : 0) : Math.exp(lchoose(n, k) + k * Math.log(p) + (n - k) * Math.log1p(-p));
-  // 單組：精確二項檢定（與 scipy.stats.binomtest 相同定義；雙尾為「機率不大於觀測值者加總」）
-  function prop1Test(x, n, p0, alt, alpha) {
-    alpha = alpha || 0.05;
-    let p;
-    if (alt === "less") p = binomCdf(x, n, p0);
-    else if (alt === "greater") p = x <= 0 ? 1 : 1 - binomCdf(x - 1, n, p0);
-    else { const d = binomPmf(x, n, p0), rel = 1 + 1e-7; p = 0; for (let k = 0; k <= n; k++) { const v = binomPmf(k, n, p0); if (v <= d * rel) p += v; } p = Math.min(1, p); }
-    const ph = x / n;
-    // Clopper-Pearson：單尾給單邊界限，雙尾給雙邊區間
-    const up = a => x >= n ? 1 : HT.betaPpf(1 - a, x + 1, n - x), lo = a => x <= 0 ? 0 : HT.betaPpf(a, x, n - x + 1);
-    const ci = alt === "less" ? [0, up(alpha)] : alt === "greater" ? [lo(alpha), 1] : [lo(alpha / 2), up(alpha / 2)];
-    return { x, n, p0, alt, alpha, phat: ph, p, ci, sig: p <= alpha };
-  }
-  // 兩組：合併比例的 z 檢定（與 statsmodels proportions_ztest 相同）＋ Fisher 精確檢定（小樣本時參考）＋ Wald 信賴區間
-  function prop2Test(x1, n1, x2, n2, alt, alpha) {
-    alpha = alpha || 0.05;
-    const p1 = x1 / n1, p2 = x2 / n2, pp = (x1 + x2) / (n1 + n2), se0 = Math.sqrt(pp * (1 - pp) * (1 / n1 + 1 / n2)), z = se0 > 0 ? (p1 - p2) / se0 : 0;
-    const pz = alt === "larger" ? 1 - normCdf(z) : alt === "smaller" ? normCdf(z) : 2 * (1 - normCdf(Math.abs(z)));
-    // Fisher：固定邊際，第 1 組不良數 X ~ 超幾何
-    const K = x1 + x2, N = n1 + n2, lo = Math.max(0, K - n2), hi = Math.min(K, n1);
-    const hp = k => Math.exp(lchoose(n1, k) + lchoose(n2, K - k) - lchoose(N, K));
-    let pf = 0;
-    if (alt === "larger") for (let k = x1; k <= hi; k++) pf += hp(k);
-    else if (alt === "smaller") for (let k = lo; k <= x1; k++) pf += hp(k);
-    else { const d = hp(x1) * (1 + 1e-7); for (let k = lo; k <= hi; k++) { const v = hp(k); if (v <= d) pf += v; } }
-    pf = Math.min(1, pf);
-    const zc = normInv(1 - alpha / 2), se1 = Math.sqrt(p1 * (1 - p1) / n1 + p2 * (1 - p2) / n2);
-    const minExp = Math.min(n1 * pp, n1 * (1 - pp), n2 * pp, n2 * (1 - pp));
-    return { x1, n1, x2, n2, alt, alpha, p1, p2, diff: p1 - p2, z, pz, pFisher: pf, ci: [p1 - p2 - zc * se1, p1 - p2 + zc * se1], minExp, sig: pz <= alpha };
-  }
-
-  const api = { prop1Test, prop2Test, binomPmf, tostTest, niTest, eqStats, tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
+  const api = { tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SS = api;
 })(typeof window !== "undefined" ? window : globalThis);

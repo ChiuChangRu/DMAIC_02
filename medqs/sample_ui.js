@@ -3,7 +3,7 @@
   // 樣本數規劃（計量型與通過／不通過沿用原本假設檢定的程式；其餘計算在 sample.js：window.SS）
   // =====================================================================
   const SSE = window.SS;
-  var sampleSub = "attr";
+  var sampleSub = "power";
   const SS_HINT = { power: "連續數值（強度、尺寸）的 t 檢定：所需樣本數、檢定力或可偵測差值", attr: "通過／不通過的試驗：信心度／可靠度樣本數，或評估抽樣方案", prop: "不良率：證明低於目標值，或比較兩組的不良率", tolp: "允差區間（例如 95% 信心、99% 符合規格）要測幾個", doer: "2 水準因子設計要重複幾次", guide: "MSA、SPC 等工具的建議數量", tost: "變更後一樣嗎：同等性（TOST）要測幾個", ni: "換了之後不會變差：不劣性要測幾個" };
   function setSampleSub(name) {
     const b = $("ssTabs").querySelector(`[data-tsub="${name}"]`); if (b) b.click();
@@ -18,8 +18,8 @@
     else if (name === "sample") setSampleSub(sub);
     else { const tabs = { msa: "msaTabs", doe: "doeTabs" }[name]; if (tabs) { const b = $(tabs).querySelector(`[data-tsub="${sub}"]`); if (b) b.click(); } }
   }
-  function sampleHas() { return sampleSub === "power" ? !!pw.result : sampleSub === "attr" ? !!at.result : sampleSub === "prop" ? !!TQ.prop : sampleSub === "tolp" ? !!(TQ.tolp || tl.result) : sampleSub === "doer" ? !!TQ.doer : sampleSub === "tost" ? !!TQ.tost : sampleSub === "ni" ? !!TQ.ni : false; }
-  function sampleBody() { return sampleSub === "power" ? powerContext() : sampleSub === "attr" ? attrContext() : sampleSub === "tolp" ? [(TQ.tolp && TQ.tolp.ctx) || "", tl.result ? tolContext() : ""].filter(Boolean).join("\n") : (TQ[sampleSub] && TQ[sampleSub].ctx) || ""; }
+  function sampleHas() { return sampleSub === "power" ? !!pw.result : sampleSub === "attr" ? !!at.result : sampleSub === "prop" ? !!TQ.prop : sampleSub === "tolp" ? !!TQ.tolp : sampleSub === "doer" ? !!TQ.doer : sampleSub === "tost" ? !!TQ.tost : sampleSub === "ni" ? !!TQ.ni : false; }
+  function sampleBody() { return sampleSub === "power" ? powerContext() : sampleSub === "attr" ? attrContext() : (TQ[sampleSub] && TQ[sampleSub].ctx) || ""; }
   const SS_NAME = { power: "計量型（t 檢定）", attr: "通過／不通過", prop: "不良率比較", tolp: "允差區間樣本數", doer: "DOE 重複次數", guide: "其他工具建議數量", tost: "同等性（TOST）", ni: "不劣性" };
   function sampleExplainQ() {
     return sampleSub === "power" ? "請說明這個樣本數計算：結果代表什麼、各輸入值對結果的影響、實務上要注意什麼（例如 σ 的來源、檢定力不足的風險），以及寫進驗證計畫書的樣本數理由要怎麼寫。"
