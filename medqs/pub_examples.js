@@ -115,7 +115,7 @@
     const put = (fid, v) => { const el = $(fid); if (!el) return; el.value = String(v); el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true })); };
     $("sampleProblem").value = tag;
     if (ex.pw) { const p = ex.pw; chip("pwDesign", p.design); chip("pwSolve", "n"); chip("pwAlt", p.alt); put("pwSd", p.sd); put("pwDelta", p.delta); put("pwTarget", p.target); put("pwAlpha", p.alpha); $("pwRun").click(); $("pwHint").textContent = "公開範例：" + (ex.note || ""); $("pwPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
-    if (ex.pr) { const p = ex.pr; chip("prDesign", "one"); chip("prSolve", "n"); chip("prAlt", p.alt); put("prP0", p.p0); put("prP1", p.p1); put("prTarget", p.target); put("prAlpha", p.alpha); $("prRun").click(); $("prHint").textContent = "公開範例：" + (ex.note || ""); }
+    if (ex.pr) { const p = ex.pr; chip("prDesign", "one"); chip("prSolve", "n"); chip("prAlt", p.alt); put("prP0", p.p0); put("prP1", p.p1); put("prTarget", p.target); put("prAlpha", p.alpha); $("prRun").click(); $("prHint").textContent = "公開範例：" + (ex.note || ""); $("prRun").closest(".card").scrollIntoView({ behavior: "smooth", block: "start" }); }
     if (ex.at) { const p = ex.at; chip("atMode", "plan"); put("atC", p.c); put("atR", p.r); put("atCc", p.cc); $("atRun").click(); $("atHint").textContent = "公開範例：" + (ex.note || ""); $("atPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
   }
   // ---- 下拉選單（假設檢定、樣本數規劃、案件存取共用） ----
@@ -141,8 +141,7 @@
   }
   pubMountSelect("pubHypSel", "pubHypDesc", "hyp", ex => pubLoad(ex.id));
   pubMountSelect("pubSsSel", "pubSsDesc", "ss", ex => pubLoad(ex.id));
-  pubMountSelect("pubCaseSel", "pubCaseDesc", "", null);
-  $("pubCaseGo") && $("pubCaseGo").addEventListener("click", () => { const v = $("pubCaseSel").value; if (v) pubLoad(v); else $("pubCaseDesc").textContent = "請先選一個公開範例。"; });
+  pubMountSelect("pubCaseSel", "pubCaseDesc", "", ex => pubLoad(ex.id));
   // ---- 確效頁：公開範例對照表 ----
   function pubValRender() {
     const box = $("valPub"); if (!box) return;

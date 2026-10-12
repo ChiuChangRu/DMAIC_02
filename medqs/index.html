@@ -1802,8 +1802,7 @@ body.novice .nb-line { display: block; }
         <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
         <p class="hint" id="demoDesc"></p>
         <div class="pk-ask" id="demoAsk" hidden></div>
-        <div class="fields"><div class="field"><label for="pubCaseSel">公開範例（假設檢定、樣本數規劃；只載入該工具，不清除其他頁）</label><select id="pubCaseSel"></select></div></div>
-        <div class="run-row" style="margin:4px 0 0"><button class="btn small" type="button" id="pubCaseGo">載入到工具</button></div>
+        <div class="fields"><div class="field"><label for="pubCaseSel">公開範例（選了直接跳到該工具分頁；只覆蓋該工具，不清除其他頁）</label><select id="pubCaseSel"></select></div></div>
         <p class="hint" id="pubCaseDesc"></p>
         <p id="caseCurLine"></p>
         <div class="fields"><div class="field"><label for="caseName">案件名稱</label><input type="text" id="caseName" autocomplete="off" placeholder="例如：客訴 C-001 封口拉力偏低（請用代號）"></div></div>
@@ -11712,7 +11711,7 @@ else root.runValidation = runValidation;
     const put = (fid, v) => { const el = $(fid); if (!el) return; el.value = String(v); el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true })); };
     $("sampleProblem").value = tag;
     if (ex.pw) { const p = ex.pw; chip("pwDesign", p.design); chip("pwSolve", "n"); chip("pwAlt", p.alt); put("pwSd", p.sd); put("pwDelta", p.delta); put("pwTarget", p.target); put("pwAlpha", p.alpha); $("pwRun").click(); $("pwHint").textContent = "公開範例：" + (ex.note || ""); $("pwPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
-    if (ex.pr) { const p = ex.pr; chip("prDesign", "one"); chip("prSolve", "n"); chip("prAlt", p.alt); put("prP0", p.p0); put("prP1", p.p1); put("prTarget", p.target); put("prAlpha", p.alpha); $("prRun").click(); $("prHint").textContent = "公開範例：" + (ex.note || ""); }
+    if (ex.pr) { const p = ex.pr; chip("prDesign", "one"); chip("prSolve", "n"); chip("prAlt", p.alt); put("prP0", p.p0); put("prP1", p.p1); put("prTarget", p.target); put("prAlpha", p.alpha); $("prRun").click(); $("prHint").textContent = "公開範例：" + (ex.note || ""); $("prRun").closest(".card").scrollIntoView({ behavior: "smooth", block: "start" }); }
     if (ex.at) { const p = ex.at; chip("atMode", "plan"); put("atC", p.c); put("atR", p.r); put("atCc", p.cc); $("atRun").click(); $("atHint").textContent = "公開範例：" + (ex.note || ""); $("atPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
   }
   // ---- 下拉選單（假設檢定、樣本數規劃、案件存取共用） ----
@@ -11738,8 +11737,7 @@ else root.runValidation = runValidation;
   }
   pubMountSelect("pubHypSel", "pubHypDesc", "hyp", ex => pubLoad(ex.id));
   pubMountSelect("pubSsSel", "pubSsDesc", "ss", ex => pubLoad(ex.id));
-  pubMountSelect("pubCaseSel", "pubCaseDesc", "", null);
-  $("pubCaseGo") && $("pubCaseGo").addEventListener("click", () => { const v = $("pubCaseSel").value; if (v) pubLoad(v); else $("pubCaseDesc").textContent = "請先選一個公開範例。"; });
+  pubMountSelect("pubCaseSel", "pubCaseDesc", "", ex => pubLoad(ex.id));
   // ---- 確效頁：公開範例對照表 ----
   function pubValRender() {
     const box = $("valPub"); if (!box) return;
