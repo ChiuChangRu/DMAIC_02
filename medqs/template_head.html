@@ -656,6 +656,20 @@ tr.case-cur td { background: var(--teal-soft); }
 .ssq-t { font-size: 15px; font-weight: 700; line-height: 1.45; }
 .ssq-s { font-size: 12.5px; color: var(--muted); }
 .ssq[aria-pressed="true"] { border-color: var(--teal); background: var(--teal-soft, rgba(15,118,110,.1)); box-shadow: 0 0 0 3px rgba(15,118,110,.25); }
+.ss-tcard { margin-top: 14px; }
+.ss-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 150px)); gap: 16px; justify-content: start; align-items: start; margin-top: 8px; }
+@media (max-width: 900px) { .ss-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+.tool-card.tile.ss-tile.dim { opacity: .45; filter: grayscale(.5); }
+.tool-card.tile.ss-tile.dim:hover { opacity: .85; filter: none; }
+.tool-card.tile.ss-tile[aria-selected="true"]:not(.rec) { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 10px; }
+.tool-card.tile .ss-std { display: block; text-align: center; margin-top: 4px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.tool-card.tile .ss-new { position: absolute; left: 6px; top: 4px; font-size: 10px; font-weight: 700; background: #C2626B; color: #fff; border-radius: 4px; padding: 1px 6px; }
+.aq-notes { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; line-height: 1.6; }
+tr.aq-rej td { color: var(--bad); }
+#aqPanel, #subAql .preview { min-width: 0; }
+#aqSchW, #aqSchOut { max-width: 100%; min-width: 0; overflow: hidden; }
+#aqSchOut .scroll-x { overflow-x: auto; max-width: 100%; }
+#aqLots { width: 100%; box-sizing: border-box; font-family: var(--font-mono); }
 .ssq-new { font-size: 11px; font-weight: 700; color: #fff; background: #C2626B; border-radius: 5px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
 .ssq-adv { border-style: dashed; background: transparent; }
 .ss-qbanner { border-left: 5px solid var(--teal); background: var(--surface); border-radius: 10px; padding: 12px 16px; margin: 0 0 14px; display: grid; gap: 6px; }

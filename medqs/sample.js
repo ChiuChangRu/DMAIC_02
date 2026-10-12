@@ -160,6 +160,84 @@
     return Object.assign(r, { delta, alpha, tcrit: t, lo, hi, pLow, pUp, p: Math.max(pLow, pUp), ok: lo > -delta && hi < delta });
   }
 
-  const api = { eqStats, tostTest, tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
+  // ---------- 計數型 AQL 抽樣（單次抽樣） ----------
+  // 樣本代字與正常／加嚴主表依 MIL-STD-105E（美國政府公開文件）的排列規則產生；
+  // 數值經核對與 ISO 2859-1:2026 表 1～表 3 相同。減量檢驗：2026 版表 4 與 MIL-STD-105E 不同（Re = Ac + 1），本程式不內建，須由使用者依公司持有的標準輸入。
+  const AQL_LIST = [0.010, 0.015, 0.025, 0.040, 0.065, 0.10, 0.15, 0.25, 0.40, 0.65, 1.0, 1.5, 2.5, 4.0, 6.5, 10, 15, 25, 40, 65, 100, 150, 250, 400, 650, 1000];
+  const AQL_LETTERS = "ABCDEFGHJKLMNPQRS".split("");
+  const AQL_N = [2, 3, 5, 8, 13, 20, 32, 50, 80, 125, 200, 315, 500, 800, 1250, 2000, 3150];
+  const AQL_LOT = [8, 15, 25, 50, 90, 150, 280, 500, 1200, 3200, 10000, 35000, 150000, 500000, Infinity];
+  const AQL_LEVELS = { "S-1": "AAAABBBBCCCCDDD", "S-2": "AAABBBCCCDDDEEE", "S-3": "AABBCCDDEEFFGGH", "S-4": "AABCCDEEFGGHJJK", "I": "AABCCDEFGHJKLMN", "II": "ABCDEFGHJKLMNPQ", "III": "BCDEFGHJKLMNPQR" };
+  function aqlCode(N, level) {
+    const s = AQL_LEVELS[level]; if (!s || !(N >= 2)) return null;
+    const k = AQL_LOT.findIndex(b => N <= b);
+    return s[k];
+  }
+  // 主表的一格：數字 = 允收數 Ac；"D" = 往下找第一個方案；"U" = 往上找最後一個方案
+  function aqlCell(sev, i, j) {
+    if (sev === "normal") {
+      if (i > 15) return null;
+      const d = i + j - 14, seq = [1, 2, 3, 5, 7, 10, 14, 21, 30, 44];
+      if (d < 0) return "D"; if (d === 0) return 0; if (d === 1) return "U"; if (d === 2) return "D";
+      if (d > 12) return "U"; const ac = seq[d - 3]; return ac >= 30 && i > 4 ? "U" : ac;
+    }
+    if (sev === "tightened") {
+      if (i > 16) return null;
+      const d = i + j - 15, seq = [1, 2, 3, 5, 8, 12, 18, 27, 41];
+      if (d < 0) return "D"; if (d === 0) return 0; if (d === 1 || d === 2) return "D";
+      if (d > 11) return "U"; const ac = seq[d - 3]; if (i === 16 && j !== 2) return "D"; return ac >= 27 && i > 4 ? "U" : ac;
+    }
+    return null;
+  }
+  function aqlPlan(letter, aql, sev) {
+    sev = sev || "normal";
+    const i0 = AQL_LETTERS.indexOf(letter), j = AQL_LIST.findIndex(a => Math.abs(a - aql) < 1e-9);
+    if (i0 < 0 || j < 0 || !(sev === "normal" || sev === "tightened")) return null;
+    const maxI = sev === "normal" ? 15 : 16;
+    const look = (dir, from) => { for (let i = from; i >= 0 && i <= maxI; i += dir) { const c = aqlCell(sev, i, j); if (typeof c === "number") return i; } return -1; };
+    let c = aqlCell(sev, i0, j), i = i0;
+    if (typeof c !== "number") {
+      if (c === "D") { i = look(1, i0 + 1); if (i < 0) i = look(-1, i0 - 1); }
+      else { i = look(-1, i0 - 1); if (i < 0) i = look(1, i0 + 1); }
+      if (i < 0) return null;
+      c = aqlCell(sev, i, j);
+    }
+    return { letter: AQL_LETTERS[i], n: AQL_N[i], ac: c, re: c + 1, moved: i !== i0, from: letter, aql, sev };
+  }
+  // 逐批轉換規則（ISO 2859-1:2026 §9.3、§9.4，單次抽樣、整數允收數）
+  // lots: [{ N, d }]；o: { level, aql, reduced: { n, ac } | null, steady: true }
+  function aqlScheme(lots, o) {
+    let st = "normal", score = 0, win = [], tAcc = 0, tRej = 0, zeroRun = 0;
+    const out = [];
+    for (let k = 0; k < lots.length; k++) {
+      const L = lots[k], letter = aqlCode(L.N, o.level);
+      if (st === "stop") { out.push({ k, st, note: "已停止抽樣檢驗（§9.4）：須等改善措施經權責單位同意後，以加嚴檢驗恢復。" }); continue; }
+      let plan;
+      if (st === "reduced") plan = { letter: "—", n: o.reduced.n, ac: o.reduced.ac, re: o.reduced.ac + 1, sev: "reduced" };
+      else plan = aqlPlan(letter, o.aql, st);
+      if (!plan) { out.push({ k, st, note: "查無方案" }); continue; }
+      const full = plan.n >= L.N, acc = L.d <= plan.ac, row = { k, st, letter, plan, d: L.d, acc, full, scoreBefore: score };
+      let next = st, note = "";
+      if (st === "normal") {
+        win.push(acc); if (win.length > 5) win.shift();
+        if (plan.ac >= 2) { const t = aqlPlan(plan.letter, AQL_LIST[AQL_LIST.indexOf(o.aql) - 1], "normal"); score = t && t.letter === plan.letter && L.d <= t.ac ? score + 3 : 0; }
+        else score = acc ? score + 2 : 0;
+        if (win.filter(x => !x).length >= 2) { next = "tightened"; note = "最近 5 批內有 2 批不允收 → 轉加嚴（§9.3.1）"; win = []; tAcc = 0; tRej = 0; score = 0; }
+        else if (score >= 30 && o.steady !== false) { if (o.reduced) { next = "reduced"; note = "轉換分數 ≥ 30 → 可轉減量（§9.3.3，需權責單位同意）"; } else note = "轉換分數 ≥ 30，可轉減量（§9.3.3）；需先填入減量方案"; }
+      } else if (st === "tightened") {
+        if (acc) { tAcc++; if (tAcc >= 5) { next = "normal"; note = "加嚴連續 5 批允收 → 回正常（§9.3.2）"; win = []; score = 0; } }
+        else { tAcc = 0; tRej++; if (tRej >= 5) { next = "stop"; note = "加嚴累計 5 批不允收 → 停止抽樣檢驗（§9.4）"; } }
+      } else if (st === "reduced") {
+        if (!acc) { next = "normal"; note = "減量時有 1 批不允收 → 回正常（§9.3.4）"; win = []; score = 0; }
+      }
+      zeroRun = acc && L.d === 0 && st !== "tightened" ? zeroRun + 1 : 0;
+      row.score = score; row.next = next; row.note = note; row.zeroRun = zeroRun;
+      row.skipOk = next === st && (st === "reduced" || (st === "normal" && score >= 30)) && zeroRun >= 10;   // §9.3.6、§9.5.3.1：另須廠商與產品資格
+      out.push(row); st = next;
+    }
+    return { rows: out, state: st, score };
+  }
+
+  const api = { AQL_LIST, AQL_LETTERS, AQL_N, AQL_LEVELS, aqlCode, aqlCell, aqlPlan, aqlScheme, eqStats, tostTest, tostPower, niPower, tostN, niN, tostDelta, niDelta, prop1Crit, prop1Power, prop1N, prop1NApprox, prop2Power, prop2N, doePower, doeReps, tolK, tolN, npConf, npTolN };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SS = api;
 })(typeof window !== "undefined" ? window : globalThis);

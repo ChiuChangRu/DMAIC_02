@@ -387,14 +387,20 @@
         </div>
         <div class="ss-qgrp"><div class="ss-qgl">符合規格</div>
           <button type="button" class="ssq" data-q="q8"><span class="ssq-t">⑧ 要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
-          <div class="ss-qgl" style="margin-top:10px">實驗與其他工具</div>
+          <div class="ss-qgl" style="margin-top:10px">生產批次檢驗</div>
+          <button type="button" class="ssq" data-q="q11"><span class="ssq-t">⑪ 進料、出貨抽檢：抽多少、幾個不良算不合格？<span class="ssq-new">新增</span></span><span class="ssq-s">看合格／不合格，數不良品（ISO 2859-1:2026）</span></button>
+          <button type="button" class="ssq" data-q="q12"><span class="ssq-t">⑫ 用量測數值判批次合格，可以少抽一點嗎？<span class="ssq-new">新增</span></span><span class="ssq-s">看平均和變異；數據要接近常態（ISO 3951-1）</span></button>
+        </div>
+        <div class="ss-qgrp"><div class="ss-qgl">實驗與其他工具</div>
           <button type="button" class="ssq" data-q="q9"><span class="ssq-t">⑨ 實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
           <button type="button" class="ssq" data-q="q10"><span class="ssq-t">⑩ MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
         </div>
-        <div class="ss-qgrp"><div class="ss-qgl">進階</div>
-          <button type="button" class="ssq ssq-adv" id="ssAdvBtn" aria-expanded="false"><span class="ssq-t">直接選統計方法 ▸</span><span class="ssq-s">原本的計算機分頁，給熟悉統計方法的人使用</span></button>
-        </div>
       </div>
+    </section>
+    <section class="card ss-tcard" id="ssTilesCard">
+      <h2 class="ss-qh"><span class="ss-step">2</span>統計方法</h2>
+      <p class="help" id="ssRecLine">選了上面的問題，建議的方法會加框標示；也可以直接點任何一張圖卡。</p>
+      <div class="ss-tiles" id="ssTiles" role="tablist" aria-label="統計方法"></div>
     </section>
     <div class="ss-qbanner" id="ssQBanner" hidden></div>
     <div class="subtabs" role="tablist" aria-label="樣本數規劃功能（進階：直接選統計方法）" id="ssTabs" hidden>
@@ -406,6 +412,8 @@
       <button type="button" role="tab" data-tsub="ni" aria-selected="false">不劣性</button>
       <button type="button" role="tab" data-tsub="doer" aria-selected="false">DOE 重複次數</button>
       <button type="button" role="tab" data-tsub="guide" aria-selected="false">其他工具建議數量</button>
+      <button type="button" role="tab" data-tsub="aql" aria-selected="false">計數型 AQL</button>
+      <button type="button" role="tab" data-tsub="aqlv" aria-selected="false">計量型 AQL</button>
     </div>
     <div id="subPower" data-tview="power" hidden>
       <div class="grid">
@@ -488,7 +496,7 @@
               <div class="field" id="atAcF" hidden><label for="atAc">允收數 Ac／實際失效數</label><input id="atAc" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
               <div class="field" id="atAqlF" hidden><label for="atAql">AQL（%）</label><input id="atAql" type="number" step="any" min="0" placeholder="選填，例如 1.5" inputmode="decimal"></div>
             </div>
-            <p class="help" id="atIsoNote" hidden>使用 ISO 2859-1 的方案時，依批量、檢驗水準（例如 S-3）與 AQL 從抽樣表查出樣本數 n 與允收數 Ac 後填入。本頁不提供抽樣表；ISO 2859-1:1999 已由 2026 版取代，請以公司持有的版本為準。</p>
+            <p class="help" id="atIsoNote" hidden>使用 ISO 2859-1 的方案時，依批量、檢驗水準（例如 S-3）與 AQL 從抽樣表查出樣本數 n 與允收數 Ac 後填入。要從批量直接查方案、判定批次與追蹤轉換規則，請用「計數型 AQL」圖卡。ISO 2859-1:1999 已由 2026 版取代。</p>
             <div class="run-row">
               <button class="btn primary" id="atRun" type="button">計算</button>
               <span class="hint" id="atHint"></span>
@@ -586,6 +594,73 @@
       <section class="card sheet" data-ask="其他工具建議數量"><h3>其他工具的建議數量</h3>
         <p class="help">下列是業界手冊與常見做法的建議，不是統計計算結果；正式試驗請依公司程序、風險與法規要求決定。標 * 者為常見慣例，請再查證。</p>
         <div class="scroll-x"><table id="ssGuide"></table></div>
+      </section>
+    </div>
+    <div id="subAql" data-tview="aql" hidden>
+      <div class="grid">
+        <main class="card" id="aqPanel" style="border-top:6px solid #C9A227">
+          <div class="step">
+            <span class="qref copper">設定</span>
+            <h2 class="q">計數型 AQL 抽樣（ISO 2859-1:2026）</h2>
+            <p class="help">進料、製程、出貨的批次抽檢：依批量、檢驗水準與 AQL，查出要抽幾個（n）、幾個不良以內允收（Ac）。單次抽樣。</p>
+            <div class="fields">
+              <div class="field"><label for="aqN">批量 N</label><input id="aqN" type="number" step="1" min="2" inputmode="numeric" placeholder="例如 5000"></div>
+              <div class="field"><label for="aqLv">檢驗水準</label><select id="aqLv"><option value="II" selected>一般 II（未指定時用這個）</option><option value="I">一般 I（鑑別力較低）</option><option value="III">一般 III（鑑別力較高）</option><option value="S-1">特殊 S-1</option><option value="S-2">特殊 S-2</option><option value="S-3">特殊 S-3</option><option value="S-4">特殊 S-4</option></select></div>
+              <div class="field"><label for="aqAql">AQL</label><select id="aqAql"></select></div>
+              <div class="field"><label for="aqSev">嚴格度</label><select id="aqSev"><option value="normal" selected>正常（開始時用這個）</option><option value="tightened">加嚴</option><option value="reduced">減量（需自行填入方案）</option></select></div>
+              <div class="field"><label for="aqD">這批抽到的不良數（選填）</label><input id="aqD" type="number" step="1" min="0" inputmode="numeric" placeholder="填了會判定允收／拒收"></div>
+            </div>
+            <div class="fields" id="aqRedF" hidden>
+              <div class="field"><label for="aqRn">減量方案 n</label><input id="aqRn" type="number" step="1" min="1" inputmode="numeric"></div>
+              <div class="field"><label for="aqRac">減量方案 Ac</label><input id="aqRac" type="number" step="1" min="0" inputmode="numeric"></div>
+            </div>
+            <p class="help" id="aqRedNote" hidden>減量檢驗請依公司持有的 ISO 2859-1:2026 表 4 查出 n 與 Ac 後填入（2026 版的減量表與 MIL-STD-105E 不同，本頁不內建）。</p>
+            <div class="run-row">
+              <button class="btn primary" id="aqRun" type="button">查表並計算</button>
+              <span class="hint" id="aqHint"></span>
+            </div>
+            <details class="eq-adv" id="aqSchW">
+              <summary>逐批記錄與轉換規則（正常 ⇄ 加嚴 ⇄ 減量、停止檢驗）</summary>
+              <p class="help">ISO 2859-1 是給「連續多批」用的：依每批結果自動決定下一批該用正常、加嚴或減量。每列一批，填「批量 不良數」，例如 <code>5000 2</code>。</p>
+              <textarea id="aqLots" rows="6" spellcheck="false" placeholder="5000 1&#10;5000 0&#10;4800 6&#10;5000 2"></textarea>
+              <label class="fb-chk"><input type="checkbox" id="aqSteady" checked> 生產穩定（轉減量的條件之一，§9.3.3 b）</label>
+              <div class="run-row"><button class="btn small" type="button" id="aqSchRun">依序判定</button><span class="hint" id="aqSchHint"></span></div>
+              <div id="aqSchOut"></div>
+            </details>
+            <p class="hint">抽樣表依 MIL-STD-105E（美國政府公開文件）的排列規則產生；正常、加嚴主表與樣本代字經核對與 ISO 2859-1:2026 表 1～表 3 相同。正式文件請以公司持有的 ISO 版本為準。</p>
+          </div>
+        </main>
+        <aside class="card preview" aria-label="計數型 AQL 結果" data-ask="計數型 AQL 結果">
+          <div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="aqTitle">尚未計算</b></span><span class="ask-slot"></span></div>
+          <div class="preview-body" id="aqOut"><p class="help">填好批量、檢驗水準與 AQL 後按「查表並計算」。</p></div>
+        </aside>
+      </div>
+      <div class="sheets" id="aqSheets" hidden>
+        <section class="card sheet" data-ask="使用 ISO 2859-1 要注意的事">
+          <h3>使用 ISO 2859-1 要注意的事</h3>
+          <ul class="aq-notes">
+            <li><b>只抽一次就不算「依 ISO 2859-1 檢驗」（§12.6.1）</b>：這套標準要搭配轉換規則連續使用。只挑一個方案、抽一次（例如設計驗證、確效）時，只能說「採用表中方案」，並要另外評估它的 OC 曲線；要宣稱可靠度請改用「通過／不通過」或「允差區間」。</li>
+            <li><b>AQL 不是可宣稱的品質（§3.1.1、§5.1）</b>：AQL 是「可容忍的最差製程平均」，不代表理想品質；製程平均應該比 AQL 好，否則會常常被拒收。</li>
+            <li><b>關鍵不良應全檢（§7.5）</b>：會造成使用者危害的不良（對應 ISO 14971 的高風險項目），可要求全數檢驗，抽樣中發現 1 件就整批拒收。</li>
+            <li><b>標準假設檢驗員不會判錯（§14）</b>：外觀等目視檢驗，先用 MSA 的「屬性一致性（Kappa）」確認檢驗員判定可靠。</li>
+            <li><b>抽樣要隨機（§8.1、附錄 B）</b>：方便取樣會讓結果失效；批內有分層（不同模穴、時段）時，依比例分層抽樣。</li>
+            <li><b>批數不多時（§12.6.2）</b>：轉換規則用不上，要看單批的保護（下表 LTPD）；孤立批（例如試產、轉廠初期）應改用 ISO 2859-2（LQ 方案）。</li>
+            <li><b>AQL 表不是為 ppm 等級設計的（附錄 F）</b>：極低不良率的要求，請改用可靠度或計量型方法。</li>
+          </ul>
+        </section>
+        <section class="card sheet" data-ask="AQL 方案允收機率表">
+          <h3>允收機率表（OC）</h3>
+          <p class="help">製程不良率為下列數值時，這個方案允收一批的機率（二項分布，依附錄 E 的方法計算）。</p>
+          <div class="scroll-x"><table id="aqTable"></table></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="subAqlv" data-tview="aqlv" hidden>
+      <section class="card sheet" data-ask="計量型 AQL">
+        <h3>計量型 AQL 抽樣（ISO 3951-1）— 準備中</h3>
+        <p class="help">用量測數值（尺寸、拉力）判定批次：以樣本平均和標準差，計算離規格的距離（Q 值）並和允收常數 k 比較。和數不良品的計數型抽樣相比，同樣的保護程度通常可以少抽*；但前提是數據接近常態分布。</p>
+        <p class="help">這張圖卡的計算功能，要等讀過 ISO 3951-1 原文、確認判定方法（s 法、σ 法）與表格來源後才加入。目前可以先用「允差區間」宣稱比例落在規格內，或用「計數型 AQL」。</p>
       </section>
     </div>
   </section>

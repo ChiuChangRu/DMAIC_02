@@ -425,6 +425,25 @@ if (SS && SS.tostPower && ref.eq) {
   R.nip.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} n=${c.n} δ=${c.delta} 真實差=${c.D}`, "檢定力", SS.niPower(c.design, c.n, c.delta, c.sd, c.alpha, c.D, c.dir), c.power, 1e-9));
   R.nin.forEach(c => check(G, `不劣性 ${dn(c.design)} ${c.dir === "higher" ? "越大越好" : "越小越好"} δ=${c.delta} σ=${c.sd} α=${c.alpha} 目標 ${c.target}`, "最小樣本數", SS.niN(c.design, c.delta, c.sd, c.alpha, c.target, c.D, c.dir), c.n, 0));
   R.sim.forEach(c => check(G, `TOST 模擬 40 萬次 ${dn(c.design)} n=${c.n} δ=${c.delta} σ=${c.sd} 真實差=${c.D}（容許 4 個模擬標準誤）`, "檢定力", SS.tostPower(c.design, c.n, c.delta, c.sd, 0.05, c.D), c.power, 4 * c.se));
+  if (SS.aqlPlan) {
+    const GA = "計數型 AQL 抽樣（ISO 2859-1:2026）", P = (l, a, s) => SS.aqlPlan(l, a, s), eq = (r, L, n, ac) => r && r.letter === L && r.n === n && r.ac === ac && r.re === ac + 1;
+    t(GA, "樣本代字（表 1）：批量 5 000、水準 II → L；2～8、S-1 → A；500 001 以上、III → R；26～50、S-4 → C", SS.aqlCode(5000, "II") === "L" && SS.aqlCode(8, "S-1") === "A" && SS.aqlCode(600000, "III") === "R" && SS.aqlCode(30, "S-4") === "C");
+    t(GA, "附錄 E 二項例：代字 D、AQL 6.5、正常 → n=8、Ac=1；Pa(p=10%) = 81.3%", eq(P("D", 6.5), "D", 8, 1) && Math.abs(HT.binomCdf(1, 8, 0.1) - 0.8131) < 5e-5);
+    t(GA, "附錄 E 卜瓦松例：代字 G、AQL 4、正常 → n=32、Ac=3", eq(P("G", 4), "G", 32, 3));
+    t(GA, "表 2：L、AQL 1.0 → n=200、Ac=5、Re=6", eq(P("L", 1.0), "L", 200, 5));
+    t(GA, "表 2 往下找：A、AQL 10（無適用方案）→ C、n=5、Ac=1", eq(P("A", 10), "C", 5, 1));
+    t(GA, "表 2 往上找：R、AQL 0.015 → P、n=800、Ac=0", eq(P("R", 0.015), "P", 800, 0));
+    t(GA, "表 2：Ac 30／44 只出現在代字 A～E（例：E、AQL 250 → 44；F、AQL 100 → 往上 E、21）", eq(P("E", 250), "E", 13, 44) && eq(P("F", 100), "E", 13, 21));
+    t(GA, "表 3 加嚴：R、AQL 0.025 → S、n=3150、Ac=1；R、AQL 0.015 → Q、n=1250、Ac=0；A、AQL 10 → n=2、Ac=0", eq(P("R", 0.025, "tightened"), "S", 3150, 1) && eq(P("R", 0.015, "tightened"), "Q", 1250, 0) && eq(P("A", 10, "tightened"), "A", 2, 0));
+    t(GA, "表 3 加嚴：K、AQL 1.0 → n=125、Ac=2；D、AQL 400 → n=8、Ac=41", eq(P("K", 1.0, "tightened"), "K", 125, 2) && eq(P("D", 400, "tightened"), "D", 8, 41));
+    t(GA, "同一代字下，加嚴的允收數不大於正常", SS.AQL_LETTERS.slice(0, 16).every(l => SS.AQL_LIST.every(a => { const n = P(l, a), g = P(l, a, "tightened"); return !n || !g || g.n > n.n || g.ac <= n.ac; })));
+    const sch = SS.aqlScheme([{ N: 5000, d: 6 }, { N: 5000, d: 2 }, { N: 5000, d: 7 }].concat(Array(5).fill({ N: 5000, d: 0 })), { level: "II", aql: 1.0 });
+    t(GA, "轉換規則 §9.3.1／§9.3.2：5 批內 2 批不允收 → 加嚴；加嚴連續 5 批允收 → 回正常", sch.rows[2].next === "tightened" && sch.rows[3].st === "tightened" && sch.rows[7].next === "normal");
+    const sc = SS.aqlScheme(Array(10).fill({ N: 5000, d: 1 }), { level: "II", aql: 1.0 });
+    t(GA, "轉換分數 §9.3.3.2：Ac≥2 時，若嚴一級 AQL（0.65，Ac=3）也允收則 +3；10 批後 = 30", sc.score === 30);
+    const st5 = SS.aqlScheme(Array(2).fill({ N: 5000, d: 9 }).concat(Array(5).fill({ N: 5000, d: 9 })), { level: "II", aql: 1.0 });
+    t(GA, "§9.4：加嚴累計 5 批不允收 → 停止抽樣檢驗", st5.state === "stop");
+  }
   if (SS.tostTest) {
     (R.tests || []).forEach((c, i) => {
       const lab = `同等性判定 #${i + 1} ${c.paired ? "成對" : "兩組獨立"} n=${c.x.length}/${c.y.length} δ=${c.delta} α=${c.alpha}（statsmodels ttost）`, r = SS.tostTest(c.x, c.y, c.delta, c.alpha, c.paired);

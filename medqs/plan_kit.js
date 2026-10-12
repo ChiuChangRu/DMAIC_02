@@ -288,7 +288,7 @@
       } else {
         pkClick(`#tpMethod [data-v="${m.method}"]`); pkClick(`#tpSide [data-v="${m.side}"]`); pkSet("tpP", m.cover, "change"); pkSet("tpG", m.tconf, "change"); $("tpRun").click();
       }
-      $("ssTabs").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("ssTilesCard").scrollIntoView({ behavior: "smooth", block: "start" });
       return { msg: "已帶入下方工具並計算。" };
     }
   });

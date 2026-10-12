@@ -13,7 +13,9 @@
     q7: { sub: "prop", title: "⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
     q8: { sub: "tolp", title: "⑧ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "數據量完後，到「假設檢定・統計允差區間」計算。" },
     q9: { sub: "doer", title: "⑨ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
-    q10: { sub: "guide", title: "⑩ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" }
+    q10: { sub: "guide", title: "⑩ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" },
+    q11: { sub: "aql", title: "⑪ 進料、出貨抽檢：抽多少、幾個不良算不合格？", prep: ["批量 N（這一批有多少個）", "檢驗水準：未指定時用一般 II", "AQL：依不良的嚴重程度（主要、次要）由權責單位決定；關鍵不良應全檢"], note: "這是給連續多批的批次檢驗用的（ISO 2859-1:2026）。設計驗證、確效只抽一次時，請改用 ⑤ 或 ⑧。" },
+    q12: { sub: "aqlv", title: "⑫ 用量測數值判批次合格，可以少抽一點嗎？", prep: ["規格界限（單邊或雙邊）", "數據要接近常態分布"], note: "計量型 AQL（ISO 3951-1）準備中。" }
   };
   let ssCurQ = "", ssQBusy = false;
   function ssBanner() {
@@ -28,8 +30,8 @@
     $("ssQ").querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.q === q)));
     ssQBusy = true; setSampleSub(d.sub); ssQBusy = false;
     if (d.set && !(opts && opts.keep)) d.set();
-    ssBanner();
-    if (!(opts && opts.noScroll)) $("ssQBanner").scrollIntoView({ behavior: "smooth", block: "start" });
+    ssBanner(); ssTileMark();
+    if (!(opts && opts.noScroll)) $("ssTilesCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   // 從進階分頁或其他頁面切換時，同步到對應的問題
   function ssSyncFromSub(s) {
@@ -37,8 +39,9 @@
     if (SSQ[ssCurQ] && SSQ[ssCurQ].sub === s) return;
     const q = s === "power" ? (($("pwDesign").querySelector('[aria-pressed="true"]') || {}).dataset || {}).v === "one" ? "q4" : "q1"
       : s === "attr" ? ((($("atMode").querySelector('[aria-pressed="true"]') || {}).dataset || {}).v === "eval" ? "q6" : "q5")
-      : { tost: "q2", ni: "q3", prop: "q7", tolp: "q8", doer: "q9", guide: "q10" }[s];
+      : { tost: "q2", ni: "q3", prop: "q7", tolp: "q8", doer: "q9", guide: "q10", aql: "q11", aqlv: "q12" }[s];
     if (q) { ssCurQ = q; $("ssQ").querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.q === q))); ssBanner(); }
+    ssTileMark();
   }
   function ssRestoreQ(q, sub) {
     if (SSQ[q]) ssPick(q, { keep: true, noScroll: true });
