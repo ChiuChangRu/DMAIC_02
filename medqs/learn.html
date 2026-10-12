@@ -101,6 +101,7 @@ td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; 
 .tex-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 6px 18px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .tex-row:last-child { border-bottom: 0; }
 @media (max-width: 760px) { .tex-row { grid-template-columns: minmax(0, 1fr); } }
+.tex math { font-size: 1.15em; }
 .tex { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 17px; }
 .tex code { font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; }
 .tex-note { font-size: 14px; color: var(--muted); }
@@ -112,7 +113,6 @@ ul.tight { margin: 6px 0 0; padding-left: 1.2em; } ul.tight li { margin: 2px 0; 
 footer { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
 footer a, .card a { color: var(--act-text); }
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 </head>
 <body>
 <div class="wrap">
@@ -398,7 +398,7 @@ footer a, .card a { color: var(--act-text); }
   // 章節導覽：捲動時標示目前章節（目前只有第 1 節）
 
   // ---- LaTeX ----
-  function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
+  function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true, output: "mathml" }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
   function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); }
   function texLive() {
     const two = S.side === "two", qa = two ? 1 - S.a / 2 : 1 - S.a, za = PhiInv(qa), sh = S.sh, zb = sh - za, beta = betaOf(sh, S.a, S.side);
