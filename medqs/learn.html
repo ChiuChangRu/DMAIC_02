@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>統計觀念圖解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+TC:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #F5F1EA; --surface: #FFFFFF; --ink: #1F2933; --muted: #5A6570; --line: #E4DCCD;
+  --teal: #4F7F7A; --copper: #B87333; --navy: #3E5A78; --teal-soft: #E2EEEC; --copper-soft: #F7E8D9; --navy-soft: #E3E8EE;
+  --band: #1F2933; --band-ink: #F5F1EA; --band-muted: #C9C2B6; --code-bg: #FCFAF6; --grid: #ECE6DA;
+  --good: #2E7A4C; --bad: #B03A3A; --warn-soft: #FBF1DC; --warn-ink: #7A5410;
+  --act: #A34A16; --on-act: #FFFFFF; --act-text: #A34A16;
+  --c-alpha: #C0562B; --c-beta: #5B4FC4; --c-power: #2E8B6E; --c-h0: #1F2933; --c-h1: #5B4FC4;
+  --font-display: Georgia, "Noto Serif TC", "Times New Roman", serif;
+  --font-body: Calibri, "Carlito", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131A20; --surface: #1B242C; --ink: #EDE7DC; --muted: #A3AEB8; --line: #2E3A44;
+    --teal: #7DB0AA; --copper: #D8995F; --navy: #A9BCD0; --teal-soft: #1E3533; --copper-soft: #3A2B1D; --navy-soft: #263340;
+    --band: #0D1317; --band-ink: #F5F1EA; --band-muted: #A9B3BC; --code-bg: #161E25; --grid: #26313A;
+    --good: #6CC08E; --bad: #E58A84; --warn-soft: #362B14; --warn-ink: #E8C27A;
+    --act: #B8622A; --on-act: #FFF6EC; --act-text: #E3995F;
+    --c-alpha: #E8875A; --c-beta: #9D93F0; --c-power: #5CC79F; --c-h0: #EDE7DC; --c-h1: #9D93F0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131A20; --surface: #1B242C; --ink: #EDE7DC; --muted: #A3AEB8; --line: #2E3A44;
+  --teal: #7DB0AA; --copper: #D8995F; --navy: #A9BCD0; --teal-soft: #1E3533; --copper-soft: #3A2B1D; --navy-soft: #263340;
+  --band: #0D1317; --band-ink: #F5F1EA; --band-muted: #A9B3BC; --code-bg: #161E25; --grid: #26313A;
+  --good: #6CC08E; --bad: #E58A84; --warn-soft: #362B14; --warn-ink: #E8C27A;
+  --act: #B8622A; --on-act: #FFF6EC; --act-text: #E3995F;
+  --c-alpha: #E8875A; --c-beta: #9D93F0; --c-power: #5CC79F; --c-h0: #EDE7DC; --c-h1: #9D93F0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 56px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+header.top { position: relative; background: var(--band); color: var(--band-ink); border-radius: 14px; padding: 26px 28px 0; margin-bottom: 24px; overflow: hidden; }
+header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: linear-gradient(90deg, #4F7F7A 0 40%, #B87333 40% 70%, #F5F1EA 70% 85%, #4F7F7A 85%); }
+.eyebrow { font-size: 13px; letter-spacing: .1em; color: #D8995F; font-weight: 700; }
+h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(28px, 4.4vw, 40px); line-height: 1.15; margin: 4px 0 8px; color: #F5F1EA; }
+.lede { color: var(--band-muted); max-width: 66ch; margin: 0; }
+.top-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.top-link { color: #F5F1EA; border: 1.5px solid rgba(245,241,234,.45); border-radius: 8px; padding: 8px 14px; text-decoration: none; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.top-link:hover { background: rgba(245,241,234,.1); }
+nav.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 20px; padding-bottom: 8px; }
+nav.tabs a { font-size: 15px; font-weight: 700; color: var(--band-muted); text-decoration: none; border-bottom: 3px solid transparent; padding: 8px 14px 10px; }
+nav.tabs a[aria-current="true"] { color: #F5F1EA; border-bottom-color: #D8995F; }
+nav.tabs span { font-size: 14px; color: var(--band-muted); padding: 8px 14px 10px; opacity: .7; }
+h2.sec { font-family: var(--font-display); font-weight: 500; font-size: 28px; margin: 8px 0 4px; }
+.sec-lede { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+.card { background: color-mix(in srgb, var(--teal) 28%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 50%, var(--line)); border-radius: 12px; padding: 24px; margin-bottom: 24px; min-width: 0; }
+@media (max-width: 480px) { .card { padding: 18px 14px; } }
+.card h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0 0 6px; }
+.qref { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--act-text); margin-bottom: 4px; }
+.help { color: var(--muted); margin: 0 0 14px; max-width: 70ch; font-size: 15px; }
+.inner { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 20px; margin-bottom: 14px; }
+.ctl { display: grid; gap: 4px; }
+.ctl label { font-size: 13px; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.ctl label output { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+input[type=range] { width: 100%; accent-color: var(--act); }
+input[type=number], select { font: inherit; color: var(--ink); background: var(--code-bg); border: 1.5px solid var(--act); border-radius: 8px; padding: 8px 10px; width: 100%; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 14.5px; color: var(--act-text); background: var(--surface); border: 1.5px solid var(--act); border-radius: 999px; padding: 6px 14px; cursor: pointer; line-height: 1.3; }
+.chip:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--act) 30%, transparent); }
+.chip[aria-pressed="true"] { background: var(--act); color: var(--on-act); font-weight: 700; }
+.chip:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--act); outline-offset: 2px; }
+svg.plot { width: 100%; height: auto; display: block; }
+svg.plot text { font-family: var(--font-body); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.stat .k { font-size: 13px; color: var(--muted); }
+.stat .v { font-family: var(--font-mono); font-size: 22px; font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--muted); margin: 0 0 6px; }
+.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend i.ln { height: 0; border-top: 2.5px solid; border-radius: 0; vertical-align: 3px; }
+.legend i.dash { border-top-style: dashed; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--navy-soft); font-weight: 700; }
+td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+.scroll-x { overflow-x: auto; }
+.cell-a { background: color-mix(in srgb, var(--c-alpha) 18%, var(--surface)); }
+.cell-b { background: color-mix(in srgb, var(--c-beta) 18%, var(--surface)); }
+.cell-p { background: color-mix(in srgb, var(--c-power) 18%, var(--surface)); }
+.formula { font-family: var(--font-mono); background: var(--code-bg); border: 1px solid var(--line); border-left: 4px solid var(--act); border-radius: 0; padding: 10px 14px; margin: 10px 0; overflow-x: auto; white-space: nowrap; }
+.stack { display: grid; gap: 20px; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.note { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; font-size: 14.5px; margin-top: 12px; }
+ul.tight { margin: 6px 0 0; padding-left: 1.2em; } ul.tight li { margin: 2px 0; }
+footer { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
+footer a, .card a { color: var(--act-text); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="top-row">
+    <div>
+      <div class="eyebrow">醫材品質統計工作台 · 觀念篇</div>
+      <h1>統計觀念圖解</h1>
+      <p class="lede">用可以拖拉的圖，看懂工具背後的觀念。所有數字都由本頁程式即時計算。</p>
+    </div>
+    <a class="top-link" href="index.html">回到統計工作台 →</a>
+  </div>
+  <nav class="tabs" aria-label="章節">
+    <a href="#s1" aria-current="true">1 假設檢定</a>
+    <span>2 樣本數（規劃中）</span>
+    <span>3 MSA（規劃中）</span>
+    <span>4 SPC（規劃中）</span>
+  </nav>
+</header>
+
+<section id="s1">
+  <h2 class="sec">1　假設檢定：α、β 與 OC 曲線</h2>
+  <p class="sec-lede">假設檢定是在「實際沒差異（H₀）」與「實際有差異（H₁）」之間做判定。判定一定可能出錯，α、β 就是兩種出錯的機率。本節依序看：兩種錯誤長什麼樣子、α 與 β 怎麼互相拉扯、它們跟抽樣的 OC 曲線其實是同一件事。</p>
+
+  <!-- 1-1 -->
+  <section class="card" id="s1-1">
+    <span class="qref">1-1</span>
+    <h3>型一、型二錯誤：兩條常態分布與臨界值</h3>
+    <p class="help">例子：熱封強度，標準差 σ、想抓到的最小差異 Δ、樣本數 n。平均值的標準誤 SE = σ/√n；H₁ 的分布相對 H₀ 往右移 Δ/SE 個標準誤。拖拉看看哪一塊面積在變。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="i_d">實際差異 Δ <output id="o_d"></output></label><input type="range" id="i_d" min="0" max="3" step="0.05" value="1.5"></div>
+        <div class="ctl"><label for="i_s">標準差 σ <output id="o_s"></output></label><input type="range" id="i_s" min="0.2" max="4" step="0.1" value="1.6"></div>
+        <div class="ctl"><label for="i_n">樣本數 n <output id="o_n"></output></label><input type="range" id="i_n" min="2" max="60" step="1" value="10"></div>
+        <div class="ctl"><label for="i_a">顯著水準 α</label><select id="i_a"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+      </div>
+      <div class="chips" id="i_side" role="group" aria-label="單尾或雙尾" style="margin-bottom:10px">
+        <button class="chip" type="button" data-v="one" aria-pressed="true">單尾（H₁：變大）</button>
+        <button class="chip" type="button" data-v="two" aria-pressed="false">雙尾（H₁：不相等）</button>
+      </div>
+      <div class="legend">
+        <span><i class="ln" style="border-color:var(--c-h0)"></i>H₀ 實際沒差異</span>
+        <span><i class="ln dash" style="border-color:var(--c-h1)"></i>H₁ 實際有差異</span>
+        <span><i style="background:var(--c-alpha);opacity:.6"></i>α 誤判有差</span>
+        <span><i style="background:var(--c-beta);opacity:.45"></i>β 漏抓</span>
+        <span><i style="background:var(--c-power);opacity:.35"></i>檢定力</span>
+      </div>
+      <svg class="plot" id="p1" viewBox="0 0 680 320" role="img" aria-label="H0 與 H1 常態分布、臨界值與 α、β、檢定力面積"></svg>
+      <div class="stats">
+        <div class="stat"><div class="k">標準誤 SE = σ/√n</div><div class="v" id="m_se"></div></div>
+        <div class="stat"><div class="k">偏移 Δ/SE</div><div class="v" id="m_sh"></div></div>
+        <div class="stat"><div class="k">臨界值 z</div><div class="v" id="m_c"></div></div>
+        <div class="stat"><div class="k" style="color:var(--c-alpha)">α 第一型錯誤</div><div class="v" id="m_a"></div></div>
+        <div class="stat"><div class="k" style="color:var(--c-beta)">β 第二型錯誤</div><div class="v" id="m_b"></div></div>
+        <div class="stat"><div class="k" style="color:var(--c-power)">檢定力 1 − β</div><div class="v" id="m_p"></div></div>
+      </div>
+    </div>
+    <h4 style="margin:18px 0 8px">對照表（數字隨上面設定變動）</h4>
+    <div class="scroll-x"><table>
+      <tr><th></th><th>實際沒差異（H₀ 真）</th><th>實際有差異（H₁ 真，差 Δ）</th></tr>
+      <tr><th>判定「有差異」</th><td class="cell-a">第一型錯誤，<b>α</b> = <span id="t_a"></span><br><span class="help" style="font-size:13px">品管：生產者風險，好批被判退</span></td><td class="cell-p">抓到了，<b>檢定力</b> = <span id="t_p"></span></td></tr>
+      <tr><th>判定「沒差異」</th><td>正確，<b>1 − α</b> = <span id="t_1a"></span></td><td class="cell-b">第二型錯誤，<b>β</b> = <span id="t_b"></span><br><span class="help" style="font-size:13px">品管：消費者風險，壞批被允收</span></td></tr>
+    </table></div>
+    <ul class="tight help" style="margin-top:12px">
+      <li>Δ 變大或 n 變大：兩條曲線分得更開，β 變小。</li>
+      <li>α 從 0.05 改 0.01：臨界值右移，α 變小、β 變大。</li>
+      <li>p ≥ α「未達顯著」不代表沒差異；檢定力低時本來就抓不到。要證明「一樣」請用同等性檢定（TOST）。</li>
+    </ul>
+  </section>
+
+  <!-- 1-2 -->
+  <section class="card" id="s1-2">
+    <span class="qref">1-2</span>
+    <h3>α 與 β 的關係式</h3>
+    <p class="help">α 是事先自己設定的；β 不能直接設定，由 α、n、σ 與實際差異 Δ 一起決定。兩者會互相拉扯，但不是「α + β = 1」這種固定關係。</p>
+    <div class="formula" id="f12">β = Φ( z₁₋α − Δ·√n / σ )　（單尾）</div>
+    <p class="help" style="margin-top:0">Φ 是標準常態累積機率。下圖用 1-1 目前的 Δ 與 σ，畫出不同樣本數下 β 隨 α 的變化；圓點是 1-1 的設定。</p>
+    <div class="inner">
+      <div class="legend" id="lg12"></div>
+      <svg class="plot" id="p2" viewBox="0 0 680 320" role="img" aria-label="β 對 α 的關係曲線，不同樣本數"></svg>
+    </div>
+    <div class="scroll-x" style="margin-top:14px"><table id="t12"></table></div>
+    <div class="note">報告寫「檢定力 90%」時，要一起寫「針對 Δ = 多少」。實際差異比 Δ 小，β 就比規劃時大。</div>
+  </section>
+
+  <!-- 1-3 -->
+  <section class="card" id="s1-3">
+    <span class="qref">1-3</span>
+    <h3>OC 曲線：把 β 畫成一整條線</h3>
+    <p class="help">OC 曲線（操作特性曲線）＝「判定沒問題」的機率，對「實際狀況」作圖。假設檢定與 AQL 抽樣是同一個觀念：α 是曲線在「好」的那一點離 100% 差多少，β 是曲線在「壞」的那一點的高度。</p>
+    <div class="stack">
+      <div class="inner">
+        <h4 style="margin:0 0 4px">假設檢定的 OC 曲線</h4>
+        <p class="help" style="font-size:14px">橫軸：實際差異；縱軸：判定「沒差異」的機率。設定沿用 1-1。</p>
+        <div class="legend" id="lg13a"></div>
+        <svg class="plot" id="p3a" viewBox="0 0 680 360" role="img" aria-label="假設檢定的 OC 曲線"></svg>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 4px">AQL 抽樣方案的 OC 曲線</h4>
+        <p class="help" style="font-size:14px">抽 n 個、不良 ≤ Ac 允收。橫軸：批的實際不良率；縱軸：允收機率（二項分布）。</p>
+        <div class="controls" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">
+          <div class="ctl"><label for="q_n">樣本數 n</label><input type="number" id="q_n" min="1" max="3000" step="1" value="80"></div>
+          <div class="ctl"><label for="q_ac">允收數 Ac</label><input type="number" id="q_ac" min="0" max="100" step="1" value="2"></div>
+          <div class="ctl"><label for="q_aql">AQL（%）</label><input type="number" id="q_aql" min="0.01" max="50" step="any" value="1.0"></div>
+          <div class="ctl"><label for="q_rql">拒收品質 RQL（%）</label><input type="number" id="q_rql" min="0.01" max="80" step="any" value="6.5"></div>
+        </div>
+        <p class="help" id="q_err" style="color:var(--bad);margin:0" hidden></p>
+        <svg class="plot" id="p3b" viewBox="0 0 680 360" role="img" aria-label="AQL 抽樣方案的 OC 曲線"></svg>
+        <div class="stats">
+          <div class="stat"><div class="k" style="color:var(--c-alpha)">生產者風險 α = 1 − Pa(AQL)</div><div class="v" id="q_a"></div></div>
+          <div class="stat"><div class="k" style="color:var(--c-beta)">消費者風險 β = Pa(RQL)</div><div class="v" id="q_b"></div></div>
+        </div>
+      </div>
+    </div>
+    <h4 style="margin:18px 0 8px">兩邊對照</h4>
+    <div class="scroll-x"><table>
+      <tr><th>項目</th><th>假設檢定</th><th>AQL 抽樣</th></tr>
+      <tr><td>橫軸（實際狀況）</td><td>實際差異 Δ</td><td>批的實際不良率 p</td></tr>
+      <tr><td>縱軸</td><td>判定「沒差異」的機率</td><td>允收機率 Pa</td></tr>
+      <tr><td>「好」的那一點</td><td>Δ = 0，高度 = 1 − α</td><td>p = AQL，高度 = 1 − 生產者風險</td></tr>
+      <tr><td>「壞」的那一點</td><td>Δ = 要抓的差，高度 = β</td><td>p = RQL（LTPD），高度 = 消費者風險</td></tr>
+      <tr><td>讓曲線更陡（分得更清楚）</td><td>加大 n</td><td>加大 n（Ac 跟著調）</td></tr>
+    </table></div>
+    <div class="note">預設 n = 80、Ac = 2 是 ISO 2859-1 一般檢驗水準 II、樣本代字 J、AQL 1.0 的正常檢驗方案（範例用）。單次抽樣的 OC 只描述這個方案本身；依 ISO 2859-1 連續檢驗還要搭配轉換規則。RQL 6.5% 只是示範值，請依產品風險設定。</div>
+  </section>
+</section>
+
+<footer>
+  計算方法：常態分布（σ 視為已知的近似）與二項分布，由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  // ---- 數學 ----
+  function erfc(x) { const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+    const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+    return x >= 0 ? r : 2 - r; }
+  const Phi = x => 0.5 * erfc(-x / Math.SQRT2);
+  const pdf = x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
+  function PhiInv(p) {   // Acklam + 一次牛頓修正
+    const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924],
+      b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857],
+      c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878],
+      d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742], pl = 0.02425;
+    let x;
+    if (p < pl) { const q = Math.sqrt(-2 * Math.log(p)); x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    else if (p <= 1 - pl) { const q = p - 0.5, r = q * q; x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
+    else { const q = Math.sqrt(-2 * Math.log(1 - p)); x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    const e = Phi(x) - p; return x - e / pdf(x);
+  }
+  function lgamma(x) { const g = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    let y = x, t = x + 5.5; t -= (x + 0.5) * Math.log(t); let s = 1.000000000190015; for (const v of g) s += v / ++y; return -t + Math.log(2.5066282746310005 * s / x); }
+  function binomCdf(k, n, p) { if (p <= 0) return 1; if (p >= 1) return k >= n ? 1 : 0; let s = 0; const lf = lgamma(n + 1);
+    for (let i = 0; i <= Math.min(k, n); i++) s += Math.exp(lf - lgamma(i + 1) - lgamma(n - i + 1) + i * Math.log(p) + (n - i) * Math.log1p(-p)); return Math.min(1, s); }
+  // 檢定：回傳 β（判定沒差異的機率）
+  function betaOf(shift, alpha, side) { if (side === "two") { const c = PhiInv(1 - alpha / 2); return Phi(c - shift) - Phi(-c - shift); } return Phi(PhiInv(1 - alpha) - shift); }
+  const pct = (v, d) => (v * 100).toFixed(d == null ? 1 : d) + "%";
+  const fx = (v, d) => Number(v).toFixed(d);
+  // ---- 繪圖小工具 ----
+  const VW = id => { const w = (id && $(id).parentElement.clientWidth) || 680; return Math.round(Math.max(340, Math.min(680, w))); };
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function frame(o) {
+    const W = VW(o.svg), H = o.H || 320, L = o.L || 56, R = W - 18, T = o.T || 18, B = H - (o.Bp || 46);
+    const sx = x => L + (x - o.x0) / (o.x1 - o.x0) * (R - L), sy = y => B - (y - o.y0) / (o.y1 - o.y0) * (B - T);
+    let s = "";
+    (o.yt || []).forEach(v => { s += `<line x1="${L}" x2="${R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--grid)"/><text x="${L - 8}" y="${sy(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${o.yf ? o.yf(v) : v}</text>`; });
+    (o.xt || []).forEach(v => { s += `<text x="${sx(v)}" y="${B + 18}" text-anchor="middle" font-size="12" fill="var(--muted)">${o.xf ? o.xf(v) : v}</text>`; });
+    s += `<line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="var(--muted)" stroke-opacity=".6"/>`;
+    if (o.xl) s += `<text x="${(L + R) / 2}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--muted)">${o.xl}</text>`;
+    if (o.yl) s += `<text transform="translate(14 ${(T + B) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="var(--muted)">${o.yl}</text>`;
+    if (o.svg) $(o.svg).setAttribute("viewBox", `0 0 ${W} ${H}`);
+    return { s, sx, sy, L, R, T, B, W };
+  }
+  const poly = (f, a, b, sx, sy, step) => { let p = ""; for (let x = a; x <= b + 1e-9; x += step) p += `${sx(x).toFixed(1)},${sy(f(x)).toFixed(1)} `; return p; };
+  const line = (f, a, b, sx, sy, color, dash, w, step) => `<polyline points="${poly(f, a, b, sx, sy, step || (b - a) / 240)}" fill="none" stroke="${color}" stroke-width="${w || 2.2}" stroke-linejoin="round" stroke-linecap="round"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+  const fillArea = (f, a, b, sx, sy, y0, color, op) => b <= a ? "" : `<polygon points="${sx(a).toFixed(1)},${sy(y0).toFixed(1)} ${poly(f, a, b, sx, sy, (b - a) / 160)}${sx(b).toFixed(1)},${sy(y0).toFixed(1)}" fill="${color}" fill-opacity="${op}"/>`;
+  const dot = (x, y, color) => `<circle cx="${x}" cy="${y}" r="5.5" fill="${color}" stroke="var(--surface)" stroke-width="2"/>`;
+
+  // ---- 狀態 ----
+  const S = { side: "one" };
+  function read() { S.d = +$("i_d").value; S.s = +$("i_s").value; S.n = +$("i_n").value; S.a = +$("i_a").value; S.se = S.s / Math.sqrt(S.n); S.sh = S.d / S.se; }
+
+  // 1-1
+  function draw1() {
+    const sh = S.sh, a = S.a, two = S.side === "two", c = two ? PhiInv(1 - a / 2) : PhiInv(1 - a), beta = betaOf(sh, a, S.side);
+    const x0 = -4, x1 = Math.max(7, sh + 4);
+    const F = frame({ svg: "p1", x0, x1, y0: 0, y1: 0.45, T: 34, xt: Array.from({ length: Math.floor(x1 - x0) + 1 }, (_, i) => Math.ceil(x0) + i), xl: "檢定統計量 z（以標準誤為單位）", L: 24 });
+    const { sx, sy } = F, h0 = pdf, h1 = x => pdf(x - sh);
+    let s = F.s;
+    s += fillArea(h1, two ? -c : x0, c, sx, sy, 0, "var(--c-beta)", .35);
+    s += fillArea(h1, c, x1, sx, sy, 0, "var(--c-power)", .25);
+    if (two) s += fillArea(h1, x0, -c, sx, sy, 0, "var(--c-power)", .25);
+    s += fillArea(h0, c, x1, sx, sy, 0, "var(--c-alpha)", .6);
+    if (two) s += fillArea(h0, x0, -c, sx, sy, 0, "var(--c-alpha)", .6);
+    s += line(h0, x0, x1, sx, sy, "var(--c-h0)");
+    s += line(h1, x0, x1, sx, sy, "var(--c-h1)", "7 5");
+    const crit = cv => `<line x1="${sx(cv)}" x2="${sx(cv)}" y1="${sy(0.45) - 6}" y2="${F.B}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    s += crit(c) + `<text x="${sx(c)}" y="${sy(0.45) - 12}" text-anchor="middle" font-size="12.5" fill="var(--ink)">臨界值 ${fx(c, 3)}</text>`;
+    if (two) s += crit(-c) + `<text x="${sx(-c)}" y="${sy(0.45) - 12}" text-anchor="middle" font-size="12.5" fill="var(--ink)">−${fx(c, 3)}</text>`;
+    s += `<text x="${sx(0)}" y="${sy(0.399) - 8}" text-anchor="middle" font-size="13" fill="var(--c-h0)">H₀ 沒差異</text>`;
+    s += `<text x="${sx(sh)}" y="${sy(0.399) - 24}" text-anchor="middle" font-size="13" fill="var(--c-h1)">H₁ 差 ${fx(S.d, 2)}</text>`;
+    s += `<text x="${sx(c) + 6}" y="${F.B - 6}" font-size="12" fill="var(--muted)">判定有差 →</text><text x="${sx(c) - 6}" y="${F.B - 6}" text-anchor="end" font-size="12" fill="var(--muted)">${two ? "" : "← 判定沒差"}</text>`;
+    $("p1").innerHTML = s;
+    $("m_se").textContent = fx(S.se, 3); $("m_sh").textContent = fx(sh, 2); $("m_c").textContent = (two ? "±" : "") + fx(c, 3);
+    $("m_a").textContent = pct(a, 1); $("m_b").textContent = pct(beta); $("m_p").textContent = pct(1 - beta);
+    $("t_a").textContent = pct(a, 1); $("t_1a").textContent = pct(1 - a, 1); $("t_b").textContent = pct(beta); $("t_p").textContent = pct(1 - beta);
+  }
+  // 1-2
+  function draw2() {
+    const ns = [Math.max(2, Math.round(S.n / 2)), S.n, S.n * 2], cols = ["var(--c-alpha)", "var(--c-beta)", "var(--c-power)"], dashes = ["7 5", "", "2 5"];
+    const F = frame({ svg: "p2", x0: 0, x1: 0.2, y0: 0, y1: 1, xt: [0, 0.025, 0.05, 0.1, 0.15, 0.2], xf: v => v, yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: "α（第一型錯誤）", yl: "β（第二型錯誤）" });
+    let s = F.s;
+    ns.forEach((n, i) => { const sh = S.d / (S.s / Math.sqrt(n)); s += line(a => betaOf(sh, Math.max(a, 1e-4), S.side), 0.001, 0.2, F.sx, F.sy, cols[i], dashes[i]); });
+    const b0 = betaOf(S.sh, S.a, S.side); s += dot(F.sx(S.a), F.sy(b0), "var(--c-beta)");
+    s += `<text x="${F.sx(S.a) + 9}" y="${F.sy(b0) - 8}" font-size="12.5" fill="var(--ink)">α ${S.a}，β ${pct(b0)}</text>`;
+    $("p2").innerHTML = s;
+    $("lg12").innerHTML = ns.map((n, i) => `<span><i class="ln${dashes[i] ? " dash" : ""}" style="border-color:${cols[i]}"></i>n = ${n}${i === 1 ? "（目前）" : ""}</span>`).join("");
+    $("f12").textContent = S.side === "two" ? "β = Φ( z₁₋α/₂ − Δ√n/σ ) − Φ( −z₁₋α/₂ − Δ√n/σ )　（雙尾）" : "β = Φ( z₁₋α − Δ√n/σ )　（單尾）";
+    const as = [0.01, 0.025, 0.05, 0.10];
+    $("t12").innerHTML = `<tr><th>α</th>${ns.map(n => `<th>n = ${n} 的 β</th><th>檢定力</th>`).join("")}</tr>` +
+      as.map(a => `<tr><td class="num">${a}</td>${ns.map(n => { const b = betaOf(S.d / (S.s / Math.sqrt(n)), a, S.side); return `<td class="num">${pct(b)}</td><td class="num">${pct(1 - b)}</td>`; }).join("")}</tr>`).join("");
+  }
+  // 1-3a
+  function draw3a() {
+    const ns = [Math.max(2, Math.round(S.n / 2)), S.n, S.n * 2], cols = ["var(--c-alpha)", "var(--c-beta)", "var(--c-power)"], dashes = ["7 5", "", "2 5"];
+    const xmax = Math.max(3 * S.d, 4 * S.se, 0.5);
+    const F = frame({ svg: "p3a", H: 360, x0: 0, x1: xmax, y0: 0, y1: 1, xt: [0, xmax / 4, xmax / 2, 3 * xmax / 4, xmax], xf: v => fx(v, 2), yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: "實際差異", yl: "判定「沒差異」的機率" });
+    let s = F.s;
+    ns.forEach((n, i) => { const se = S.s / Math.sqrt(n); s += line(x => betaOf(x / se, S.a, S.side), 0, xmax, F.sx, F.sy, cols[i], dashes[i]); });
+    const b = betaOf(S.sh, S.a, S.side), top = 1 - S.a;
+    s += `<line x1="${F.sx(S.d)}" x2="${F.sx(S.d)}" y1="${F.sy(1)}" y2="${F.B}" stroke="var(--muted)" stroke-dasharray="3 4"/>`;
+    s += dot(F.sx(0), F.sy(top), "var(--c-alpha)") + `<text x="${F.sx(0) + 10}" y="${F.sy(top) + 18}" font-size="12.5" fill="var(--c-alpha)">Δ = 0：1 − α = ${pct(top, 1)}</text>`;
+    s += dot(F.sx(S.d), F.sy(b), "var(--c-beta)") + `<text x="${F.sx(S.d) + 10}" y="${F.sy(b) - 8}" font-size="12.5" fill="var(--c-beta)">Δ = ${fx(S.d, 2)}：β = ${pct(b)}</text>`;
+    $("p3a").innerHTML = s;
+    $("lg13a").innerHTML = ns.map((n, i) => `<span><i class="ln${dashes[i] ? " dash" : ""}" style="border-color:${cols[i]}"></i>n = ${n}${i === 1 ? "（目前）" : ""}</span>`).join("");
+  }
+  // 1-3b
+  function draw3b() {
+    const n = Math.round(+$("q_n").value), ac = Math.round(+$("q_ac").value), aql = +$("q_aql").value / 100, rql = +$("q_rql").value / 100, err = $("q_err");
+    let msg = "";
+    if (!(n >= 1 && n <= 3000)) msg = "樣本數 n 請填 1～3000 的整數。";
+    else if (!(ac >= 0 && ac < n)) msg = "允收數 Ac 要 ≥ 0 且小於 n。";
+    else if (!(aql > 0 && rql > aql && rql < 1)) msg = "請填 0 < AQL < RQL < 100%。";
+    err.hidden = !msg; err.textContent = msg;
+    if (msg) { $("p3b").innerHTML = ""; $("q_a").textContent = "—"; $("q_b").textContent = "—"; return; }
+    let pmax = Math.min(1, Math.max(rql * 1.6, 0.02)); for (let p = 0.001; p < 1; p += 0.001) { if (binomCdf(ac, n, p) < 0.01) { pmax = Math.min(1, Math.max(pmax, p * 1.1)); break; } }
+    const F = frame({ svg: "p3b", H: 360, x0: 0, x1: pmax, y0: 0, y1: 1, xt: [0, pmax / 4, pmax / 2, 3 * pmax / 4, pmax], xf: v => pct(v, v * 100 < 10 ? 1 : 0), yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: "批的實際不良率", yl: "允收機率 Pa" });
+    let s = F.s; s += line(p => binomCdf(ac, n, p), 0, pmax, F.sx, F.sy, "var(--c-h1)", "", 2.4);
+    const pa1 = binomCdf(ac, n, aql), pa2 = binomCdf(ac, n, rql);
+    [[aql, pa1, "var(--c-alpha)", `AQL ${pct(aql, 2)}：Pa ${pct(pa1)}`], [rql, pa2, "var(--c-beta)", `RQL ${pct(rql, 2)}：Pa ${pct(pa2)}`]].forEach(([x, y, col, lab], i) => {
+      s += `<line x1="${F.sx(x)}" x2="${F.sx(x)}" y1="${F.sy(1)}" y2="${F.B}" stroke="${col}" stroke-dasharray="3 4"/>` + dot(F.sx(x), F.sy(y), col);
+      const right = F.sx(x) < F.W * 0.6; s += `<text x="${F.sx(x) + (right ? 10 : -10)}" y="${F.sy(y) + (i ? -10 : 18)}" text-anchor="${right ? "start" : "end"}" font-size="12.5" fill="${col}">${lab}</text>`;
+    });
+    $("p3b").innerHTML = s; $("q_a").textContent = pct(1 - pa1); $("q_b").textContent = pct(pa2);
+  }
+  function all() { read(); $("o_d").textContent = fx(S.d, 2); $("o_s").textContent = fx(S.s, 1); $("o_n").textContent = S.n; draw1(); draw2(); draw3a(); }
+  ["i_d", "i_s", "i_n"].forEach(id => $(id).addEventListener("input", all)); $("i_a").addEventListener("change", all);
+  $("i_side").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; S.side = b.dataset.v; $("i_side").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); all(); });
+  ["q_n", "q_ac", "q_aql", "q_rql"].forEach(id => $(id).addEventListener("input", draw3b));
+  // 章節導覽：捲動時標示目前章節（目前只有第 1 節）
+  all(); draw3b();
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { all(); draw3b(); }, 150); });
+  window.__learn = { Phi, PhiInv, betaOf, binomCdf };
+})();
+</script>
+</body>
+</html>
