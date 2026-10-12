@@ -20,7 +20,7 @@
       { model: "claude-fable-5-1", label: "Claude Fable 5.1（最強、最貴*）", note: "Anthropic 最高階層級，價格未核實*。一般統計輔助說明通常用不到；先用 Sonnet，不夠再升級。" }
     ],
     kimi: [
-      { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", note: "約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
+      { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", note: "官方模型總覽：K2.6 預設開啟思考模式，回答前會先推理，所以較慢；網站預設關閉思考（下方可改）。約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
       { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", note: "依官方 K3 快速入門（platform.kimi.com）：上下文 1M、原生支援圖片（base64）、固定為思考模式（無法關閉），可用下方「思考深度」調整（官方預設 max，越深越慢、越貴*）。官方範例的 API 網址是 https://api.moonshot.cn/v1，帳號在那個平台時請把上面的 API 網址改成這個。須儲值至少 10 元人民幣，註冊贈送額度不能用於 K3。價格見官方計價頁，這裡未核實*。多輪對話是否需要回傳思考內容，未實測*。" },
     ],
     openai: [
@@ -34,7 +34,7 @@
   const CUSTOM_NOTE = "自訂模型（公司私有雲、Azure 等）：請同時填 API 網址，並確認該模型支援圖片輸入（需要上傳照片時）。費用依該服務計價。";
   const byokPreset = () => (BYOK_MODELS[byokCfg.provider] || []).find(m => m.model === byokModel());
   const OPENCC_URL = "https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js";
-  let byokCfg = { provider: "anthropic", base: "", model: "", imgs: true, s2t: false, keep: false, effort: "max" };
+  let byokCfg = { provider: "anthropic", base: "", model: "", imgs: true, s2t: false, keep: false, effort: "max", think: "off" };
   try { Object.assign(byokCfg, JSON.parse(localStorage.getItem(BYOK_CFG) || "{}")); } catch (_) {}
   if (byokCfg.provider === "openai" && /^kimi/i.test(byokCfg.model || "")) { byokCfg.provider = "kimi"; if (/api\.moonshot\.ai/.test(byokCfg.base || "")) byokCfg.base = ""; }   // 舊設定：Kimi 原本放在 OpenAI 相容格式
   if (!BYOK_PROV[byokCfg.provider]) byokCfg.provider = "anthropic";
@@ -104,7 +104,8 @@
       url = base + "/chat/completions";
       headers = Object.assign({ "content-type": "application/json" }, byokKeyMem ? { authorization: "Bearer " + byokKeyMem } : {});
       body = { model, stream: true, messages: m };
-      if (prov === "kimi" && /^kimi-k3/i.test(model) && ["low", "high", "max"].includes(byokCfg.effort)) body.reasoning_effort = byokCfg.effort;   // K3 固定思考模式；temperature 等參數官方建議不要傳
+      if (prov === "kimi" && /^kimi-k3/i.test(model) && ["low", "high", "max"].includes(byokCfg.effort)) body.reasoning_effort = byokCfg.effort;
+      else if (prov === "kimi" && /^kimi-k2\.6/i.test(model)) body.thinking = { type: byokCfg.think === "on" ? "enabled" : "disabled" };   // K2.6 預設開啟思考；網站預設關閉以加快回答   // K3 固定思考模式；temperature 等參數官方建議不要傳
     }
     let res;
     try { res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: opts.signal }); }
@@ -170,6 +171,7 @@
     $("byokModelNote").textContent = custom ? CUSTOM_NOTE : pr ? pr.note : "請先選擇模型。標 * 的是第三方資料或推論，未逐一核實；費用與功能以各服務官網為準。";
     $("byokKeyLab").textContent = P.needKey ? "API key" : "API key（公司私有雲不需要時可留空）";
     $("byokEffortF").hidden = !(byokCfg.provider === "kimi" && /^kimi-k3/i.test(cur)); $("byokEffort").value = byokCfg.effort || "max";
+    $("byokThinkF").hidden = !(byokCfg.provider === "kimi" && /^kimi-k2\.6/i.test(cur)); $("byokThink").value = byokCfg.think === "on" ? "on" : "off";
     $("byokKeep").checked = !!byokCfg.keep; $("byokImgs").checked = !!byokCfg.imgs; $("byokS2t").checked = !!byokCfg.s2t;
     const kf = $("byokKey");
     kf.placeholder = byokKeyMem ? "••••••••••••••••（已輸入，結尾 " + byokKeyMem.slice(-4) + "；要更換再貼新的）" : "貼上後按「儲存並啟用」";
@@ -186,12 +188,12 @@
     if (v === BYOK_CUSTOM) { byokCustomMode = true; byokCfg.model = ""; byokRender(); $("byokModel").focus(); return; }
     byokCustomMode = false; byokCfg.model = v;
     const m = (BYOK_MODELS[byokCfg.provider] || []).find(x => x.model === v);
-    if (m) { byokCfg.base = m.base || ""; $("byokBase").value = byokCfg.base; }
+    if (m && m.base) { byokCfg.base = m.base; $("byokBase").value = byokCfg.base; }   // 預設清單沒有指定網址時，保留使用者填的 API 網址（例如 Kimi 中國站）
     byokRender();
   });
   $("byokSave").addEventListener("click", async () => {
     byokCfg.base = $("byokBase").value.trim(); byokCfg.model = ($("byokModelSel").value === BYOK_CUSTOM ? $("byokModel").value : $("byokModelSel").value).trim();
-    byokCfg.keep = $("byokKeep").checked; byokCfg.imgs = $("byokImgs").checked; byokCfg.effort = $("byokEffort").value; byokCfg.s2t = $("byokS2t").checked;
+    byokCfg.keep = $("byokKeep").checked; byokCfg.imgs = $("byokImgs").checked; byokCfg.effort = $("byokEffort").value; byokCfg.think = $("byokThink").value; byokCfg.s2t = $("byokS2t").checked;
     const k = $("byokKey").value.trim(); if (k) byokKeyMem = k; $("byokKey").value = "";
     byokSaveCfg();
     if (byokCfg.s2t) s2tLoad().catch(() => { $("byokHint").textContent = "簡轉繁工具載入失敗，回答會保持原樣。"; });
