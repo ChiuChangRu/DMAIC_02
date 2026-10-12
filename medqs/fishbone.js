@@ -572,6 +572,13 @@
   }
   function fbCarryFromButton(sug) { homeSug = sug; carried.fishbone = -1; route("fishbone"); }
   $("msgs").addEventListener("click", e => {
+    const hf = e.target.closest("[data-homefb]");
+    if (hf) {
+      if (busy) return;
+      hf.disabled = true;
+      ask("請依目前已知的資訊，先列出這個問題可能的原因（資訊不足的部分標 *），附上 fishbone 區塊；最後列出還需要我補充哪些資訊，讓原因更聚焦。", { label: "列出可能原因" });
+      return;
+    }
     const g = e.target.closest("[data-goto]");
     if (g) { if (chatKey === "home") closePanel(); gotoTool(g.dataset.goto, g.dataset.sub); return; }
     const qa = e.target.closest("[data-askf]");

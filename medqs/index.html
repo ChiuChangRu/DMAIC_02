@@ -360,6 +360,7 @@ tr.fb-row-cand td { color: var(--muted); }
 .fb-add .btn { white-space: nowrap; flex: none; }
 .fb-sug { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .fb-sug .hint { margin: 0; flex-basis: 100%; }
+#msgs > .msg:not(:last-child) .home-more { display: none; }
 .fb-sug p.hint { color: var(--good); font-weight: 700; }
 .fb-candbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
 .fb-candbar span { margin-right: auto; }
@@ -4971,7 +4972,9 @@ else root.runValidation = runValidation;
     "6. 不要做統計計算或編造數字；樣本數等計算請引導使用者到對應工具。",
     "7. 回答精簡，使用短段落或條列。使用者質疑時依邏輯重新檢查，不要只是附和。",
     "9. 只要給了工具建議，回答的最後一行固定寫「建議工具：工具名稱 → 工具名稱」（依使用順序，只寫網站工具名稱：魚骨圖、樣本數規劃、MSA、假設檢定、相關與回歸、SPC、DOE、田口方法）。還在向使用者確認問題、尚未建議工具時不要寫這一行。",
-    "10. 輸出格式依【回答樣板】：小標題名稱與順序完全照樣板，不改名、不調換、不另加小標題。"
+    "10. 輸出格式依【回答樣板】：小標題名稱與順序完全照樣板，不改名、不調換、不另加小標題。",
+    "11. 對話不要自行結束：不寫「以上」「祝順利」這類結束語。給建議的回答，在「建議工具」那一行之前加一行「還想知道：」，提出 1～2 個能讓原因或建議更聚焦的問題（一般文字，不是小標題）；「需要先確認」的回答本身就是追問，不必再加。",
+    "12. 需要找原因的問題（不良、破裂、斷線、洩漏、滅菌失敗、客訴等）：資訊足夠就附 fishbone 區塊；資訊不足先追問。但使用者已經回答過一次追問後，即使資訊仍不完整，也要先附 fishbone 區塊列出初步的可能原因（推論標 *），再繼續追問。之後使用者補充新資訊時，可以附更新後的 fishbone 區塊。"
   ].join("\n");
   function guideContext() {
     const L = ["【網站工具與模式】"];
@@ -5052,9 +5055,13 @@ else root.runValidation = runValidation;
     const m = String(text).match(/建議工具[:：]\s*([^\n]+)/);
     const ids = m ? toolsFromText(m[1]) : [];
     if (sug && !ids.includes("fishbone")) ids.unshift("fishbone");
-    if (!ids.length) return "";
+    const more = sug && sug.factors.length
+      ? `<div class="fb-sug home-more"><span class="hint">可以繼續補充資訊或追問，AI 會更新可能原因；整理好再按「魚骨圖」帶入。</span></div>`
+      : ids.length ? `<div class="fb-sug home-more"><span class="hint">可以繼續追問；需要找原因的話，</span><button type="button" class="btn small" data-homefb="1">請 AI 列出可能原因</button></div>`
+      : `<div class="fb-sug home-more"><span class="hint">還沒有原因建議：回答上面的問題繼續對話，或</span><button type="button" class="btn small" data-homefb="1">請 AI 先列出可能原因</button></div>`;
+    if (!ids.length) return more;
     const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時會列為候選）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
-    return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>`;
+    return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>` + more;
   }
   function addMsg(role, text, extra) {
     const div = document.createElement("div");
@@ -6206,6 +6213,13 @@ else root.runValidation = runValidation;
   }
   function fbCarryFromButton(sug) { homeSug = sug; carried.fishbone = -1; route("fishbone"); }
   $("msgs").addEventListener("click", e => {
+    const hf = e.target.closest("[data-homefb]");
+    if (hf) {
+      if (busy) return;
+      hf.disabled = true;
+      ask("請依目前已知的資訊，先列出這個問題可能的原因（資訊不足的部分標 *），附上 fishbone 區塊；最後列出還需要我補充哪些資訊，讓原因更聚焦。", { label: "列出可能原因" });
+      return;
+    }
     const g = e.target.closest("[data-goto]");
     if (g) { if (chatKey === "home") closePanel(); gotoTool(g.dataset.goto, g.dataset.sub); return; }
     const qa = e.target.closest("[data-askf]");
