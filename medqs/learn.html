@@ -196,7 +196,7 @@ footer a, .card a { color: var(--act-text); }
     <div class="stack">
       <div class="inner">
         <h4 style="margin:0 0 4px">假設檢定的 OC 曲線</h4>
-        <p class="help" style="font-size:14px">橫軸：實際差異，單位與量測值相同（1-1 填的單位）；縱軸：判定「沒差異」的機率。設定沿用 1-1。</p>
+        <p class="help" style="font-size:14px">橫軸：標準化差異 d = 實際差異 ÷ σ，是「差異有幾個標準差大」的比值，沒有單位，換了量測單位或產品也能直接比較；縱軸：判定「沒差異」的機率。每條線是一個樣本數。設定沿用 1-1。</p>
         <div class="legend" id="lg13a"></div>
         <svg class="plot" id="p3a" viewBox="0 0 680 360" role="img" aria-label="假設檢定的 OC 曲線"></svg>
       </div>
@@ -220,10 +220,10 @@ footer a, .card a { color: var(--act-text); }
     <h4 style="margin:18px 0 8px">兩邊對照</h4>
     <div class="scroll-x"><table>
       <tr><th>項目</th><th>假設檢定</th><th>AQL 抽樣</th></tr>
-      <tr><td>橫軸（實際狀況）</td><td>實際差異 Δ</td><td>批的實際不良率 p</td></tr>
+      <tr><td>橫軸（實際狀況）</td><td>標準化差異 d = Δ/σ</td><td>批的實際不良率 p</td></tr>
       <tr><td>縱軸</td><td>判定「沒差異」的機率</td><td>允收機率 Pa</td></tr>
-      <tr><td>「好」的那一點</td><td>Δ = 0，高度 = 1 − α</td><td>p = AQL，高度 = 1 − 生產者風險</td></tr>
-      <tr><td>「壞」的那一點</td><td>Δ = 要抓的差，高度 = β</td><td>p = RQL（LTPD），高度 = 消費者風險</td></tr>
+      <tr><td>「好」的那一點</td><td>d = 0，高度 = 1 − α</td><td>p = AQL，高度 = 1 − 生產者風險</td></tr>
+      <tr><td>「壞」的那一點</td><td>d = 要抓的差 ÷ σ，高度 = β</td><td>p = RQL（LTPD），高度 = 消費者風險</td></tr>
       <tr><td>讓曲線更陡（分得更清楚）</td><td>加大 n</td><td>加大 n（Ac 跟著調）</td></tr>
     </table></div>
     <div class="note">預設 n = 80、Ac = 2 是 ISO 2859-1 一般檢驗水準 II、樣本代字 J、AQL 1.0 的正常檢驗方案（範例用）。單次抽樣的 OC 只描述這個方案本身；依 ISO 2859-1 連續檢驗還要搭配轉換規則。RQL 6.5% 只是示範值，請依產品風險設定。</div>
@@ -331,14 +331,14 @@ footer a, .card a { color: var(--act-text); }
   // 1-3a
   function draw3a() {
     const ns = [Math.max(2, Math.round(S.n / 2)), S.n, S.n * 2], cols = ["var(--c-alpha)", "var(--c-beta)", "var(--c-power)"], dashes = ["7 5", "", "2 5"];
-    const xmax = Math.max(3 * S.d, 4 * S.se, 0.5);
-    const F = frame({ svg: "p3a", H: 360, x0: 0, x1: xmax, y0: 0, y1: 1, xt: [0, xmax / 4, xmax / 2, 3 * xmax / 4, xmax], xf: v => fx(v, 2), yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: `實際差異${S.u ? "（" + S.u + "）" : "（與 σ 同單位）"}`, yl: "判定「沒差異」的機率" });
+    const d0 = S.d / S.s, xmax = Math.max(3 * d0, 4 / Math.sqrt(S.n), 0.5), u = S.u ? " " + S.u : "";
+    const F = frame({ svg: "p3a", H: 360, x0: 0, x1: xmax, y0: 0, y1: 1, xt: (() => { const st = xmax <= 1.5 ? 0.25 : xmax <= 4 ? 0.5 : 1, t = []; for (let v = 0; v <= xmax + 1e-9; v += st) t.push(+v.toFixed(2)); return t; })(), xf: v => v, yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: "標準化差異 d = 實際差異 ÷ σ（無單位）", yl: "判定「沒差異」的機率" });
     let s = F.s;
-    ns.forEach((n, i) => { const se = S.s / Math.sqrt(n); s += line(x => betaOf(x / se, S.a, S.side), 0, xmax, F.sx, F.sy, cols[i], dashes[i]); });
+    ns.forEach((n, i) => { s += line(d => betaOf(d * Math.sqrt(n), S.a, S.side), 0, xmax, F.sx, F.sy, cols[i], dashes[i]); });
     const b = betaOf(S.sh, S.a, S.side), top = 1 - S.a;
-    s += `<line x1="${F.sx(S.d)}" x2="${F.sx(S.d)}" y1="${F.sy(1)}" y2="${F.B}" stroke="var(--muted)" stroke-dasharray="3 4"/>`;
-    s += dot(F.sx(0), F.sy(top), "var(--c-alpha)") + `<text x="${F.sx(0) + 10}" y="${F.sy(top) + 18}" font-size="12.5" fill="var(--c-alpha)">Δ = 0：1 − α = ${pct(top, 1)}</text>`;
-    s += dot(F.sx(S.d), F.sy(b), "var(--c-beta)") + `<text x="${F.sx(S.d) + 10}" y="${F.sy(b) - 8}" font-size="12.5" fill="var(--c-beta)">Δ = ${fx(S.d, 2)}：β = ${pct(b)}</text>`;
+    s += `<line x1="${F.sx(d0)}" x2="${F.sx(d0)}" y1="${F.sy(1)}" y2="${F.B}" stroke="var(--muted)" stroke-dasharray="3 4"/>`;
+    s += dot(F.sx(0), F.sy(top), "var(--c-alpha)") + `<text x="${F.sx(0) + 10}" y="${F.sy(top) + 18}" font-size="12.5" fill="var(--c-alpha)">d = 0：1 − α = ${pct(top, 1)}</text>`;
+    s += dot(F.sx(d0), F.sy(b), "var(--c-beta)") + `<text x="${F.sx(d0) + 10}" y="${F.sy(b) - 8}" font-size="12.5" fill="var(--c-beta)">d = ${fx(d0, 2)}（${fx(S.d, 2)}${u} ÷ ${fx(S.s, 1)}${u}）：β = ${pct(b)}</text>`;
     $("p3a").innerHTML = s;
     $("lg13a").innerHTML = ns.map((n, i) => `<span><i class="ln${dashes[i] ? " dash" : ""}" style="border-color:${cols[i]}"></i>n = ${n}${i === 1 ? "（目前）" : ""}</span>`).join("");
   }
