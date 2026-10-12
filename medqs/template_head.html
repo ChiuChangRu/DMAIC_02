@@ -729,3 +729,23 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .reg-corr .reg-sig { font-weight: 700; } .reg-corr .reg-self { color: var(--muted); text-align: center; }
 .reg-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
 #regCols { margin-top: 8px; }
+
+/* ===== 全站：可以操作的地方一律用橘色（未選＝橘框橘字；已選／主要動作＝橘底） ===== */
+:root { --act: var(--deep-orange); --on-act: var(--on-deep-orange); --act-text: #A34A16; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --act-text: #E3995F; } }
+:root[data-theme="dark"] { --act-text: #E3995F; }
+.chip, .subtabs button, .btn:not(.primary):not(.copper):not(.ghost-light), .ssq, .guide-q { border-color: var(--act); color: var(--act-text); background: var(--surface); }
+.chip:hover, .subtabs button:hover, .btn:not(.primary):not(.ghost-light):not([disabled]):hover, .ssq:hover, .guide-q:hover { border-color: var(--act-text); box-shadow: 0 0 0 2px color-mix(in srgb, var(--act) 30%, transparent); }
+.chip[aria-pressed="true"], .subtabs button[aria-selected="true"], .guide-q[aria-current="true"] { background: var(--act); border-color: var(--act); color: var(--on-act); font-weight: 700; }
+.chip[aria-pressed="true"]::before { color: inherit; }
+.ssq .ssq-t { color: var(--act-text); } .ssq .ssq-s { color: var(--muted); }
+.ssq[aria-pressed="true"] { background: var(--act); border-color: var(--act); box-shadow: 0 0 0 3px color-mix(in srgb, var(--act) 35%, transparent); }
+.ssq[aria-pressed="true"] .ssq-t, .ssq[aria-pressed="true"] .ssq-s { color: var(--on-act); }
+.btn.primary, .btn.copper { background: var(--act); border-color: var(--act); color: var(--on-act); }
+.fb-banner.danger .btn.primary { background: var(--bad); border-color: var(--bad); }
+.linkbtn { color: var(--act-text); }
+header .btn.ghost { background: transparent; color: #F5F1EA; border-color: rgba(245,241,234,.4); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--act); outline-offset: 1px; }
+.ai-fab, :root .ai-fab, :root[data-theme] .ai-fab { background: var(--act); color: var(--on-act); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ai-fab { background: var(--act); color: var(--on-act); } }
+details > summary { color: var(--act-text); cursor: pointer; }
