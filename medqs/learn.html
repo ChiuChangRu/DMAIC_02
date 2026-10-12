@@ -103,6 +103,8 @@ td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; 
 @media (max-width: 760px) { .tex-row { grid-template-columns: minmax(0, 1fr); } }
 .tex math { font-size: 1.15em; }
 .tex { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 17px; }
+.tex-row .tex, .tex-live .tex { background: var(--code-bg); border: 1.5px solid color-mix(in srgb, var(--act) 55%, var(--line)); border-radius: 8px; padding: 6px 14px; }
+.tex-live .tex + .tex { margin-top: 8px; }
 .tex code { font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; }
 .tex-note { font-size: 14px; color: var(--muted); }
 .tex-note b { color: var(--ink); }
