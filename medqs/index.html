@@ -629,7 +629,8 @@ g.fb-hit:hover rect { stroke-width: 3; }
 :root[data-theme="dark"] .ai-panel textarea, :root[data-theme="dark"] .ai-panel input, :root[data-theme="dark"] .ai-panel select { background: #261C1E; }
 :root[data-theme="dark"] .ai-fab { background: #8A4D55; color: #FBEFF0; }
 .pk-wide textarea { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 14px; }
-.case-badge { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--teal); }
+.case-badge { margin: 10px 0 0; padding: 0 0 18px; font-size: 16px; font-weight: 700; color: var(--band-ink); letter-spacing: .02em; }
+.case-badge::before { content: "●"; color: #B87333; margin-right: 8px; font-size: 12px; vertical-align: 2px; }
 .case-badge[hidden] { display: none; }
 #caseList td { vertical-align: middle; }
 .case-btns { white-space: nowrap; display: flex; gap: 6px; }
