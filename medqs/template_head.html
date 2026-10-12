@@ -740,3 +740,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 .ai-fab, :root .ai-fab, :root[data-theme] .ai-fab { background: var(--act); color: var(--on-act); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ai-fab { background: var(--act); color: var(--on-act); } }
 details > summary { color: var(--act-text); cursor: pointer; }
+
+/* 從魚骨圖勾選帶入 */
+.fbp { border: 1.5px dashed var(--act); border-radius: 10px; padding: 12px 14px; margin: 4px 0 12px; background: var(--code-bg); }
+.fbp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px 16px; margin: 8px 0; }
+.fbp-cat { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.fbp-item { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; cursor: pointer; }
+.fbp-item input { margin-top: 4px; accent-color: var(--act); }
+.fbp-text { flex: 1; font-size: 14.5px; line-height: 1.45; } .fbp-text small { display: block; color: var(--muted); font-size: 12px; }
+.fbp .fbp-item select { width: auto; flex: 0 0 auto; max-width: 120px; min-height: 0; height: auto; font-size: 13px; padding: 3px 6px; }
+.fbp-text { min-width: 0; }
+.fbp-open { margin-top: 6px; }

@@ -609,6 +609,7 @@
     return v.length ? v : fb.factors.filter(f => f.key && f.st === "use");
   }
   function pkFromFb(tool, fid) {
+    if (tool === "doe" || tool === "taguchi") { fbpFromFishbone(tool); return; }   // 到工具頁勾選要帶入的原因
     const list = pkFbList();
     if (!list.length && tool !== "hyp") { fbNote("還沒有標記「◇ 待驗證」（或「★ 重要」）的原因。先在 STEP 2 標記，再帶入。"); return; }
     if (tool === "doe") PLANS.doe.apply({ mode: list.length > 5 ? (list.length > 7 ? "pb" : "frac") : "full", factors: list.map(f => ({ name: f.text, low: "", high: "", unit: "" })) }, "fb");
