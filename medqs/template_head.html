@@ -764,3 +764,18 @@ body details.mp-card > summary .hint, body details.card > summary .hint { color:
 .ask-ai:hover, .preview-head .ask-ai:hover { background: var(--act); color: var(--on-act); border-color: var(--act); }
 .btn.ghost-light:not(header .btn) { border-color: var(--act); color: var(--act-text); }
 a.link, a { color: var(--act-text); }
+
+/* 初學者說明：？按鈕、新手模式、說明小視窗 */
+.hq { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 4px; padding: 0; border-radius: 50%; border: 1.5px solid var(--act); background: var(--surface); color: var(--act-text); font: 700 12px/1 var(--font-body); cursor: pointer; vertical-align: 1px; }
+.hq:hover, .hq:focus-visible { background: var(--act); color: var(--on-act); outline: none; }
+.nb-line { display: none; margin: 2px 0 6px; font-size: 13px; line-height: 1.5; color: var(--act-text); background: color-mix(in srgb, var(--act) 10%, transparent); border-left: 3px solid var(--act); padding: 4px 8px; border-radius: 0 6px 6px 0; }
+body.novice .nb-line { display: block; }
+.tool-head .nov-chip { margin-left: auto; font-size: 13.5px; padding: 5px 12px; }
+.hq-wrap { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; }
+.help-pop { position: absolute; z-index: 60; background: var(--surface); color: var(--ink); border: 2px solid var(--act); border-radius: 12px; padding: 12px 14px; box-shadow: 0 14px 36px rgba(0,0,0,.35); font-size: 14px; line-height: 1.6; }
+.help-pop .hp-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.help-pop .hp-head b { font-size: 15px; color: var(--act-text); }
+.help-pop .hp-x { border: 0; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; padding: 0 2px; }
+.help-pop .hp-plain { margin: 6px 0 8px; font-weight: 700; }
+.help-pop dl { margin: 0; } .help-pop dt { font-size: 12.5px; font-weight: 700; color: var(--muted); margin-top: 6px; } .help-pop dd { margin: 2px 0 0; }
+.help-pop .hint { margin: 8px 0 0; font-size: 12px; }

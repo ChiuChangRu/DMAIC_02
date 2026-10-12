@@ -299,7 +299,7 @@
   function pkHypSettings(m) {
     setSub("compare");
     if (m.purpose === "two") pkClick(`#modeChips [data-mode="${m.relation}"]`);
-    if (m.purpose !== "multi") { pkClick(`#goalChips [data-goal="${m.goal || "diff"}"]`); if (m.goal !== "equiv") pkClick(`#altChips [data-alt="${m.alt}"]`); pkSet("eqDelta", m.goal === "equiv" ? m.eqd : $("eqDelta").value); }
+    if (m.purpose !== "multi") { pkClick(`#goalChips [data-goal="${m.goal || "diff"}"]`); if (m.goal !== "equiv") pkClick(`#altChips [data-alt="${m.alt}"]`); pkSet("hypEqDelta", m.goal === "equiv" ? m.eqd : $("hypEqDelta").value); }
     pkSet("alphaSel", m.alpha, "change"); pkSet("target", m.purpose === "one" ? m.target : ""); pkSet("lsl", m.lsl); pkSet("usl", m.usl);
   }
   makePlanner({

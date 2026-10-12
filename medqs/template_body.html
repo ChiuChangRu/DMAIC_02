@@ -224,8 +224,8 @@
               <input id="delta0" type="number" step="any" value="0" inputmode="decimal">
             </div>
             <div class="field" id="eqField" hidden>
-              <label for="eqDelta">同等界限 Δ（±，必填）</label>
-              <input id="eqDelta" type="number" step="any" min="0" placeholder="例如 1.5" inputmode="decimal">
+              <label for="hypEqDelta">同等界限 Δ（±，必填）</label>
+              <input id="hypEqDelta" type="number" step="any" min="0" placeholder="例如 1.5" inputmode="decimal">
               <small>差多少以內算一樣；要在看數據前依臨床、功能需求或比對品規格決定</small>
             </div>
             <div class="field">
@@ -1348,10 +1348,10 @@
     const b = e.target.closest("button"); if (!b) return;
     state.alt = b.dataset.alt; setPressed("altChips", "alt", state.alt); markStale();
   });
-  ["alphaSel", "delta0", "eqDelta", "usl", "lsl", "target"].forEach(id => $(id).addEventListener("input", markStale));
+  ["alphaSel", "delta0", "hypEqDelta", "usl", "lsl", "target"].forEach(id => $(id).addEventListener("input", markStale));
 
   function settingsKey() {
-    return JSON.stringify([$("pasteBox").value, state.force, state.swap, state.included, state.mode, state.alt, state.goal, $("eqDelta").value, $("alphaSel").value, $("delta0").value, $("usl").value, $("lsl").value, $("target").value]);
+    return JSON.stringify([$("pasteBox").value, state.force, state.swap, state.included, state.mode, state.alt, state.goal, $("hypEqDelta").value, $("alphaSel").value, $("delta0").value, $("usl").value, $("lsl").value, $("target").value]);
   }
   function markStale() {
     if (!state.result) return;
@@ -1380,8 +1380,8 @@
     const usl = numVal("usl"), lsl = numVal("lsl"), d0 = numVal("delta0"), target = numVal("target");
     if (isFinite(usl) && isFinite(lsl) && usl <= lsl) { hint.textContent = "規格上限必須大於規格下限。"; return; }
     const paired = state.mode === "paired" && g.length >= 2;
-    const eq = state.goal === "equiv" && g.length <= 2, eqD = numVal("eqDelta");
-    if (eq && !(eqD > 0)) { hint.textContent = "同等性檢定要先填同等界限 Δ（大於 0）。"; $("eqDelta").focus(); return; }
+    const eq = state.goal === "equiv" && g.length <= 2, eqD = numVal("hypEqDelta");
+    if (eq && !(eqD > 0)) { hint.textContent = "同等性檢定要先填同等界限 Δ（大於 0）。"; $("hypEqDelta").focus(); return; }
     if (eq && g.length === 1 && !isFinite(target)) { hint.textContent = "單組同等性要填目標值。"; return; }
     const data = buildData(g, paired);
     const opts = { paired, alpha: Number($("alphaSel").value), alternative: g.length <= 2 ? state.alt : "two-sided",
@@ -1504,6 +1504,7 @@
     $("resultTitle").textContent = r.mode === "one" ? `${names[0]} vs 目標值 ${fmtSig(o.target, 8)}` : names.length <= 3 ? names.join(" vs ") : `${names.length} 組比較`;
     $("previewBody").innerHTML = verdictHTML(r, "chartWrap") + legendHTML(r);
     drawBoxplot($("chartWrap"), r, state.data);
+    if (typeof helpDecorate === "function") helpDecorate();
 
     $("reasons").innerHTML = r.reasons.concat(r.warnings).map(x => `<li>${esc(x)}</li>`).join("");
 
@@ -2709,7 +2710,7 @@
     state.force = null; state.swap = false;
     state.mode = "ind"; setPressed("modeChips", "mode", "ind");
     state.alt = "two-sided"; setPressed("altChips", "alt", "two-sided");
-    state.goal = "diff"; setPressed("goalChips", "goal", "diff"); $("eqDelta").value = ""; updateSettingsUI();
+    state.goal = "diff"; setPressed("goalChips", "goal", "diff"); $("hypEqDelta").value = ""; updateSettingsUI();
     $("alphaSel").value = "0.05"; $("delta0").value = "0";
     $("target").value = ex.target; $("lsl").value = ex.lsl; $("usl").value = ex.usl;
     reparse(false);

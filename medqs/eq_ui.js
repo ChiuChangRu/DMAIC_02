@@ -182,7 +182,7 @@
       ${m.basis ? `<p class="hint">δ 的依據：${esc(EQ_BASIS.find(o => o[0] === m.basis)[1])}${m.basisNote ? "——" + esc(m.basisNote) : ""}</p>` : `<p class="hint" style="color:var(--bad)">尚未填寫 δ 的依據。</p>`}
       <div class="eq-slider"><b>如果只能${two ? "各量" : "量"} <span id="${p}SlN">${mIni}</span> ${two ? "件" : "對"}呢？</b><input type="range" id="${p}Sl" min="2" max="${Math.max(n + 20, 2 * n)}" value="${mIni}" aria-label="可量測的數量"><span id="${p}SlTxt"></span></div>
       <div class="eq-next"><button type="button" class="btn primary small" id="${p}RecBtn">產生量測記錄表</button></div>
-      <p class="hint">量完後的同等性／不劣性判定，會在下一版加入「假設檢定」，並自動帶入這次的規劃條件；目前規劃已隨案件保存。</p>
+      <p class="hint">${kind === "ni" ? "量完後的不劣性判定尚未加入「假設檢定」；目前可用其 90% 信賴區間自行比對。" : "量完後到「假設檢定」，檢定目的選「同等性（TOST）」，同等界限填這裡的 δ，程式會判定是否同等。"}規劃條件已隨案件保存。</p>
       <p class="hint">計算方法：${kind === "tost" ? "兩個單尾 t 檢定（TOST，Schuirmann 1987）的精確檢定力，對樣本標準差的分布做數值積分" : "單邊 t 檢定的精確檢定力（非中心 t 分布）"}；已與 SciPy 獨立計算${kind === "tost" ? "及模擬" : ""}比對確效。假設資料近似常態${two ? "、兩組標準差相同" : ""}。</p>`;
     const sl = $(p + "Sl"), upd = () => {
       const k = +sl.value, pk = eqPw(kind, m, k);
