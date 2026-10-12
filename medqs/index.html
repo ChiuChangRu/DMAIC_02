@@ -441,7 +441,11 @@ g.fb-hit:hover rect { stroke-width: 3; }
 .fb-cats { grid-template-columns: minmax(0, 1fr); }
 .fb-banner.danger { background: var(--bad-soft); color: var(--ink); border: 2px solid var(--bad); }
 .fb-banner.danger .btn.primary { background: var(--bad); border-color: var(--bad); }
-.tools-sheet .home-grid { margin-top: 8px; }
+.tools-inline { margin: 4px 0 6px; }
+.tools-inline .home-grid { grid-template-columns: repeat(auto-fill, minmax(0, 136px)); gap: 14px; }
+.tools-inline #recLine:empty { display: none; }
+@media (max-width: 520px) { .tools-inline .home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+.tools-inline #recLine { margin: 10px 0 0; }
 .tool-card.tile { transition: transform .15s ease, filter .25s ease, opacity .25s ease; }
 .tool-card.tile.dim { filter: grayscale(1); opacity: .28; }
 .tool-card.tile.dim:hover { opacity: .6; }
@@ -747,6 +751,10 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
       <section class="card sheet guide" id="guideSheet">
         <h3>我想解決什麼問題</h3>
         <div class="chips need-cats" id="guideCats" role="group" aria-label="我想解決什麼問題"></div>
+        <div class="tools-inline" aria-label="工具">
+          <div class="home-grid" id="toolCards"></div>
+          <p class="help" id="recLine"></p>
+        </div>
         <div id="amCommon" class="am-common" hidden>
           <div class="guide-body">
             <div class="guide-list" id="guideList" role="list"></div>
@@ -779,11 +787,6 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
           <details class="ext-out" id="extOut" hidden><summary id="extOutSum"></summary><div id="extOutBody"></div></details>
         </div>
         <button id="guideAsk" type="button" hidden></button>
-      </section>
-      <section class="card sheet tools-sheet" aria-label="工具">
-        <h3>工具</h3>
-        <p class="help" id="recLine"></p>
-        <div class="home-grid" id="toolCards"></div>
       </section>
     </div>
   </section>
