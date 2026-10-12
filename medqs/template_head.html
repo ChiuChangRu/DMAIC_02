@@ -143,6 +143,17 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); font-size: 13
 .pill { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; border-radius: 999px; padding: 4px 12px; justify-self: start; }
 .pill.sig { background: var(--copper-soft); color: var(--copper-text); }
 .pill.ns { background: var(--navy-soft); color: var(--ink); }
+.pill.eqok { background: var(--good-soft); color: var(--good); }
+.eqc { margin: 10px 0 4px; }
+.eqc svg { width: 100%; height: auto; display: block; }
+.eqc-band { fill: var(--good-soft); }
+.eqc-lim { stroke: var(--good); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.eqc-zero { stroke: var(--muted); stroke-width: 1; }
+.eqc-ci { stroke-width: 3; } .eqc-ci.ok { stroke: var(--good); } .eqc-ci.no { stroke: var(--bad); }
+.eqc-pt.ok { fill: var(--good); } .eqc-pt.no { fill: var(--bad); }
+.eqc-lab, .eqc-val { font-size: 16px; fill: var(--muted); } .eqc-val { fill: var(--ink); }
+.eqc figcaption { font-size: 13px; color: var(--muted); }
+.eq-ref { margin: 6px 0 10px; }
 .verdict p { margin: 0; }
 .verdict .big { font-family: var(--font-display); font-size: 21px; line-height: 1.35; text-wrap: balance; }
 .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }

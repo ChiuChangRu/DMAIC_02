@@ -24,7 +24,7 @@
     CASE_VIEWS.forEach(vid => {
       const v = $(vid); if (!v) return;
       v.querySelectorAll("input, select, textarea").forEach(el => { if (caseSkip(el)) return; fields[el.id] = el.type === "checkbox" ? !!el.checked : el.value; });
-      v.querySelectorAll(".chips[id]").forEach(g => { if (g.closest(".mp-card") || g.closest("#aiPanel")) return; const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt"].find(x => b.dataset[x] != null); if (a) chips[g.id] = [a, b.dataset[a]]; });
+      v.querySelectorAll(".chips[id]").forEach(g => { if (g.closest(".mp-card") || g.closest("#aiPanel")) return; const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt", "goal"].find(x => b.dataset[x] != null); if (a) chips[g.id] = [a, b.dataset[a]]; });
       v.querySelectorAll(".subtabs").forEach((s, i) => { const b = s.querySelector('[aria-selected="true"]'); if (!b) return; const key = s.id || vid + ":" + i; subs[key] = b.dataset.tsub || b.dataset.sub || ""; });
     });
     const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer, tost: !!TQ.tost, ni: !!TQ.ni, reg: !!REG.res };

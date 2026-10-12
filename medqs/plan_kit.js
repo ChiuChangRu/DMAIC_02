@@ -299,7 +299,7 @@
   function pkHypSettings(m) {
     setSub("compare");
     if (m.purpose === "two") pkClick(`#modeChips [data-mode="${m.relation}"]`);
-    if (m.purpose !== "multi") pkClick(`#altChips [data-alt="${m.alt}"]`);
+    if (m.purpose !== "multi") { pkClick(`#goalChips [data-goal="${m.goal || "diff"}"]`); if (m.goal !== "equiv") pkClick(`#altChips [data-alt="${m.alt}"]`); pkSet("eqDelta", m.goal === "equiv" ? m.eqd : $("eqDelta").value); }
     pkSet("alphaSel", m.alpha, "change"); pkSet("target", m.purpose === "one" ? m.target : ""); pkSet("lsl", m.lsl); pkSet("usl", m.usl);
   }
   makePlanner({
@@ -308,23 +308,26 @@
     aiTop: true, helpFold: true, applyLabel: "同意，套用到下方檢定設定",
     applySettings: m => {
       pkHypSettings(m);
-      const L = [m.purpose === "two" ? (m.relation === "paired" ? "成對樣本" : "獨立樣本") : "", m.purpose !== "multi" ? { "two-sided": "雙尾", greater: "單尾 A>B", less: "單尾 A<B" }[m.alt] : "", "α=" + m.alpha, m.purpose === "one" && m.target !== "" ? "目標值 " + m.target : "", m.lsl !== "" ? "LSL " + m.lsl : "", m.usl !== "" ? "USL " + m.usl : ""].filter(Boolean);
+      const eqv = m.goal === "equiv" && m.purpose !== "multi";
+      const L = [m.purpose === "two" ? (m.relation === "paired" ? "成對樣本" : "獨立樣本") : "", eqv ? "同等性 TOST ±" + m.eqd : m.purpose !== "multi" ? { "two-sided": "雙尾", greater: "單尾 A>B", less: "單尾 A<B" }[m.alt] : "", "α=" + m.alpha, m.purpose === "one" && m.target !== "" ? "目標值 " + m.target : "", m.lsl !== "" ? "LSL " + m.lsl : "", m.usl !== "" ? "USL " + m.usl : ""].filter(Boolean);
       return "已套用到下方 STEP 2（" + L.join("、") + "）。組數與樣本數依貼上的數據判定。";
     },
     help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
     descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
     goLabel: "產生記錄表",
-    role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。",
-    example: '{"purpose":"two","relation":"ind","groups":["轉廠前","轉廠後"],"n":15,"alt":"two-sided","alpha":0.05,"target":null,"lsl":null,"usl":null}',
-    schemaNote: "purpose＝one、two、multi；relation＝ind 或 paired（只有 two 用）；groups＝組別名稱（one 為 1 個、two 為 2 個、multi 為 3～8 個）；n＝每組樣本數（建議值，常見做法標 *）；alt＝two-sided、greater（第 1 組較大或大於目標）、less；alpha；target＝單組要比較的目標值；lsl／usl＝規格（使用者提供才填）。",
-    def: { purpose: "two", relation: "ind", groups: "A, B", n: 10, alt: "two-sided", alpha: "0.05", target: "", lsl: "", usl: "" },
+    role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。再判斷檢定目的 goal：要證明「有差／改善了」用 diff；要證明「一樣／同等／沒有改變」（例如和 510(k) 比對品比較、轉廠、變更前後、換料、換供應商）用 equiv（同等性 TOST），並在理由中說明「沒有顯著差異不等於相同」。同等界限 eqd（Δ）只有使用者提供才填，否則填 null，並說明 Δ 要在看數據前依臨床或功能需求、比對品規格決定。",
+    example: '{"purpose":"two","relation":"ind","groups":["轉廠前","轉廠後"],"n":15,"alt":"two-sided","alpha":0.05,"goal":"diff","eqd":null,"target":null,"lsl":null,"usl":null}',
+    schemaNote: "purpose＝one、two、multi；relation＝ind 或 paired（只有 two 用）；groups＝組別名稱（one 為 1 個、two 為 2 個、multi 為 3～8 個）；n＝每組樣本數（建議值，常見做法標 *）；alt＝two-sided、greater（第 1 組較大或大於目標）、less（goal 為 equiv 時固定 two-sided）；alpha；goal＝diff 或 equiv（multi 只能 diff）；eqd＝同等界限 Δ（正數，使用者提供才填）；target＝單組要比較的目標值；lsl／usl＝規格（使用者提供才填）。",
+    def: { purpose: "two", relation: "ind", groups: "A, B", n: 10, goal: "diff", eqd: "", alt: "two-sided", alpha: "0.05", target: "", lsl: "", usl: "" },
     toJson: m => Object.assign({}, m, { groups: String(m.groups).split(/[,，、]+/).map(s => s.trim()).filter(Boolean) }),
     fields: [
       { k: "purpose", lab: "要比較什麼", type: "select", opts: [["one", "單組對目標值"], ["two", "兩組比較"], ["multi", "3 組以上"]] },
       { k: "relation", lab: "樣本關係", type: "select", opts: [["ind", "獨立（兩組是不同的樣品）"], ["paired", "成對（同一個樣品量兩次）"]], show: m => m.purpose === "two" },
       { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 轉廠前, 轉廠後" },
       { k: "n", lab: "每組樣本數", type: "int", lo: 2, hi: 500 },
-      { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾：第 1 組較大／大於目標"], ["less", "單尾：第 1 組較小／小於目標"]], show: m => m.purpose !== "multi" },
+      { k: "goal", lab: "檢定目的", type: "select", opts: [["diff", "差異：有沒有差"], ["equiv", "同等性（TOST）：差在 ±Δ 內"]], show: m => m.purpose !== "multi" },
+      { k: "eqd", lab: "同等界限 Δ（±）", type: "num", ph: "必填，看數據前決定", show: m => m.purpose !== "multi" && m.goal === "equiv" },
+      { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾：第 1 組較大／大於目標"], ["less", "單尾：第 1 組較小／小於目標"]], show: m => m.purpose !== "multi" && m.goal !== "equiv" },
       { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]] },
       { k: "target", lab: "目標值", type: "num", ph: "單組必填", show: m => m.purpose === "one" },
       { k: "lsl", lab: "規格下限 LSL（選填）", type: "num" },
@@ -337,9 +340,12 @@
       if (new Set(g).size !== g.length) bad("組別名稱不能重複。");
       if (m.purpose === "one") { const t = pkNum(m.target); if (t == null || Number.isNaN(t)) bad("單組對目標值要填目標值。"); }
       const L = pkNum(m.lsl), U = pkNum(m.usl); if (Number.isNaN(L) || Number.isNaN(U)) bad("規格要是數字。"); else if (L != null && U != null && L >= U) bad("規格下限必須小於上限。");
-      if (m.n < 3) bad("每組至少 3 個。"); else if (m.n < 10) warn("每組少於 10 個：檢定力低，「沒有顯著差異」不代表「相同」*。要證明相同，請用樣本數規劃或等效性檢定的思路決定 n。"); else ok(`共 ${m.n * Math.max(need, g.length)} 個量測值。`);
+      const eqv = m.goal === "equiv" && m.purpose !== "multi";
+      if (eqv) { const e = pkNum(m.eqd); if (e == null || Number.isNaN(e) || !(e > 0)) bad("同等性要填同等界限 Δ（大於 0）：差多少以內算一樣，依臨床／功能需求或比對品規格，在看數據前決定。"); else ok(`同等性判定：${Math.round((1 - 2 * Number(m.alpha)) * 100)}% 信賴區間完全落在 ±${m.eqd} 內才判定同等。`); }
+      if (eqv) warn("同等性的樣本數要用「樣本數規劃 ② 變更後一樣嗎」計算；樣本太少時信賴區間太寬，即使真的一樣也判定不出來*。");
+      if (m.n < 3) bad("每組至少 3 個。"); else if (eqv) ok(`共 ${m.n * Math.max(need, g.length)} 個量測值。`); else if (m.n < 10) warn("每組少於 10 個：檢定力低，「沒有顯著差異」不代表「相同」*。要證明相同，請用樣本數規劃或等效性檢定的思路決定 n。"); else ok(`共 ${m.n * Math.max(need, g.length)} 個量測值。`);
       if (m.relation === "paired" && m.purpose === "two") warn("成對：記錄表的同一列必須是同一個樣品（或同一對），順序不能錯。");
-      if (m.alt !== "two-sided" && m.purpose !== "multi") warn("單尾檢定只在事先確定只關心一個方向時才用*。");
+      if (m.alt !== "two-sided" && m.purpose !== "multi" && !eqv) warn("單尾檢定只在事先確定只關心一個方向時才用*。");
       warn("每組的樣品要隨機抽取，量測順序最好交錯（不要先量完 A 再量 B），避免時間或量具漂移混進組別差異*。");
       warn("樣本數的依據建議先用「樣本數規劃」計算，並把計算條件寫進試驗計畫書。");
       return o;
@@ -350,6 +356,9 @@
       if (Array.isArray(j.groups) && j.groups.length) m.groups = j.groups.map(s => String(s).slice(0, 16)).slice(0, 8).join(", ");
       if (j.n != null) m.n = pkInt(j.n, 2, 500, 10);
       if (["two-sided", "greater", "less"].includes(j.alt)) m.alt = j.alt;
+      if (["diff", "equiv"].includes(j.goal)) m.goal = j.goal;
+      if (j.eqd !== undefined) { const x = Number(j.eqd); m.eqd = j.eqd == null || !isFinite(x) || x <= 0 ? "" : String(x); }
+      if (m.goal === "equiv") m.alt = "two-sided";
       if (j.alpha != null) { const a = +j.alpha; m.alpha = a === 0.01 ? "0.01" : a === 0.1 ? "0.10" : "0.05"; }
       ["target", "lsl", "usl"].forEach(k => { if (j[k] !== undefined) { const x = Number(j[k]); m[k] = j[k] == null || !isFinite(x) ? "" : String(x); } });
     },
