@@ -30,20 +30,24 @@
     card.className = "card mp-card"; card.id = id("Plan"); card.open = true;
     card.innerHTML = `<summary><span class="qref copper">規劃</span> <b>${esc(c.title)}</b> <span class="pk-src" id="${id("Src")}" hidden></span><span class="hint"> ${esc(c.sub)}</span></summary>
       <div class="mp-body">
-        <p class="help">${c.help.replace(/^流程：① [^，]*，/, "流程：① 在上方「描述情境或問題」寫一句話，")} 請不要輸入客戶、病患、批號等可識別資訊。</p>
+        ${(h => c.helpFold ? `<details class="pk-flow"><summary>規劃流程與注意事項</summary>${h}</details>` : h)(`<p class="help">${c.help.replace(/^流程：① [^，]*，/, "流程：① 在上方「描述情境或問題」寫一句話，")} 請不要輸入客戶、病患、批號等可識別資訊。</p>`)}
         <div class="field"><label for="${id("Desc")}">情境（選填給 AI 看）</label><textarea id="${id("Desc")}" rows="2" placeholder="${esc(c.descPh)}" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="${id("Ai")}">請 AI 建議設計</button><span class="hint" id="${id("Hint")}"></span></div>
         <div class="pk-ask" id="${id("Ask")}" hidden></div>
         <div class="mp-why" id="${id("Why")}" hidden></div>
         <div id="${id("Form")}" class="mp-meta"></div>
         <ul class="mp-check" id="${id("Check")}"></ul>
-        <div class="run-row"><button class="btn primary" type="button" id="${id("Go")}">${esc(c.goLabel)}</button><button class="btn ghost" type="button" id="${id("Reset")}">恢復預設值</button></div>
+        <div class="run-row"><button class="btn primary" type="button" id="${id("Go")}">${esc(c.goLabel)}</button>${c.applyLabel ? `<button class="btn" type="button" id="${id("Apply")}">${esc(c.applyLabel)}</button>` : ""}<button class="btn ghost" type="button" id="${id("Reset")}">恢復預設值</button><span class="hint" id="${id("ApplyHint")}"></span></div>
         <div id="${id("Sheet")}" hidden></div>
       </div>`;
     if (c.direct) { [id("Form"), id("Check")].forEach(k => { card.querySelector("#" + k).hidden = true; }); card.querySelector("#" + id("Go")).closest(".run-row").hidden = true; }
     card.querySelector("#" + id("Desc")).closest(".field").hidden = true;   // 只留頁面上方一個描述框
     const view = $(c.view), anchor = view.querySelector(c.before);
     anchor.parentNode.insertBefore(card, anchor);
+    if (c.aiTop) {   // 「請 AI 建議設計」放在描述框正下方：寫完就按
+      const tp = $(c.problemId) && $(c.problemId).closest(".tool-problem");
+      if (tp) { const row = card.querySelector("#" + id("Ai")).closest(".run-row"); row.classList.add("pk-airow"); tp.appendChild(row); }
+    }
     const note = (m, bad) => { $(id("Hint")).innerHTML = m ? (bad ? `<span class="status ng">${esc(m)}</span>` : esc(m)) : ""; };
     const setSrc = s => { P.src = s || ""; const el = $(id("Src")); el.hidden = !s; el.textContent = s ? `來源：${PK_SRC[s] || s}・待確認` : ""; };
     // 確認列：取代／加入／取消
@@ -108,7 +112,8 @@
         if (mode === "add" && c.merge) c.merge(P.m, fresh); else P.m = fresh;
         $(id("Sheet")).hidden = true; setSrc(src); render();
         const bad = c.check(P.m).some(x => x.lv === "bad");
-        note((r.notes || []).concat([bad ? "已放進確認區，但還有缺少或不可行的設定（紅色或 ✗），請補上。" : "已放進確認區，請確認或修改後按「" + c.goLabel + "」。"]).join(" "), bad);
+        note((r.notes || []).concat([bad ? "已放進確認區，但還有缺少或不可行的設定（紅色或 ✗），請補上。" : "已放進下方確認區，請確認或修改後按「" + c.goLabel + "」" + (c.applyLabel ? "；同意的話也可以按「" + c.applyLabel + "」。" : "。")]).join(" "), bad);
+        if (c.aiTop) card.scrollIntoView({ behavior: "smooth", block: "start" });
       };
       if (dirty()) ask("確認區已經有內容。要怎麼處理新的建議？", [{ label: "取代", fn: () => doIt("replace") }].concat(c.merge ? [{ label: "加入（把新的因子加在後面）", fn: () => doIt("add") }] : []).concat([{ label: "取消" }]));
       else doIt("replace");
@@ -144,6 +149,11 @@
     });
     card.addEventListener("click", e => { const g = e.target.closest(".mp-check [data-go]"); if (g) gotoTool(g.dataset.go, g.dataset.sub); });
     $(id("Ai")).addEventListener("click", askAI);
+    if (c.applyLabel) $(id("Apply")).addEventListener("click", () => {
+      read(); const h = $(id("ApplyHint"));
+      if (check().some(x => x.lv === "bad")) { h.innerHTML = `<span class="status ng">還有 ✗ 的設定，請先修正。</span>`; return; }
+      h.textContent = c.applySettings(P.m) || "";
+    });
     $(id("Reset")).addEventListener("click", () => { P.m = JSON.parse(JSON.stringify(c.def)); $(id("Why")).hidden = true; $(id("Sheet")).hidden = true; $(id("Ask")).hidden = true; setSrc(""); note(""); render(); });
     $(id("Go")).addEventListener("click", () => {
       read(); if (check().some(x => x.lv === "bad")) return;
@@ -286,9 +296,21 @@
   // ---------------- 假設檢定 ----------------
   let pkHypTouched = false; $("pasteBox").addEventListener("input", () => { pkHypTouched = true; });
   document.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => { pkHypTouched = false; }));
+  function pkHypSettings(m) {
+    setSub("compare");
+    if (m.purpose === "two") pkClick(`#modeChips [data-mode="${m.relation}"]`);
+    if (m.purpose !== "multi") pkClick(`#altChips [data-alt="${m.alt}"]`);
+    pkSet("alphaSel", m.alpha, "change"); pkSet("target", m.purpose === "one" ? m.target : ""); pkSet("lsl", m.lsl); pkSet("usl", m.usl);
+  }
   makePlanner({
     id: "pkh", view: "viewAnalyze", before: ".subtabs", route: "hypothesis", chatKey: "hyp", problemId: "hypProblem", block: "hypplan",
     title: "比較試驗規劃", sub: "先決定比什麼、分幾組、每組幾個；產生記錄表，填完再分析",
+    aiTop: true, helpFold: true, applyLabel: "同意，套用到下方檢定設定",
+    applySettings: m => {
+      pkHypSettings(m);
+      const L = [m.purpose === "two" ? (m.relation === "paired" ? "成對樣本" : "獨立樣本") : "", m.purpose !== "multi" ? { "two-sided": "雙尾", greater: "單尾 A>B", less: "單尾 A<B" }[m.alt] : "", "α=" + m.alpha, m.purpose === "one" && m.target !== "" ? "目標值 " + m.target : "", m.lsl !== "" ? "LSL " + m.lsl : "", m.usl !== "" ? "USL " + m.usl : ""].filter(Boolean);
+      return "已套用到下方 STEP 2（" + L.join("、") + "）。組數與樣本數依貼上的數據判定。";
+    },
     help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
     descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
     goLabel: "產生記錄表",
@@ -358,9 +380,7 @@
           setSub("compare");
           pkSet("pasteBox", [g.join("\t")].concat(S.v.map(r => r.map(v => String(v).trim()).join("\t"))).join("\n"));
           reparse(false);
-          if (m.purpose === "two") pkClick(`#modeChips [data-mode="${m.relation}"]`);
-          if (m.purpose !== "multi") pkClick(`#altChips [data-alt="${m.alt}"]`);
-          pkSet("alphaSel", m.alpha, "change"); pkSet("target", m.purpose === "one" ? m.target : ""); pkSet("lsl", m.lsl); pkSet("usl", m.usl);
+          pkHypSettings(m);
           $("runBtn").click(); $("pasteBox").scrollIntoView({ behavior: "smooth", block: "center" });
           ui.note("已帶入並分析，結果在下方。");
           };
