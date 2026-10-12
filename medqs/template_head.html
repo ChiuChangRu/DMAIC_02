@@ -751,3 +751,16 @@ details > summary { color: var(--act-text); cursor: pointer; }
 .fbp .fbp-item select { width: auto; flex: 0 0 auto; max-width: 120px; min-height: 0; height: auto; font-size: 13px; padding: 3px 6px; }
 .fbp-text { min-width: 0; }
 .fbp-open { margin-top: 6px; }
+
+/* 全站橘色風格（補）：下拉選單、勾選框、輸入框、展開標題、問 AI、連結 */
+select:not(.pk-miss) { border-color: var(--act) !important; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--act); }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.pk-miss), textarea:not(.pk-miss) { border-color: color-mix(in srgb, var(--act) 55%, var(--line)); }
+input:not([type="checkbox"]):not([type="radio"]):focus, textarea:focus, select:focus { border-color: var(--act-text) !important; }
+body details > summary { color: var(--act-text) !important; } body details > summary * { color: var(--act-text); }
+body details > summary .hint { color: var(--muted); }
+body details.mp-card > summary .hint, body details.card > summary .hint { color: var(--muted); }
+.ask-ai, .preview-head .ask-ai { background: transparent; color: var(--act-text); border: 1.5px solid var(--act); }
+.ask-ai:hover, .preview-head .ask-ai:hover { background: var(--act); color: var(--on-act); border-color: var(--act); }
+.btn.ghost-light:not(header .btn) { border-color: var(--act); color: var(--act-text); }
+a.link, a { color: var(--act-text); }
