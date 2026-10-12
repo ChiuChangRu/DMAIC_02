@@ -617,21 +617,12 @@ g.fb-hit:hover rect { stroke-width: 3; }
 .mp-opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 15px; }
 .mp-opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 .mp-meta select { height: 48px; box-sizing: border-box; }
-/* AI 輔助視窗：淡玫瑰紅（亮色主題）；暗色主題用低彩度的酒紅，避免刺眼 */
-.ai-panel { --surface: #FDF3F3; --bg: #FFF9F9; --ink: #3A1F22; --muted: #7D5A5E; --line: #EDCFD2; --grid: #EDCFD2; --code-bg: #F8E6E7; --navy-soft: #F4DADC; --teal: #2E7D78; --teal-soft: #E3F1EE; --copper-text: #93451C; --copper-soft: #FAE6D9; --warn-ink: #75500A; --warn-soft: #FBF0D6; --good: #2F7A45; --good-soft: #E2F1E6; --bad: #B3261E; --bad-soft: #FBE2DF; --on-accent: #FFFFFF; background: var(--surface); color: var(--ink); border-color: #E2B9BD; }
-.ai-panel .ai-head { background: #C2626B; color: #FFFFFF; }
-.ai-panel textarea, .ai-panel input, .ai-panel select { background: #FFFFFF; color: var(--ink); border-color: var(--line); }
-.ai-panel a { color: #9C2F3A; }
-.ai-fab { background: #C2626B; color: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ai-panel { --surface: #2E2224; --bg: #261C1E; --ink: #F3E6E7; --muted: #C7AEB1; --line: #4E3A3D; --grid: #4E3A3D; --code-bg: #382A2C; --navy-soft: #45313A; --teal: #86CDC4; --teal-soft: #213433; --copper-text: #F2BE90; --copper-soft: #3E2D22; --warn-ink: #F3CC80; --warn-soft: #3A3221; --good: #8BD5A0; --good-soft: #1F3527; --bad: #FFA79B; --bad-soft: #43282A; --on-accent: #261C1E; border-color: #4E3A3D; }
-  :root:not([data-theme="light"]) .ai-panel .ai-head { background: #5A3A3F; color: #FBEFF0; }
-  :root:not([data-theme="light"]) .ai-panel textarea, :root:not([data-theme="light"]) .ai-panel input, :root:not([data-theme="light"]) .ai-panel select { background: #261C1E; }
-  :root:not([data-theme="light"]) .ai-panel a { color: #F5B9A8; }
-  :root:not([data-theme="light"]) .ai-fab { background: #8A4D55; color: #FBEFF0; } }
-:root[data-theme="dark"] .ai-panel { --surface: #2E2224; --bg: #261C1E; --ink: #F3E6E7; --muted: #C7AEB1; --line: #4E3A3D; --grid: #4E3A3D; --code-bg: #382A2C; --navy-soft: #45313A; --teal: #86CDC4; --teal-soft: #213433; --copper-text: #F2BE90; --copper-soft: #3E2D22; --warn-ink: #F3CC80; --warn-soft: #3A3221; --good: #8BD5A0; --good-soft: #1F3527; --bad: #FFA79B; --bad-soft: #43282A; --on-accent: #261C1E; border-color: #4E3A3D; }
-:root[data-theme="dark"] .ai-panel .ai-head { background: #5A3A3F; color: #FBEFF0; }
-:root[data-theme="dark"] .ai-panel textarea, :root[data-theme="dark"] .ai-panel input, :root[data-theme="dark"] .ai-panel select { background: #261C1E; }
-:root[data-theme="dark"] .ai-fab { background: #8A4D55; color: #FBEFF0; }
+/* AI 輔助視窗：黑底（亮色、暗色主題相同），避免刺眼；可操作元件沿用全站橘色 */
+.ai-panel, :root .ai-panel, :root[data-theme] .ai-panel { --surface: #15181B; --bg: #0E1012; --ink: #ECE7DF; --muted: #A6ADB4; --line: #2C3238; --grid: #2C3238; --code-bg: #1C2024; --navy-soft: #252B31; --teal: #86CDC4; --teal-soft: #1B2E2C; --copper-text: #F2BE90; --copper-soft: #33261C; --warn-ink: #F3CC80; --warn-soft: #33291A; --good: #8BD5A0; --good-soft: #1B3022; --bad: #FFA79B; --bad-soft: #3D2321; --on-accent: #0E1012; --act-text: #E3995F; --deep-orange: #B8622A; --on-deep-orange: #FFF6EC; background: var(--surface); color: var(--ink); border-color: #2C3238; }
+.ai-panel .ai-head, :root[data-theme] .ai-panel .ai-head { background: #0B0D0F; color: #F5F1EA; border-bottom: 1px solid #2C3238; }
+.ai-panel textarea, .ai-panel input, .ai-panel select, :root[data-theme] .ai-panel textarea, :root[data-theme] .ai-panel input, :root[data-theme] .ai-panel select { background: #0E1012; color: var(--ink); border-color: var(--line); }
+.ai-panel a { color: var(--act-text); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ai-panel { --surface: #15181B; --bg: #0E1012; --ink: #ECE7DF; --muted: #A6ADB4; --line: #2C3238; --grid: #2C3238; --code-bg: #1C2024; --navy-soft: #252B31; --teal: #86CDC4; --teal-soft: #1B2E2C; --copper-text: #F2BE90; --copper-soft: #33261C; --warn-ink: #F3CC80; --warn-soft: #33291A; --good: #8BD5A0; --good-soft: #1B3022; --bad: #FFA79B; --bad-soft: #3D2321; --on-accent: #0E1012; --act-text: #E3995F; --deep-orange: #B8622A; --on-deep-orange: #FFF6EC; } :root:not([data-theme="light"]) .ai-panel .ai-head { background: #0B0D0F; color: #F5F1EA; } :root:not([data-theme="light"]) .ai-panel textarea, :root:not([data-theme="light"]) .ai-panel input, :root:not([data-theme="light"]) .ai-panel select { background: #0E1012; } }
 .pk-wide textarea { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 14px; }
 .case-badge { margin: 10px 0 0; padding: 0 0 18px; font-size: 16px; font-weight: 700; color: var(--band-ink); letter-spacing: .02em; }
 .case-badge::before { content: "●"; color: #B87333; margin-right: 8px; font-size: 12px; vertical-align: 2px; }
