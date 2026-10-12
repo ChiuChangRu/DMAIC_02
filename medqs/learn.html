@@ -136,6 +136,7 @@ footer a, .card a { color: var(--act-text); }
         <div class="ctl"><label for="i_d">實際差異 Δ <output id="o_d"></output></label><input type="range" id="i_d" min="0" max="3" step="0.05" value="1.5"></div>
         <div class="ctl"><label for="i_s">標準差 σ <output id="o_s"></output></label><input type="range" id="i_s" min="0.2" max="4" step="0.1" value="1.6"></div>
         <div class="ctl"><label for="i_n">樣本數 n <output id="o_n"></output></label><input type="range" id="i_n" min="2" max="60" step="1" value="10"></div>
+        <div class="ctl"><label for="i_u">量測單位（Δ、σ 共用）</label><input type="text" id="i_u" value="N/15mm" maxlength="20" style="font:inherit;color:var(--ink);background:var(--code-bg);border:1.5px solid var(--act);border-radius:8px;padding:8px 10px;width:100%"></div>
         <div class="ctl"><label for="i_a">顯著水準 α</label><select id="i_a"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
       </div>
       <div class="chips" id="i_side" role="group" aria-label="單尾或雙尾" style="margin-bottom:10px">
@@ -195,7 +196,7 @@ footer a, .card a { color: var(--act-text); }
     <div class="stack">
       <div class="inner">
         <h4 style="margin:0 0 4px">假設檢定的 OC 曲線</h4>
-        <p class="help" style="font-size:14px">橫軸：實際差異；縱軸：判定「沒差異」的機率。設定沿用 1-1。</p>
+        <p class="help" style="font-size:14px">橫軸：實際差異，單位與量測值相同（1-1 填的單位）；縱軸：判定「沒差異」的機率。設定沿用 1-1。</p>
         <div class="legend" id="lg13a"></div>
         <svg class="plot" id="p3a" viewBox="0 0 680 360" role="img" aria-label="假設檢定的 OC 曲線"></svg>
       </div>
@@ -285,13 +286,13 @@ footer a, .card a { color: var(--act-text); }
 
   // ---- 狀態 ----
   const S = { side: "one" };
-  function read() { S.d = +$("i_d").value; S.s = +$("i_s").value; S.n = +$("i_n").value; S.a = +$("i_a").value; S.se = S.s / Math.sqrt(S.n); S.sh = S.d / S.se; }
+  function read() { S.d = +$("i_d").value; S.s = +$("i_s").value; S.n = +$("i_n").value; S.a = +$("i_a").value; S.u = ($("i_u").value || "").trim(); S.se = S.s / Math.sqrt(S.n); S.sh = S.d / S.se; }
 
   // 1-1
   function draw1() {
     const sh = S.sh, a = S.a, two = S.side === "two", c = two ? PhiInv(1 - a / 2) : PhiInv(1 - a), beta = betaOf(sh, a, S.side);
     const x0 = -4, x1 = Math.max(7, sh + 4);
-    const F = frame({ svg: "p1", x0, x1, y0: 0, y1: 0.45, T: 34, xt: Array.from({ length: Math.floor(x1 - x0) + 1 }, (_, i) => Math.ceil(x0) + i), xl: "檢定統計量 z（以標準誤為單位）", L: 24 });
+    const F = frame({ svg: "p1", x0, x1, y0: 0, y1: 0.45, T: 34, xt: Array.from({ length: Math.floor(x1 - x0) + 1 }, (_, i) => Math.ceil(x0) + i), xl: `檢定統計量 z = 實際差異 ÷ SE（無單位；SE = ${fx(S.se, 3)}${S.u ? " " + S.u : ""}）`, L: 24 });
     const { sx, sy } = F, h0 = pdf, h1 = x => pdf(x - sh);
     let s = F.s;
     s += fillArea(h1, two ? -c : x0, c, sx, sy, 0, "var(--c-beta)", .35);
@@ -308,7 +309,7 @@ footer a, .card a { color: var(--act-text); }
     s += `<text x="${sx(sh)}" y="${sy(0.399) - 24}" text-anchor="middle" font-size="13" fill="var(--c-h1)">H₁ 差 ${fx(S.d, 2)}</text>`;
     s += `<text x="${sx(c) + 6}" y="${F.B - 6}" font-size="12" fill="var(--muted)">判定有差 →</text><text x="${sx(c) - 6}" y="${F.B - 6}" text-anchor="end" font-size="12" fill="var(--muted)">${two ? "" : "← 判定沒差"}</text>`;
     $("p1").innerHTML = s;
-    $("m_se").textContent = fx(S.se, 3); $("m_sh").textContent = fx(sh, 2); $("m_c").textContent = (two ? "±" : "") + fx(c, 3);
+    $("m_se").textContent = fx(S.se, 3) + (S.u ? " " + S.u : ""); $("m_sh").textContent = fx(sh, 2); $("m_c").textContent = (two ? "±" : "") + fx(c, 3);
     $("m_a").textContent = pct(a, 1); $("m_b").textContent = pct(beta); $("m_p").textContent = pct(1 - beta);
     $("t_a").textContent = pct(a, 1); $("t_1a").textContent = pct(1 - a, 1); $("t_b").textContent = pct(beta); $("t_p").textContent = pct(1 - beta);
   }
@@ -331,7 +332,7 @@ footer a, .card a { color: var(--act-text); }
   function draw3a() {
     const ns = [Math.max(2, Math.round(S.n / 2)), S.n, S.n * 2], cols = ["var(--c-alpha)", "var(--c-beta)", "var(--c-power)"], dashes = ["7 5", "", "2 5"];
     const xmax = Math.max(3 * S.d, 4 * S.se, 0.5);
-    const F = frame({ svg: "p3a", H: 360, x0: 0, x1: xmax, y0: 0, y1: 1, xt: [0, xmax / 4, xmax / 2, 3 * xmax / 4, xmax], xf: v => fx(v, 2), yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: "實際差異", yl: "判定「沒差異」的機率" });
+    const F = frame({ svg: "p3a", H: 360, x0: 0, x1: xmax, y0: 0, y1: 1, xt: [0, xmax / 4, xmax / 2, 3 * xmax / 4, xmax], xf: v => fx(v, 2), yt: [0, .2, .4, .6, .8, 1], yf: v => pct(v, 0), xl: `實際差異${S.u ? "（" + S.u + "）" : "（與 σ 同單位）"}`, yl: "判定「沒差異」的機率" });
     let s = F.s;
     ns.forEach((n, i) => { const se = S.s / Math.sqrt(n); s += line(x => betaOf(x / se, S.a, S.side), 0, xmax, F.sx, F.sy, cols[i], dashes[i]); });
     const b = betaOf(S.sh, S.a, S.side), top = 1 - S.a;
@@ -360,8 +361,8 @@ footer a, .card a { color: var(--act-text); }
     });
     $("p3b").innerHTML = s; $("q_a").textContent = pct(1 - pa1); $("q_b").textContent = pct(pa2);
   }
-  function all() { read(); $("o_d").textContent = fx(S.d, 2); $("o_s").textContent = fx(S.s, 1); $("o_n").textContent = S.n; draw1(); draw2(); draw3a(); }
-  ["i_d", "i_s", "i_n"].forEach(id => $(id).addEventListener("input", all)); $("i_a").addEventListener("change", all);
+  function all() { read(); const u = S.u ? " " + S.u : ""; $("o_d").textContent = fx(S.d, 2) + u; $("o_s").textContent = fx(S.s, 1) + u; $("o_n").textContent = S.n; draw1(); draw2(); draw3a(); }
+  ["i_d", "i_s", "i_n", "i_u"].forEach(id => $(id).addEventListener("input", all)); $("i_a").addEventListener("change", all);
   $("i_side").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; S.side = b.dataset.v; $("i_side").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); all(); });
   ["q_n", "q_ac", "q_aql", "q_rql"].forEach(id => $(id).addEventListener("input", draw3b));
   // 章節導覽：捲動時標示目前章節（目前只有第 1 節）
