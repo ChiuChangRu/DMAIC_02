@@ -212,7 +212,7 @@
           <div class="fields">
             <div class="field">
               <label for="alphaSel">顯著水準 α</label>
-              <select id="alphaSel"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
+              <select id="alphaSel"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
             </div>
             <div class="field">
               <label for="target">目標值</label>
@@ -1397,9 +1397,11 @@
       res.tost.paired = g.length === 1 || paired; res.tost.one = g.length === 1;
     }
     state.result = res; state.data = data; state.groups = g; state.opts = opts; state.pairRuns = [];
+    res.planDiff = typeof ssPlanDiff === "function" ? ssPlanDiff(g.length, paired) : [];
     state.dec = decimalsOf([].concat(...data));
     state.lastKey = settingsKey();
     renderResult();
+    if (res.planDiff && res.planDiff.length) hint.innerHTML = `<span class="status ng">⚠ 判定條件和樣本數規劃帶過來的不同：${esc(res.planDiff.join("、"))}。看完數據才改判定條件，結果可能不被接受；如有正當理由，請寫進報告。</span>`;
     noteResultChanged();
     $("sheets").hidden = false;
     $("sheets").classList.remove("is-stale");
@@ -1789,6 +1791,7 @@
     L.push("前提檢定（門檻 0.05）：" + r.normality.map(n => `Shapiro-Wilk ${n.label} W=${fmt(n.W, 4)} p=${fmtP(n.p)}`).join("；") + (r.levene ? `；Levene W=${fmt(r.levene.W, 4)} p=${fmtP(r.levene.p)}` : "") + (r.sphericity ? `；Mauchly W=${fmt(r.sphericity.W, 4)} p=${fmtP(r.sphericity.p)}，GG ε=${fmt(r.sphericity.epsGG, 4)}` : ""));
     L.push(`選用檢定：${r.chosenTest.name}；理由：${r.reasons.join(" ")}`);
     if (r.warnings.length) L.push("提醒：" + r.warnings.join(" "));
+    if (r.planDiff && r.planDiff.length) L.push("注意：判定條件和事先的樣本數規劃不同（" + r.planDiff.join("、") + "），可能是看完數據才改；說明結果時要提醒這一點。");
     L.push("全部檢定：" + r.tests.map(x => `${x.name}：${x.statName}=${fmtSig(x.stat, 6)}${x.df1 != null ? `，df=(${fmtSig(x.df1, 4)}, ${fmtSig(x.df, 4)})` : x.df != null ? `，df=${fmtSig(x.df, 5)}` : ""}，p=${fmtP(x.p)}${x.ci ? `，差值 ${Math.round(r.conf * 100)}% CI=[${fmt(x.ci[0], d)}, ${fmt(x.ci[1], d)}]` : ""}${x.method ? `（${x.method}）` : ""}`).join("；"));
     L.push(`${r.tost ? "差異檢定（參考）" : "結論"}：${r.significant ? "達統計顯著" : "未達統計顯著"}（${r.chosenTest.name} p=${fmtP(r.chosenTest.p)}）；效果量 ${r.effect.name}=${fmt(r.effect.value, 3)}`);
     if (r.tost) { const q = r.tost; L.push(`檢定目的：同等性（TOST，兩個單尾 t 檢定${q.one ? "，對目標值" : q.paired ? "，成對" : "，合併變異數"}）；同等界限 Δ=±${q.delta}；平均差（${q.one ? "平均−目標" : "A−B"}）=${fmt(q.d, d)}；${Math.round((1 - 2 * q.alpha) * 100)}% 信賴區間=[${fmt(q.lo, d)}, ${fmt(q.hi, d)}]；下界檢定 p=${fmtP(q.pLow)}，上界檢定 p=${fmtP(q.pUp)}，TOST p=${fmtP(q.p)}；結論：${q.ok ? "判定同等（信賴區間完全落在 ±Δ 內）" : "不能宣稱同等（信賴區間超出 ±Δ）"}。以同等性判定為主要結論，差異檢定只作參考。`); }

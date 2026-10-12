@@ -782,6 +782,8 @@ body.novice .nb-line { display: block; }
 
 /* 所有分頁的卡片框框：比照「定義問題」分頁的深度 */
 [data-view] .card { background: color-mix(in srgb, var(--teal) 28%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 50%, var(--line)); }
+
+.ss2hyp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
 </style>
 
 <div class="wrap">
@@ -996,7 +998,7 @@ body.novice .nb-line { display: block; }
           <div class="fields">
             <div class="field">
               <label for="alphaSel">顯著水準 α</label>
-              <select id="alphaSel"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
+              <select id="alphaSel"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
             </div>
             <div class="field">
               <label for="target">目標值</label>
@@ -4958,9 +4960,11 @@ else root.runValidation = runValidation;
       res.tost.paired = g.length === 1 || paired; res.tost.one = g.length === 1;
     }
     state.result = res; state.data = data; state.groups = g; state.opts = opts; state.pairRuns = [];
+    res.planDiff = typeof ssPlanDiff === "function" ? ssPlanDiff(g.length, paired) : [];
     state.dec = decimalsOf([].concat(...data));
     state.lastKey = settingsKey();
     renderResult();
+    if (res.planDiff && res.planDiff.length) hint.innerHTML = `<span class="status ng">⚠ 判定條件和樣本數規劃帶過來的不同：${esc(res.planDiff.join("、"))}。看完數據才改判定條件，結果可能不被接受；如有正當理由，請寫進報告。</span>`;
     noteResultChanged();
     $("sheets").hidden = false;
     $("sheets").classList.remove("is-stale");
@@ -5350,6 +5354,7 @@ else root.runValidation = runValidation;
     L.push("前提檢定（門檻 0.05）：" + r.normality.map(n => `Shapiro-Wilk ${n.label} W=${fmt(n.W, 4)} p=${fmtP(n.p)}`).join("；") + (r.levene ? `；Levene W=${fmt(r.levene.W, 4)} p=${fmtP(r.levene.p)}` : "") + (r.sphericity ? `；Mauchly W=${fmt(r.sphericity.W, 4)} p=${fmtP(r.sphericity.p)}，GG ε=${fmt(r.sphericity.epsGG, 4)}` : ""));
     L.push(`選用檢定：${r.chosenTest.name}；理由：${r.reasons.join(" ")}`);
     if (r.warnings.length) L.push("提醒：" + r.warnings.join(" "));
+    if (r.planDiff && r.planDiff.length) L.push("注意：判定條件和事先的樣本數規劃不同（" + r.planDiff.join("、") + "），可能是看完數據才改；說明結果時要提醒這一點。");
     L.push("全部檢定：" + r.tests.map(x => `${x.name}：${x.statName}=${fmtSig(x.stat, 6)}${x.df1 != null ? `，df=(${fmtSig(x.df1, 4)}, ${fmtSig(x.df, 4)})` : x.df != null ? `，df=${fmtSig(x.df, 5)}` : ""}，p=${fmtP(x.p)}${x.ci ? `，差值 ${Math.round(r.conf * 100)}% CI=[${fmt(x.ci[0], d)}, ${fmt(x.ci[1], d)}]` : ""}${x.method ? `（${x.method}）` : ""}`).join("；"));
     L.push(`${r.tost ? "差異檢定（參考）" : "結論"}：${r.significant ? "達統計顯著" : "未達統計顯著"}（${r.chosenTest.name} p=${fmtP(r.chosenTest.p)}）；效果量 ${r.effect.name}=${fmt(r.effect.value, 3)}`);
     if (r.tost) { const q = r.tost; L.push(`檢定目的：同等性（TOST，兩個單尾 t 檢定${q.one ? "，對目標值" : q.paired ? "，成對" : "，合併變異數"}）；同等界限 Δ=±${q.delta}；平均差（${q.one ? "平均−目標" : "A−B"}）=${fmt(q.d, d)}；${Math.round((1 - 2 * q.alpha) * 100)}% 信賴區間=[${fmt(q.lo, d)}, ${fmt(q.hi, d)}]；下界檢定 p=${fmtP(q.pLow)}，上界檢定 p=${fmtP(q.pUp)}，TOST p=${fmtP(q.p)}；結論：${q.ok ? "判定同等（信賴區間完全落在 ±Δ 內）" : "不能宣稱同等（信賴區間超出 ±Δ）"}。以同等性判定為主要結論，差異檢定只作參考。`); }
@@ -9918,7 +9923,7 @@ else root.runValidation = runValidation;
   const pkInt = (v, lo, hi, d) => { const x = Math.round(Number(v)); return isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
   const pkClick = (sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
   const pkSet = (id, v, ev) => { const el = $(id); if (!el) return; el.value = v == null ? "" : String(v); el.dispatchEvent(new Event(ev || "input", { bubbles: true })); };
-  const PK_SRC = { ai: "AI 建議", fb: "魚骨圖", user: "手動", reg: "相關與回歸" };
+  const PK_SRC = { ai: "AI 建議", fb: "魚骨圖", user: "手動", reg: "相關與回歸", ss: "樣本數規劃" };
   const pkCheckHtml = ck => ck.map(x => `<li class="mp-${x.lv}"><b>${x.lv === "bad" ? "✗ 不可行" : x.lv === "warn" ? "⚠ 提醒" : "✓"}</b> ${esc(x.m)}${x.go ? ` <button type="button" class="linkbtn" data-go="${x.go[0]}"${x.go[1] ? ` data-sub="${x.go[1]}"` : ""}>${esc(x.go[2])}</button>` : ""}</li>`).join("") + `<li class="hint">標 * 的是一般慣例或推論，不是法規硬性規定；以公司程序為準。</li>`;
   const PK_COMMON = "規則：1. 全程使用繁體中文。2. 不要產生、猜測或舉例任何量測數值或實驗結果；只給設計參數。3. 標準差 σ、預期平均、不良率、因子水準等「需要使用者決定或歷史資料」的數字，只在使用者有提供時才填，否則留空（\"\" 或 null），並在文字中說明要去哪裡找或怎麼決定。4. 規格、目標值只在使用者提供時填。5. 不確定的地方標 * 並說明要使用者確認什麼。6. 不要要求或重複客戶、病患、批號等可識別資訊。";
   const PK_FORMAT = "回答格式：先用最多 6 點說明為什麼這樣設計（每點一行，以「- 」開頭），口語、短句，具體到可以照做；常見做法的數量標 *。最後附一個規劃區塊（JSON），格式如下：";
@@ -10238,7 +10243,7 @@ else root.runValidation = runValidation;
       { k: "goal", lab: "檢定目的", type: "select", opts: [["diff", "差異：有沒有差"], ["equiv", "同等性（TOST）：差在 ±Δ 內"]], show: m => m.purpose !== "multi" },
       { k: "eqd", lab: "同等界限 Δ（±）", type: "num", ph: "必填，看數據前決定", show: m => m.purpose !== "multi" && m.goal === "equiv" },
       { k: "alt", lab: "對立假設", type: "select", opts: [["two-sided", "雙尾（不同）"], ["greater", "單尾：第 1 組較大／大於目標"], ["less", "單尾：第 1 組較小／小於目標"]], show: m => m.purpose !== "multi" && m.goal !== "equiv" },
-      { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.05", "0.05"], ["0.10", "0.10"]] },
+      { k: "alpha", lab: "顯著水準 α", type: "select", opts: [["0.01", "0.01"], ["0.025", "0.025"], ["0.05", "0.05"], ["0.10", "0.10"]] },
       { k: "target", lab: "目標值", type: "num", ph: "單組必填", show: m => m.purpose === "one" },
       { k: "lsl", lab: "規格下限 LSL（選填）", type: "num" },
       { k: "usl", lab: "規格上限 USL（選填）", type: "num" }
@@ -10269,7 +10274,7 @@ else root.runValidation = runValidation;
       if (["diff", "equiv"].includes(j.goal)) m.goal = j.goal;
       if (j.eqd !== undefined) { const x = Number(j.eqd); m.eqd = j.eqd == null || !isFinite(x) || x <= 0 ? "" : String(x); }
       if (m.goal === "equiv") m.alt = "two-sided";
-      if (j.alpha != null) { const a = +j.alpha; m.alpha = a === 0.01 ? "0.01" : a === 0.1 ? "0.10" : "0.05"; }
+      if (j.alpha != null) { const a = +j.alpha; m.alpha = a === 0.01 ? "0.01" : a === 0.025 ? "0.025" : a === 0.1 ? "0.10" : "0.05"; }
       ["target", "lsl", "usl"].forEach(k => { if (j[k] !== undefined) { const x = Number(j[k]); m[k] = j[k] == null || !isFinite(x) ? "" : String(x); } });
     },
     go: (m, ui) => {
@@ -10772,6 +10777,75 @@ else root.runValidation = runValidation;
     const pr = pop.getBoundingClientRect(); if (pr.bottom > window.innerHeight - 8 && r.top > pr.height + 16) pop.style.top = (r.top + window.scrollY - pr.height - 8) + "px";
   }
   helpDecorate();
+  // =====================================================================
+  // 樣本數規劃 → 假設檢定：把情境（選的題目、問題描述）、判定參數與數量帶過去
+  // 只接有對應判定的題目：① t 檢定、② 同等性、④ 單組對目標值、⑧ 允差區間。
+  // 帶過去的判定條件記為「計畫」；假設檢定執行時若條件被改，提醒並記入 AI 說明。
+  // =====================================================================
+  let ssPlanRef = null;   // { goal, rel, alt, alpha, eqd, k }
+  function ssCtxText(extra) {
+    const q = SSQ[ssCurQ], desc = ($("sampleProblem").value || "").trim();
+    return [q ? "情境：" + q.title : "", extra || "", desc ? "描述：" + desc : ""].filter(Boolean).join("\n");
+  }
+  function ssFillProblem(text) {
+    const tb = $("hypProblem"); if (!tb || !text) return;
+    const cur = tb.value.trim();
+    tb.value = !cur || tb.dataset.auto === tb.value || cur === text ? text : text + "\n（原本的描述）" + cur;
+    tb.dataset.auto = tb.value; tb.dispatchEvent(new Event("input", { bubbles: true }));
+    const src = $("hypProblemSrc"); if (src) src.textContent = "從樣本數規劃帶入，可直接修改";
+  }
+  function ss2hyp(kind) {
+    if (kind === "power") {
+      const r = pw.result; if (!r) return;
+      const one = r.design !== "two", target = ssCurQ === "q4";
+      const purpose = one && target ? "one" : "two", rel = one ? "paired" : "ind";
+      const alt = r.alt === "two-sided" ? "two-sided" : "greater";
+      const j = { purpose, relation: rel, groups: purpose === "one" ? ["樣品"] : one ? ["前", "後"] : ["A", "B"], n: r.n, alt, alpha: r.alpha, goal: "diff", eqd: null, target: null, lsl: null, usl: null };
+      ssPlanRef = { goal: "diff", rel: purpose === "two" ? rel : "", alt, alpha: String(r.alpha), eqd: "", k: purpose === "one" ? 1 : 2 };
+      ssFillProblem(ssCtxText(`樣本數規劃：t 檢定，σ = ${r.sd}、要偵測 Δ = ${fmtSig(r.delta, 6)}、檢定力 ${fmt(r.power * 100, 0)}%，${purpose === "one" ? "" : one ? "成對 " : "每組 "}n = ${r.n}`));
+      PLANS.hyp.apply(j, "ss");
+      pkHypNote(alt !== "two-sided" ? "單尾：方向預設為「第 1 組較大／大於目標」，請確認是否正確。" : "", purpose === "one" ? "單組對目標值：請在確認區填目標值。" : "");
+    } else if (kind === "tost") {
+      const m = TQ.tost; if (!m) return;
+      const rel = m.design === "two" ? "ind" : "paired";
+      const j = { purpose: "two", relation: rel, groups: ["新", "舊"], n: m.n, alt: "two-sided", alpha: m.alpha, goal: "equiv", eqd: m.delta, target: null, lsl: null, usl: null };
+      ssPlanRef = { goal: "equiv", rel, alt: "", alpha: String(m.alpha), eqd: String(m.delta), k: 2 };
+      const u = m.unit ? " " + m.unit : "";
+      ssFillProblem(ssCtxText(`樣本數規劃：同等性（TOST），${m.name ? "特性 " + m.name + "，" : ""}δ = ±${m.delta}${u}${m.basisNote ? "（依據：" + m.basisNote + "）" : ""}、σ = ${m.sd}${u}、α = ${m.alpha}、把握 ${fmt(m.power * 100, 0)}%，${rel === "ind" ? "每組" : "成對"} n = ${m.n}`));
+      PLANS.hyp.apply(j, "ss");
+      pkHypNote("組別順序「新, 舊」：結果的平均差 = 新 − 舊，與樣本數規劃相同。");
+    } else if (kind === "tolp") {
+      const t = TQ.tolp; if (!t) return;
+      ssPlanRef = null;
+      ssFillProblem(ssCtxText(`樣本數規劃：允差區間，涵蓋 ${t.p * 100}%、信心 ${t.g * 100}%（${t.side === "two" ? "雙邊" : t.side === "lower" ? "單邊下限" : "單邊上限"}），建議量 n = ${t.n}`));
+      closePanel(); route("hypothesis"); setSub("tol");
+      pkClick(`#tlSide [data-v="${t.side === "two" ? "two" : t.side}"]`);
+      pkSet("tlP", String(t.p), "change"); pkSet("tlG", String(t.g), "change");
+      if (t.lsl != null && isFinite(t.lsl)) pkSet("tlLsl", t.lsl); if (t.usl != null && isFinite(t.usl)) pkSet("tlUsl", t.usl);
+      $("tlHint").textContent = `已帶入樣本數規劃的條件。量完 ${t.n} 個後貼上數據，再按「計算」。`;
+      $("tlPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+  function pkHypNote(...xs) { const h = $("pkhHint"); if (h) { const add = xs.filter(Boolean).join(" "); if (add) h.textContent = (h.textContent ? h.textContent + " " : "") + add; } }
+  // 假設檢定執行時：判定條件是否和帶過來的計畫不同
+  function ssPlanDiff(k, paired) {
+    const P = ssPlanRef; if (!P || P.k !== k) return [];
+    const d = [], goal = state.goal === "equiv" && k <= 2 ? "equiv" : "diff";
+    if (P.goal !== goal) d.push("檢定目的");
+    if (k === 2 && P.rel && P.rel !== (paired ? "paired" : "ind")) d.push("樣本關係");
+    if (goal === "diff" && P.alt && P.alt !== state.alt) d.push("對立假設");
+    if (Number(P.alpha) !== Number($("alphaSel").value)) d.push("α");
+    if (goal === "equiv" && P.eqd && Number(P.eqd) !== Number($("hypEqDelta").value)) d.push("同等界限 Δ");
+    return d;
+  }
+  // 結果區加「帶到假設檢定」按鈕（只在有對應判定的題目）
+  const SS2H = [["pwOut", "power", () => !!pw.result], ["eqOut", "tost", () => !!TQ.tost], ["tpOut", "tolp", () => !!TQ.tolp]];
+  SS2H.forEach(([id, kind, ok]) => {
+    const el = $(id); if (!el) return;
+    const add = () => { if (!ok() || el.querySelector("[data-tohyp]")) return; el.insertAdjacentHTML("beforeend", `<div class="ss2hyp"><button type="button" class="btn primary small" data-tohyp="${kind}">帶到假設檢定 →</button><span class="hint">帶過去：情境、判定條件${kind === "tolp" ? "" : "與每組數量"}；量完在假設檢定判定</span></div>`); };
+    new MutationObserver(add).observe(el, { childList: true });
+  });
+  document.addEventListener("click", e => { const b = e.target.closest("[data-tohyp]"); if (b) ss2hyp(b.dataset.tohyp); });
   // =====================================================================
   // 相關與回歸（計算在 regress.js：window.RG）
   // 舊資料初步分析：相關係數矩陣、散佈圖、簡單線性迴歸、規格反推
