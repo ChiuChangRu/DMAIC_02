@@ -6925,14 +6925,15 @@ else root.runValidation = runValidation;
   })();
 
   // =====================================================================
-  // AI 連線方式：(1) claude.ai（平台 AI）；(2) 自帶 API key（Claude API 或 OpenAI 相容格式）
+  // AI 連線方式：(1) claude.ai（平台 AI）；(2) 自帶 API key（Claude API、Kimi 或 OpenAI 相容格式；Kimi 使用 OpenAI 相容的 /chat/completions）
   // 模式 (2) 只在 claude.ai 以外（例如 GitHub Pages）可用：claude.ai 的安全規則禁止網頁連到外部 API。
   // key 只存在使用者自己的瀏覽器，直接送到使用者填的 AI 服務，不經過其他伺服器。
   // =====================================================================
   const BYOK_CFG = "mdqs.byok.v1", BYOK_KEY = "mdqs.byok.key";
   const BYOK_PROV = {
     anthropic: { name: "Claude API（Anthropic）", base: "https://api.anthropic.com", model: "claude-sonnet-5-5", needKey: true },
-    openai: { name: "OpenAI 相容格式（GPT、Kimi、Azure OpenAI、公司私有雲等）", base: "https://api.openai.com/v1", model: "", needKey: false }
+    kimi: { name: "Kimi（Moonshot AI）", base: "https://api.moonshot.ai/v1", model: "kimi-k2.6", needKey: true },
+    openai: { name: "OpenAI 相容格式（GPT、Azure OpenAI、公司私有雲等）", base: "https://api.openai.com/v1", model: "", needKey: false }
   };
 
   // 模型清單：特性說明。價格來自第三方整理頁（2026-10 查到，未逐一對官方核實*），實際以各服務官網為準。
@@ -6943,9 +6944,11 @@ else root.runValidation = runValidation;
       { model: "claude-opus-5-5", label: "Claude Opus 5.5（複雜問題）", note: "針對複雜問題的較強模型，費用高於 Sonnet*（價格未核實）。適合查廠答辯、多證據交叉比對等重要案件。" },
       { model: "claude-fable-5-1", label: "Claude Fable 5.1（最強、最貴*）", note: "Anthropic 最高階層級，價格未核實*。一般統計輔助說明通常用不到；先用 Sonnet，不夠再升級。" }
     ],
+    kimi: [
+      { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", note: "約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
+      { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", note: "上下文 1M，支援圖片；輸出約 $13–15／百萬 token*，比 K2.6 貴很多。需要長文件或較強推論時才選。網址規則同 K2.6。" }
+    ],
     openai: [
-      { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", base: "https://api.moonshot.ai/v1", note: "約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
-      { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", base: "https://api.moonshot.ai/v1", note: "上下文 1M，支援圖片；輸出約 $13–15／百萬 token*，比 K2.6 貴很多。需要長文件或較強推論時才選。網址規則同 K2.6。" },
       { model: "gpt-6.1-sol", label: "GPT-6.1 Sol（OpenAI，通用）", base: "https://api.openai.com/v1", note: "約 $2／$10（百萬 token）*，與 Sonnet 同級。是否支援圖片未確認*，請先「測試連線」並附一張圖試試。公司以 GPT 為主時，這項最容易導入。瀏覽器直連是否可行未驗證*。" },
       { model: "gpt-6-luna", label: "GPT-6 Luna（OpenAI，最省*）", base: "https://api.openai.com/v1", note: "約 $0.10／$0.50（百萬 token）*，最便宜。適合簡單詢問；複雜根因推論可能較淺*。圖片支援未確認*。" },
       { model: "gpt-5.6-terra", label: "GPT-5.6 Terra（OpenAI，中階）", base: "https://api.openai.com/v1", note: "約 $2／$12（百萬 token）*，中階。圖片支援未確認*。" }
@@ -6958,6 +6961,8 @@ else root.runValidation = runValidation;
   const OPENCC_URL = "https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js";
   let byokCfg = { provider: "anthropic", base: "", model: "", imgs: true, s2t: false, keep: false };
   try { Object.assign(byokCfg, JSON.parse(localStorage.getItem(BYOK_CFG) || "{}")); } catch (_) {}
+  if (byokCfg.provider === "openai" && /^kimi/i.test(byokCfg.model || "")) { byokCfg.provider = "kimi"; if (/api\.moonshot\.ai/.test(byokCfg.base || "")) byokCfg.base = ""; }   // 舊設定：Kimi 原本放在 OpenAI 相容格式
+  if (!BYOK_PROV[byokCfg.provider]) byokCfg.provider = "anthropic";
   let byokKeyMem = "";
   try { byokKeyMem = localStorage.getItem(BYOK_KEY) || ""; } catch (_) {}
   let aiMode = "none";   // "claude" | "byok" | "none"
@@ -7098,7 +7103,7 @@ else root.runValidation = runValidation;
   }
   function byokSaveCfg() { try { localStorage.setItem(BYOK_CFG, JSON.stringify(byokCfg)); if (byokCfg.keep && byokKeyMem) localStorage.setItem(BYOK_KEY, byokKeyMem); else localStorage.removeItem(BYOK_KEY); } catch (_) {} }
   $("byokProv").innerHTML = Object.entries(BYOK_PROV).map(([k, v]) => `<option value="${k}">${esc(v.name)}</option>`).join("");
-  $("byokProv").addEventListener("change", e => { byokCfg.provider = e.target.value; byokCfg.base = ""; byokCfg.model = ""; byokCustomMode = false; byokRender(); });
+  $("byokProv").addEventListener("change", e => { byokCfg.provider = e.target.value; byokCfg.base = ""; byokCfg.model = ""; byokCustomMode = false; if (byokCfg.provider === "kimi") byokCfg.s2t = true; byokRender(); });
   $("byokModelSel").addEventListener("change", e => {
     const v = e.target.value;
     if (v === BYOK_CUSTOM) { byokCustomMode = true; byokCfg.model = ""; byokRender(); $("byokModel").focus(); return; }
