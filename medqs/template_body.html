@@ -177,6 +177,7 @@
             <button class="chip" type="button" data-example="3">範例：三組</button>
             <button class="chip" type="button" id="clearBtn">清除</button>
           </div>
+          <div class="pub-pick"><label for="pubHypSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubHypSel"></select><p class="hint" id="pubHypDesc"></p></div>
           <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;轉廠前&#9;轉廠後&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
           <div class="detect" id="detect" aria-live="polite"></div>
         </div>
@@ -401,6 +402,7 @@
       <h2 class="ss-qh"><span class="ss-step">2</span>統計方法</h2>
       <p class="help" id="ssRecLine">選了上面的問題，建議的方法會加框標示；也可以直接點任何一張圖卡。</p>
       <div class="ss-tiles" id="ssTiles" role="tablist" aria-label="統計方法"></div>
+      <div class="pub-pick"><label for="pubSsSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubSsSel"></select><p class="hint" id="pubSsDesc"></p></div>
     </section>
     <div class="ss-qbanner" id="ssQBanner" hidden></div>
     <div class="subtabs" role="tablist" aria-label="樣本數規劃功能（進階：直接選統計方法）" id="ssTabs" hidden>
@@ -1008,6 +1010,9 @@
         <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
         <p class="hint" id="demoDesc"></p>
         <div class="pk-ask" id="demoAsk" hidden></div>
+        <div class="fields"><div class="field"><label for="pubCaseSel">公開範例（假設檢定、樣本數規劃；只載入該工具，不清除其他頁）</label><select id="pubCaseSel"></select></div></div>
+        <div class="run-row" style="margin:4px 0 0"><button class="btn small" type="button" id="pubCaseGo">載入到工具</button></div>
+        <p class="hint" id="pubCaseDesc"></p>
         <p id="caseCurLine"></p>
         <div class="fields"><div class="field"><label for="caseName">案件名稱</label><input type="text" id="caseName" autocomplete="off" placeholder="例如：客訴 C-001 封口拉力偏低（請用代號）"></div></div>
         <div class="mp-opts"><label><input type="checkbox" id="caseChat"> 一起儲存 AI 對話紀錄（可能含敏感內容，預設不存）</label></div>
@@ -1090,6 +1095,13 @@
           <span class="hint" id="valHint"></span>
         </div>
         <div class="tiles" id="valTiles"></div>
+      </section>
+
+      <section class="card sheet" id="valPubCard">
+        <h3>公開範例對照（網路上的教科書／官方文件範例）</h3>
+        <p class="help">把網路上公開、有發表答案的範例放進本站計算，逐項比對。「發表值」是來源文件寫的數字，「本站」由本站計算引擎即時算出。儘量選醫材或臨床範例；不是醫材的照實標示原產業。差異若來自來源用近似公式或來源誤植，標示「差異已說明」並在明細寫出理由。可按「載入」把範例放進對應工具自己看一遍。</p>
+        <p class="hint" id="valPubSum"></p>
+        <div class="scroll-x"><table id="valPub"></table></div>
       </section>
 
       <section class="card sheet">
