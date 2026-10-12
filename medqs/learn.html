@@ -97,11 +97,22 @@ td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; 
 .stack { display: grid; gap: 20px; }
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 @media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.texbox { display: grid; gap: 0; margin: 4px 0 16px; }
+.tex-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 6px 18px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tex-row:last-child { border-bottom: 0; }
+@media (max-width: 760px) { .tex-row { grid-template-columns: minmax(0, 1fr); } }
+.tex { overflow-x: auto; overflow-y: hidden; padding: 2px 0; font-size: 17px; }
+.tex code { font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; }
+.tex-note { font-size: 14px; color: var(--muted); }
+.tex-note b { color: var(--ink); }
+.tex-live { background: var(--code-bg); border: 1px solid var(--line); border-left: 4px solid var(--act); padding: 12px 14px; margin-top: 10px; }
+.tex-live .tex { font-size: 16px; }
 .note { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; font-size: 14.5px; margin-top: 12px; }
 ul.tight { margin: 6px 0 0; padding-left: 1.2em; } ul.tight li { margin: 2px 0; }
 footer { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
 footer a, .card a { color: var(--act-text); }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 </head>
 <body>
 <div class="wrap">
@@ -178,8 +189,27 @@ footer a, .card a { color: var(--act-text); }
     <span class="qref">1-2</span>
     <h3>α 與 β 的關係式</h3>
     <p class="help">α 是事先自己設定的；β 不能直接設定，由 α、n、σ 與實際差異 Δ 一起決定。兩者會互相拉扯，但不是「α + β = 1」這種固定關係。</p>
-    <div class="formula" id="f12">β = Φ( z₁₋α − Δ·√n / σ )　（單尾）</div>
-    <p class="help" style="margin-top:0">Φ 是標準常態累積機率。下圖用 1-1 目前的 Δ 與 σ，畫出不同樣本數下 β 隨 α 的變化；圓點是 1-1 的設定。</p>
+    <h4 style="margin:8px 0 2px">α、β 與 n 的關係式</h4>
+    <p class="help" style="margin-bottom:6px">符號：δ = 要偵測的實際差異、σ = 標準差、n = 樣本數、Φ = 標準常態累積機率、z<sub>q</sub> = Φ 的 q 分位數（例如 z<sub>0.95</sub> = 1.645）。前四式假設 σ 已知（常態近似）。</p>
+    <div class="inner texbox">
+      <div class="tex-row"><div class="tex" data-tex="\beta = \Phi\!\left(z_{1-\alpha} - \dfrac{\delta\sqrt{n}}{\sigma}\right)"></div><div class="tex-note"><b>① 單尾的 β。</b>α 決定臨界值 z<sub>1−α</sub>；δ√n/σ 是兩條分布分開的距離（以標準誤計）。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="z_{1-\alpha} + z_{1-\beta} = \dfrac{\delta\sqrt{n}}{\sigma}"></div><div class="tex-note"><b>② 核心關係。</b>由 ① 移項。左邊是 α、β 要求的「距離」，右邊是 δ、σ、n 提供的距離。固定 n 時，α 調小（z<sub>1−α</sub> 變大），z<sub>1−β</sub> 只能變小，也就是 β 變大。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n = \left(\dfrac{(z_{1-\alpha}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>③ 所需樣本數（單尾）。</b>由 ② 解 n。α、β 越小或 δ/σ 越小，n 越大；δ 減半，n 變 4 倍。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n \approx \left(\dfrac{(z_{1-\alpha/2}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>④ 雙尾。</b>臨界值改 z<sub>1−α/2</sub>；忽略另一側極小的尾巴面積，所以是近似。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n_{g} = 2\left(\dfrac{(z_{1-\alpha/2}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>⑤ 兩組獨立比較（每組 n<sub>g</sub>）。</b>兩組平均相減，變異加倍，所以多乘 2。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n = \left(\dfrac{(t_{1-\alpha,\,n-1}+t_{1-\beta,\,n-1})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>⑥ σ 未知（用樣本估計）。</b>改用 t 分位數，n 在兩邊都出現，要迭代（NIST 範例：9 → 11）。工作台用非中心 t 精確計算。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="1-\alpha = \sum_{k=0}^{Ac}\binom{n}{k}p_{\mathrm{AQL}}^{\,k}(1-p_{\mathrm{AQL}})^{n-k}"></div><div class="tex-note"><b>⑦ AQL 計數抽樣：生產者風險 α。</b>批的不良率剛好等於 AQL 時，被允收的機率是 1 − α。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="\beta = \sum_{k=0}^{Ac}\binom{n}{k}p_{\mathrm{RQL}}^{\,k}(1-p_{\mathrm{RQL}})^{n-k}"></div><div class="tex-note"><b>⑦′ 消費者風險 β。</b>批的不良率在 RQL 時仍被允收的機率。α、β 都由 n 與 Ac 決定；要兩者都小，只能加大 n。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n = \dfrac{\ln(1-C)}{\ln R},\qquad C = 1-\beta,\; R = 1-p_{\mathrm{RQL}}"></div><div class="tex-note"><b>⑧ 成功試驗法（Ac = 0）。</b>⑦ 在 Ac = 0 的特例：0.95<sup>n</sup> ≤ 0.05，得 95/95 需 n = 59。</div></div>
+    </div>
+    <div class="tex-live">
+      <div class="ctl" style="max-width:260px;margin-bottom:6px"><label for="i_pw">目標檢定力 1 − β（算所需 n 用）</label><select id="i_pw"><option value="0.8">80%</option><option value="0.9" selected>90%</option><option value="0.95">95%</option></select></div>
+      <div class="hint" style="font-size:13.5px;color:var(--muted)">代入 1-1 目前的設定：</div>
+      <div class="tex" id="texLive1"></div>
+      <div class="tex" id="texLive2"></div>
+      <div class="tex-note" id="texLiveNote"></div>
+    </div>
+    <p class="help" style="margin-top:14px">下圖用 1-1 目前的 δ 與 σ，畫出不同樣本數下 β 隨 α 的變化；圓點是 1-1 的設定。</p>
     <div class="inner">
       <div class="legend" id="lg12"></div>
       <svg class="plot" id="p2" viewBox="0 0 680 320" role="img" aria-label="β 對 α 的關係曲線，不同樣本數"></svg>
@@ -323,7 +353,7 @@ footer a, .card a { color: var(--act-text); }
     s += `<text x="${F.sx(S.a) + 9}" y="${F.sy(b0) - 8}" font-size="12.5" fill="var(--ink)">α ${S.a}，β ${pct(b0)}</text>`;
     $("p2").innerHTML = s;
     $("lg12").innerHTML = ns.map((n, i) => `<span><i class="ln${dashes[i] ? " dash" : ""}" style="border-color:${cols[i]}"></i>n = ${n}${i === 1 ? "（目前）" : ""}</span>`).join("");
-    $("f12").textContent = S.side === "two" ? "β = Φ( z₁₋α/₂ − Δ√n/σ ) − Φ( −z₁₋α/₂ − Δ√n/σ )　（雙尾）" : "β = Φ( z₁₋α − Δ√n/σ )　（單尾）";
+    texLive();
     const as = [0.01, 0.025, 0.05, 0.10];
     $("t12").innerHTML = `<tr><th>α</th>${ns.map(n => `<th>n = ${n} 的 β</th><th>檢定力</th>`).join("")}</tr>` +
       as.map(a => `<tr><td class="num">${a}</td>${ns.map(n => { const b = betaOf(S.d / (S.s / Math.sqrt(n)), a, S.side); return `<td class="num">${pct(b)}</td><td class="num">${pct(1 - b)}</td>`; }).join("")}</tr>`).join("");
@@ -366,6 +396,21 @@ footer a, .card a { color: var(--act-text); }
   $("i_side").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; S.side = b.dataset.v; $("i_side").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); all(); });
   ["q_n", "q_ac", "q_aql", "q_rql"].forEach(id => $(id).addEventListener("input", draw3b));
   // 章節導覽：捲動時標示目前章節（目前只有第 1 節）
+
+  // ---- LaTeX ----
+  function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
+  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); }
+  function texLive() {
+    const two = S.side === "two", qa = two ? 1 - S.a / 2 : 1 - S.a, za = PhiInv(qa), sh = S.sh, zb = sh - za, beta = betaOf(sh, S.a, S.side);
+    const pw = +$("i_pw").value, zp = PhiInv(pw), zaLab = two ? "z_{1-\\alpha/2}" : "z_{1-\\alpha}", f3 = v => fx(v, 3);
+    tex($("texLive1"), `${zaLab}=z_{${fx(qa, 3).replace(/0+$/, "")}}=${f3(za)},\\quad \\dfrac{\\delta\\sqrt{n}}{\\sigma}=\\dfrac{${fx(S.d, 2)}\\sqrt{${S.n}}}{${fx(S.s, 1)}}=${f3(sh)},\\quad z_{1-\\beta}=${f3(sh)}-${f3(za)}=${f3(zb)}\\;\\Rightarrow\\;\\beta${two ? "\\approx" : "="}\\Phi(${f3(-zb)})=${fx(beta * 100, 1)}\\%`);
+    if (!(S.d > 0)) { $("texLive2").innerHTML = ""; $("texLiveNote").textContent = "δ = 0 時沒有「要偵測的差異」，無法計算所需樣本數。"; return; }
+    const nReq = Math.pow((za + zp) * S.s / S.d, 2);
+    tex($("texLive2"), `n=\\left(\\dfrac{(${f3(za)}+${f3(zp)})\\times ${fx(S.s, 1)}}{${fx(S.d, 2)}}\\right)^{2}=${fx(nReq, 2)}\\;\\Rightarrow\\;n=${Math.ceil(nReq)}`);
+    $("texLiveNote").textContent = `目標檢定力 ${pct(pw, 0)}（z = ${f3(zp)}）需 n = ${Math.ceil(nReq)}（常態近似，σ 已知）。σ 用樣本估計時請用工作台「樣本數規劃」的 t 分布精確計算，n 會略大。${two ? "雙尾的 β 忽略另一側尾巴，是近似值。" : ""}`;
+  }
+  $("i_pw").addEventListener("change", texLive);
+  (function loadKatex() { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"; sc.onload = texAll; sc.onerror = texAll; document.head.appendChild(sc); })();
   all(); draw3b();
   let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { all(); draw3b(); }, 150); });
   window.__learn = { Phi, PhiInv, betaOf, binomCdf };
