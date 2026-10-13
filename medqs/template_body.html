@@ -1857,7 +1857,7 @@
       : ids.length ? `<div class="fb-sug home-more"><span class="hint">可以繼續追問；需要找原因的話，</span><button type="button" class="btn small" data-homefb="1">請 AI 列出可能原因</button></div>`
       : `<div class="fb-sug home-more"><span class="hint">還沒有原因建議：回答上面的問題繼續對話，或</span><button type="button" class="btn small" data-homefb="1">請 AI 先列出可能原因</button></div>`;
     if (!ids.length) return more;
-    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時，每一次回答的原因都會列出，由你勾選帶入）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
+    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時，每一次回答的原因都會列出，由你勾選帶入）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}${f.ref ? `<span class="hint">（出處：${esc(f.ref)}）</span>` : ""}</li>`).join("")}</ul><p class="hint" style="font-size:12.5px">標 * 為 AI 推論；有「出處」的是依外部資料庫紀錄提出，仍需驗證是否適用本案。</p></details>` : "";
     return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>` + more;
   }
   function addMsg(role, text, extra) {
@@ -2507,17 +2507,25 @@
     if (gctx) { display = guideSel.q + (q ? "\n" + q : ""); q = gctx + "\n【使用者補充的實際狀況】\n" + (q || "（沒有補充）"); }
     if (!q) q = "請依附件判斷我遇到的問題，並建議該用哪個工具。";
     let extBlock = "";
-    if ($("extChk").checked && !$("extWrap").hidden && mcpNs) {
-      $("homeQBtn").disabled = true; $("homeQHint").textContent = "正在檢索外部案例（NyquistAI）…";
-      try {
-        homeExt = await extSearch(q, c ? c.parts.join("\n") : "");
-        extBlock = extText(homeExt) + "\n\n" + EXT_RULE;
-        $("homeQHint").textContent = homeExt.empty ? "NyquistAI 查無相關的外部案例，AI 會照常回答。" : "已檢索外部案例，AI 回答時會一起參考（結果見下方）。";
-      } catch (e) {
-        homeExt = null;
-        const code = e && e.code;
-        $("homeQHint").textContent = NQ_ERR[code] || (code === "invalid_json" ? "無法產生查詢關鍵字，這次沒有參考外部案例。" : "檢索外部案例失敗，這次沒有參考外部案例。");
-        if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extWrap").hidden = true; }
+    const useNq = $("extChk").checked && !$("extWrap").hidden && mcpNs, xsIds = typeof xsSelected === "function" ? xsSelected() : [];
+    if (useNq || xsIds.length) {
+      $("homeQBtn").disabled = true; $("homeQHint").textContent = "正在產生查詢關鍵字…";
+      let plan = null;
+      try { plan = await extPlan(q, c ? c.parts.join("\n") : ""); } catch (e) { plan = null; $("homeQHint").textContent = "無法產生查詢關鍵字，這次沒有參考外部資料。"; }
+      if (plan) {
+        let nq = null, nqMsg = "";
+        if (useNq) {
+          $("homeQHint").textContent = "正在檢索外部案例（NyquistAI）…";
+          try { nq = await extSearch(q, "", plan); }
+          catch (e) { const code = e && e.code; nqMsg = NQ_ERR[code] || "NyquistAI 檢索失敗。"; if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extWrap").hidden = true; } }
+        }
+        let more = [];
+        if (xsIds.length) { $("homeQHint").textContent = "正在檢索其他外部資料庫…"; more = await xsSearch(plan, xsIds); }
+        homeExt = nq ? Object.assign(nq, { nq: true, more }) : { queries: plan.queries, codes: plan.codes, recalls: [], recallTotal: 0, rootCauses: [], maude: null, empty: true, nq: false, more, at: new Date().toISOString().slice(0, 10) };
+        if (!nq && useNq) homeExt.nq = false;
+        extBlock = extText(homeExt) + "\n\n" + (homeExt.nq ? EXT_RULE + "\n" : "") + XS_RULE;
+        const got = more.filter(m => m.ok).map(m => `${m.name} ${m.items.length} 筆`), fail = more.filter(m => !m.ok).map(m => m.name);
+        $("homeQHint").textContent = [nqMsg, nq ? (nq.empty ? "NyquistAI 查無相關案例。" : "NyquistAI 已檢索。") : "", got.length ? "已檢索：" + got.join("、") + "。" : "", fail.length ? "未取得：" + fail.join("、") + "（原因見下方結果）。" : ""].filter(Boolean).join(" ") + " AI 回答時會一起參考。";
       }
       $("homeQBtn").disabled = false; renderExtBoxes();
     }

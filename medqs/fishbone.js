@@ -491,6 +491,11 @@
       const o = JSON.parse(text.slice(i + 11, j));
       const factors = (Array.isArray(o.factors) ? o.factors : []).filter(f => f && typeof f.text === "string" && f.text.trim()).slice(0, 40)
         .map(f => ({ cat: String(f.cat || ""), text: f.text.trim().slice(0, 160), subs: Array.isArray(f.subs) ? f.subs.filter(x => typeof x === "string").slice(0, 8) : [], src: f.src === "ext" ? "ext" : "", ref: typeof f.ref === "string" ? f.ref : "" }));
+      // 出處檢查：ref 必須是檢索結果中的編號；沒有出處的原因視為 AI 推論，結尾加 *
+      factors.forEach(f => {
+        if (f.ref && !(typeof extRefOK === "function" && extRefOK(f.ref))) { f.ref = ""; f.src = ""; }
+        if (!f.ref) { f.src = ""; if (!/[*＊]\s*$/.test(f.text)) f.text += "*"; }
+      });
       const problem = typeof o.problem === "string" && !/選填/.test(o.problem) ? o.problem.trim().slice(0, 200) : "";
       return { clean, sug: factors.length || problem ? { problem, factors } : null };
     } catch (_) { return { clean, sug: null }; }
@@ -502,9 +507,9 @@
     if (!n) return `<div class="fb-sug"><button class="btn small primary" type="button" data-sug="${data}" data-mode="cand">查看建議的問題點</button></div>`;
     // 列出每個原因（依分類），可勾選後再加入；已在魚骨圖的不勾
     const groups = []; sug.factors.forEach((f, i) => { const c = f.cat || "未分類"; let g = groups.find(x => x[0] === c); if (!g) groups.push(g = [c, []]); g[1].push([f, i]); });
-    const rows = groups.map(([c, fs]) => `<div class="sug-grp"><div class="sug-cat">${esc(c)}</div>${fs.map(([f, i]) => { const dup = fbHasText(f.text); return `<label class="sug-item${dup ? " dup" : ""}"><input type="checkbox" data-k="${i}"${dup ? " disabled" : " checked"}><span class="sug-text">${esc(f.text)}${f.subs && f.subs.length ? `<small>子因子：${esc(f.subs.join("、"))}</small>` : ""}${dup ? `<small class="sug-dup">已在魚骨圖</small>` : ""}</span><button type="button" class="linkbtn sug-ask" data-askf="${esc(f.text)}">問 AI</button></label>`; }).join("")}</div>`).join("");
+    const rows = groups.map(([c, fs]) => `<div class="sug-grp"><div class="sug-cat">${esc(c)}</div>${fs.map(([f, i]) => { const dup = fbHasText(f.text); return `<label class="sug-item${dup ? " dup" : ""}"><input type="checkbox" data-k="${i}"${dup ? " disabled" : " checked"}><span class="sug-text">${esc(f.text)}${f.ref ? `<small>出處：${esc(f.ref)}</small>` : ""}${f.subs && f.subs.length ? `<small>子因子：${esc(f.subs.join("、"))}</small>` : ""}${dup ? `<small class="sug-dup">已在魚骨圖</small>` : ""}</span><button type="button" class="linkbtn sug-ask" data-askf="${esc(f.text)}">問 AI</button></label>`; }).join("")}</div>`).join("");
     if (sug.factors.every(f => fbHasText(f.text))) return `<div class="fb-sug fb-sug-list"><p class="hint">AI 建議的 ${n} 個原因都已經在魚骨圖中（候選在 STEP 2「待決定」），不用再加入。</p>${rows}</div>`;
-    return `<div class="fb-sug fb-sug-list"><p class="hint">AI 建議 ${n} 個原因（推論，請確認是否適用）。取消勾選不適用的，再按下方按鈕：</p>${rows}
+    return `<div class="fb-sug fb-sug-list"><p class="hint">AI 建議 ${n} 個原因（標 * 為 AI 推論；有「出處」的是依外部紀錄提出，仍需確認是否適用）。取消勾選不適用的，再按下方按鈕：</p>${rows}
       <div class="run-row"><button class="btn small primary" type="button" data-sug="${data}" data-mode="cand">勾選的加入候選</button><button class="btn small" type="button" data-sug="${data}" data-mode="use">勾選的直接採用</button><button class="linkbtn" type="button" data-sugall="1">全選／全不選</button></div></div>`;
   }
   function fbTakeSug(sug, adopt) {
@@ -531,7 +536,7 @@
     const seen = {}; rounds.forEach(r => r.sug.factors.forEach(f => { const k = f.text.replace(/[*＊\s]/g, ""); if (!(k in seen)) seen[k] = r.n; f._dup = seen[k] !== r.n ? seen[k] : 0; }));
     box.innerHTML = `<p>定義問題的 AI 共回答了 ${rounds.length} 次原因建議，請勾選要帶入魚骨圖的原因（帶入後列為「待決定」，之後還能採用或排除）：</p>` +
       rounds.map((r, gi) => `<div class="fbr-group" data-g="${gi}"><div class="fbr-head"><b>第 ${r.n} 次回答</b>（${r.sug.factors.length} 個）<button type="button" class="linkbtn" data-fbr-all="${gi}">全選／全不選</button></div>` +
-        r.sug.factors.map((f, fi) => `<label class="fbr-item"><input type="checkbox" data-g="${gi}" data-k="${fi}" checked> <span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}${f._dup ? `<span class="hint">（與第 ${f._dup} 次相同）</span>` : ""}</label>`).join("") + `</div>`).join("") +
+        r.sug.factors.map((f, fi) => `<label class="fbr-item"><input type="checkbox" data-g="${gi}" data-k="${fi}" checked> <span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}${f.ref ? `<span class="hint">（出處：${esc(f.ref)}）</span>` : ""}${f._dup ? `<span class="hint">（與第 ${f._dup} 次相同）</span>` : ""}</label>`).join("") + `</div>`).join("") +
       `<div class="run-row"><button type="button" class="btn small primary" data-fbr="go">帶入勾選的原因</button><button type="button" class="btn small" data-fbr="none">只帶問題點與對話</button></div>`;
     box.hidden = false;
     box.onclick = e => {
@@ -655,7 +660,7 @@
       if (part("excl").length) seg.push("排除：" + part("excl").map(f => f.text + (f.reason ? `（理由：${f.reason}）` : "")).join("、"));
       L.push(`- ${name}：${seg.length ? seg.join("；") : "（無）"}`);
     });
-    if (fb.ext) L.push("", extText(fb.ext));
+    if (fb.ext) L.push("", extText(fb.ext), XS_RULE);
     return L.join("\n");
   }
   // ---- export / import ----

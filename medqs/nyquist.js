@@ -26,13 +26,17 @@
     const p = res && res.payload;
     return p && p.data ? p.data : p;
   }
-  async function extSearch(question, attText) {
+  async function extPlan(question, attText) {
     const plan = await sample.json(
       "請依下列醫療器材問題，產生在美國 FDA 召回與 MAUDE 不良事件資料庫（英文）查詢同類產品案例用的關鍵字。只回 JSON，格式：" +
       '{"queries":["2 到 3 組英文關鍵字，每組 2～4 個字，例如 luer crack"],"product_codes":["確定知道的 3 碼 FDA 產品代碼，不確定就留空陣列"]}' +
       "\n\n問題：" + question + (attText ? "\n\n附件摘錄：" + attText.slice(0, 1500) : ""), { modelTier: "quick" });
     const queries = (Array.isArray(plan && plan.queries) ? plan.queries : []).map(q => String(q).replace(/[^\w\s\-]/g, " ").trim()).filter(Boolean).slice(0, 3);
     const codes = (Array.isArray(plan && plan.product_codes) ? plan.product_codes : []).map(c => String(c).toUpperCase().trim()).filter(c => /^[A-Z]{3}$/.test(c)).slice(0, 2);
+    return { queries, codes };
+  }
+  async function extSearch(question, attText, P) {
+    const { queries, codes } = P || await extPlan(question, attText);
     if (!queries.length && !codes.length) return { queries, codes, recalls: [], recallTotal: 0, rootCauses: [], maude: null, empty: true };
     const recalls = new Map(); let recallTotal = 0, rootAgg = new Map(), maude = null;
     const runs = queries.map(q => ({ query: q })).concat(codes.map(c => ({ query: "", product_code: c })));
@@ -51,6 +55,11 @@
   }
   function extText(ext) {
     if (!ext) return "";
+    const more = typeof xsText === "function" ? xsText(ext.more) : "";
+    if (ext.nq === false) return more;
+    return [extTextNq(ext), more].filter(Boolean).join("\n\n");
+  }
+  function extTextNq(ext) {
     if (ext.empty) return `【檢索外部案例（NyquistAI，美國 FDA 公開資料）】查詢關鍵字：${ext.queries.join("、") || "（無）"}；查無相關召回或不良事件資料。`;
     const L = [`【檢索外部案例（NyquistAI，美國 FDA 公開資料，查詢日 ${ext.at}）】`, `查詢關鍵字：${ext.queries.join("、")}${ext.codes.length ? "；產品代碼：" + ext.codes.join("、") : ""}`];
     if (ext.recalls.length) {
@@ -66,6 +75,11 @@
   }
   function extTableHtml(ext) {
     if (!ext) return "";
+    const more = typeof xsHtml === "function" ? xsHtml(ext.more) : "";
+    if (ext.nq === false) return more;
+    return extTableNq(ext) + (more ? `<h3 style="margin-top:14px">其他外部資料庫</h3>` + more : "");
+  }
+  function extTableNq(ext) {
     if (ext.empty) return `<p class="hint">查詢關鍵字：${esc(ext.queries.join("、") || "（無）")}。NyquistAI 查無相關的召回或不良事件資料。</p>`;
     let h = `<p class="hint">資料來源：NyquistAI（美國 FDA 召回與 MAUDE 公開資料），查詢日 ${esc(ext.at)}。查詢關鍵字：${esc(ext.queries.join("、"))}${ext.codes.length ? "；產品代碼：" + esc(ext.codes.join("、")) : ""}。只代表在美國有通報或召回的案例，不能用來推估不良率。</p>`;
     if (ext.recalls.length) {
@@ -79,11 +93,17 @@
     } else h += `<p class="hint">MAUDE：查無相關資料。</p>`;
     return h;
   }
+  function extSumText(e, lab) {
+    const parts = [];
+    if (e.nq !== false) parts.push(e.empty ? "NyquistAI 查無" : `NyquistAI 召回 ${e.recalls.length} 筆${e.maude ? `、不良事件 ${e.maude.total} 筆` : ""}`);
+    (e.more || []).forEach(m => parts.push(m.ok ? `${m.name} ${m.items.length} 筆` : `${m.name} 未取得`));
+    return `${lab}（${parts.join("；")}）`;
+  }
   function renderExtBoxes() {
     $("extOut").hidden = !homeExt; $("extOutBody").innerHTML = extTableHtml(homeExt);
-    $("extOutSum").textContent = homeExt ? (homeExt.empty ? "檢索外部案例：查無相關資料" : `檢索外部案例結果（召回 ${homeExt.recalls.length} 筆${homeExt.maude ? `、不良事件 ${homeExt.maude.total} 筆` : ""}）`) : "";
+    $("extOutSum").textContent = homeExt ? extSumText(homeExt, "檢索外部案例") : "";
     const fe = fb.ext;
     $("fbExtBox").hidden = !fe; $("fbExtBody").innerHTML = extTableHtml(fe);
-    $("fbExtSum").textContent = fe ? (fe.empty ? "其他廠參考案例：查無相關資料" : `其他廠參考案例（檢索外部案例：召回 ${fe.recalls.length} 筆${fe.maude ? `、不良事件 ${fe.maude.total} 筆` : ""}）`) : "";
+    $("fbExtSum").textContent = fe ? extSumText(fe, "其他廠參考案例") : "";
   }
   const EXT_RULE = "【檢索外部案例的回答方式】在建議工具之外，增加一段「其他廠經驗」：只根據上方 NyquistAI 資料整理同類產品常見的召回原因、根本原因分類與器材問題，每項附召回編號或件數；資料很少、不相關或查無資料時，直接寫「查無相關的外部案例」，不要推測或編造。適合當作魚骨圖候選原因的，放進 fishbone 區塊，該項加上 \"src\":\"ext\" 與 \"ref\":\"召回編號或 MAUDE\"。";
