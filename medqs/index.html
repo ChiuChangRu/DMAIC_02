@@ -11051,7 +11051,7 @@ else root.runValidation = runValidation;
   // =====================================================================
   // TOST 基礎入門：小視窗（圖＋重點），可開啟「統計觀念圖解」第 2 節（新分頁）
   // =====================================================================
-  const LEARN_URL = /github\.io$/.test(location.hostname) ? "learn.html#s2" : "https://claude.ai/code/artifact/35d42865-eb89-4b5d-975e-9f0187a090ec#s2";
+  const LEARN_URL = /github\.io$/.test(location.hostname) ? "learn.html#s2" : "https://chiuchangru.github.io/DMAIC_02/medqs/learn.html#s2";
   try { $("learnLink").href = LEARN_URL.replace(/#s2$/, ""); } catch (_) {}
   function tiFigure() {
     const W = 520, L = 30, R = 500, sx = v => L + (v + 2.2) / 4.4 * (R - L), rows = [[0.1, -0.35, 0.55, "① 同等"], [0.45, 0.25, 0.65, "② 同等（但有顯著差）"], [1.4, 0.9, 1.9, "③ 不同等"], [0.2, -1.3, 1.7, "④ 無法判定"]];
