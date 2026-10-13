@@ -789,6 +789,10 @@ body.novice .nb-line { display: block; }
 #valPub td { vertical-align: top; }
 #valPub tr.pub-det td { border-top: 0; padding-top: 0; }
 #valPub details table { margin-top: 6px; }
+.fbr-group { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--surface); }
+.fbr-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+.fbr-item { display: flex; gap: 6px; align-items: flex-start; padding: 3px 0; font-size: 14.5px; }
+.fbr-item input { margin-top: 4px; accent-color: var(--act); flex: none; }
 .ss2hyp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
 </style>
 
@@ -5426,7 +5430,7 @@ else root.runValidation = runValidation;
       : ids.length ? `<div class="fb-sug home-more"><span class="hint">可以繼續追問；需要找原因的話，</span><button type="button" class="btn small" data-homefb="1">請 AI 列出可能原因</button></div>`
       : `<div class="fb-sug home-more"><span class="hint">還沒有原因建議：回答上面的問題繼續對話，或</span><button type="button" class="btn small" data-homefb="1">請 AI 先列出可能原因</button></div>`;
     if (!ids.length) return more;
-    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時會列為候選）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
+    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時，每一次回答的原因都會列出，由你勾選帶入）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
     return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>` + more;
   }
   function addMsg(role, text, extra) {
@@ -6525,7 +6529,40 @@ else root.runValidation = runValidation;
     const recent = homeLog.slice(-20);
     return "【使用者先前在定義問題與 AI 的對話（最近 " + Math.ceil(recent.length / 2) + " 輪）】\n" + recent.map(m => (m.role === "user" ? "使用者：" : "AI：") + fbSplit(m.text, false).clean.trim()).join("\n");
   }
+  // 定義問題每一次 AI 回答的原因（依回答順序）
+  function homeRounds(homeLog) {
+    let n = 0; const out = [];
+    homeLog.forEach(m => { if (m.role !== "ai" || m.carried) return; n++; const sg = fbSplit(m.text || "", true).sug; if (sg && sg.factors.length) out.push({ n, sug: sg }); });
+    return out;
+  }
+  // 兩次以上回答都有原因時，全部列出讓使用者勾選
+  function fbPickRounds(rounds, done) {
+    const box = $("fbBanner"); box.classList.remove("danger");
+    const seen = {}; rounds.forEach(r => r.sug.factors.forEach(f => { const k = f.text.replace(/[*＊\s]/g, ""); if (!(k in seen)) seen[k] = r.n; f._dup = seen[k] !== r.n ? seen[k] : 0; }));
+    box.innerHTML = `<p>定義問題的 AI 共回答了 ${rounds.length} 次原因建議，請勾選要帶入魚骨圖的原因（帶入後列為「待決定」，之後還能採用或排除）：</p>` +
+      rounds.map((r, gi) => `<div class="fbr-group" data-g="${gi}"><div class="fbr-head"><b>第 ${r.n} 次回答</b>（${r.sug.factors.length} 個）<button type="button" class="linkbtn" data-fbr-all="${gi}">全選／全不選</button></div>` +
+        r.sug.factors.map((f, fi) => `<label class="fbr-item"><input type="checkbox" data-g="${gi}" data-k="${fi}" checked> <span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}${f._dup ? `<span class="hint">（與第 ${f._dup} 次相同）</span>` : ""}</label>`).join("") + `</div>`).join("") +
+      `<div class="run-row"><button type="button" class="btn small primary" data-fbr="go">帶入勾選的原因</button><button type="button" class="btn small" data-fbr="none">只帶問題點與對話</button></div>`;
+    box.hidden = false;
+    box.onclick = e => {
+      const ga = e.target.closest("[data-fbr-all]");
+      if (ga) { const cbs = [...box.querySelectorAll(`input[data-g="${ga.dataset.fbrAll}"]`)]; const on = cbs.some(c => !c.checked); cbs.forEach(c => { c.checked = on; }); return; }
+      const b = e.target.closest("[data-fbr]"); if (!b) return;
+      const picked = [];
+      if (b.dataset.fbr === "go") box.querySelectorAll("input[data-k]").forEach(c => { if (c.checked) picked.push(rounds[+c.dataset.g].sug.factors[+c.dataset.k]); });
+      box.hidden = true; box.onclick = null;
+      const prob = [...rounds].reverse().map(r => r.sug.problem).find(Boolean) || "";
+      done({ problem: prob, factors: picked });
+    };
+    box.scrollIntoView({ block: "nearest" });
+  }
   function carryToFishbone(sug, homeLog) {
+    const rounds = homeRounds(homeLog);
+    if (rounds.length >= 2) { fbPickRounds(rounds, picked => carryToFishboneGo(Object.assign({}, picked, { problem: picked.problem || sug.problem }), homeLog)); return; }
+    if (rounds.length === 1 && !(sug.factors && sug.factors.length)) sug = Object.assign({}, rounds[0].sug, { problem: sug.problem || rounds[0].sug.problem });
+    carryToFishboneGo(sug, homeLog);
+  }
+  function carryToFishboneGo(sug, homeLog) {
     const lastQ = ([...homeLog].reverse().find(m => m.role === "user") || {}).text || "";
     const doCarry = keepChat => {
       if (!keepChat) resetChat();

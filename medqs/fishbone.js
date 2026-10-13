@@ -518,7 +518,40 @@
     const recent = homeLog.slice(-20);
     return "【使用者先前在定義問題與 AI 的對話（最近 " + Math.ceil(recent.length / 2) + " 輪）】\n" + recent.map(m => (m.role === "user" ? "使用者：" : "AI：") + fbSplit(m.text, false).clean.trim()).join("\n");
   }
+  // 定義問題每一次 AI 回答的原因（依回答順序）
+  function homeRounds(homeLog) {
+    let n = 0; const out = [];
+    homeLog.forEach(m => { if (m.role !== "ai" || m.carried) return; n++; const sg = fbSplit(m.text || "", true).sug; if (sg && sg.factors.length) out.push({ n, sug: sg }); });
+    return out;
+  }
+  // 兩次以上回答都有原因時，全部列出讓使用者勾選
+  function fbPickRounds(rounds, done) {
+    const box = $("fbBanner"); box.classList.remove("danger");
+    const seen = {}; rounds.forEach(r => r.sug.factors.forEach(f => { const k = f.text.replace(/[*＊\s]/g, ""); if (!(k in seen)) seen[k] = r.n; f._dup = seen[k] !== r.n ? seen[k] : 0; }));
+    box.innerHTML = `<p>定義問題的 AI 共回答了 ${rounds.length} 次原因建議，請勾選要帶入魚骨圖的原因（帶入後列為「待決定」，之後還能採用或排除）：</p>` +
+      rounds.map((r, gi) => `<div class="fbr-group" data-g="${gi}"><div class="fbr-head"><b>第 ${r.n} 次回答</b>（${r.sug.factors.length} 個）<button type="button" class="linkbtn" data-fbr-all="${gi}">全選／全不選</button></div>` +
+        r.sug.factors.map((f, fi) => `<label class="fbr-item"><input type="checkbox" data-g="${gi}" data-k="${fi}" checked> <span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}${f._dup ? `<span class="hint">（與第 ${f._dup} 次相同）</span>` : ""}</label>`).join("") + `</div>`).join("") +
+      `<div class="run-row"><button type="button" class="btn small primary" data-fbr="go">帶入勾選的原因</button><button type="button" class="btn small" data-fbr="none">只帶問題點與對話</button></div>`;
+    box.hidden = false;
+    box.onclick = e => {
+      const ga = e.target.closest("[data-fbr-all]");
+      if (ga) { const cbs = [...box.querySelectorAll(`input[data-g="${ga.dataset.fbrAll}"]`)]; const on = cbs.some(c => !c.checked); cbs.forEach(c => { c.checked = on; }); return; }
+      const b = e.target.closest("[data-fbr]"); if (!b) return;
+      const picked = [];
+      if (b.dataset.fbr === "go") box.querySelectorAll("input[data-k]").forEach(c => { if (c.checked) picked.push(rounds[+c.dataset.g].sug.factors[+c.dataset.k]); });
+      box.hidden = true; box.onclick = null;
+      const prob = [...rounds].reverse().map(r => r.sug.problem).find(Boolean) || "";
+      done({ problem: prob, factors: picked });
+    };
+    box.scrollIntoView({ block: "nearest" });
+  }
   function carryToFishbone(sug, homeLog) {
+    const rounds = homeRounds(homeLog);
+    if (rounds.length >= 2) { fbPickRounds(rounds, picked => carryToFishboneGo(Object.assign({}, picked, { problem: picked.problem || sug.problem }), homeLog)); return; }
+    if (rounds.length === 1 && !(sug.factors && sug.factors.length)) sug = Object.assign({}, rounds[0].sug, { problem: sug.problem || rounds[0].sug.problem });
+    carryToFishboneGo(sug, homeLog);
+  }
+  function carryToFishboneGo(sug, homeLog) {
     const lastQ = ([...homeLog].reverse().find(m => m.role === "user") || {}).text || "";
     const doCarry = keepChat => {
       if (!keepChat) resetChat();

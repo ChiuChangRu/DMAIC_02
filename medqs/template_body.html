@@ -1857,7 +1857,7 @@
       : ids.length ? `<div class="fb-sug home-more"><span class="hint">可以繼續追問；需要找原因的話，</span><button type="button" class="btn small" data-homefb="1">請 AI 列出可能原因</button></div>`
       : `<div class="fb-sug home-more"><span class="hint">還沒有原因建議：回答上面的問題繼續對話，或</span><button type="button" class="btn small" data-homefb="1">請 AI 先列出可能原因</button></div>`;
     if (!ids.length) return more;
-    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時會列為候選）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
+    const peek = sug && sug.factors.length ? `<details class="sug-peek" open><summary>AI 建議的 ${sug.factors.length} 個原因（前往魚骨圖時，每一次回答的原因都會列出，由你勾選帶入）</summary><ul>${sug.factors.map(f => `<li><span class="sug-cat">${esc(f.cat || "未分類")}</span>${esc(f.text)}</li>`).join("")}</ul></details>` : "";
     return peek + `<div class="fb-sug"><span class="hint">前往建議的工具（會自動帶入你的問題，可修改）：</span>${ids.map((id, i) => `<button type="button" class="btn small${i ? "" : " primary"}" data-goto="${id}">${i + 1}. ${esc((TOOLS.find(t => t.id === id) || {}).name || id)}</button>`).join("")}</div>` + more;
   }
   function addMsg(role, text, extra) {
