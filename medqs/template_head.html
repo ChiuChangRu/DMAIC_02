@@ -66,6 +66,9 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.12; margin: 4px 0 8px; text-wrap: balance; color: #F5F1EA; }
 .lede { color: var(--band-muted); max-width: 64ch; margin: 0; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+header a.btn { text-decoration: none; display: inline-block; }
+header a.btn.ghost, header a.btn.ghost:visited { color: #F5F1EA; background: transparent; border-color: rgba(245,241,234,.55); }
+header a.btn.ghost:hover { background: rgba(245,241,234,.12); }
 header .btn { background: #F5F1EA; color: #1F2933; border-color: #F5F1EA; }
 header .btn:hover { background: #FFFFFF; }
 header .btn.ghost { background: transparent; color: #F5F1EA; border-color: rgba(245,241,234,.4); }
