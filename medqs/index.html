@@ -6330,14 +6330,15 @@ else root.runValidation = runValidation;
     return ["【網站工具與模式】"].concat(T.map(t => `- ${t.name}（${t.status === "ready" ? "可使用" : "建置中"}）：${t.desc}${t.modes ? "；模式：" + t.modes.join("、") : ""}`)).join("\n");
   }
   let fbView = "diagram";
-  try { fbView = localStorage.getItem("mdqs.fbview") || (window.matchMedia("(max-width: 600px)").matches ? "list" : "diagram"); } catch (_) {}
+  // 每次開啟一律先顯示魚骨圖；切到清單只在這次使用有效
+  try { localStorage.removeItem("mdqs.fbview"); } catch (_) {}
   function fbListView() {
     const mark = f => (f.key ? "★ " : "") + (f.verify ? "◇ " : "");
     return `<div class="fb-lv"><button type="button" class="fb-lv-head" data-head="1"><span class="hint">問題點</span>${esc(fb.problem.trim() || "（尚未填寫問題點）")}</button>` +
       fbCats().map(c => { const fs = fb.factors.filter(f => f.cat[fb.set] === c.id && f.st === "use");
         return `<section class="fb-lv-cat"><button type="button" class="fb-lv-catname" data-cat="${c.id}">${esc(c.name)} <span>＋</span></button>${fs.length ? `<ul>${fs.map(f => `<li><button type="button" class="fb-lv-f${f.key ? " key" : ""}" data-f="${f.id}">${mark(f)}${esc(f.text)}</button>${f.subs.some(x => x.st === "use") ? `<ul>${f.subs.filter(x => x.st === "use").map(x => `<li><button type="button" class="fb-lv-s" data-f="${f.id}" data-s="${x.id}">${esc(x.text)}</button></li>`).join("")}</ul>` : ""}</li>`).join("")}</ul>` : `<p class="hint">（尚無採用的原因，點分類名稱新增）</p>`}</section>`; }).join("") + "</div>";
   }
-  chipGroup("fbView", v => { fbView = v; try { localStorage.setItem("mdqs.fbview", v); } catch (_) {} popClose(); $("fbZoom").hidden = v === "list"; fbRenderOut(); });
+  chipGroup("fbView", v => { fbView = v; popClose(); $("fbZoom").hidden = v === "list"; fbRenderOut(); });
   setChip("fbView", fbView); $("fbZoom").hidden = fbView === "list";
   // ---- edit directly on the diagram ----
   let pop = null;
