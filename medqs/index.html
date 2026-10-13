@@ -805,8 +805,10 @@ body.novice .nb-line { display: block; }
 .xs-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 8px 0; background: var(--surface); }
 .xs-head { display: grid; gap: 2px; margin-bottom: 6px; }
 .xs-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2px 14px; }
+.xs-nq { grid-column: 1 / -1; }
 .xs-pv { display: grid; gap: 4px; margin-top: 8px; max-width: 420px; }
 .xs-note { margin: 6px 0 0; font-size: 12.5px; }
+.keep-box { border: 1px dashed color-mix(in srgb, var(--teal) 50%, var(--line)); border-radius: 10px; padding: 8px 12px; background: var(--surface); margin-top: 10px; }
 .ss2hyp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
 </style>
 
@@ -869,10 +871,10 @@ body.novice .nb-line { display: block; }
             <div class="fb-drop-row"><span class="hint">可拖曳多個 .md 檔到這裡；檔案只在這個瀏覽器讀取，送給 AI 的只有檢索到的相關段落</span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
             <input type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
-            <label class="fb-chk km-keep"><input type="checkbox" id="kmKeep"> 保留在這個瀏覽器（下次開啟仍可使用；換問題時不會被清除）</label>
             <p class="hint" id="kmInfo"></p>
           </div>
-          <label class="fb-chk ext-chk" id="extWrap" hidden><input type="checkbox" id="extChk"> <b>檢索外部案例</b>：同時參考 NyquistAI 查得的 FDA 召回與不良事件（只有美國資料；查不到時會直接說明；用量約為平常的 2 倍）</label>
+          <div class="keep-box"><label class="fb-chk"><input type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
+          <label class="fb-chk xs-nq" id="extWrap"><input type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
           <div class="run-row home-go"><button class="btn primary" id="homeQBtn" type="button">AI 診斷分析</button></div>
           <div id="homeChoice" class="home-choice" hidden></div>
           <p class="hint" id="homeQHint"></p>
@@ -7178,7 +7180,7 @@ else root.runValidation = runValidation;
     try {
       const r = await mcpNs.listTools();
       const s = (r.servers || []).find(x => /nyquist/i.test(x.server));
-      if (s) { nqServer = s.server; $("extWrap").hidden = false; }
+      if (s) { nqServer = s.server; $("extChk").disabled = false; $("extNa").textContent = ""; }
     } catch (_) {}
   })();
   const NQ_ERR = {
@@ -7300,11 +7302,15 @@ else root.runValidation = runValidation;
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(XS_KEY) || "{}"); } catch (_) {}
     let pv = ""; try { pv = localStorage.getItem(PV_KEY) || ""; } catch (_) {}
     wrap.insertAdjacentHTML("afterend", `<div class="xs-box" id="xsBox">
-      <div class="xs-head"><b>檢索其他外部資料庫</b><span class="hint">勾選後，問 AI 時會先用 AI 產生的英文關鍵字查詢；查到的紀錄附編號與連結，AI 依紀錄提出的原因會標出處，沒有紀錄依據的推論會加 *。只送英文關鍵字與產品代碼，不送客戶、批號、病患資料。</span></div>
-      <div class="xs-list">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
+      <div class="xs-head"><b>檢索外部資料庫</b><span class="hint">勾選後，問 AI 時會先用 AI 產生的英文關鍵字查詢；查到的紀錄附編號與連結，AI 依紀錄提出的原因會標出處，沒有紀錄依據的推論會加 *。只送英文關鍵字與產品代碼，不送客戶、批號、病患資料。</span></div>
+      <div class="xs-list" id="xsList">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
       <div class="xs-pv" id="xsPv"${saved.patents ? "" : " hidden"}><label for="xsPvKey" class="hint">PatentsView API 金鑰（到 USPTO 開發者網站免費申請；只存在這個瀏覽器）</label><input type="password" id="xsPvKey" autocomplete="off" value="${esc(pv)}" placeholder="貼上金鑰"></div>
       <p class="hint xs-note">這些網站是否允許網頁直接查詢，依開啟方式而定；連不上時會說明原因，並附上可自行查詢的網址。</p>
     </div>`);
+    // NyquistAI 併入同一個清單（第一項）；不在 claude.ai 或沒連接時停用並說明
+    $("xsList").prepend(wrap); wrap.classList.remove("ext-chk");
+    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（目前開啟方式無法使用）"; }
+    else { $("extChk").disabled = true; $("extNa").textContent = "（尚未偵測到 NyquistAI 連接器）"; }
     $("xsBox").addEventListener("change", e => {
       const c = e.target.closest("[data-xs]");
       if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} $("xsPv").hidden = !o.patents; }
@@ -12112,7 +12118,7 @@ else root.runValidation = runValidation;
     if (gctx) { display = guideSel.q + (q ? "\n" + q : ""); q = gctx + "\n【使用者補充的實際狀況】\n" + (q || "（沒有補充）"); }
     if (!q) q = "請依附件判斷我遇到的問題，並建議該用哪個工具。";
     let extBlock = "";
-    const useNq = $("extChk").checked && !$("extWrap").hidden && mcpNs, xsIds = typeof xsSelected === "function" ? xsSelected() : [];
+    const useNq = $("extChk").checked && !$("extChk").disabled && mcpNs, xsIds = typeof xsSelected === "function" ? xsSelected() : [];
     if (useNq || xsIds.length) {
       $("homeQBtn").disabled = true; $("homeQHint").textContent = "正在產生查詢關鍵字…";
       let plan = null;
@@ -12122,7 +12128,7 @@ else root.runValidation = runValidation;
         if (useNq) {
           $("homeQHint").textContent = "正在檢索外部案例（NyquistAI）…";
           try { nq = await extSearch(q, "", plan); }
-          catch (e) { const code = e && e.code; nqMsg = NQ_ERR[code] || "NyquistAI 檢索失敗。"; if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extWrap").hidden = true; } }
+          catch (e) { const code = e && e.code; nqMsg = NQ_ERR[code] || "NyquistAI 檢索失敗。"; if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extChk").disabled = true; $("extNa").textContent = "（目前無法使用）"; } }
         }
         let more = [];
         if (xsIds.length) { $("homeQHint").textContent = "正在檢索其他外部資料庫…"; more = await xsSearch(plan, xsIds); }

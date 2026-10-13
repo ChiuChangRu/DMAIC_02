@@ -8,7 +8,7 @@
     try {
       const r = await mcpNs.listTools();
       const s = (r.servers || []).find(x => /nyquist/i.test(x.server));
-      if (s) { nqServer = s.server; $("extWrap").hidden = false; }
+      if (s) { nqServer = s.server; $("extChk").disabled = false; $("extNa").textContent = ""; }
     } catch (_) {}
   })();
   const NQ_ERR = {

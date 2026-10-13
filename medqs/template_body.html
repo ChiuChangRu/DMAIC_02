@@ -59,10 +59,10 @@
             <div class="fb-drop-row"><span class="hint">可拖曳多個 .md 檔到這裡；檔案只在這個瀏覽器讀取，送給 AI 的只有檢索到的相關段落</span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
             <input type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
-            <label class="fb-chk km-keep"><input type="checkbox" id="kmKeep"> 保留在這個瀏覽器（下次開啟仍可使用；換問題時不會被清除）</label>
             <p class="hint" id="kmInfo"></p>
           </div>
-          <label class="fb-chk ext-chk" id="extWrap" hidden><input type="checkbox" id="extChk"> <b>檢索外部案例</b>：同時參考 NyquistAI 查得的 FDA 召回與不良事件（只有美國資料；查不到時會直接說明；用量約為平常的 2 倍）</label>
+          <div class="keep-box"><label class="fb-chk"><input type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
+          <label class="fb-chk xs-nq" id="extWrap"><input type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
           <div class="run-row home-go"><button class="btn primary" id="homeQBtn" type="button">AI 診斷分析</button></div>
           <div id="homeChoice" class="home-choice" hidden></div>
           <p class="hint" id="homeQHint"></p>
@@ -2507,7 +2507,7 @@
     if (gctx) { display = guideSel.q + (q ? "\n" + q : ""); q = gctx + "\n【使用者補充的實際狀況】\n" + (q || "（沒有補充）"); }
     if (!q) q = "請依附件判斷我遇到的問題，並建議該用哪個工具。";
     let extBlock = "";
-    const useNq = $("extChk").checked && !$("extWrap").hidden && mcpNs, xsIds = typeof xsSelected === "function" ? xsSelected() : [];
+    const useNq = $("extChk").checked && !$("extChk").disabled && mcpNs, xsIds = typeof xsSelected === "function" ? xsSelected() : [];
     if (useNq || xsIds.length) {
       $("homeQBtn").disabled = true; $("homeQHint").textContent = "正在產生查詢關鍵字…";
       let plan = null;
@@ -2517,7 +2517,7 @@
         if (useNq) {
           $("homeQHint").textContent = "正在檢索外部案例（NyquistAI）…";
           try { nq = await extSearch(q, "", plan); }
-          catch (e) { const code = e && e.code; nqMsg = NQ_ERR[code] || "NyquistAI 檢索失敗。"; if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extWrap").hidden = true; } }
+          catch (e) { const code = e && e.code; nqMsg = NQ_ERR[code] || "NyquistAI 檢索失敗。"; if (code === "server_not_connected" || code === "blocked_by_policy") { $("extChk").checked = false; $("extChk").disabled = true; $("extNa").textContent = "（目前無法使用）"; } }
         }
         let more = [];
         if (xsIds.length) { $("homeQHint").textContent = "正在檢索其他外部資料庫…"; more = await xsSearch(plan, xsIds); }

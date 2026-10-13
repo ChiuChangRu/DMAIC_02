@@ -21,11 +21,15 @@
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(XS_KEY) || "{}"); } catch (_) {}
     let pv = ""; try { pv = localStorage.getItem(PV_KEY) || ""; } catch (_) {}
     wrap.insertAdjacentHTML("afterend", `<div class="xs-box" id="xsBox">
-      <div class="xs-head"><b>檢索其他外部資料庫</b><span class="hint">勾選後，問 AI 時會先用 AI 產生的英文關鍵字查詢；查到的紀錄附編號與連結，AI 依紀錄提出的原因會標出處，沒有紀錄依據的推論會加 *。只送英文關鍵字與產品代碼，不送客戶、批號、病患資料。</span></div>
-      <div class="xs-list">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
+      <div class="xs-head"><b>檢索外部資料庫</b><span class="hint">勾選後，問 AI 時會先用 AI 產生的英文關鍵字查詢；查到的紀錄附編號與連結，AI 依紀錄提出的原因會標出處，沒有紀錄依據的推論會加 *。只送英文關鍵字與產品代碼，不送客戶、批號、病患資料。</span></div>
+      <div class="xs-list" id="xsList">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
       <div class="xs-pv" id="xsPv"${saved.patents ? "" : " hidden"}><label for="xsPvKey" class="hint">PatentsView API 金鑰（到 USPTO 開發者網站免費申請；只存在這個瀏覽器）</label><input type="password" id="xsPvKey" autocomplete="off" value="${esc(pv)}" placeholder="貼上金鑰"></div>
       <p class="hint xs-note">這些網站是否允許網頁直接查詢，依開啟方式而定；連不上時會說明原因，並附上可自行查詢的網址。</p>
     </div>`);
+    // NyquistAI 併入同一個清單（第一項）；不在 claude.ai 或沒連接時停用並說明
+    $("xsList").prepend(wrap); wrap.classList.remove("ext-chk");
+    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（目前開啟方式無法使用）"; }
+    else { $("extChk").disabled = true; $("extNa").textContent = "（尚未偵測到 NyquistAI 連接器）"; }
     $("xsBox").addEventListener("change", e => {
       const c = e.target.closest("[data-xs]");
       if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} $("xsPv").hidden = !o.patents; }
