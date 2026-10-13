@@ -793,4 +793,13 @@ body.novice .nb-line { display: block; }
 .fbr-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
 .fbr-item { display: flex; gap: 6px; align-items: flex-start; padding: 3px 0; font-size: 14.5px; }
 .fbr-item input { margin-top: 4px; accent-color: var(--act); flex: none; }
+.ti-wrap { position: fixed; inset: 0; z-index: 80; background: rgba(10,14,18,.55); display: grid; place-items: center; padding: 16px; }
+.ti-wrap[hidden] { display: none; }
+.ti-box { width: min(600px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--surface); color: var(--ink); border: 2px solid var(--act); border-radius: 14px; padding: 16px 18px; box-shadow: 0 18px 48px rgba(0,0,0,.4); font-size: 15px; line-height: 1.6; }
+.ti-box .hp-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.ti-box .hp-head b { font-size: 17px; color: var(--act-text); }
+.ti-box .hp-x { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.ti-fig { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.ti-list { margin: 10px 0 0; padding-left: 1.2em; } .ti-list li { margin: 3px 0; }
+.ti-box a.btn { text-decoration: none; display: inline-block; }
 .ss2hyp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }

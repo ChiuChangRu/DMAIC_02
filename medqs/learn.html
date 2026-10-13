@@ -128,10 +128,10 @@ footer a, .card a { color: var(--act-text); }
     <a class="top-link" href="index.html">回到統計工作台 →</a>
   </div>
   <nav class="tabs" aria-label="章節">
-    <a href="#s1" aria-current="true">1 假設檢定</a>
-    <span>2 樣本數（規劃中）</span>
-    <span>3 MSA（規劃中）</span>
-    <span>4 SPC（規劃中）</span>
+    <a href="#s1" data-tab="s1" aria-current="true">1 假設檢定</a>
+    <a href="#s2" data-tab="s2" aria-current="false">2 同等性 TOST 入門</a>
+    <span>3 樣本數（規劃中）</span>
+    <span>4 MSA（規劃中）</span>
   </nav>
 </header>
 
@@ -274,8 +274,156 @@ footer a, .card a { color: var(--act-text); }
   </section>
 </section>
 
+<section id="s2" hidden>
+  <h2 class="sec">2　同等性檢定（TOST）入門</h2>
+  <p class="sec-lede">變更製程、換供應商、移廠之後，要證明的是「一樣好」，不是「有沒有差」。TOST（Two One-Sided Tests，兩個單邊檢定）就是用來證明「差異在可接受範圍 ±Δ 之內」的方法。</p>
+
+  <!-- 2-1 -->
+  <section class="card" id="s2-1">
+    <span class="qref">2-1</span>
+    <h3>為什麼需要 TOST：「沒看到差」不等於「沒有差」</h3>
+    <p class="help">差異檢定的 p ≥ 0.05 只代表「證據不足以說有差」。樣本少、變異大時，信賴區間很寬，本來就看不出差異。TOST 改成看：<b>差異的信賴區間是否整段落在 ±Δ 之內</b>。下圖是四種典型情況（示意圖，數值為說明用）。</p>
+    <div class="inner">
+      <div class="legend">
+        <span><i style="background:var(--c-power);opacity:.3"></i>同等界限 ±Δ</span>
+        <span><i class="ln" style="border-color:var(--act)"></i>90% 信賴區間（TOST 用）</span>
+        <span><i class="ln dash" style="border-color:var(--muted)"></i>95% 信賴區間（差異檢定用）</span>
+      </div>
+      <svg class="plot" id="p21" viewBox="0 0 680 330" role="img" aria-label="四種典型情況：信賴區間與同等界限的關係"></svg>
+    </div>
+    <div class="scroll-x" style="margin-top:12px"><table>
+      <tr><th>情況</th><th>差異檢定（95% CI 含 0？）</th><th>TOST（90% CI 在 ±Δ 內？）</th><th>解讀</th></tr>
+      <tr><td>① 窄、在中間</td><td>含 0 → 無顯著差</td><td>在內 → <b>同等</b></td><td>真的一樣，而且有證據</td></tr>
+      <tr><td>② 窄、偏一邊</td><td>不含 0 → <b>有顯著差</b></td><td>在內 → <b>同等</b></td><td>有差但差很小，實務上可接受（樣本大時常見）</td></tr>
+      <tr><td>③ 超出界限</td><td>不含 0 → 有顯著差</td><td>超出 → 不同等</td><td>真的不一樣</td></tr>
+      <tr><td>④ 很寬</td><td>含 0 → 無顯著差</td><td>超出 → <b>無法判定同等</b></td><td>證據不足，多半是樣本太少；只看差異檢定會誤判成「一樣」</td></tr>
+    </table></div>
+  </section>
+
+  <!-- 2-2 -->
+  <section class="card" id="s2-2">
+    <span class="qref">2-2</span>
+    <h3>動手看：90% 信賴區間 vs ±Δ</h3>
+    <p class="help">輸入量測結果的摘要（平均差、標準差、樣本數）與事先訂好的 Δ。下圖即時畫出信賴區間，並同時給出差異檢定與 TOST 的結論。</p>
+    <div class="inner">
+      <div class="chips" id="t_design" role="group" aria-label="試驗設計" style="margin-bottom:10px">
+        <button class="chip" type="button" data-v="one" aria-pressed="true">單組對目標值／成對</button>
+        <button class="chip" type="button" data-v="two" aria-pressed="false">兩組獨立（每組 n）</button>
+      </div>
+      <div class="controls">
+        <div class="ctl"><label for="t_d">觀察到的平均差 d̄ <output id="o_td"></output></label><input type="range" id="t_d" min="-3" max="3" step="0.05" value="0.3"></div>
+        <div class="ctl"><label for="t_s">標準差 s <output id="o_ts"></output></label><input type="range" id="t_s" min="0.2" max="4" step="0.1" value="1.6"></div>
+        <div class="ctl"><label for="t_n">樣本數 n <output id="o_tn"></output></label><input type="range" id="t_n" min="3" max="80" step="1" value="12"></div>
+        <div class="ctl"><label for="t_D">同等界限 Δ（±） <output id="o_tD"></output></label><input type="range" id="t_D" min="0.2" max="4" step="0.05" value="1.5"></div>
+        <div class="ctl"><label for="tt_a">α（每個單邊）</label><select id="tt_a"><option value="0.025">0.025（看 95% CI）</option><option value="0.05" selected>0.05（看 90% CI）</option></select></div>
+        <div class="ctl"><label for="t_u">單位</label><input type="text" id="t_u" value="N/15mm" maxlength="20" style="font:inherit;color:var(--ink);background:var(--code-bg);border:1.5px solid var(--act);border-radius:8px;padding:8px 10px;width:100%"></div>
+      </div>
+      <svg class="plot" id="p22" viewBox="0 0 680 230" role="img" aria-label="信賴區間與同等界限"></svg>
+      <div class="two" style="margin-top:10px">
+        <div class="stat" id="v_diff"></div>
+        <div class="stat" id="v_tost"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">標準誤 SE</div><div class="v" id="m_tse"></div></div>
+        <div class="stat"><div class="k">自由度 df</div><div class="v" id="m_tdf"></div></div>
+        <div class="stat"><div class="k">下界 p（H₀：差 ≤ −Δ）</div><div class="v" id="m_tpl"></div></div>
+        <div class="stat"><div class="k">上界 p（H₀：差 ≥ +Δ）</div><div class="v" id="m_tpu"></div></div>
+        <div class="stat"><div class="k">TOST p = 兩者較大</div><div class="v" id="m_tp"></div></div>
+      </div>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li>把 n 拉小：信賴區間變寬，差異檢定常「無顯著差」，TOST 卻判「無法判定同等」——這就是情況 ④。</li>
+      <li>把 n 拉大、d̄ 設 0.5：差異檢定可能「有顯著差」，TOST 仍判「同等」——情況 ②。</li>
+      <li>兩組獨立時，SE 多乘 √2，同樣的 n 證據比較弱。</li>
+    </ul>
+  </section>
+
+  <!-- 2-3 -->
+  <section class="card" id="s2-3">
+    <span class="qref">2-3</span>
+    <h3>TOST 的算式</h3>
+    <p class="help">把「同等」拆成兩個單邊檢定，兩個都拒絕虛無假設，才判定同等。μ<sub>d</sub> = 真實平均差，d̄ = 觀察平均差，SE = 標準誤。</p>
+    <div class="inner texbox">
+      <div class="tex-row"><div class="tex" data-tex="H_{01}:\ \mu_d \le -\Delta \qquad H_{02}:\ \mu_d \ge +\Delta"></div><div class="tex-note"><b>① 兩個虛無假設。</b>「有問題」（超出界限）放在 H₀；要證明的「同等」放在對立假設 −Δ &lt; μ<sub>d</sub> &lt; +Δ。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="t_{1} = \dfrac{\bar d + \Delta}{SE},\qquad t_{2} = \dfrac{\bar d - \Delta}{SE}"></div><div class="tex-note"><b>② 兩個 t 值。</b>分別量 d̄ 離下界、上界多遠（以標準誤計）。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="p_{1} = P(T_{df} \ge t_{1}),\quad p_{2} = P(T_{df} \le t_{2}),\quad p_{\mathrm{TOST}} = \max(p_{1}, p_{2})"></div><div class="tex-note"><b>③ 兩個單邊 p 值。</b>取較大者；p<sub>TOST</sub> &lt; α 判定同等。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="\bar d \pm t_{1-\alpha,\,df}\cdot SE \ \subset\ (-\Delta,\ +\Delta)"></div><div class="tex-note"><b>④ 等價的信賴區間判法。</b>每邊 α = 0.05 時，看的是 (1 − 2α) = <b>90%</b> 信賴區間，不是 95%。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="SE = \dfrac{s}{\sqrt{n}}\ (df = n-1),\qquad SE = s_{p}\sqrt{\dfrac{2}{n}}\ (df = 2n-2)"></div><div class="tex-note"><b>⑤ 標準誤。</b>左：單組對目標值或成對（s 為差值的標準差）；右：兩組獨立、每組 n，s<sub>p</sub> 為合併標準差。</div></div>
+    </div>
+  </section>
+
+  <!-- 2-4 -->
+  <section class="card" id="s2-4">
+    <span class="qref">2-4</span>
+    <h3>Δ 怎麼定：最關鍵、也最常被問</h3>
+    <p class="help">Δ 是「差多少以內算一樣」，是工程與臨床判斷，不是統計算出來的。</p>
+    <div class="two">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">常見依據</h4>
+        <ul class="tight">
+          <li><b>功能或臨床需求</b>：差異多大會影響使用或安全（例如熱封強度降多少仍遠高於規格下限）。</li>
+          <li><b>規格與製程能力</b>：以規格寬度或製程變異作參考*。</li>
+          <li><b>比對品或舊製程的歷史變異</b>：例如批間差異本來就有多大。</li>
+          <li><b>法規或指引已有的界限</b>：例如藥品生體相等常用幾何平均比的 80%～125%。</li>
+        </ul>
+        <p class="hint" style="font-size:13px">* 用規格的幾成當 Δ 沒有通用規則，需依產品風險說明理由。</p>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">必須遵守</h4>
+        <ul class="tight">
+          <li><b>看數據之前就訂好</b>，寫進計畫書；看了結果再調 Δ，結論無效。</li>
+          <li>寫下 Δ 的理由與出處，列入知識庫（KM），下次同類變更可以沿用。</li>
+          <li>Δ 太寬：什麼都判同等，失去保護；Δ 太窄：需要非常大的樣本。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2-5 -->
+  <section class="card" id="s2-5">
+    <span class="qref">2-5</span>
+    <h3>要量幾個：TOST 的樣本數概念</h3>
+    <p class="help">真實差異為 0 時，TOST 的檢定力近似：</p>
+    <div class="inner texbox">
+      <div class="tex-row"><div class="tex" data-tex="n \approx \left(\dfrac{(z_{1-\alpha}+z_{1-\beta/2})\,\sigma}{\Delta}\right)^{2}"></div><div class="tex-note"><b>近似式（σ 已知、真實差 0；單組或成對）。</b>兩組獨立時每組再乘 2。注意是 z<sub>1−β/2</sub>：兩邊都要過，檢定力要分給兩側。Δ/σ 越小，n 越大；Δ 減半，n 變 4 倍。</div></div>
+    </div>
+    <div class="tex-live">
+      <div class="ctl" style="max-width:260px;margin-bottom:6px"><label for="t_pw">目標檢定力（把握）</label><select id="t_pw"><option value="0.8">80%</option><option value="0.9" selected>90%</option></select></div>
+      <div class="hint" style="font-size:13.5px;color:var(--muted)">代入 2-2 的 s、Δ、α 與設計：</div>
+      <div class="tex" id="texT1"></div>
+      <div class="tex-note" id="texTNote"></div>
+    </div>
+    <div class="note">這是常態近似，只用來理解 Δ/σ 對樣本數的影響。實際規劃請用工作台「樣本數規劃 → 同等性」，它用精確計算，也能設定「真實差異不為 0」的情況；通常會比近似式多幾個。</div>
+  </section>
+
+  <!-- 2-6 -->
+  <section class="card" id="s2-6">
+    <span class="qref">2-6</span>
+    <h3>在工作台怎麼做</h3>
+    <div class="two">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">規劃階段（量之前）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>樣本數規劃 → 點「同等性」圖卡。</li>
+          <li>填 Δ 與依據、預估 σ、α、目標把握。</li>
+          <li>算出每組 n 後，按「帶到假設檢定 →」。</li>
+        </ol>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">判定階段（量完後）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>假設檢定 → 貼上數據。</li>
+          <li>檢定目的選「同等性（TOST）」，填同等界限 Δ。</li>
+          <li>執行分析：看 90% 信賴區間圖與兩個單邊 p 值。</li>
+        </ol>
+      </div>
+    </div>
+    <p class="help" style="margin-top:12px">只怕「變差」、變好沒關係時，用非劣性檢定（只做一邊），工作台的樣本數規劃也有對應圖卡。</p>
+  </section>
+</section>
+
 <footer>
-  計算方法：常態分布（σ 視為已知的近似）與二項分布，由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
+  計算方法：常態分布（σ 視為已知的近似）、t 分布與二項分布，由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
 </footer>
 </div>
 
@@ -427,7 +575,7 @@ footer a, .card a { color: var(--act-text); }
 
   // ---- LaTeX ----
   function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true, output: "mathml" }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
-  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); }
+  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); texT(); }
   function texLive() {
     const two = S.side === "two", qa = two ? 1 - S.a / 2 : 1 - S.a, za = PhiInv(qa), sh = S.sh, zb = sh - za, beta = betaOf(sh, S.a, S.side);
     const pw = +$("i_pw").value, zp = PhiInv(pw), zaLab = two ? "z_{1-\\alpha/2}" : "z_{1-\\alpha}", f3 = v => fx(v, 3);
@@ -439,9 +587,76 @@ footer a, .card a { color: var(--act-text); }
   }
   $("i_pw").addEventListener("change", texLive);
   (function loadKatex() { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"; sc.onload = texAll; sc.onerror = texAll; document.head.appendChild(sc); })();
-  all(); draw3b();
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { all(); draw3b(); }, 150); });
-  window.__learn = { Phi, PhiInv, betaOf, binomCdf };
+  // ======== 第 2 節：TOST ========
+  function betacf(a, b, x) { const MAXIT = 300, EPS = 3e-16, FPMIN = 1e-300; let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap; if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d;
+    for (let m = 1; m <= MAXIT; m++) { const m2 = 2 * m; let aa = m * (b - m) * x / ((qam + m2) * (a + m2)); d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2)); d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < EPS) break; } return h; }
+  function ibeta(x, a, b) { if (x <= 0) return 0; if (x >= 1) return 1; const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b; }
+  const tSf = (t, df) => { const x = df / (df + t * t), p = 0.5 * ibeta(x, df / 2, 0.5); return t >= 0 ? p : 1 - p; };
+  const tCdf = (t, df) => 1 - tSf(t, df);
+  function tInv(p, df) { let lo = -60, hi = 60; for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; tCdf(m, df) < p ? lo = m : hi = m; } return (lo + hi) / 2; }
+  const T = { design: "one" };
+  function tostCalc() {
+    const d = +$("t_d").value, s = +$("t_s").value, n = +$("t_n").value, D = +$("t_D").value, a = +$("tt_a").value, two = T.design === "two";
+    const se = two ? s * Math.sqrt(2 / n) : s / Math.sqrt(n), df = two ? 2 * n - 2 : n - 1;
+    const tc = tInv(1 - a, df), t95 = tInv(0.975, df), lo = d - tc * se, hi = d + tc * se, lo95 = d - t95 * se, hi95 = d + t95 * se;
+    const pl = tSf((d + D) / se, df), pu = tCdf((d - D) / se, df), p = Math.max(pl, pu), pdiff = 2 * tSf(Math.abs(d) / se, df);
+    return { d, s, n, D, a, two, se, df, tc, lo, hi, lo95, hi95, pl, pu, p, pdiff, eq: lo > -D && hi < D, sig: pdiff < 0.05 };
+  }
+  function ciPlot(id, rows, D, xr, H) {
+    const F = frame({ svg: id, H, x0: -xr, x1: xr, y0: 0, y1: 1, L: 16, T: 10, Bp: 40, xt: (() => { const st = xr > 4 ? 1 : xr > 2 ? 0.5 : 0.25, t = []; for (let v = -Math.floor(xr / st) * st; v <= xr + 1e-9; v += st) t.push(+v.toFixed(2)); return t; })(), xf: v => v, xl: rows.xl || "平均差（觀察值 − 目標或參考）" });
+    let s = F.s;
+    s += `<rect x="${F.sx(-D)}" y="${F.T}" width="${F.sx(D) - F.sx(-D)}" height="${F.B - F.T}" fill="var(--c-power)" fill-opacity=".18"/>`;
+    [[-D, "−Δ"], [D, "+Δ"]].forEach(([x, l]) => { s += `<line x1="${F.sx(x)}" x2="${F.sx(x)}" y1="${F.T}" y2="${F.B}" stroke="var(--c-power)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${F.sx(x)}" y="${F.T + 12}" text-anchor="middle" font-size="12" fill="var(--c-power)">${l}</text>`; });
+    s += `<line x1="${F.sx(0)}" x2="${F.sx(0)}" y1="${F.T}" y2="${F.B}" stroke="var(--muted)" stroke-width="1"/>`;
+    const k = rows.items.length, gap = (F.B - F.T - 18) / k;
+    rows.items.forEach((r, i) => {
+      const y = F.T + 18 + gap * (i + 0.5), cl = v => Math.max(-xr, Math.min(xr, v));
+      if (r.lo95 != null) s += `<line x1="${F.sx(cl(r.lo95))}" x2="${F.sx(cl(r.hi95))}" y1="${y + 9}" y2="${y + 9}" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>`;
+      s += `<line x1="${F.sx(cl(r.lo))}" x2="${F.sx(cl(r.hi))}" y1="${y}" y2="${y}" stroke="var(--act)" stroke-width="5" stroke-linecap="round"/>` + dot(F.sx(r.m), y, "var(--act)");
+      if (r.lab) s += `<text x="${F.sx(cl(r.hi)) + 10 > F.R - 150 ? F.sx(cl(r.lo)) - 10 : F.sx(cl(r.hi)) + 10}" y="${y + 4}" text-anchor="${F.sx(cl(r.hi)) + 10 > F.R - 150 ? "end" : "start"}" font-size="12.5" fill="var(--ink)">${r.lab}</text>`;
+    });
+    $(id).innerHTML = s;
+  }
+  function draw21() {
+    const D = 1, items = [{ m: 0.1, lo: -0.35, hi: 0.55, lo95: -0.45, hi95: 0.65, lab: "① 同等、無顯著差" }, { m: 0.45, lo: 0.25, hi: 0.65, lo95: 0.2, hi95: 0.7, lab: "② 同等、但有顯著差" }, { m: 1.4, lo: 0.9, hi: 1.9, lo95: 0.8, hi95: 2.0, lab: "③ 不同等" }, { m: 0.2, lo: -1.3, hi: 1.7, lo95: -1.6, hi95: 2.0, lab: "④ 無法判定（太寬）" }];
+    ciPlot("p21", { items, xl: "平均差（以 Δ 為 1 的示意尺度）" }, D, 2.4, 330);
+  }
+  function draw22() {
+    const r = tostCalc(), u = ($("t_u").value || "").trim(), us = u ? " " + u : "", f = v => fx(v, 3);
+    $("o_td").textContent = fx(r.d, 2) + us; $("o_ts").textContent = fx(r.s, 1) + us; $("o_tn").textContent = r.n + (r.two ? "（每組）" : ""); $("o_tD").textContent = "±" + fx(r.D, 2) + us;
+    const xr = Math.max(r.D * 1.6, Math.abs(r.lo95) * 1.1, Math.abs(r.hi95) * 1.1, 0.5);
+    ciPlot("p22", { items: [{ m: r.d, lo: r.lo, hi: r.hi, lo95: r.lo95, hi95: r.hi95, lab: `${Math.round((1 - 2 * r.a) * 100)}% CI ${f(r.lo)} ～ ${f(r.hi)}` }], xl: `平均差${u ? "（" + u + "）" : ""}` }, r.D, xr, 230);
+    $("v_diff").innerHTML = `<div class="k">差異檢定（雙尾 α = 0.05）</div><div style="font-size:17px;font-weight:700;margin-top:2px">${r.sig ? "有顯著差" : "無顯著差"}</div><div class="hint" style="font-size:13px">p = ${fx(r.pdiff, 4)}；95% CI ${f(r.lo95)} ～ ${f(r.hi95)} ${r.lo95 > 0 || r.hi95 < 0 ? "不含 0" : "含 0"}</div>`;
+    const tl = r.eq ? "判定同等" : (r.lo > r.D || r.hi < -r.D) ? "不同等" : "無法判定同等";
+    $("v_tost").innerHTML = `<div class="k">TOST（每邊 α = ${r.a}）</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${r.eq ? "var(--good)" : "var(--bad)"}">${tl}</div><div class="hint" style="font-size:13px">${Math.round((1 - 2 * r.a) * 100)}% CI ${r.eq ? "完全在" : "沒有完全在"} ±${fx(r.D, 2)} 內；p<sub>TOST</sub> = ${fx(r.p, 4)}</div>`;
+    $("m_tse").textContent = f(r.se); $("m_tdf").textContent = r.df; $("m_tpl").textContent = fx(r.pl, 4); $("m_tpu").textContent = fx(r.pu, 4); $("m_tp").textContent = fx(r.p, 4);
+    texT();
+  }
+  function texT() {
+    if (!$("texT1")) return;
+    const r = tostCalc(), pw = +$("t_pw").value, za = PhiInv(1 - r.a), zb = PhiInv(1 - (1 - pw) / 2), k = r.two ? 2 : 1, nReq = k * Math.pow((za + zb) * r.s / r.D, 2), f3 = v => fx(v, 3);
+    tex($("texT1"), `n\\approx ${k === 2 ? "2\\times" : ""}\\left(\\dfrac{(${f3(za)}+${f3(zb)})\\times ${fx(r.s, 1)}}{${fx(r.D, 2)}}\\right)^{2}=${fx(nReq, 2)}\\;\\Rightarrow\\;n=${Math.ceil(nReq)}`);
+    $("texTNote").textContent = `z₁₋α = ${f3(za)}（α = ${r.a}），z₁₋β/₂ = ${f3(zb)}（把握 ${Math.round(pw * 100)}%）；${r.two ? "兩組獨立，每組" : "單組／成對，共"}約 ${Math.ceil(nReq)} 個（常態近似，真實差異假設為 0）。`;
+  }
+  T.all = () => { draw22(); };
+  ["t_d", "t_s", "t_n", "t_D", "t_u"].forEach(id => $(id).addEventListener("input", draw22)); $("tt_a").addEventListener("change", draw22); $("t_pw").addEventListener("change", texT);
+  $("t_design").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; T.design = b.dataset.v; $("t_design").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw22(); });
+  // ---- 分頁切換 ----
+  function showTab(id) {
+    const ok = ["s1", "s2"].includes(id) ? id : "s1";
+    ["s1", "s2"].forEach(k => { $(k).hidden = k !== ok; });
+    document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
+    if (ok === "s2") { draw21(); draw22(); } else { all(); draw3b(); }
+  }
+  document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
+  window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+  // 回到統計工作台：GitHub Pages 用相對路徑，其他（claude.ai）用工作台網址
+  (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
+  showTab(location.hash.slice(1));
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(location.hash.slice(1) || ($("s2").hidden ? "s1" : "s2")), 150); });
+  window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc };
 })();
 </script>
 </body>
