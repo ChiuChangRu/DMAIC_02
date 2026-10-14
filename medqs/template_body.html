@@ -376,26 +376,25 @@
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
       <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
       <div class="ss-qgrid">
-        <div class="ss-qgrp"><div class="ss-qgl">變更／比較</div>
-          <button type="button" class="ssq" data-q="q1"><span class="ssq-t">① 改善後有沒有變好？兩條線、兩家料有沒有差？</span><span class="ssq-s">找原因、驗證改善效果（證明有差）</span></button>
-          <button type="button" class="ssq" data-q="q2"><span class="ssq-t">② 轉廠、換料、換設備後，一樣嗎？<span class="ssq-new">新增</span></span><span class="ssq-s">證明相當（同等性 TOST）</span></button>
-          <button type="button" class="ssq" data-q="q3"><span class="ssq-t">③ 換了之後，不會變差吧？<span class="ssq-new">新增</span></span><span class="ssq-s">只怕變差（不劣性）</span></button>
-          <button type="button" class="ssq" data-q="q4"><span class="ssq-t">④ 平均有沒有達到目標值？</span><span class="ssq-s">單組對目標值</span></button>
+        <div class="ss-qgrp"><div class="ss-qhd"><svg class="ss-qsvg" viewBox="0 0 96 64" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="12" width="22" height="42" rx="3" fill="var(--qic-a)"/><rect x="64" y="8" width="22" height="46" rx="3" fill="var(--qic-b)"/><path d="M38 32h17M49 25l7 7-7 7" stroke="currentColor" stroke-width="4.5"/></svg><div class="ss-qgl">變更／比較</div><div class="ss-qgd">比較兩組，或變更前後</div></div>
+          <button type="button" class="ssq" data-q="q1"><span class="ssq-n" aria-hidden="true">1</span><span class="ssq-t">改善後有沒有變好？兩條線、兩家料有沒有差？</span><span class="ssq-s">找原因、驗證改善效果（證明有差）</span></button>
+          <button type="button" class="ssq" data-q="q2"><span class="ssq-n" aria-hidden="true">2</span><span class="ssq-t">轉廠、換料、換設備後，一樣嗎？</span><span class="ssq-s">證明相當（同等性 TOST）</span></button>
+          <button type="button" class="ssq" data-q="q3"><span class="ssq-n" aria-hidden="true">3</span><span class="ssq-t">換了之後，不會變差吧？</span><span class="ssq-s">只怕變差（不劣性）</span></button>
+          <button type="button" class="ssq" data-q="q4"><span class="ssq-n" aria-hidden="true">4</span><span class="ssq-t">平均有沒有達到目標值？</span><span class="ssq-s">單組對目標值</span></button>
         </div>
-        <div class="ss-qgrp"><div class="ss-qgl">合格／不合格</div>
-          <button type="button" class="ssq" data-q="q5"><span class="ssq-t">⑤ 要測幾個全過，才能宣稱可靠度（例如 95/95）？</span><span class="ssq-s">破裂、洩漏、外觀等通過／不通過試驗</span></button>
-          <button type="button" class="ssq" data-q="q6"><span class="ssq-t">⑥ 現有抽樣方案（n、Ac）能宣稱什麼？</span><span class="ssq-s">評估既有方案或已完成的試驗</span></button>
-          <button type="button" class="ssq" data-q="q7"><span class="ssq-t">⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？</span><span class="ssq-s">比例資料</span></button>
+        <div class="ss-qgrp"><div class="ss-qhd"><svg class="ss-qsvg" viewBox="0 0 96 64" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="25" cy="32" r="19" stroke="var(--qic-a)" stroke-width="5"/><path d="M16 32.5l6.5 6.5 12-13" stroke="currentColor" stroke-width="5"/><circle cx="71" cy="32" r="19" stroke="var(--qic-b)" stroke-width="5"/><path d="M63.5 24.5l15 15M78.5 24.5l-15 15" stroke="currentColor" stroke-width="5"/></svg><div class="ss-qgl">合格／不合格</div><div class="ss-qgd">結果只有過／不過，數件數</div></div>
+          <button type="button" class="ssq" data-q="q5"><span class="ssq-n" aria-hidden="true">5</span><span class="ssq-t">要測幾個全過，才能宣稱可靠度（例如 95/95）？</span><span class="ssq-s">破裂、洩漏、外觀等通過／不通過試驗</span></button>
+          <button type="button" class="ssq" data-q="q6"><span class="ssq-n" aria-hidden="true">6</span><span class="ssq-t">現有抽樣方案（n、Ac）能宣稱什麼？</span><span class="ssq-s">評估既有方案或已完成的試驗</span></button>
+          <button type="button" class="ssq" data-q="q7"><span class="ssq-n" aria-hidden="true">7</span><span class="ssq-t">不良率有沒有低於目標？兩邊不良率有沒有差？</span><span class="ssq-s">比例資料</span></button>
         </div>
-        <div class="ss-qgrp"><div class="ss-qgl">符合規格</div>
-          <button type="button" class="ssq" data-q="q8"><span class="ssq-t">⑧ 要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
-          <div class="ss-qgl" style="margin-top:10px">生產批次檢驗</div>
-          <button type="button" class="ssq" data-q="q11"><span class="ssq-t">⑪ 進料、出貨抽檢：抽多少、幾個不良算不合格？<span class="ssq-new">新增</span></span><span class="ssq-s">看合格／不合格，數不良品（ISO 2859-1:2026）</span></button>
-          <button type="button" class="ssq" data-q="q12"><span class="ssq-t">⑫ 用量測數值判批次合格，可以少抽一點嗎？<span class="ssq-new">新增</span></span><span class="ssq-s">看平均和變異；數據要接近常態（ISO 3951-1）</span></button>
+        <div class="ss-qgrp"><div class="ss-qhd"><svg class="ss-qsvg" viewBox="0 0 96 64" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M8 56h80" stroke="currentColor" stroke-width="3.5"/><path d="M14 55C30 55 34 14 48 14S66 55 82 55" stroke="currentColor" stroke-width="4"/><path d="M24 4v56M72 4v56" stroke="var(--qic-b)" stroke-width="3.5" stroke-dasharray="6 5"/></svg><div class="ss-qgl">規格與批次驗收</div><div class="ss-qgd">產品落在規格內，批次能否放行</div></div>
+          <button type="button" class="ssq" data-q="q8"><span class="ssq-n" aria-hidden="true">8</span><span class="ssq-t">要測幾個，才能宣稱 99% 產品落在規格內？</span><span class="ssq-s">允差區間</span></button>
+          <button type="button" class="ssq" data-q="q11"><span class="ssq-n" aria-hidden="true">9</span><span class="ssq-t">進料、出貨抽檢：抽多少、幾個不良算不合格？</span><span class="ssq-s">看合格／不合格，數不良品（ISO 2859-1:2026）</span></button>
+          <button type="button" class="ssq" data-q="q12"><span class="ssq-n" aria-hidden="true">10</span><span class="ssq-t">用量測數值判批次合格，可以少抽一點嗎？</span><span class="ssq-s">看平均和變異；數據要接近常態（ISO 3951-1）</span></button>
         </div>
-        <div class="ss-qgrp"><div class="ss-qgl">實驗與其他工具</div>
-          <button type="button" class="ssq" data-q="q9"><span class="ssq-t">⑨ 實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
-          <button type="button" class="ssq" data-q="q10"><span class="ssq-t">⑩ MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
+        <div class="ss-qgrp"><div class="ss-qhd"><svg class="ss-qsvg" viewBox="0 0 96 64" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6h20M29 6v17L14 50q-3 7 5 7h30q8 0 5-7L39 23V6" stroke="currentColor" stroke-width="4"/><path d="M20 41q7-4 14 0t14 0L53 50q2 4-3 4H18q-5 0-3-4z" fill="var(--qic-b)"/><g transform="translate(74 36)" fill="var(--qic-a)"><path d="M-3.5-17h7l1 5 4 1.7 4.3-2.8 5 5-2.8 4.3 1.7 4 5 1v7l-5 1-1.7 4 2.8 4.3-5 5-4.3-2.8-4 1.7-1 5h-7l-1-5-4-1.7-4.3 2.8-5-5 2.8-4.3-1.7-4-5-1v-7l5-1 1.7-4-2.8-4.3 5-5 4.3 2.8 4-1.7z"/><circle r="5.5" fill="var(--surface)"/></g></svg><div class="ss-qgl">實驗與其他工具</div><div class="ss-qgd">DOE、MSA、SPC 的建議數量</div></div>
+          <button type="button" class="ssq" data-q="q9"><span class="ssq-n" aria-hidden="true">11</span><span class="ssq-t">實驗要重複幾次？</span><span class="ssq-s">DOE</span></button>
+          <button type="button" class="ssq" data-q="q10"><span class="ssq-n" aria-hidden="true">12</span><span class="ssq-t">MSA、SPC 要收多少？</span><span class="ssq-s">建議數量表</span></button>
         </div>
       </div>
     </section>

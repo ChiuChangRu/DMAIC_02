@@ -12,10 +12,10 @@
     q6: { sub: "attr", title: "⑥ 現有抽樣方案（n、Ac）能宣稱什麼？", prep: ["抽樣方案的樣本數 n 與允收數 Ac（例如從 ISO 2859-1 查出）", "AQL（選填）"], note: "AQL 不是可宣稱的可靠度，結果頁會分開說明。", set: () => pkClick('#atMode [data-v="eval"]') },
     q7: { sub: "prop", title: "⑦ 不良率有沒有低於目標？兩邊不良率有沒有差？", prep: ["目標不良率或兩組的預期不良率（歷史資料或規格）"], note: "不良率很低時，需要的數量通常很大；可考慮改用計量型特性。" },
     q8: { sub: "tolp", title: "⑧ 要測幾個，才能宣稱 99% 產品落在規格內？", prep: ["涵蓋比例與信心水準（例如 99%／95%）", "預期平均與標準差（前期數據）、規格界限"], note: "數據量完後，到「假設檢定・統計允差區間」計算。" },
-    q9: { sub: "doer", title: "⑨ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
-    q10: { sub: "guide", title: "⑩ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" },
-    q11: { sub: "aql", title: "⑪ 進料、出貨抽檢：抽多少、幾個不良算不合格？", prep: ["批量 N（這一批有多少個）", "檢驗水準：未指定時用一般 II", "AQL：依不良的嚴重程度（主要、次要）由權責單位決定；關鍵不良應全檢"], note: "這是給連續多批的批次檢驗用的（ISO 2859-1:2026）。設計驗證、確效只抽一次時，請改用 ⑤ 或 ⑧。" },
-    q12: { sub: "aqlv", title: "⑫ 用量測數值判批次合格，可以少抽一點嗎？", prep: ["規格界限（單邊或雙邊）", "數據要接近常態分布"], note: "計量型 AQL（ISO 3951-1）準備中。" }
+    q9: { sub: "doer", title: "⑪ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
+    q10: { sub: "guide", title: "⑫ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" },
+    q11: { sub: "aql", title: "⑨ 進料、出貨抽檢：抽多少、幾個不良算不合格？", prep: ["批量 N（這一批有多少個）", "檢驗水準：未指定時用一般 II", "AQL：依不良的嚴重程度（主要、次要）由權責單位決定；關鍵不良應全檢"], note: "這是給連續多批的批次檢驗用的（ISO 2859-1:2026）。設計驗證、確效只抽一次時，請改用 ⑤ 或 ⑧。" },
+    q12: { sub: "aqlv", title: "⑩ 用量測數值判批次合格，可以少抽一點嗎？", prep: ["規格界限（單邊或雙邊）", "數據要接近常態分布"], note: "計量型 AQL（ISO 3951-1）準備中。" }
   };
   let ssCurQ = "", ssQBusy = false;
   function ssBanner() {
@@ -217,3 +217,4 @@
     $(p + "Run").addEventListener("click", () => eqRun(p));
     $(p + "RecCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($(p + "Rec").dataset.tsv || ""); $(p + "RecHint").textContent = "已複製，可直接貼到 Excel。"; } catch (_) { $(p + "RecHint").textContent = "無法自動複製，請選取表格後手動複製。"; } });
   });
+

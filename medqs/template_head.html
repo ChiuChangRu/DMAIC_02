@@ -745,6 +745,25 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .ssq .ssq-t { color: var(--act-text); } .ssq .ssq-s { color: var(--muted); }
 .ssq[aria-pressed="true"] { background: var(--act); border-color: var(--act); box-shadow: 0 0 0 3px color-mix(in srgb, var(--act) 35%, transparent); }
 .ssq[aria-pressed="true"] .ssq-t, .ssq[aria-pressed="true"] .ssq-s { color: var(--on-act); }
+/* 樣本數規劃：問題圖卡（四大類＋插圖，方塊等高） */
+:root { --qic-a: #3E9C8F; --qic-b: #E06A2C; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --qic-a: #6FCFC0; --qic-b: #F2874A; } }
+:root[data-theme="dark"] { --qic-a: #6FCFC0; --qic-b: #F2874A; }
+.ss-qgrid { gap: 14px; align-items: stretch; }
+.ss-qgrp { background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 14px 12px 6px; }
+.ss-qhd { text-align: center; color: var(--ink); margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.ss-qsvg { display: block; width: 108px; height: 72px; margin: 0 auto 8px; }
+.ss-qhd .ss-qgl { font-size: 19px; font-weight: 800; color: var(--ink); margin: 0; letter-spacing: .02em; }
+.ss-qgd { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.ss-qgrid .ssq { grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; row-gap: 3px; align-content: start; padding: 11px 12px; border: 1.5px solid color-mix(in srgb, var(--qic-a) 40%, var(--line)); background: var(--surface); }
+.ss-qgrid .ssq:hover { border-color: var(--qic-a); box-shadow: 0 0 0 2px color-mix(in srgb, var(--qic-a) 30%, transparent); }
+.ss-qgrid .ssq .ssq-t { color: var(--ink); }
+.ss-qgrid .ssq-n { grid-row: 1 / span 2; width: 26px; height: 26px; border-radius: 50%; background: var(--qic-a); color: var(--surface); display: grid; place-items: center; font-size: 12.5px; font-weight: 800; margin-top: 1px; font-variant-numeric: tabular-nums; }
+.ss-qgrid .ssq-t, .ss-qgrid .ssq-s { grid-column: 2; }
+.ss-qgrid .ssq[aria-pressed="true"] { background: var(--act); border-color: var(--act); }
+.ss-qgrid .ssq[aria-pressed="true"] .ssq-t, .ss-qgrid .ssq[aria-pressed="true"] .ssq-s { color: var(--on-act); }
+.ss-qgrid .ssq[aria-pressed="true"] .ssq-n { background: var(--on-act); color: var(--act); }
+
 .btn.primary, .btn.copper { background: var(--act); border-color: var(--act); color: var(--on-act); }
 .fb-banner.danger .btn.primary { background: var(--bad); border-color: var(--bad); }
 .linkbtn { color: var(--act-text); }
