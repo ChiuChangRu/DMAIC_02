@@ -93,7 +93,8 @@
     return byokErr(st === 401 || st === 403 ? "byok_auth" : st === 404 ? "byok_model" : st === 429 ? "rate_limited" : st === 413 ? "prompt_too_large" : st >= 500 ? "upstream_error" : "byok_bad", (msg || "").slice(0, 200) + ` (HTTP ${st})`);
   }
   // 與平台 sample() 相同的介面：sample(input, {onText, signal, images}) → {text, truncated}
-  async function byokSample(input, opts) {
+  const byokSample = (input, opts) => aiTrack(byokSampleRaw(input, opts));
+  async function byokSampleRaw(input, opts) {
     opts = opts || {};
     if (!byokUsable()) throw byokErr("byok_nokey");
     if (byokCfg.s2t && !s2tFn) { try { await s2tLoad(); } catch (_) {} }
@@ -147,12 +148,12 @@
   // ---- 設定畫面 ----
   const inClaudeView = () => !!(window.claude && window.claude.use);
   function byokActivate() {
-    if (aiMode === "claude") { byokRender(); return; }
+    if (aiMode === "claude") { byokRender(); aiChipRender(); return; }
     if (byokUsable() && !inClaudeView()) { sample = byokSample; aiMode = "byok"; aiErr = ""; }
     else { if (sample === byokSample) sample = null; aiMode = "none";
       aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定與案件存取」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
     try { attInitLimits(); } catch (_) {}
-    setHelpText(); updateChatControls(); byokRender();
+    setHelpText(); updateChatControls(); byokRender(); aiChipRender();
   }
   function byokRender() {
     const inC = inClaudeView();

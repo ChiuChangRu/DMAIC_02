@@ -7,7 +7,7 @@
         <div class="eyebrow">Medical Device Quality Statistics</div>
         <h1>醫材品質統計工作台</h1>
       </div>
-      <div class="top-actions"><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
+      <div class="top-actions"><span class="ai-chips" id="aiChips" role="status" aria-live="polite"></span><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
     </div>
     <nav class="tabs toolnav" role="tablist" aria-label="工具">
       <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
@@ -2133,6 +2133,7 @@
   const aiReadyP = (async () => {
     const inClaude = !!(window.claude && window.claude.use);
     try { sample = inClaude ? await window.claude.use("sample") : null; } catch (_) { sample = null; }
+    if (sample) { const raw = sample, w = (...a) => aiTrack(raw.apply(null, a)); Object.assign(w, raw); if (raw.json) w.json = (...a) => aiTrack(raw.json.apply(raw, a)); sample = w; }   // 記錄「上次成功／失敗」給標題列的 AI 標籤
     if (!sample && !aiErr) aiErr = inClaude
       ? "目前無法使用 AI。常見原因：(1) 沒有登入 claude.ai 就打開分享連結；(2) 用「在新分頁開啟／全螢幕單獨開啟」的網址，不是在 claude.ai 頁面裡開；(3) 帳號或組織沒有開放在網頁中使用 Claude。請登入 claude.ai 後，直接點分享連結開啟本頁再試。統計計算不受影響。"
       : "目前無法使用 AI：這個頁面不是在 claude.ai 裡開啟（例如下載的 HTML 檔，或放在其他網站的副本），AI 功能只在 claude.ai 中可用。請登入 claude.ai 後點分享連結開啟。統計計算不受影響。";

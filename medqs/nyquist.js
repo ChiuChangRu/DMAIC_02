@@ -1,6 +1,6 @@
   // ---------- 檢索外部案例 (NyquistAI, US FDA public data) ----------
   const NQ_NAME = "NyquistAI MedTech";
-  let mcpNs = null, nqServer = NQ_NAME, nqOff = "";
+  let mcpNs = null, nqServer = NQ_NAME, nqOff = "", nqFound = false;
   let homeExt = null;
   (async () => {
     try { mcpNs = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch (_) { mcpNs = null; }
@@ -8,7 +8,7 @@
     try {
       const r = await mcpNs.listTools();
       const s = (r.servers || []).find(x => /nyquist/i.test(x.server));
-      if (s) { nqServer = s.server; $("extChk").disabled = false; $("extNa").textContent = ""; }
+      if (s) { nqServer = s.server; nqFound = true; $("extChk").disabled = false; $("extNa").textContent = ""; try { aiChipRender(); } catch (_) {} }
     } catch (_) {}
   })();
   const NQ_ERR = {

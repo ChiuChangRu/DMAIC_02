@@ -66,6 +66,16 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.12; margin: 4px 0 8px; text-wrap: balance; color: #F5F1EA; }
 .lede { color: var(--band-muted); max-width: 64ch; margin: 0; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ai-chips { display: inline-flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ai-chip { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; color: #F5F1EA; background: rgba(245,241,234,.08); border: 1px solid rgba(245,241,234,.35); border-radius: 999px; padding: 5px 12px 5px 10px; cursor: pointer; }
+.ai-chip:hover { background: rgba(245,241,234,.18); }
+.ai-name { font-weight: 700; font-size: 12.5px; color: #fff; border-radius: 999px; padding: 1px 9px; }
+.ai-st { color: #D8D2C6; }
+.ai-dot { width: 9px; height: 9px; border-radius: 50%; background: #8A949E; flex: none; display: inline-block; }
+.ai-dot.ok { background: #4FBF8B; } .ai-dot.bad { background: #EE6A57; } .ai-dot.idle { background: transparent; border: 2px solid #A3AEB8; }
+.ai-dot.busy { background: #E0B14A; animation: aipulse 1.1s ease-in-out infinite; }
+@keyframes aipulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ai-dot.busy { animation: none; } }
 header a.btn { text-decoration: none; display: inline-block; }
 header a.btn.ghost, header a.btn.ghost:visited { color: #F5F1EA; background: transparent; border-color: rgba(245,241,234,.55); }
 header a.btn.ghost:hover { background: rgba(245,241,234,.12); }
@@ -822,7 +832,7 @@ body.novice .nb-line { display: block; }
         <div class="eyebrow">Medical Device Quality Statistics</div>
         <h1>醫材品質統計工作台</h1>
       </div>
-      <div class="top-actions"><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
+      <div class="top-actions"><span class="ai-chips" id="aiChips" role="status" aria-live="polite"></span><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
     </div>
     <nav class="tabs toolnav" role="tablist" aria-label="工具">
       <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
@@ -5725,6 +5735,7 @@ else root.runValidation = runValidation;
   const aiReadyP = (async () => {
     const inClaude = !!(window.claude && window.claude.use);
     try { sample = inClaude ? await window.claude.use("sample") : null; } catch (_) { sample = null; }
+    if (sample) { const raw = sample, w = (...a) => aiTrack(raw.apply(null, a)); Object.assign(w, raw); if (raw.json) w.json = (...a) => aiTrack(raw.json.apply(raw, a)); sample = w; }   // 記錄「上次成功／失敗」給標題列的 AI 標籤
     if (!sample && !aiErr) aiErr = inClaude
       ? "目前無法使用 AI。常見原因：(1) 沒有登入 claude.ai 就打開分享連結；(2) 用「在新分頁開啟／全螢幕單獨開啟」的網址，不是在 claude.ai 頁面裡開；(3) 帳號或組織沒有開放在網頁中使用 Claude。請登入 claude.ai 後，直接點分享連結開啟本頁再試。統計計算不受影響。"
       : "目前無法使用 AI：這個頁面不是在 claude.ai 裡開啟（例如下載的 HTML 檔，或放在其他網站的副本），AI 功能只在 claude.ai 中可用。請登入 claude.ai 後點分享連結開啟。統計計算不受影響。";
@@ -7176,7 +7187,7 @@ else root.runValidation = runValidation;
   renderStyleUI();
   // ---------- 檢索外部案例 (NyquistAI, US FDA public data) ----------
   const NQ_NAME = "NyquistAI MedTech";
-  let mcpNs = null, nqServer = NQ_NAME, nqOff = "";
+  let mcpNs = null, nqServer = NQ_NAME, nqOff = "", nqFound = false;
   let homeExt = null;
   (async () => {
     try { mcpNs = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch (_) { mcpNs = null; }
@@ -7184,7 +7195,7 @@ else root.runValidation = runValidation;
     try {
       const r = await mcpNs.listTools();
       const s = (r.servers || []).find(x => /nyquist/i.test(x.server));
-      if (s) { nqServer = s.server; $("extChk").disabled = false; $("extNa").textContent = ""; }
+      if (s) { nqServer = s.server; nqFound = true; $("extChk").disabled = false; $("extNa").textContent = ""; try { aiChipRender(); } catch (_) {} }
     } catch (_) {}
   })();
   const NQ_ERR = {
@@ -7654,7 +7665,8 @@ else root.runValidation = runValidation;
     return byokErr(st === 401 || st === 403 ? "byok_auth" : st === 404 ? "byok_model" : st === 429 ? "rate_limited" : st === 413 ? "prompt_too_large" : st >= 500 ? "upstream_error" : "byok_bad", (msg || "").slice(0, 200) + ` (HTTP ${st})`);
   }
   // 與平台 sample() 相同的介面：sample(input, {onText, signal, images}) → {text, truncated}
-  async function byokSample(input, opts) {
+  const byokSample = (input, opts) => aiTrack(byokSampleRaw(input, opts));
+  async function byokSampleRaw(input, opts) {
     opts = opts || {};
     if (!byokUsable()) throw byokErr("byok_nokey");
     if (byokCfg.s2t && !s2tFn) { try { await s2tLoad(); } catch (_) {} }
@@ -7708,12 +7720,12 @@ else root.runValidation = runValidation;
   // ---- 設定畫面 ----
   const inClaudeView = () => !!(window.claude && window.claude.use);
   function byokActivate() {
-    if (aiMode === "claude") { byokRender(); return; }
+    if (aiMode === "claude") { byokRender(); aiChipRender(); return; }
     if (byokUsable() && !inClaudeView()) { sample = byokSample; aiMode = "byok"; aiErr = ""; }
     else { if (sample === byokSample) sample = null; aiMode = "none";
       aiErr = inClaudeView() ? aiErr : "目前無法使用 AI：這個頁面不在 claude.ai 中開啟。請到「AI 設定與案件存取」→「AI 連線方式」貼上你自己的 API key，就能使用 AI；統計計算不受影響。"; }
     try { attInitLimits(); } catch (_) {}
-    setHelpText(); updateChatControls(); byokRender();
+    setHelpText(); updateChatControls(); byokRender(); aiChipRender();
   }
   function byokRender() {
     const inC = inClaudeView();
@@ -12059,6 +12071,40 @@ else root.runValidation = runValidation;
   document.addEventListener("click", e => { const b = e.target.closest("[data-pubload]"); if (b) pubLoad(b.dataset.pubload); });
   pubValRender();
   $("valBtn") && $("valBtn").addEventListener("click", pubValRender);
+
+  // =====================================================================
+  // 標題列的 AI 連線標籤：只顯示「上次呼叫的結果」，不假裝即時監看。
+  // 綠點＝上次成功；紅點＝上次失敗；空心＝已設定但還沒呼叫過；黃點閃動＝正在回答。
+  // 名稱標籤的顏色只是辨識用，不是各公司的 Logo。claude.ai 模式不知道帳號方案，所以不寫 Pro。
+  // =====================================================================
+  const AIS = { ok: null, at: null, busy: 0, code: "" };
+  const AI_BRAND = { claude: ["claude.ai", "#A34A16"], anthropic: ["Claude API", "#A34A16"], gemini: ["Gemini", "#2F63B8"], kimi: ["Kimi", "#6B46B8"], openai: ["OpenAI 相容", "#526173"] };
+  const AI_FAIL = /^byok|network|rate_limited|upstream|not_granted|sampling|unavailable|auth|forbidden|quota/i;   // 這些代表「連不上或被拒」；格式或內容問題不算
+  function aiTrack(p) {
+    AIS.busy++; aiChipRender();
+    return Promise.resolve(p).then(r => { AIS.busy--; AIS.ok = true; AIS.at = new Date(); AIS.code = ""; aiChipRender(); return r; },
+      e => { AIS.busy--; const c = e && e.code || ""; if (c !== "cancelled" && (AI_FAIL.test(c) || !c)) { AIS.ok = false; AIS.at = new Date(); AIS.code = c; } aiChipRender(); throw e; });
+  }
+  const aiHM = d => d ? String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") : "";
+  function aiChipRender() {
+    const box = $("aiChips"); if (!box) return;
+    const usable = aiMode === "claude" || aiMode === "byok";
+    let h = "";
+    if (!usable) {
+      h = `<button type="button" class="ai-chip" data-ai-go title="尚未設定 AI。點一下到「AI 設定」"><i class="ai-dot idle"></i><span class="ai-st">尚未設定 AI</span></button>`;
+    } else {
+      const key = aiMode === "claude" ? "claude" : byokCfg.provider, B = AI_BRAND[key] || AI_BRAND.openai;
+      const nm = aiMode === "claude" ? B[0] : B[0] + "・" + byokModel();
+      const dot = AIS.busy ? "busy" : AIS.ok === false ? "bad" : AIS.ok === true ? "ok" : aiMode === "claude" ? "ok" : "idle";
+      const st = AIS.busy ? "回答中…" : AIS.ok === false ? "上次失敗" + (AIS.at ? " " + aiHM(AIS.at) : "") : AIS.ok === true ? "上次成功 " + aiHM(AIS.at) : aiMode === "claude" ? "已連線" : "已設定，尚未測試";
+      const tip = AIS.ok === false ? String((typeof ERR !== "undefined" && ERR[AIS.code]) || AIS.code || "呼叫失敗").replace(/[。.]+$/, "") + "。點一下到「AI 設定」" : "點一下到「AI 設定」";
+      h = `<button type="button" class="ai-chip" data-ai-go title="${esc(tip)}"><i class="ai-dot ${dot}"></i><b class="ai-name" style="background:${B[1]}">${esc(nm)}</b><span class="ai-st">${esc(st)}</span></button>`;
+    }
+    if (aiMode === "claude" && typeof nqFound !== "undefined" && nqFound) h += `<button type="button" class="ai-chip" data-ai-go title="NyquistAI 連接器已偵測到"><i class="ai-dot ok"></i><b class="ai-name" style="background:#3D6B66">NyquistAI</b><span class="ai-st">已連接</span></button>`;
+    box.innerHTML = h;
+  }
+  $("aiChips").addEventListener("click", e => { if (!e.target.closest("[data-ai-go]")) return; const b = document.querySelector('[data-route="aisettings"]'); if (b) b.click(); });
+  aiChipRender();
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;
