@@ -130,8 +130,9 @@ footer a, .card a { color: var(--act-text); }
   <nav class="tabs" aria-label="章節">
     <a href="#s1" data-tab="s1" aria-current="true">1 假設檢定</a>
     <a href="#s2" data-tab="s2" aria-current="false">2 同等性 TOST 入門</a>
-    <span>3 樣本數（規劃中）</span>
-    <span>4 MSA（規劃中）</span>
+    <a href="#s3" data-tab="s3" aria-current="false">3 t 檢定入門</a>
+    <span>4 樣本數（規劃中）</span>
+    <span>5 MSA（規劃中）</span>
   </nav>
 </header>
 
@@ -355,28 +356,55 @@ footer a, .card a { color: var(--act-text); }
   <!-- 2-4 -->
   <section class="card" id="s2-4">
     <span class="qref">2-4</span>
-    <h3>Δ 怎麼定：最關鍵、也最常被問</h3>
-    <p class="help">Δ 是「差多少以內算一樣」，是工程與臨床判斷，不是統計算出來的。</p>
+    <h3>Δ 怎麼取得：最關鍵、也最常被問</h3>
+    <p class="help">Δ 讀作「delta」，意思是「差多少以內，我們就說一樣」。這像驗收前先講好「尺寸誤差多少以內算合格」，不是量完才決定。它<b>不是統計算出來的，也不能問 AI 要一個數字</b>，要由你們依產品的功能、風險與要求決定，並寫下依據。以下比照工作台「新手模式」的格式：白話、什麼時候訂、訂錯會怎樣、醫材例子。</p>
     <div class="two">
-      <div class="inner">
-        <h4 style="margin:0 0 6px">常見依據</h4>
-        <ul class="tight">
-          <li><b>功能或臨床需求</b>：差異多大會影響使用或安全（例如熱封強度降多少仍遠高於規格下限）。</li>
-          <li><b>規格與製程能力</b>：以規格寬度或製程變異作參考*。</li>
-          <li><b>比對品或舊製程的歷史變異</b>：例如批間差異本來就有多大。</li>
-          <li><b>法規或指引已有的界限</b>：例如藥品生體相等常用幾何平均比的 80%～125%。</li>
-        </ul>
-        <p class="hint" style="font-size:13px">* 用規格的幾成當 Δ 沒有通用規則，需依產品風險說明理由。</p>
-      </div>
-      <div class="inner">
-        <h4 style="margin:0 0 6px">必須遵守</h4>
-        <ul class="tight">
-          <li><b>看數據之前就訂好</b>，寫進計畫書；看了結果再調 Δ，結論無效。</li>
-          <li>寫下 Δ 的理由與出處，列入知識庫（KM），下次同類變更可以沿用。</li>
-          <li>Δ 太寬：什麼都判同等，失去保護；Δ 太窄：需要非常大的樣本。</li>
-        </ul>
-      </div>
+      <div class="inner"><h4 style="margin:0 0 6px">白話</h4><p style="margin:0">新、舊的平均差在 ±Δ 之內，就當作一樣。Δ 是工程或臨床判斷，不是統計結果。</p></div>
+      <div class="inner"><h4 style="margin:0 0 6px">什麼時候訂</h4><p style="margin:0"><b>量測之前</b>，寫進驗證計畫書。可以參考規格寬度的一部分、功能或臨床影響、舊廠批次間的變異（見下表的六類依據）。</p></div>
+      <div class="inner"><h4 style="margin:0 0 6px">訂錯會怎樣</h4><p style="margin:0">Δ 太大：一定判同等，但說服不了審查員。Δ 太小：要量非常多件。看完數據才訂 Δ，等於讓結果決定標準，審查時會被質疑。不要為了少量幾件而放寬 Δ。</p></div>
+      <div class="inner"><h4 style="margin:0 0 6px">醫材例子（示意）</h4><p style="margin:0">內徑規格 ±0.10 mm（公差寬度 0.20 mm），Δ 取 0.02 mm（約公差寬度的 10%）*，並寫明理由。</p></div>
     </div>
+
+    <h4 style="margin:16px 0 6px">Δ 的六類依據：去哪裡找資料</h4>
+    <p class="help" style="margin-top:0">這六類與工作台「Δ 的依據」下拉選單相同。選最主要的一類，再用一句話寫出具體內容。</p>
+    <div class="scroll-x"><table>
+      <tr><th>依據</th><th>去哪裡取得</th><th>可以回答的問題</th><th>寫進計畫書的說法（示意*）</th></tr>
+      <tr><td><b>功能／臨床影響</b></td><td>設計輸入、風險分析（ISO 14971）、組裝或功能驗證、使用者回饋</td><td>差多少會開始影響使用或安全？</td><td>內徑差 0.02 mm 內不影響組裝（依組裝驗證）</td></tr>
+      <tr><td><b>客戶或下游要求</b></td><td>客戶圖面、規格書、品質協議、下游製程需求</td><td>對方允許平均偏移多少？</td><td>依品質協議第 X 條，平均偏移不超過 ___</td></tr>
+      <tr><td><b>舊廠（現行）製程變異</b></td><td>SPC 圖、歷史批次數據、批間差異</td><td>現行製程本來就會晃動多少？比這更小的差異，沒必要區分（有疑慮時可以參考 SPC 管制圖的分散程度）</td><td>現行 3 批的批間平均差為 ___</td></tr>
+      <tr><td><b>量測能力（MSA）</b></td><td>量測系統分析（MSA，例如 Gage R&amp;R：量測本身會晃多少）的結果、量具解析度</td><td>量測系統分得出多小的差異？</td><td>Δ 不小於量測系統能可靠分辨的差異</td></tr>
+      <tr><td><b>規格或內控標準</b></td><td>規格公差寬度、內控限</td><td>Δ 佔公差的幾成？</td><td>公差寬度 0.20 mm 的 10%，Δ = 0.02 mm</td></tr>
+      <tr><td><b>其他（請說明）</b></td><td>法規、標準、指引、文獻已有的界限</td><td>有沒有被接受的先例？</td><td>藥品生體相等常用幾何平均比 80%～125%，需註明出處</td></tr>
+    </table></div>
+    <p class="hint" style="font-size:13px">「去哪裡取得」是常見來源的整理，各公司文件名稱不同；「寫進計畫書的說法」只是格式示範，數字請依你們的文件填寫。</p>
+
+    <h4 style="margin:16px 0 6px">取得 Δ 的步驟</h4>
+    <ol class="tight" style="padding-left:1.4em">
+      <li><b>先問「差多少會出事」</b>：這個特性影響什麼功能或安全？多大的平均偏移才開始有影響？這是 Δ 的上限。</li>
+      <li><b>蒐集可用的依據</b>：對照上表六類，把手上有的資料都列出來（規格、SPC、MSA、客戶要求…）。</li>
+      <li><b>取最能說服審查員的那一個</b>：不同依據算出的 Δ 常常不一樣，保守做法是採較小的那個*，並說明為什麼。</li>
+      <li><b>寫下依據與理由</b>：選依據類別，再用一句話寫具體內容與出處。稽核最常追問的就是「Δ 為什麼合理」。</li>
+      <li><b>量測前鎖定</b>：隨驗證計畫書一起核准，之後不再更動。</li>
+      <li><b>用樣本數檢查可不可行</b>：Δ 訂好後，到「樣本數規劃」看要量幾件。如果件數多到做不到，是回頭檢討製程變異或量測能力，而不是把 Δ 放寬。</li>
+    </ol>
+
+    <h4 style="margin:16px 0 6px">試算：Δ 合不合理、要量幾件</h4>
+    <p class="help" style="margin-top:0">輸入規格公差寬度、你們考慮的 Δ 與這個特性平常的波動 σ。下面會看 Δ 佔公差的比例、Δ 與 σ 的比值，以及大約要量幾件（常態近似，α = 0.05，把握 90%，真實差異為 0）。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="dl_W">規格公差寬度（上限 − 下限） <output id="o_dlW"></output></label><input type="range" id="dl_W" min="0.05" max="2" step="0.01" value="0.2"></div>
+        <div class="ctl"><label for="dl_D">考慮的 Δ（±） <output id="o_dlD"></output></label><input type="range" id="dl_D" min="0.005" max="1" step="0.005" value="0.02"></div>
+        <div class="ctl"><label for="dl_S">平常的分散程度（標準差 σ） <output id="o_dlS"></output></label><input type="range" id="dl_S" min="0.002" max="0.5" step="0.002" value="0.02"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Δ 佔公差寬度</div><div class="v" id="m_dlr"></div></div>
+        <div class="stat"><div class="k">Δ ÷ σ</div><div class="v" id="m_dls"></div></div>
+        <div class="stat"><div class="k">單組／成對 約需</div><div class="v" id="m_dln1"></div></div>
+        <div class="stat"><div class="k">兩組獨立 每組約需</div><div class="v" id="m_dln2"></div></div>
+      </div>
+      <p class="hint" id="dl_note" style="font-size:13.5px;margin-top:8px"></p>
+    </div>
+    <p class="hint" style="font-size:13px;margin-top:8px">這是近似算法，只用來感受 Δ 與 σ 的關係。正式規劃請用工作台「樣本數規劃 → 同等性」圖卡。選擇依據時，工作台也會顯示「Δ 約為公差的幾 %」。</p>
   </section>
 
   <!-- 2-5 -->
@@ -419,6 +447,224 @@ footer a, .card a { color: var(--act-text); }
       </div>
     </div>
     <p class="help" style="margin-top:12px">只怕「變差」、變好沒關係時，用非劣性檢定（只做一邊），工作台的樣本數規劃也有對應圖卡。</p>
+  </section>
+</section>
+
+<section id="s3" hidden>
+  <h2 class="sec">3　t 檢定入門：比較平均值</h2>
+  <p class="sec-lede">新製程做出來的產品，平均強度真的比舊的高嗎？換了供應商，來料的平均尺寸有沒有變？你不可能把整批都量過，只能抽幾件來量，再用這幾件去推測整批。但抽樣有運氣成分：這次抽到的幾件，剛好偏高或偏低都有可能。t 檢定要回答的就是：<b>「看到的差異，是真的有差，還是剛好抽到的運氣？」</b>它專門用在「抽的件數不多、整批的分散程度也不知道」的情況，是工作台「假設檢定」最常用的一組。本節先認識幾個詞，再看圖、動手算，最後說明怎麼選、用在哪裡。</p>
+
+  <!-- 3-1 -->
+  <section class="card" id="s3-0">
+    <span class="qref">3-1</span>
+    <h3>先認識幾個詞（不用背，後面會一直用到）</h3>
+    <p class="help">下面用同一個情境說明：新、舊製程各抽 10 件量封口強度，想知道平均有沒有差。</p>
+    <div class="scroll-x"><table>
+      <tr><th>名詞</th><th>白話意思</th><th>舉例</th></tr>
+      <tr><td><b>平均（x̄）</b></td><td>全部量測值加起來，除以件數。</td><td>10 件的強度加總除以 10。</td></tr>
+      <tr><td><b>標準差（s）</b></td><td>每一件跟平均「典型差多遠」，代表資料有多分散。越大越散。</td><td>兩批平均都是 10 N，A 批大多落在 9.9～10.1，B 批落在 8～12。B 批的標準差比較大。</td></tr>
+      <tr><td><b>件數（n）</b></td><td>你量了幾件。</td><td>每批 10 件，n = 10。</td></tr>
+      <tr><td><b>標準誤（SE）</b></td><td>「平均」本身的不確定程度。同一個製程重新抽 10 件，算出來的平均每次都會有點不同，SE 就是這個晃動的大小。量得越多，SE 越小。</td><td>SE = s ÷ √n。量 40 件比量 10 件，SE 約小一半。</td></tr>
+      <tr><td><b>自由度（df）</b></td><td>可以想成「真正提供資訊的件數」，單組大約是 n − 1。你不用自己算，程式會算，但它會決定 t 分布的形狀。</td><td>量 10 件，df = 9。</td></tr>
+      <tr><td><b>t 值</b></td><td>觀察到的差異，是標準誤的幾倍。倍數越大，越不像運氣。</td><td>差 0.4 N、SE 為 0.2 N，t = 2。</td></tr>
+      <tr><td><b>p 值</b></td><td>先假設「其實沒有差」，光靠運氣也剛好看到這麼大（或更大）差異的機率。越小，越不像運氣。<br><b>它不是「沒有差的機率」。</b></td><td>p = 0.03：如果真的沒差，只有約 3% 的機會抽到這麼大的差異。</td></tr>
+      <tr><td><b>顯著水準（α）</b></td><td>事先訂的門檻，常用 0.05。p 小於 α，就說「有顯著差異」。</td><td>p = 0.03 &lt; 0.05，判定有顯著差異。</td></tr>
+      <tr><td><b>信賴區間</b></td><td>真實差異「大概落在哪個範圍」。區間越窄，估得越準。</td><td>差異的 95% 信賴區間為 0.1～0.7 N。</td></tr>
+    </table></div>
+  </section>
+
+  <!-- 3-1 -->
+  <section class="card" id="s3-1">
+    <span class="qref">3-2</span>
+    <h3>為什麼用 t 分布，不用常態分布</h3>
+    <p class="help">判定的邏輯是：看到的差異如果是標準誤的好幾倍，就不太可能是運氣。「好幾倍」的門檻（臨界值）要查分布表。如果整批的分散程度已知，查常態分布就可以。但實際上我們只有抽到的幾件，只能用它們算出的 s 來估，而 s 本身也會因為運氣而不準，<b>量得越少越不準</b>。為了保險，門檻要訂得更高一點。這個「加高過的分布」就是 t 分布，件數越少，加得越多。拖拉 df（自由度，可以先想成「件數 − 1」）看看。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="u_df">自由度 df <output id="o_udf"></output></label><input type="range" id="u_df" min="1" max="60" step="1" value="4"></div>
+      </div>
+      <div class="legend">
+        <span><i class="ln dash" style="border-color:var(--muted)"></i>常態分布（整批分散程度已知）</span>
+        <span><i class="ln" style="border-color:var(--c-h0)"></i>t 分布（用抽到的 s 估）</span>
+        <span><i style="background:var(--c-alpha);opacity:.6"></i>t 的判定門檻外側（雙尾 α = 0.05）</span>
+      </div>
+      <svg class="plot" id="p31" viewBox="0 0 680 320" role="img" aria-label="t 分布與常態分布的比較"></svg>
+      <div class="two" style="margin-top:10px">
+        <div class="stat"><div class="k">雙尾 α = 0.05 的臨界值：常態</div><div class="v" id="m_uz"></div></div>
+        <div class="stat"><div class="k">雙尾 α = 0.05 的臨界值：t（目前 df）</div><div class="v" id="m_ut"></div></div>
+      </div>
+    </div>
+    <div class="scroll-x" style="margin-top:12px"><table id="u_tbl">
+      <tr><th>自由度 df</th><th>t 臨界值（雙尾 α = 0.05）</th><th>比常態的 1.960 大多少</th></tr>
+    </table></div>
+    <p class="hint" style="font-size:13px;margin-top:8px">表中數字由本頁程式以 t 分布計算。件數很少時（df = 2，只量 3 件），門檻超過 4，要看到差異是標準誤的 4 倍以上才肯說「有差」；件數多了，門檻就降到接近 2。這就是「量太少不能直接套常態分布」的原因。</p>
+  </section>
+
+  <!-- 3-2 -->
+  <section class="card" id="s3-2">
+    <span class="qref">3-3</span>
+    <h3>動手算：統計過程一步一步</h3>
+    <p class="help">先選你的比較屬於哪一種（見下方三個按鈕），再拖拉數字，看結論怎麼變。圖是「如果其實沒有差」時，t 值會落在哪裡：中間高、兩邊低，越往兩邊越「少見」。<b>紅色區域是「少見到可以判定有差」的範圍</b>，紫色線是你的資料算出的 t，<b>紫色面積就是 p 值</b>，也就是比紫線更極端的機率。圖下方會用文字列出每一步，照著讀一遍就知道檢定在做什麼。</p>
+    <ul class="tight help" style="margin-top:0">
+      <li><b>單組對目標值</b>：一批產品的平均，跟一個固定的目標值比（例如規格目標、標示值）。</li>
+      <li><b>成對</b>：同一件產品量兩次再比（例如滅菌前、滅菌後）。輸入的是「每件前後差」的平均與標準差。</li>
+      <li><b>兩組獨立</b>：兩批不同的產品互相比（例如新、舊製程各做一批）。</li>
+    </ul>
+    <div class="inner">
+      <div class="chips" id="u_design" role="group" aria-label="試驗設計" style="margin-bottom:10px">
+        <button class="chip" type="button" data-v="one" aria-pressed="true">單組對目標值</button>
+        <button class="chip" type="button" data-v="paired" aria-pressed="false">成對（同一件前後）</button>
+        <button class="chip" type="button" data-v="two" aria-pressed="false">兩組獨立（Welch）</button>
+      </div>
+      <div class="controls">
+        <div class="ctl" id="uc_m1"><label for="u_m1" id="ul_m1">樣本平均 x̄ <output id="o_um1"></output></label><input type="range" id="u_m1" min="0" max="20" step="0.05" value="10.4"></div>
+        <div class="ctl" id="uc_s1"><label for="u_s1" id="ul_s1">樣本標準差 s <output id="o_us1"></output></label><input type="range" id="u_s1" min="0.1" max="4" step="0.05" value="0.8"></div>
+        <div class="ctl" id="uc_n1"><label for="u_n1" id="ul_n1">件數 n <output id="o_un1"></output></label><input type="range" id="u_n1" min="2" max="80" step="1" value="12"></div>
+        <div class="ctl" id="uc_m2"><label for="u_m2" id="ul_m2">目標值 μ₀ <output id="o_um2"></output></label><input type="range" id="u_m2" min="0" max="20" step="0.05" value="10"></div>
+        <div class="ctl" id="uc_s2" hidden><label for="u_s2">組 2 標準差 s₂ <output id="o_us2"></output></label><input type="range" id="u_s2" min="0.1" max="4" step="0.05" value="1.2"></div>
+        <div class="ctl" id="uc_n2" hidden><label for="u_n2">組 2 件數 n₂ <output id="o_un2"></output></label><input type="range" id="u_n2" min="2" max="80" step="1" value="12"></div>
+        <div class="ctl"><label for="u_a">門檻 α（誤判的容忍度）</label><select id="u_a"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.1">0.10</option></select></div>
+        <div class="ctl"><label for="u_tail">想證明的方向</label><select id="u_tail"><option value="two" selected>雙尾：有沒有差</option><option value="greater">單尾：有沒有比較大</option><option value="less">單尾：有沒有比較小</option></select></div>
+        <div class="ctl"><label for="u_u">單位</label><input type="text" id="u_u" value="N" maxlength="20" style="font:inherit;color:var(--ink);background:var(--code-bg);border:1.5px solid var(--act);border-radius:8px;padding:8px 10px;width:100%"></div>
+      </div>
+      <div class="legend">
+        <span><i class="ln" style="border-color:var(--c-h0)"></i>H₀ 實際沒差異時的 t 分布</span>
+        <span><i style="background:var(--c-alpha);opacity:.6"></i>α 判定有差的範圍</span>
+        <span><i class="ln" style="border-color:var(--c-h1)"></i>你的資料算出的 t</span>
+        <span><i style="background:var(--c-h1);opacity:.35"></i>p 值</span>
+      </div>
+      <svg class="plot" id="p32" viewBox="0 0 680 320" role="img" aria-label="t 分布、拒絕區與 p 值"></svg>
+      <div class="two" style="margin-top:10px">
+        <div class="stat" id="u_v1"></div>
+        <div class="stat" id="u_v2"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">標準誤 SE</div><div class="v" id="m_use"></div></div>
+        <div class="stat"><div class="k">t 值</div><div class="v" id="m_ut2"></div></div>
+        <div class="stat"><div class="k">自由度 df</div><div class="v" id="m_udf"></div></div>
+        <div class="stat"><div class="k">臨界值</div><div class="v" id="m_ucv"></div></div>
+        <div class="stat"><div class="k">p 值</div><div class="v" id="m_up"></div></div>
+      </div>
+      <h4 style="margin:14px 0 6px">檢定一步一步在做什麼（隨上面的輸入即時更新）</h4>
+      <ol class="tight" style="padding-left:1.4em" id="u_steps"></ol>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>試試把件數 n 拉大</b>（差異不變）：標準誤變小，t 變大，p 變小。同樣的差異，量得越多越容易被判定「有差」。</li>
+      <li><b>試試把標準差 s 拉大</b>：資料越分散，越看不出差異。量測系統不穩定時，量出來的 s 會被灌大，真正的差異就被蓋住了（這也是要先做量測系統分析 MSA 的原因）。</li>
+      <li><b>單尾與雙尾</b>：單尾把「少見」的範圍全放在一邊，同樣的 t 比較容易判有差。但要在看數據前就決定，而且只在「另一個方向的差異完全不在乎」時才用，否則像是事後挑對自己有利的標準。</li>
+      <li><b>「有顯著差異」不等於「差異夠大、有意義」</b>：件數很多時，很小的差異也會顯著。要同時看信賴區間與差異有多大，是否超過你們真正在意的量。</li>
+      <li><b>「沒有顯著差異」不等於「一樣」</b>：可能只是量得不夠多。要證明「一樣」要改用 TOST（見第 2 節）。</li>
+    </ul>
+  </section>
+
+  <!-- 3-3 -->
+  <section class="card" id="s3-3">
+    <span class="qref">3-4</span>
+    <h3>t 檢定的算式</h3>
+    <p class="help">看到算式不用緊張。三種比較只差在「標準誤怎麼算」與「自由度怎麼定」，後面的 t 值、p 值、信賴區間都是同一套。符號：x̄ = 平均，s = 標準差，n = 件數，μ₀ = 目標值（讀作「繆零」）。每條右邊都有白話說明；想看實際數字，看最下面「代入」那一格。</p>
+    <div class="inner texbox">
+      <div class="tex-row"><div class="tex" data-tex="t=\dfrac{\bar x-\mu_0}{s/\sqrt{n}},\qquad df=n-1"></div><div class="tex-note"><b>① 單組對目標值。</b>分子是「平均離目標差多少」，分母是標準誤（平均的晃動程度），所以 t 就是「差了幾個標準誤」。例：量測平均與規格目標值比較。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="d_i=x_i-y_i,\qquad t=\dfrac{\bar d}{s_d/\sqrt{n}},\qquad df=n-1"></div><div class="tex-note"><b>② 成對。</b>同一件量兩次（前後、兩種方法）。先算出每件的差，再當成「單組跟 0 比」處理：如果沒有差，每件的差平均起來應該接近 0。注意 s<sub>d</sub> 是「差」的標準差，不是兩次量測各自的標準差。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="t=\dfrac{\bar x_1-\bar x_2}{\sqrt{\dfrac{s_1^{2}}{n_1}+\dfrac{s_2^{2}}{n_2}}},\qquad df=\dfrac{\left(\dfrac{s_1^{2}}{n_1}+\dfrac{s_2^{2}}{n_2}\right)^{2}}{\dfrac{(s_1^{2}/n_1)^{2}}{n_1-1}+\dfrac{(s_2^{2}/n_2)^{2}}{n_2-1}}"></div><div class="tex-note"><b>③ 兩組獨立（Welch）。</b>兩組的分散程度各算各的，不必相同；自由度的算式比較複雜，結果通常不是整數，交給程式算即可。3-3 的「兩組獨立」就是用這個。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="\begin{gathered}s_p^{2}=\dfrac{(n_1-1)s_1^{2}+(n_2-1)s_2^{2}}{n_1+n_2-2}\\[6pt] t=\dfrac{\bar x_1-\bar x_2}{s_p\sqrt{1/n_1+1/n_2}},\quad df=n_1+n_2-2\end{gathered}"></div><div class="tex-note"><b>④ 兩組獨立（Student，合併）。</b>假設兩組一樣分散，把兩組的標準差合併成一個再算。如果兩組分散程度差很多就不適用，所以不確定時用 ③ 較安全。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="p=2\,P(T_{df}\ge |t|)\ \ (\text{雙尾}),\qquad \text{CI}=(\bar x_1-\bar x_2)\pm t_{1-\alpha/2,\,df}\cdot SE"></div><div class="tex-note"><b>⑤ p 值與信賴區間。</b>p 值就是 t 分布圖上，比你的 t 更極端的那塊面積。信賴區間 = 差異 ± 門檻 × 標準誤。信賴區間沒有包含 0（單組時沒有包含 μ₀），就等於 p 小於 α，兩種說法的結論一致。</div></div>
+    </div>
+    <div class="tex-live">
+      <div class="hint" style="font-size:13.5px;color:var(--muted)">代入 3-3 目前的輸入（改上面的數字，這裡會跟著變）：</div>
+      <div class="tex" id="texU1"></div>
+      <div class="tex" id="texU2"></div>
+      <div class="tex-note" id="texUNote"></div>
+    </div>
+  </section>
+
+  <!-- 3-4 -->
+  <section class="card" id="s3-4">
+    <span class="qref">3-5</span>
+    <h3>怎麼選：哪一種 t、前提是什麼</h3>
+    <div class="scroll-x"><table>
+      <tr><th>你手上的資料</th><th>用哪一種</th><th>要注意什麼</th></tr>
+      <tr><td>一組量測，要跟目標值（規格、標示值）比</td><td>單組 t</td><td>目標值要在量測前訂好，不能看了數據再挑</td></tr>
+      <tr><td>同一件量兩次（滅菌前後、老化前後、兩種方法）</td><td>成對 t</td><td>一定要能「一對一」配起來；配對後變異通常更小，檢定力更好</td></tr>
+      <tr><td>兩批不同的件（新舊製程、兩家供應商）</td><td>兩組獨立 t（Welch 或 Student）</td><td>每件只屬於一組；不確定變異數是否相同時用 Welch</td></tr>
+      <tr><td>三組以上</td><td>不要兩兩做 t</td><td>改用 ANOVA。三組兩兩比較要做 3 次 t 檢定，每次都有 5% 的誤判機會，整體至少誤判一次的機率變成約 1 − 0.95³ ≈ 14.3%，不是 5%</td></tr>
+    </table></div>
+    <div class="two" style="margin-top:12px">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">t 檢定要成立，需要這幾件事</h4>
+        <ul class="tight">
+          <li><b>每件各自獨立</b>：同一件重複量 10 次，只能算 1 件，不能當成 10 件。</li>
+          <li><b>資料大致呈鐘形</b>（兩邊少、中間多，稱為常態分布）：件數很少時，要看資料是否偏得很厲害。件數較多時，平均值的分布會自己接近鐘形，t 檢定對輕微偏離比較不怕。「多少件算夠」沒有統一標準*。</li>
+          <li><b>沒有極端的離群值</b>：一個特別離譜的值，就能把平均與標準差都拉歪。</li>
+        </ul>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">這些條件不符時怎麼辦</h4>
+        <ul class="tight">
+          <li>資料偏得很厲害或有離群值，而且件數少：改用「不假設資料形狀」的無母數檢定（單組與成對用 Wilcoxon 符號等級檢定，兩組獨立用 Mann-Whitney 檢定）。</li>
+          <li>兩組分散程度差很多：用 Welch，不用合併的 Student。</li>
+          <li>工作台會幫你檢查「資料是否呈鐘形」（Shapiro-Wilk 檢定）與「兩組分散程度是否相近」（Levene 檢定），也提供 Wilcoxon、Mann-Whitney 等無母數檢定，有疑慮時可以對照看結果是否一致。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3-5 -->
+  <section class="card" id="s3-5">
+    <span class="qref">3-6</span>
+    <h3>用在哪裡：醫材常見的比較情境</h3>
+    <p class="help">以下為說明用的示意情境，不是特定產品的數據。</p>
+    <div class="scroll-x"><table>
+      <tr><th>情境（示意）</th><th>比較什麼</th><th>用哪一種</th></tr>
+      <tr><td>量一批產品的平均拉力，跟規格目標值比</td><td>平均 vs 目標值</td><td>單組 t</td></tr>
+      <tr><td>同一批試片，滅菌前後各量一次拉力</td><td>前後差（每件一對）</td><td>成對 t</td></tr>
+      <tr><td>兩位量測人員量同一批樣品</td><td>兩人的讀值差（每件一對）</td><td>成對 t</td></tr>
+      <tr><td>新、舊熱封製程各做一批，比較封口強度</td><td>兩批平均</td><td>兩組獨立 t（Welch）</td></tr>
+      <tr><td>換供應商後，來料尺寸平均有沒有變</td><td>兩批平均</td><td>兩組獨立 t（Welch）</td></tr>
+    </table></div>
+    <div class="two" style="margin-top:12px">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">t 檢定在整個流程的位置</h4>
+        <ul class="tight">
+          <li><b>想證明「有差」</b>：用本節的 t 檢定。找原因、確認改善有沒有效，都屬於這類。</li>
+          <li><b>想證明「一樣」</b>：改用 TOST（見第 2 節），它其實是做兩次單邊的 t 檢定，而且要先訂「差多少以內算一樣」（±Δ）。p ≥ 0.05 不能當成「沒差」。</li>
+          <li><b>量之前先規劃件數</b>：要先想好「多大的差異算有意義」與「平常的分散程度」，才知道要量幾件（見 1-2）。</li>
+          <li>同樣的概念也用在回歸分析：判斷一條趨勢線的斜率是不是真的不為 0（t = 係數 ÷ 標準誤）。</li>
+        </ul>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">不是 t 檢定的場合</h4>
+        <ul class="tight">
+          <li>只有「良品／不良品」的比例：用比例檢定（Fisher 精確檢定、卡方檢定）。</li>
+          <li>三組以上的平均：用 ANOVA，再做多重比較。</li>
+          <li>想比較兩組的「分散程度」是否相同：用變異數檢定（如 Levene 檢定），t 檢定比的是平均。</li>
+          <li>資料不是可連續量測的數值（例如等級、點數、計件）：用無母數或計數資料的方法。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3-6 -->
+  <section class="card" id="s3-6">
+    <span class="qref">3-7</span>
+    <h3>在工作台怎麼做</h3>
+    <div class="two">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">規劃階段（量之前）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>樣本數規劃 → 選「改善後有沒有變好？」（兩組比較）或「平均有沒有達到目標值？」（單組、成對）圖卡。</li>
+          <li>填要抓的差異大小與這個特性平常的波動 σ，算出每組要量幾件。</li>
+          <li>結果區有「帶到假設檢定 →」按鈕時，按下去可把條件帶過去。</li>
+        </ol>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">判定階段（量完後）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>假設檢定 → 貼上數據，選單組、成對或兩組。</li>
+          <li>檢定目的選「差異：有沒有差」，對立假設選雙尾或單尾。</li>
+          <li>執行分析：看 t 值、p 值、信賴區間，並留意常態性與變異數同質性的檢查結果。</li>
+        </ol>
+      </div>
+    </div>
+    <p class="help" style="margin-top:12px">要證明「一樣好」時，檢定目的改選「同等性（TOST）」。想看信賴區間與 ±Δ 的關係，回到第 2 節。</p>
   </section>
 </section>
 
@@ -575,7 +821,7 @@ footer a, .card a { color: var(--act-text); }
 
   // ---- LaTeX ----
   function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true, output: "mathml" }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
-  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); texT(); }
+  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); texT(); try { texU(); } catch (_) {} }
   function texLive() {
     const two = S.side === "two", qa = two ? 1 - S.a / 2 : 1 - S.a, za = PhiInv(qa), sh = S.sh, zb = sh - za, beta = betaOf(sh, S.a, S.side);
     const pw = +$("i_pw").value, zp = PhiInv(pw), zaLab = two ? "z_{1-\\alpha/2}" : "z_{1-\\alpha}", f3 = v => fx(v, 3);
@@ -643,20 +889,138 @@ footer a, .card a { color: var(--act-text); }
   T.all = () => { draw22(); };
   ["t_d", "t_s", "t_n", "t_D", "t_u"].forEach(id => $(id).addEventListener("input", draw22)); $("tt_a").addEventListener("change", draw22); $("t_pw").addEventListener("change", texT);
   $("t_design").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; T.design = b.dataset.v; $("t_design").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw22(); });
+
+  // ======== 第 3 節：t 檢定 ========
+  const tPdf = (x, v) => Math.exp(lgamma((v + 1) / 2) - lgamma(v / 2) - 0.5 * Math.log(v * Math.PI) - (v + 1) / 2 * Math.log1p(x * x / v));
+  const U = { design: "one" };
+  function ttCalc() {
+    const des = U.design, tail = $("u_tail").value, a = +$("u_a").value, m1 = +$("u_m1").value, s1 = +$("u_s1").value, n1 = +$("u_n1").value, m2 = +$("u_m2").value, s2 = +$("u_s2").value, n2 = +$("u_n2").value;
+    let diff, se, df;
+    if (des === "two") { const v1 = s1 * s1 / n1, v2 = s2 * s2 / n2; se = Math.sqrt(v1 + v2); df = Math.pow(v1 + v2, 2) / (v1 * v1 / (n1 - 1) + v2 * v2 / (n2 - 1)); diff = m1 - m2; }
+    else { se = s1 / Math.sqrt(n1); df = n1 - 1; diff = des === "paired" ? m1 : m1 - m2; }
+    const t = diff / se, two = tail === "two", cv = two ? tInv(1 - a / 2, df) : tInv(1 - a, df), tc = tInv(1 - a / 2, df);
+    const p = two ? 2 * tSf(Math.abs(t), df) : tail === "greater" ? tSf(t, df) : tCdf(t, df);
+    const rej = two ? Math.abs(t) > cv : tail === "greater" ? t > cv : t < -cv;
+    return { des, tail, a, m1, s1, n1, m2, s2, n2, diff, se, df, t, two, cv, p, rej, lo: diff - tc * se, hi: diff + tc * se, ci: Math.round((1 - a) * 100) };
+  }
+  function ttSetDesign(d) {
+    U.design = d;
+    const L = { one: ["樣本平均 x̄", "樣本標準差 s", "件數 n", "目標值 μ₀"], paired: ["平均差 d̄", "差值的標準差 s<sub>d</sub>", "配對數 n", ""], two: ["組 1 平均 x̄₁", "組 1 標準差 s₁", "組 1 件數 n₁", "組 2 平均 x̄₂"] }[d];
+    const set = (id, txt) => { const lb = $(id), o = lb.querySelector("output"); lb.innerHTML = txt + " "; lb.appendChild(o); };
+    set("ul_m1", L[0]); set("ul_s1", L[1]); set("ul_n1", L[2]); if (L[3]) set("ul_m2", L[3]);
+    $("uc_m2").hidden = d === "paired"; $("uc_s2").hidden = d !== "two"; $("uc_n2").hidden = d !== "two";
+    const m1 = $("u_m1"); if (d === "paired") { m1.min = -5; m1.max = 5; m1.value = 0.4; } else { m1.min = 0; m1.max = 20; m1.value = 10.4; }
+    $("u_m2").value = d === "two" ? 10 : 10;
+    $("u_design").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === d)));
+    draw32();
+  }
+  const ttTbl = [2, 5, 10, 20, 30, 60];
+  function draw31() {
+    const v = +$("u_df").value; $("o_udf").textContent = v;
+    const z = PhiInv(0.975), tc = tInv(0.975, v), xr = 4.5, fn = x => tPdf(x, v);
+    const F = frame({ svg: "p31", x0: -xr, x1: xr, y0: 0, y1: 0.45, T: 34, L: 24, xt: [-4, -3, -2, -1, 0, 1, 2, 3, 4], xl: "檢定統計量（z 或 t，無單位）" });
+    const { sx, sy } = F; let s = F.s;
+    s += fillArea(fn, tc, xr, sx, sy, 0, "var(--c-alpha)", .6) + fillArea(fn, -xr, -tc, sx, sy, 0, "var(--c-alpha)", .6);
+    s += line(pdf, -xr, xr, sx, sy, "var(--muted)", "7 5") + line(fn, -xr, xr, sx, sy, "var(--c-h0)");
+    const crit = cv => `<line x1="${sx(cv)}" x2="${sx(cv)}" y1="${sy(0.45) - 6}" y2="${F.B}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    s += crit(tc) + crit(-tc) + `<text x="${sx(tc)}" y="${sy(0.45) - 12}" text-anchor="middle" font-size="12.5" fill="var(--ink)">t 臨界值 ${fx(tc, 3)}</text><text x="${sx(-tc)}" y="${sy(0.45) - 12}" text-anchor="middle" font-size="12.5" fill="var(--ink)">−${fx(tc, 3)}</text>`;
+    s += `<line x1="${sx(z)}" x2="${sx(z)}" y1="${sy(0.2)}" y2="${F.B}" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="${sx(-z)}" x2="${sx(-z)}" y1="${sy(0.2)}" y2="${F.B}" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="4 3"/><text x="${sx(z)}" y="${sy(0.2) - 5}" text-anchor="middle" font-size="12" fill="var(--muted)">z ${fx(z, 3)}</text>`;
+    $("p31").innerHTML = s;
+    $("m_uz").textContent = "±" + fx(z, 3); $("m_ut").textContent = "±" + fx(tc, 3) + `（df = ${v}）`;
+  }
+  function buildTbl() {
+    const z = PhiInv(0.975); let h = `<tr><th>自由度 df</th><th>t 臨界值（雙尾 α = 0.05）</th><th>比常態的 ${fx(z, 3)} 大多少</th></tr>`;
+    ttTbl.forEach(v => { const t = tInv(0.975, v); h += `<tr><td>${v}</td><td>${fx(t, 3)}</td><td>+${fx((t / z - 1) * 100, 1)}%</td></tr>`; });
+    h += `<tr><td>∞（常態）</td><td>${fx(z, 3)}</td><td>—</td></tr>`;
+    $("u_tbl").innerHTML = h;
+  }
+  function draw32() {
+    const r = ttCalc(), u = ($("u_u").value || "").trim(), us = u ? " " + u : "", f = v => fx(v, 3), des = r.des;
+    $("o_um1").textContent = fx(r.m1, 2) + us; $("o_us1").textContent = fx(r.s1, 2) + us; $("o_un1").textContent = r.n1; $("o_um2").textContent = fx(r.m2, 2) + us; $("o_us2").textContent = fx(r.s2, 2) + us; $("o_un2").textContent = r.n2;
+    const xr = Math.min(12, Math.max(4.5, Math.abs(r.t) + 1.2, r.cv + 1)), v = r.df;
+    const F = frame({ svg: "p32", x0: -xr, x1: xr, y0: 0, y1: 0.45, T: 34, L: 24, xt: (() => { const st = xr > 8 ? 2 : 1, a = []; for (let k = -Math.floor(xr / st) * st; k <= xr; k += st) a.push(k); return a; })(), xl: `檢定統計量 t = 差異 ÷ 標準誤（無單位；你的 t = ${f(r.t)}，df = ${fx(v, des === "two" ? 1 : 0)}）` });
+    const { sx, sy } = F, fn = x => tPdf(x, v); let s = F.s;
+    const cv = r.cv, t = r.t;
+    if (r.two) s += fillArea(fn, Math.abs(t), xr, sx, sy, 0, "var(--c-h1)", .35) + fillArea(fn, -xr, -Math.abs(t), sx, sy, 0, "var(--c-h1)", .35);
+    else if (r.tail === "greater") s += fillArea(fn, t, xr, sx, sy, 0, "var(--c-h1)", .35); else s += fillArea(fn, -xr, t, sx, sy, 0, "var(--c-h1)", .35);
+    const rejA = (a0, b0) => fillArea(fn, a0, b0, sx, sy, 0, "var(--c-alpha)", .6);
+    if (r.two) s += rejA(cv, xr) + rejA(-xr, -cv); else if (r.tail === "greater") s += rejA(cv, xr); else s += rejA(-xr, -cv);
+    s += line(fn, -xr, xr, sx, sy, "var(--c-h0)");
+    const crit = c => `<line x1="${sx(c)}" x2="${sx(c)}" y1="${sy(0.45) - 6}" y2="${F.B}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    const cl = r.two ? [cv, -cv] : r.tail === "greater" ? [cv] : [-cv];
+    cl.forEach((c, i) => { s += crit(c) + `<text x="${sx(c)}" y="${sy(0.45) - 12}" text-anchor="middle" font-size="12.5" fill="var(--ink)">${i === 0 ? "臨界值 " : ""}${c < 0 ? "−" : ""}${f(Math.abs(c))}</text>`; });
+    const tx = Math.max(-xr, Math.min(xr, t));
+    s += `<line x1="${sx(tx)}" x2="${sx(tx)}" y1="${sy(0.399) - 6}" y2="${F.B}" stroke="var(--c-h1)" stroke-width="2.4"/>` + dot(sx(tx), sy(fn(tx)), "var(--c-h1)") + `<text x="${sx(tx) + (tx > xr * 0.6 ? -8 : 8)}" y="${sy(0.399) + 8}" text-anchor="${tx > xr * 0.6 ? "end" : "start"}" font-size="13" fill="var(--c-h1)">你的 t = ${f(t)}</text>`;
+    s += `<text x="${sx(0)}" y="${sy(fn(0)) - 8}" text-anchor="middle" font-size="13" fill="var(--c-h0)">H₀ 沒有差</text>`;
+    $("p32").innerHTML = s;
+    const cmp = r.two ? "≠" : r.tail === "greater" ? "＞" : "＜";
+    $("u_v1").innerHTML = `<div class="k">判定（α = ${r.a}，${r.two ? "雙尾" : "單尾"}）</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${r.rej ? "var(--good)" : "var(--muted)"}">${r.rej ? "拒絕 H₀：有顯著差" : "無法拒絕 H₀：證據不足"}</div><div class="hint" style="font-size:13px">p = ${fx(r.p, 4)} ${r.p < r.a ? "＜" : "≥"} α；${r.rej ? "差異不像是抽樣誤差" : "不代表「沒有差」，可能只是量得不夠多"}</div>`;
+    const dl = des === "two" ? "平均差（組 1 − 組 2）" : des === "paired" ? "平均差 d̄" : "平均 − 目標值";
+    $("u_v2").innerHTML = `<div class="k">${dl}與 ${r.ci}% 信賴區間</div><div style="font-size:17px;font-weight:700;margin-top:2px">${fx(r.diff, 3)}${us}</div><div class="hint" style="font-size:13px">${r.ci}% CI ${f(r.lo)} ～ ${f(r.hi)}${us}；${r.lo > 0 || r.hi < 0 ? "不含 0" : "含 0"}</div>`;
+    $("m_use").textContent = f(r.se); $("m_ut2").textContent = f(r.t); $("m_udf").textContent = fx(r.df, des === "two" ? 2 : 0); $("m_ucv").textContent = (r.two ? "±" : r.tail === "greater" ? "+" : "−") + f(r.cv); $("m_up").textContent = fx(r.p, 4);
+    const h0 = des === "one" ? "整批平均 = 目標值 μ₀" : des === "paired" ? "前後的平均差 = 0" : "兩組的平均相同（μ₁ = μ₂）", h1 = (des === "one" ? "整批平均" : des === "paired" ? "前後的平均差" : "組 1 平均") + (r.two ? " 不等於 " : r.tail === "greater" ? " 大於 " : " 小於 ") + (des === "one" ? "目標值" : des === "paired" ? "0" : "組 2 平均");
+    const seTxt = des === "two" ? `√(s₁²/n₁ + s₂²/n₂) = √(${f(r.s1 * r.s1)}/${r.n1} + ${f(r.s2 * r.s2)}/${r.n2})` : `s/√n = ${fx(r.s1, 2)}/√${r.n1}`;
+    const dfTxt = des === "two" ? `用 Welch 公式（兩組分散程度不必相同），自由度 = ${fx(r.df, 2)}（不一定是整數）` : `件數 − 1 = ${r.n1} − 1 = ${r.n1 - 1}`;
+    const cvTxt = r.two ? `雙尾（高或低都算）：門檻 ±${f(r.cv)}；p 值 = 兩邊尾巴面積加總 = ${fx(r.p, 4)}` : `單尾（只看一邊）：門檻 ${r.tail === "greater" ? "+" : "−"}${f(r.cv)}；p 值 = 單邊尾巴面積 = ${fx(r.p, 4)}`;
+    $("u_steps").innerHTML = [
+      `<b>先訂「沒有差」的假設（H₀）</b>：${h0}。檢定的做法是先假設這個成立，再看資料「像不像」。我們想證明的方向（H₁）是：${h1}。門檻 α = ${r.a}，要在量測前決定。`,
+      `<b>算標準誤（平均的晃動程度）</b>：SE = ${seTxt} = ${f(r.se)}。`,
+      `<b>算 t 值（差了幾個標準誤）</b>：t = ${fx(r.diff, 3)} ÷ ${f(r.se)} = ${f(r.t)}。也就是觀察到的差，是標準誤的 ${fx(Math.abs(r.t), 2)} 倍。`,
+      `<b>決定自由度</b>：${dfTxt}。它決定要查哪一條 t 分布曲線。`,
+      `<b>查門檻（臨界值）與 p 值</b>：${cvTxt}。`,
+      `<b>下判定</b>：${r.rej ? "你的 t 超過門檻（落在紅色區域），p 小於 α，所以拒絕「沒有差」的假設，判定有顯著差異。" : "你的 t 沒有超過門檻（沒落在紅色區域），p 不小於 α，所以不能拒絕「沒有差」，證據不足以說有差。"}${r.ci}% 信賴區間 ${f(r.lo)} ～ ${f(r.hi)}${r.lo > 0 || r.hi < 0 ? "，沒有包含 0" : "，包含 0"}，結論和 p 值一致。`,
+      `<b>回到實務</b>：${r.rej ? "顯著只代表「差異不像運氣」，" + fx(r.diff, 3) + us + " 的差異是否夠大、有沒有意義，要由你們依功能與規格判斷。" : "沒有顯著差異不等於一樣，可能只是量得不夠多。"}要證明「一樣」要改用 TOST。`
+    ].map(x => `<li>${x}</li>`).join("");
+    texU();
+  }
+  function texU() {
+    if (!$("texU1")) return;
+    const r = ttCalc(), f = v => fx(v, 3);
+    if (r.des === "two") {
+      tex($("texU1"), `t=\dfrac{${fx(r.m1, 2)}-${fx(r.m2, 2)}}{\sqrt{\dfrac{${fx(r.s1, 2)}^{2}}{${r.n1}}+\dfrac{${fx(r.s2, 2)}^{2}}{${r.n2}}}}=\dfrac{${fx(r.diff, 3)}}{${f(r.se)}}=${f(r.t)}`);
+      tex($("texU2"), `df=${fx(r.df, 2)}\;\Rightarrow\;p=${fx(r.p, 4)}`);
+    } else {
+      const top = r.des === "paired" ? `\bar d=${fx(r.m1, 2)}` : `\bar x-\mu_0=${fx(r.m1, 2)}-${fx(r.m2, 2)}`;
+      tex($("texU1"), `t=\dfrac{${top}}{${fx(r.s1, 2)}/\sqrt{${r.n1}}}=\dfrac{${fx(r.diff, 3)}}{${f(r.se)}}=${f(r.t)}`);
+      tex($("texU2"), `df=${r.n1}-1=${r.n1 - 1}\;\Rightarrow\;p=${fx(r.p, 4)}`);
+    }
+    $("texUNote").textContent = `${r.rej ? "p < α，拒絕 H₀" : "p ≥ α，無法拒絕 H₀"}；${r.ci}% 信賴區間 ${f(r.lo)} ～ ${f(r.hi)}。（σ 用 s 估計，所以是 t 分布，不是常態。）`;
+  }
+  $("u_df").addEventListener("input", draw31);
+  ["u_m1", "u_s1", "u_n1", "u_m2", "u_s2", "u_n2", "u_u"].forEach(id => $(id).addEventListener("input", draw32)); $("u_a").addEventListener("change", draw32); $("u_tail").addEventListener("change", draw32);
+  $("u_design").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; ttSetDesign(b.dataset.v); });
+  ttSetDesign("one");
+
+  // ---- 2-4：Δ 試算 ----
+  function dlCalc() {
+    if (!$("dl_W")) return;
+    const W = +$("dl_W").value, D = +$("dl_D").value, S = +$("dl_S").value, za = PhiInv(0.95), zb = PhiInv(1 - 0.1 / 2);
+    $("o_dlW").textContent = fx(W, 3); $("o_dlD").textContent = "±" + fx(D, 3); $("o_dlS").textContent = fx(S, 3);
+    const r = D / W, q = D / S, n1 = Math.ceil(Math.pow((za + zb) * S / D, 2)), n2 = 2 * Math.pow((za + zb) * S / D, 2);
+    $("m_dlr").textContent = pct(r, 0); $("m_dls").textContent = fx(q, 2); $("m_dln1").textContent = n1 + " 件"; $("m_dln2").textContent = Math.ceil(n2) + " 件";
+    let note = "";
+    if (D * 2 >= W) note = "Δ 已佔公差寬度的一半以上（±Δ 的寬度達到或超過整個公差），同等界限幾乎等於規格本身，審查時容易被質疑 Δ 太寬*。";
+    else if (q < 1) note = "Δ 小於 σ：要在比平常波動更小的範圍內證明「一樣」，所需件數很多。先檢討量測能力或製程變異，不要為了少量幾件而放寬 Δ。";
+    else if (n1 > 60) note = "所需件數偏多，請確認 Δ 的依據是否真的需要這麼嚴。";
+    else note = "Δ 與 σ 的比值看起來可行。仍要有書面依據，並在量測前鎖定。";
+    $("dl_note").textContent = note;
+  }
+  ["dl_W", "dl_D", "dl_S"].forEach(id => $(id).addEventListener("input", dlCalc));
+
   // ---- 分頁切換 ----
   function showTab(id) {
-    const ok = ["s1", "s2"].includes(id) ? id : "s1";
-    ["s1", "s2"].forEach(k => { $(k).hidden = k !== ok; });
+    const ok = ["s1", "s2", "s3"].includes(id) ? id : "s1";
+    ["s1", "s2", "s3"].forEach(k => { $(k).hidden = k !== ok; });
     document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
-    if (ok === "s2") { draw21(); draw22(); } else { all(); draw3b(); }
+    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else { all(); draw3b(); }
   }
   document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   // 回到統計工作台：GitHub Pages 用相對路徑，其他（claude.ai）用工作台網址
   (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
   showTab(location.hash.slice(1));
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(location.hash.slice(1) || ($("s2").hidden ? "s1" : "s2")), 150); });
-  window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc };
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(location.hash.slice(1) || (!$("s3").hidden ? "s3" : $("s2").hidden ? "s1" : "s2")), 150); });
+  window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc };
 })();
 </script>
 </body>

@@ -5,3 +5,4 @@
 - 建置：`python3 build.py` 產生 `hypothesis-test.html`，再改名為 `index.html`。
 - 確效：`validate/`（參考值產生程式 gen_ref*.py 與 ref.json；`node validate/run_validation.js` 在 Node 中執行全部確效案例）。
 - AI：在 claude.ai 中開啟時使用平台 AI（模式 1）；在其他網站開啟時，到「AI 設定」→「AI 連線方式」貼上自己的 API key（模式 2，支援 Claude API 與 OpenAI 相容格式）。
+- `learn.html`：統計觀念圖解（單一檔案，不需建置）。第 1 節假設檢定（α、β、OC 曲線）、第 2 節同等性 TOST（含 Δ 怎麼取得）、第 3 節 t 檢定入門。數字由頁面程式計算，圖表風格與工作台一致。

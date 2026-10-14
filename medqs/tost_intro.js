@@ -26,7 +26,7 @@
         <li><b>有顯著差也可能同等</b>：差很小、在 ±Δ 內（情況 ②）。</li>
       </ul>
       <div class="run-row" style="margin-top:10px"><a class="btn primary small" href="${LEARN_URL}" target="_blank" rel="noopener">開啟完整圖解（新分頁）↗</a><button type="button" class="btn small" data-ti-x>關閉</button></div>
-      <p class="hint" style="font-size:12.5px;margin:8px 0 0">完整圖解在「統計觀念圖解」第 2 節：可拖拉的信賴區間、算式、Δ 怎麼定、樣本數概念。若開啟後停在第 1 節，請點上方「2 同等性 TOST 入門」。</p>
+      <p class="hint" style="font-size:12.5px;margin:8px 0 0">完整圖解在「統計觀念圖解」第 2 節：可拖拉的信賴區間、算式、Δ 怎麼取得（六類依據與試算）、樣本數概念。若開啟後停在第 1 節，請點上方「2 同等性 TOST 入門」。</p>
     </div>`;
     m.hidden = false; const x = m.querySelector("[data-ti-x]"); if (x) x.focus();
   }
