@@ -1,6 +1,6 @@
 
   // =====================================================================
-  // AI 連線方式：(1) claude.ai（平台 AI）；(2) 自帶 API key（Claude API、Kimi 或 OpenAI 相容格式；Kimi 使用 OpenAI 相容的 /chat/completions）
+  // AI 連線方式：(1) claude.ai（平台 AI）；(2) 自帶 API key（Claude API、Gemini、Kimi 或 OpenAI 相容格式；Gemini、Kimi 使用 OpenAI 相容的 /chat/completions）
   // 模式 (2) 只在 claude.ai 以外（例如 GitHub Pages）可用：claude.ai 的安全規則禁止網頁連到外部 API。
   // key 只存在使用者自己的瀏覽器，直接送到使用者填的 AI 服務，不經過其他伺服器。
   // =====================================================================
@@ -8,6 +8,7 @@
   const BYOK_PROV = {
     anthropic: { name: "Claude API（Anthropic）", base: "https://api.anthropic.com", model: "claude-sonnet-5-5", needKey: true },
     kimi: { name: "Kimi（Moonshot AI）", base: "https://api.moonshot.ai/v1", model: "kimi-k2.6", needKey: true },
+    gemini: { name: "Gemini API（Google）", base: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-3.8-flash", needKey: true },
     openai: { name: "OpenAI 相容格式（GPT、Azure OpenAI、公司私有雲等）", base: "https://api.openai.com/v1", model: "", needKey: false }
   };
 
@@ -22,6 +23,12 @@
     kimi: [
       { model: "kimi-k2.6", label: "Kimi K2.6（Moonshot，省錢）", note: "官方模型總覽：K2.6 預設開啟思考模式，回答前會先推理，所以較慢；網站預設關閉思考（下方可改）。約 $0.5–1 輸入／$2.4–4 輸出（百萬 token）*，上下文 256K，支援圖片（base64）。中文表現佳，費用約為 Sonnet 的一半以下*。海外帳號用此網址；中國大陸帳號請把 API 網址改成 https://api.moonshot.cn/v1。瀏覽器直連是否可行未驗證*。" },
       { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", note: "依官方 K3 快速入門（platform.kimi.com）：上下文 1M、原生支援圖片（base64）、固定為思考模式（無法關閉），可用下方「思考深度」調整（官方預設 max，越深越慢、越貴*）。官方範例的 API 網址是 https://api.moonshot.cn/v1，帳號在那個平台時請把上面的 API 網址改成這個。須儲值至少 10 元人民幣，註冊贈送額度不能用於 K3。價格見官方計價頁，這裡未核實*。多輪對話是否需要回傳思考內容，未實測*。" },
+    ],
+    gemini: [
+      { model: "gemini-3.8-flash", label: "Gemini 3.8 Flash（Google，建議預設）", note: "依 Google 官方模型頁（ai.google.dev）：目前最強的 Flash，官方建議新專案使用，適合長任務與一般問答。網站走 Google 的 OpenAI 相容端點（官方文件註明支援串流與 base64 圖片）。價格與思考模式的預設行為這裡未核實*，用量以 Google AI Studio 的帳單為準。瀏覽器直連是否可行未驗證*，請先「測試連線」。" },
+      { model: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite（Google，最省*）", note: "官方模型頁列為 3.5 世代最快、最省的型號。適合快速測試與簡單詢問；複雜根因推論可能較淺*。價格未核實*。" },
+      { model: "gemini-4-argon", label: "Gemini 4 Argon（Google，旗艦）", note: "官方模型頁列為旗艦推理模型，上下文 1M。費用應高於 Flash*（未核實）。重要案件、Flash 答得不夠深時再用。" },
+      { model: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro（Google，預覽版）", note: "官方模型頁列為 Pro 型號，標示為預覽版，預覽版的名稱與行為可能變動*。" }
     ],
     openai: [
       { model: "gpt-6.1-sol", label: "GPT-6.1 Sol（OpenAI，通用）", base: "https://api.openai.com/v1", note: "約 $2／$10（百萬 token）*，與 Sonnet 同級。是否支援圖片未確認*，請先「測試連線」並附一張圖試試。公司以 GPT 為主時，這項最容易導入。瀏覽器直連是否可行未驗證*。" },
