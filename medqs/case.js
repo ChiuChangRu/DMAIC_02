@@ -27,7 +27,7 @@
       v.querySelectorAll(".chips[id]").forEach(g => { if (g.closest(".mp-card") || g.closest("#aiPanel")) return; const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt", "goal"].find(x => b.dataset[x] != null); if (a) chips[g.id] = [a, b.dataset[a]]; });
       v.querySelectorAll(".subtabs").forEach((s, i) => { const b = s.querySelector('[aria-selected="true"]'); if (!b) return; const key = s.id || vid + ":" + i; subs[key] = b.dataset.tsub || b.dataset.sub || ""; });
     });
-    const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer, tost: !!TQ.tost, ni: !!TQ.ni, reg: !!REG.res };
+    const ran = { hyp: !!state.result, spc: !!TQ.spc, grr: !!TQ.grr, bias: !!TQ.bias, lin: !!TQ.lin, stab: !!TQ.stab, attr: !!TQ.attr, doe: !!TQ.doe, tg: !!TQ.tg, pw: !!pw.result, at: !!at.result, prop: !!TQ.prop, tolp: !!TQ.tolp, doer: !!TQ.doer, tost: !!TQ.tost, ni: !!TQ.ni, reg: !!REG.res, ct: typeof CT !== "undefined" && !!CT.result };
     const data = {
       fields, chips, subs, ran, sampleSub, ssQ: ssCurQ, ssPlans: { tost: TQ.tost ? TQ.tost.plan : null, ni: TQ.ni ? TQ.ni.plan : null },
       fb: JSON.parse(JSON.stringify(fb)),
@@ -79,6 +79,7 @@
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
     step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("count", () => { if (R.ct && typeof ctRun === "function") ctRun(); });
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
     step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
     step("msaRun", () => { [["grr", grrRun], ["bias", biasRun], ["lin", linRun], ["stab", stabRun], ["attr", attrRun]].forEach(([k, f]) => { if (R[k]) f(); }); });

@@ -542,6 +542,31 @@ if (RG) {
   t(G, "二次項檢查：明顯曲線時 p < 0.05，直線時 p 不顯著", (() => { const x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], nz = [0.1, -0.2, 0.15, -0.1, 0.05, 0.2, -0.15, 0.1, -0.05, 0]; const qc = RG.quadCheck(x, x.map((v, i) => 10 - (v - 4.5) ** 2 + nz[i])), ql = RG.quadCheck(x, x.map((v, i) => 2 * v + nz[i])); return qc.p < 0.05 && ql.p > 0.05; })());
 }
 
+if (ref.counts && HT.chi2Table) {
+  const G = "次數資料（比例、卡方）";
+  ref.counts.one.forEach(c => { const r = HT.propOne(c.n, c.x, c.p0, c.conf), lab = `n=${c.n}, 不良 ${c.x}, 目標 ${c.p0}, 信心 ${c.conf}`;
+    check(G, lab, "精確二項 p 值（低於目標）", r.p, c.p, 1e-9);
+    check(G, lab, "Clopper-Pearson 雙邊下限", r.ci[0], c.lo, 1e-9); check(G, lab, "Clopper-Pearson 雙邊上限", r.ci[1], c.hi, 1e-9);
+    check(G, lab, "Clopper-Pearson 單邊上限", r.upper, c.upper, 1e-9); });
+  ref.counts.chi.forEach(c => { const r = HT.chi2Table(c.t), lab = JSON.stringify(c.t);
+    check(G, lab, "卡方值", r.chi2, c.chi2, 1e-12); check(G, lab, "卡方 p 值", r.p, c.p, 1e-9); check(G, lab, "自由度", r.df, c.df, 0);
+    c.E.forEach((row, i) => row.forEach((v, j) => { check(G, lab, `期望次數 [${i + 1},${j + 1}]`, r.E[i][j], v, 1e-12); check(G, lab, `校正殘差 [${i + 1},${j + 1}]`, r.adjRes[i][j], c.adj[i][j], 1e-10); }));
+    check(G, lab, "Cramér's V", r.cramerV, c.V, 1e-12);
+    if (c.fisher !== undefined) { check(G, lab, "Fisher 精確 p 值", r.fisher.p, c.fisher, 1e-9);
+      if (typeof c.or === "number") check(G, lab, "勝算比", r.fisher.oddsRatio, c.or, 1e-12);
+      check(G, lab, "兩比例差 95% CI 下限（Newcombe）", r.diffCI[0], c.diffCI[0], 1e-9); check(G, lab, "兩比例差 95% CI 上限（Newcombe）", r.diffCI[1], c.diffCI[1], 1e-9); } });
+  ref.counts.wilson.forEach(c => { const w = HT.wilson(c.x, c.n, 0.95); check(G, `x=${c.x}, n=${c.n}`, "Wilson 下限", w[0], c.lo, 1e-9); check(G, `x=${c.x}, n=${c.n}`, "Wilson 上限", w[1], c.hi, 1e-9); });
+  t(G, "0 不良、n=59、目標 5%：95% 單邊上限 < 5%（零失效 59 件的經典結果）", HT.propOne(59, 0, 0.05).pass === true && HT.propOne(58, 0, 0.05).pass === false);
+  t(G, "單比例：上限 < 目標 與 p < 0.05 判定一致", ref.counts.one.every(c => { const r = HT.propOne(c.n, c.x, c.p0, c.conf); return r.pass === (r.p < 1 - c.conf) || Math.abs(r.p - (1 - c.conf)) < 1e-9; }));
+  t(G, "單比例：不良數大於測試數時回報錯誤", !!HT.propOne(10, 11, 0.1).error);
+  t(G, "卡方：整列為 0 時回報錯誤", !!HT.chi2Table([[0, 0], [3, 5]]).error);
+  t(G, "卡方：小數或負數回報錯誤", !!HT.chi2Table([[1.5, 2], [3, 4]]).error && !!HT.chi2Table([[-1, 2], [3, 4]]).error);
+  t(G, "卡方：2×2 期望次數 < 5 時主要結果改用 Fisher", (() => { const r = HT.chi2Table([[0, 20], [5, 15]]); return r.method === "fisher" && r.pMain === r.fisher.p; })());
+  t(G, "卡方：2×2 期望次數都 ≥ 5 時用卡方", HT.chi2Table([[30, 70], [45, 55]]).method === "chi2");
+  t(G, "卡方：列與欄對調，卡方值與 p 值不變", (() => { const a = HT.chi2Table([[10, 5, 3], [8, 12, 6]]), b = HT.chi2Table([[10, 8], [5, 12], [3, 6]]); return Math.abs(a.chi2 - b.chi2) < 1e-12 && Math.abs(a.p - b.p) < 1e-12; })());
+  t(G, "卡方：各組比例完全相同時 χ² = 0、p = 1", (() => { const r = HT.chi2Table([[5, 95], [10, 190]]); return Math.abs(r.chi2) < 1e-12 && Math.abs(r.p - 1) < 1e-12; })());
+}
+
 return { rows, nistRows, logic: results };
 }
 if (typeof module !== "undefined" && module.exports) module.exports = { runValidation };

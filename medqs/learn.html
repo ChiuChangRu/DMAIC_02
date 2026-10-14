@@ -131,8 +131,9 @@ footer a, .card a { color: var(--act-text); }
     <a href="#s1" data-tab="s1" aria-current="true">1 假設檢定</a>
     <a href="#s2" data-tab="s2" aria-current="false">2 同等性 TOST 入門</a>
     <a href="#s3" data-tab="s3" aria-current="false">3 t 檢定入門</a>
-    <span>4 樣本數（規劃中）</span>
-    <span>5 MSA（規劃中）</span>
+    <a href="#s4" data-tab="s4" aria-current="false">4 比例與卡方入門</a>
+    <span>5 樣本數（規劃中）</span>
+    <span>6 MSA（規劃中）</span>
   </nav>
 </header>
 
@@ -668,8 +669,195 @@ footer a, .card a { color: var(--act-text); }
   </section>
 </section>
 
+<section id="s4" hidden>
+  <h2 class="sec">4　比例與卡方入門：數「件數」的資料</h2>
+  <p class="sec-lede">很多醫材試驗的結果不是一個數值，而是「過或不過」：密封有沒有漏、外觀合不合格、破了沒有。這時手上的資料是<b>件數</b>：測了幾個、幾個不良。常見的問題有兩種：<b>「不良率有沒有低於目標？」</b>（一組產品）和<b>「兩組以上的不良率（或缺陷種類）有沒有差？」</b>（例如兩家供應商）。本節用同樣的方式說明：先認識幾個詞，再動手拖拉，最後說明怎麼選、用在哪裡。</p>
+
+  <section class="card" id="s4-1">
+    <span class="qref">4-1</span>
+    <h3>先認識幾個詞</h3>
+    <p class="help">情境：滅菌包裝做密封試驗，測 300 個，看有沒有洩漏。</p>
+    <div class="scroll-x"><table>
+      <tr><th>名詞</th><th>白話意思</th><th>舉例</th></tr>
+      <tr><td><b>件數資料</b></td><td>每一件只記「是／否」或「屬於哪一類」，最後數每一類有幾件。和拉力、厚度這種「量測數值」是不同的資料，方法也不同。</td><td>300 個裡 2 個洩漏、298 個合格。</td></tr>
+      <tr><td><b>觀察不良率</b></td><td>不良數 ÷ 測試數。只代表這次抽到的這幾個，不等於整批真正的不良率。</td><td>2 ÷ 300 = 0.67%。</td></tr>
+      <tr><td><b>信心上限</b></td><td>考慮抽樣運氣後，整批真正的不良率「最多可能到多少」。95% 信心上限的意思是：用這個方法算，100 次裡約有 95 次，真正的不良率不會超過它。</td><td>測 300 個、2 個不良，95% 信心上限約 2.1%。</td></tr>
+      <tr><td><b>期望次數</b></td><td>「如果各組其實一樣」時，每一格「應該」看到幾件。卡方檢定就是在比「實際」和「期望」差多少。</td><td>兩組各 200 個、合計 15 個不良，各組期望都是 7.5 個不良。</td></tr>
+      <tr><td><b>卡方值（χ²）</b></td><td>把每一格「實際 − 期望」的差距加總成一個數字。越大，越不像「各組一樣」。</td><td>χ² = 5.6。</td></tr>
+      <tr><td><b>p 值</b></td><td>和第 3 節一樣：先假設「其實沒有差」，光靠運氣就看到這麼大（或更大）差異的機率。<b>它不是「沒有差的機率」。</b></td><td>p = 0.018：如果兩家其實一樣，只有約 1.8% 的機會看到這麼大的差異。</td></tr>
+      <tr><td><b>Fisher 精確檢定</b></td><td>件數太少時，卡方的近似算法會不準；Fisher 直接把所有可能的情況算出來，件數少也準。工作台會自動切換。</td><td>改善前後各測 20 個。</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card" id="s4-2">
+    <span class="qref">4-2</span>
+    <h3>動手看：不良率有沒有低於目標</h3>
+    <p class="help">測了 300 個、0 個不良，能說不良率是 0% 嗎？不能。只測了一部分，整批可能還是有少量不良，只是這次沒抽到。判定的想法是：<b>假設整批的不良率剛好等於目標</b>，抽 n 個時，不良數會落在哪裡（下圖的長條，越高越常見）。如果你看到的不良數<b>少到在這個假設下很少見</b>（紫色面積 = p 值很小），就可以說「不良率低於目標」。拖拉看看。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="b_n">測了幾個 n <output id="o_bn"></output></label><input type="range" id="b_n" min="10" max="1000" step="10" value="300"></div>
+        <div class="ctl"><label for="b_x">其中不良幾個 x <output id="o_bx"></output></label><input type="range" id="b_x" min="0" max="20" step="1" value="0"></div>
+        <div class="ctl"><label for="b_p0">目標不良率 <output id="o_bp0"></output></label><input type="range" id="b_p0" min="0.5" max="10" step="0.5" value="1"></div>
+        <div class="ctl"><label for="b_c">信心水準</label><select id="b_c"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c-h0);opacity:.35"></i>如果不良率剛好等於目標，各種不良數出現的機率</span>
+        <span><i style="background:var(--c-h1);opacity:.7"></i>和你一樣少或更少的情況（加總 = p 值）</span>
+      </div>
+      <svg class="plot" id="p41" viewBox="0 0 680 300" role="img" aria-label="在目標不良率下，各種不良數的機率"></svg>
+      <div class="two" style="margin-top:10px">
+        <div class="stat" id="b_v1"></div>
+        <div class="stat" id="b_v2"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">觀察不良率</div><div class="v" id="m_brate"></div></div>
+        <div class="stat"><div class="k">信心上限</div><div class="v" id="m_bup"></div></div>
+        <div class="stat"><div class="k">p 值</div><div class="v" id="m_bp"></div></div>
+        <div class="stat"><div class="k">0 不良至少要測</div><div class="v" id="m_bn0"></div></div>
+      </div>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>試試 x = 0、慢慢把 n 拉大</b>：目標 1%、95% 信心時，0 不良要測到 <b>299 個</b>才夠（上限約 3 ÷ n，俗稱「3 法則」）。這也是可靠度試驗「要測幾個全過」的由來（樣本數規劃 ⑤）。</li>
+      <li><b>試試 n = 300、把 x 調成 1</b>：只多 1 個不良，上限就從約 1% 跳到約 1.6%，宣稱不了。目標不良率很低時，需要的件數很多。</li>
+      <li><b>前提</b>：抽的樣本要能代表整批（隨機抽、涵蓋不同批次與時段）。只挑同一個時段做的，結論只代表那個時段。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s4-3">
+    <span class="qref">4-3</span>
+    <h3>動手看：兩組的不良率有沒有差（卡方的想法）</h3>
+    <p class="help">兩家供應商的管材各抽一批，A 的不良率看起來比 B 高，是真的差，還是運氣？卡方檢定的做法：先把兩組合起來算一個<b>整體不良率</b>，算出「如果兩組一樣」每組<b>應該</b>有幾個不良（期望次數，下圖的虛線框）。實際長條離虛線框越遠，越不像運氣。拖拉看看。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="c_n1">A 組測了幾個 <output id="o_cn1"></output></label><input type="range" id="c_n1" min="10" max="500" step="10" value="200"></div>
+        <div class="ctl"><label for="c_x1">A 組不良幾個 <output id="o_cx1"></output></label><input type="range" id="c_x1" min="0" max="40" step="1" value="12"></div>
+        <div class="ctl"><label for="c_n2">B 組測了幾個 <output id="o_cn2"></output></label><input type="range" id="c_n2" min="10" max="500" step="10" value="200"></div>
+        <div class="ctl"><label for="c_x2">B 組不良幾個 <output id="o_cx2"></output></label><input type="range" id="c_x2" min="0" max="40" step="1" value="3"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c-alpha);opacity:.8"></i>實際不良數</span>
+        <span><i style="background:transparent;border:2px dashed var(--c-h0);height:10px;width:16px"></i>如果兩組一樣，應該有的不良數（期望）</span>
+      </div>
+      <svg class="plot" id="p42" viewBox="0 0 680 280" role="img" aria-label="兩組的實際不良數與期望不良數"></svg>
+      <div class="two" style="margin-top:10px">
+        <div class="stat" id="c_v1"></div>
+        <div class="stat" id="c_v2"></div>
+      </div>
+      <h4 style="margin:14px 0 6px">檢定一步一步在做什麼（隨上面的輸入即時更新）</h4>
+      <ol class="tight" style="padding-left:1.4em" id="c_steps"></ol>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>試試把兩組件數都拉大、不良率不變</b>（例如 A 12/200 → 24/400）：差距一樣，但件數多了，p 值變小。和 t 檢定一樣，量得越多越容易看出差。</li>
+      <li><b>試試把件數拉小</b>（例如各 20 個）：期望次數小於 5 時，畫面會改用 Fisher 精確檢定。卡方的算法在件數少時會失準。</li>
+      <li><b>三組以上、或缺陷分成好幾種</b>：做法完全一樣，只是表格變大。工作台的「假設檢定 → 次數資料」可以直接填任意列數、欄數。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s4-4">
+    <span class="qref">4-4</span>
+    <h3>算式</h3>
+    <p class="help">不用背，知道每一步在做什麼即可。符號：n = 測試數，x = 不良數，p₀ = 目標不良率，O = 實際件數，E = 期望件數。</p>
+    <div class="inner texbox">
+      <div class="tex-row"><div class="tex" data-tex="p=P(X\le x\mid n,p_0)=\sum_{k=0}^{x}\binom{n}{k}p_0^{\,k}(1-p_0)^{n-k}"></div><div class="tex-note"><b>① 單一不良率的 p 值（精確二項）。</b>就是 4-2 圖上紫色長條的總和：如果不良率剛好等於目標，看到「這麼少或更少」不良的機率。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="p_U:\ P(X\le x\mid n,p_U)=1-\gamma\qquad (x=0\ \Rightarrow\ p_U=1-(1-\gamma)^{1/n}\approx 3/n)"></div><div class="tex-note"><b>② 信心上限（Clopper-Pearson）。</b>找一個不良率 p<sub>U</sub>，讓「看到這麼少不良」的機率剛好只剩 1 − γ（γ 是信心水準，95% 時剩 5%）。上限低於目標，等於 p 值小於 1 − γ，兩種說法結論一致。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="E_{ij}=\dfrac{(\text{第 }i\text{ 列合計})\times(\text{第 }j\text{ 欄合計})}{\text{總件數}}"></div><div class="tex-note"><b>③ 期望次數。</b>「如果各組一樣」，每組的不良率都等於整體不良率，所以期望不良數 = 這組件數 × 整體不良率。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="\chi^2=\sum_{\text{每一格}}\dfrac{(O-E)^2}{E},\qquad df=(\text{組數}-1)\times(\text{結果類別數}-1)"></div><div class="tex-note"><b>④ 卡方值與自由度。</b>每一格的差距平方，除以期望次數（期望大的格子，差一點不算什麼），再全部加總。p 值由卡方分布查出。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="z_{ij}=\dfrac{O_{ij}-E_{ij}}{\sqrt{E_{ij}\,(1-\text{列比例})(1-\text{欄比例})}}"></div><div class="tex-note"><b>⑤ 差異主要來自哪一格（校正殘差）。</b>每一格自己算一個類似 z 的值，超過 ±1.96 的格子就是「比預期多（或少）」得明顯的地方。工作台結果的「差異主要來自」就是用這個。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="P(\text{表})=\dfrac{\binom{r_1}{a}\binom{r_2}{c}}{\binom{N}{a+c}}\ \ \Rightarrow\ \ p=\sum_{P(\text{表})\le P(\text{觀察})}P(\text{表})"></div><div class="tex-note"><b>⑥ Fisher 精確檢定（2×2）。</b>固定兩組件數與總不良數，把所有可能的分法逐一算出機率，加總「和觀察到的一樣罕見或更罕見」的情況。件數少時用它。</div></div>
+    </div>
+    <div class="tex-live">
+      <div class="hint" style="font-size:13.5px;color:var(--muted)">代入 4-3 目前的輸入（改上面的數字，這裡會跟著變）：</div>
+      <div class="tex" id="texC1"></div>
+      <div class="tex" id="texC2"></div>
+      <div class="tex-note" id="texCNote"></div>
+    </div>
+  </section>
+
+  <section class="card" id="s4-5">
+    <span class="qref">4-5</span>
+    <h3>怎麼選、要注意什麼</h3>
+    <div class="scroll-x"><table>
+      <tr><th>你手上的資料</th><th>用哪一種</th><th>要注意什麼</th></tr>
+      <tr><td>一組產品：測了幾個、幾個不良，要跟目標不良率比</td><td>精確二項檢定（看信心上限）</td><td>目標要在試驗前訂好；目標很低時需要很多件</td></tr>
+      <tr><td>兩組：各自良品／不良品幾個</td><td>卡方檢定；件數少時 Fisher 精確檢定</td><td>每件只屬於一組；期望次數有小於 5 的格子時改用 Fisher（工作台自動）</td></tr>
+      <tr><td>三組以上，或缺陷分成好幾種</td><td>卡方檢定（列聯表）</td><td>期望次數小於 5 的格子超過 2 成時不準，把少見的類別合併成「其他」</td></tr>
+      <tr><td>同一批產品「前後各判一次」（例如兩位檢驗員判同一批）</td><td>不是卡方，要用 McNemar 檢定</td><td>資料是成對的，工作台目前沒有提供；判定一致性可用 MSA 的屬性一致性分析</td></tr>
+      <tr><td>量測數值（拉力、厚度）</td><td>不是本節，用 t 檢定或 ANOVA（第 3 節）</td><td>不要把量測值先分成「合格／不合格」再做卡方，會損失很多資訊</td></tr>
+    </table></div>
+    <div class="two" style="margin-top:12px">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">常見的誤解</h4>
+        <ul class="tight">
+          <li><b>「0 個不良，所以不良率 0%」</b>：不對。0 不良只能說「上限是多少」，件數越多上限越低。</li>
+          <li><b>「看不出有差，所以一樣」</b>：不對。可能只是件數不夠。要證明一樣，要先訂可接受的差異，件數通常更多。</li>
+          <li><b>「有差，所以是供應商的問題」</b>：不一定。兩組的生產時間、原料批號、檢驗人員不同，也會造成差異。</li>
+        </ul>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">件數要多少才夠</h4>
+        <ul class="tight">
+          <li>要宣稱不良率低於目標：先到「樣本數規劃」⑤（全過才算）或 ⑦（容許少量不良）。</li>
+          <li>要比較兩組的不良率：⑦ 也能算。不良率越低、想抓的差異越小，需要的件數越多。</li>
+          <li>經驗上，卡方的每一格期望次數最好都在 5 以上*。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="s4-6">
+    <span class="qref">4-6</span>
+    <h3>用在哪裡：醫材常見的情境</h3>
+    <p class="help">以下為說明用的示意情境，不是特定產品的數據。</p>
+    <div class="scroll-x"><table>
+      <tr><th>情境（示意）</th><th>問題</th><th>用哪一種</th></tr>
+      <tr><td>滅菌包裝密封試驗 300 個全過</td><td>洩漏率能否宣稱低於 1%</td><td>精確二項（信心上限）</td></tr>
+      <tr><td>導管接頭外觀抽檢 200 個、3 個不良</td><td>不良率有沒有低於 5% 的目標</td><td>精確二項（信心上限）</td></tr>
+      <tr><td>兩家供應商的管材各抽 200 支</td><td>不良率有沒有差</td><td>卡方（2×2）</td></tr>
+      <tr><td>改善前後各測 20 個</td><td>改善後不良率有沒有下降</td><td>Fisher 精確檢定（件數少）</td></tr>
+      <tr><td>同一副模具的三個模穴，各記錄破裂、毛邊、縮痕</td><td>缺陷種類的分布是否一樣</td><td>卡方（3×4 列聯表）</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card" id="s4-7">
+    <span class="qref">4-7</span>
+    <h3>在工作台怎麼做</h3>
+    <div class="two">
+      <div class="inner">
+        <h4 style="margin:0 0 6px">規劃階段（測之前）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>樣本數規劃 → 「合格／不合格」類的 ⑤（要測幾個全過）或 ⑦（不良率的樣本數）。</li>
+          <li>填目標不良率、信心水準，算出要測幾個。</li>
+        </ol>
+      </div>
+      <div class="inner">
+        <h4 style="margin:0 0 6px">判定階段（測完後）</h4>
+        <ol class="tight" style="padding-left:1.3em">
+          <li>假設檢定 → 上方分頁選「次數資料（不良率、類別）」。</li>
+          <li>選問題：「不良率有沒有低於目標？」或「兩組以上有沒有差？」，填件數。</li>
+          <li>按「計算」：看白話結論、圖、差異主要來自哪一格；需要時按「問 AI」請它說明。</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="s4-8">
+    <span class="qref">4-8</span>
+    <h3>延伸學習資源（英文，免費線上閱讀）</h3>
+    <p class="help">想多看一點例題時參考。這些是外部網站，內容與網址以各網站為準。</p>
+    <div class="scroll-x"><table>
+      <tr><th>資源</th><th>適合看什麼</th></tr>
+      <tr><td><a href="https://itl.nist.gov/div898/handbook/prc/section2/prc24.htm" target="_blank" rel="noopener">NIST/SEMATECH e-Handbook 7.2.4 Fraction Defective</a></td><td>美國國家標準與技術研究院的工程統計手冊：單一批的不良率判定，例題貼近製造業。</td></tr>
+      <tr><td><a href="https://itl.nist.gov/div898/handbook/prc/section4/prc46.htm" target="_blank" rel="noopener">NIST/SEMATECH e-Handbook 7.4.6 Comparing Fraction Defectives</a></td><td>同一本手冊：多批次的不良率是否相同（卡方），有二極體批次的例題。</td></tr>
+      <tr><td><a href="https://online.stat.psu.edu/stat200/lesson/8/8.1/8.1.2" target="_blank" rel="noopener">Penn State STAT 200：One Sample Proportion</a></td><td>賓州州立大學入門統計課：單一比例的假設檢定，一步一步的五個步驟。</td></tr>
+      <tr><td><a href="https://online.stat.psu.edu/stat200/lesson/11" target="_blank" rel="noopener">Penn State STAT 200：Lesson 11 Chi-Square Tests</a></td><td>同一門課：列聯表、期望次數與卡方獨立性檢定，入門程度。</td></tr>
+      <tr><td><a href="https://onlinestatbook.com/2/chi_square/contingencyM.html" target="_blank" rel="noopener">Online Statistics Education：Contingency Tables</a></td><td>線上教材的卡方章節：期望次數怎麼算、檢定的前提與限制。</td></tr>
+      <tr><td><a href="https://www.openintro.org/" target="_blank" rel="noopener">OpenIntro Statistics</a></td><td>免費的入門統計教科書（創用 CC 授權），其中類別資料推論的章節涵蓋單比例、兩比例與卡方。</td></tr>
+    </table></div>
+  </section>
+</section>
+
 <footer>
-  計算方法：常態分布（σ 視為已知的近似）、t 分布與二項分布，由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
+  計算方法：常態分布（σ 視為已知的近似）、t 分布、二項分布、卡方分布與 Fisher 精確檢定（超幾何分布），由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
 </footer>
 </div>
 
@@ -821,7 +1009,7 @@ footer a, .card a { color: var(--act-text); }
 
   // ---- LaTeX ----
   function tex(el, src) { if (!el) return; if (window.katex) { try { katex.render(src, el, { throwOnError: false, displayMode: true, output: "mathml" }); return; } catch (_) {} } el.innerHTML = "<code>" + src.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code>"; }
-  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); texT(); try { texU(); } catch (_) {} }
+  function texAll() { document.querySelectorAll(".tex[data-tex]").forEach(el => tex(el, el.dataset.tex)); texLive(); texT(); try { texU(); } catch (_) {} try { texC(); } catch (_) {} }
   function texLive() {
     const two = S.side === "two", qa = two ? 1 - S.a / 2 : 1 - S.a, za = PhiInv(qa), sh = S.sh, zb = sh - za, beta = betaOf(sh, S.a, S.side);
     const pw = +$("i_pw").value, zp = PhiInv(pw), zaLab = two ? "z_{1-\\alpha/2}" : "z_{1-\\alpha}", f3 = v => fx(v, 3);
@@ -1007,20 +1195,99 @@ footer a, .card a { color: var(--act-text); }
   }
   ["dl_W", "dl_D", "dl_S"].forEach(id => $(id).addEventListener("input", dlCalc));
 
+  // ======== 第 4 節：比例與卡方 ========
+  const lchoose = (n, k) => lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1);
+  const bPmf = (k, n, p) => p <= 0 ? (k === 0 ? 1 : 0) : p >= 1 ? (k === n ? 1 : 0) : Math.exp(lchoose(n, k) + k * Math.log(p) + (n - k) * Math.log1p(-p));
+  function cpUpper(x, n, g) { if (x >= n) return 1; let lo = 0, hi = 1; for (let i = 0; i < 100; i++) { const m = (lo + hi) / 2; ibeta(1 - m, n - x, x + 1) > 1 - g ? lo = m : hi = m; } return (lo + hi) / 2; }
+  function zeroN(p0, g) { let n = Math.max(1, Math.ceil(Math.log(1 - g) / Math.log(1 - p0))); while (cpUpper(0, n, g) >= p0) n++; return n; }
+  function propCalc() {
+    const n = +$("b_n").value, x = Math.min(+$("b_x").value, n), p0 = +$("b_p0").value / 100, g = +$("b_c").value;
+    const p = ibeta(1 - p0, n - x, x + 1), up = cpUpper(x, n, g);
+    return { n, x, p0, g, rate: x / n, p: x >= n ? 1 : p, up, pass: up < p0, n0: zeroN(p0, g) };
+  }
+  function draw41() {
+    $("b_x").max = Math.min(+$("b_n").value, Math.max(20, Math.ceil(+$("b_n").value * +$("b_p0").value / 100 * 1.5)));
+    const r = propCalc(), mu = r.n * r.p0, sd = Math.sqrt(mu * (1 - r.p0)), kmax = Math.min(r.n, Math.max(r.x + 3, Math.ceil(mu + 4 * sd + 1), 6));
+    $("o_bn").textContent = r.n; $("o_bx").textContent = r.x; $("o_bp0").textContent = pct(r.p0, 1);
+    const pm = Array.from({ length: kmax + 1 }, (_, k) => bPmf(k, r.n, r.p0)), ymax = Math.max(...pm) * 1.2;
+    const st = kmax > 40 ? 5 : kmax > 20 ? 2 : 1, xt = []; for (let k = 0; k <= kmax; k += st) xt.push(k);
+    const F = frame({ svg: "p41", H: 300, x0: -0.7, x1: kmax + 0.7, y0: 0, y1: ymax, T: 30, L: 48, xt, xf: v => v, yt: (() => { const st = [0.01, 0.02, 0.05, 0.1, 0.2].find(v => ymax / v <= 5) || 0.2, t = []; for (let v = 0; v <= ymax + 1e-9; v += st) t.push(+v.toFixed(2)); return t; })(), yf: v => pct(v, 0), xl: `抽 ${r.n} 個時的不良數（假設不良率剛好 = 目標 ${pct(r.p0, 1)}）`, yl: "機率" });
+    let s = F.s; const bw = Math.max(2, (F.sx(1) - F.sx(0)) * 0.72);
+    pm.forEach((v, k) => { const on = k <= r.x; s += `<rect x="${F.sx(k) - bw / 2}" y="${F.sy(v)}" width="${bw}" height="${F.B - F.sy(v)}" fill="${on ? "var(--c-h1)" : "var(--c-h0)"}" fill-opacity="${on ? .7 : .3}"/>`; });
+    s += `<line x1="${F.sx(r.x)}" x2="${F.sx(r.x)}" y1="${F.T - 6}" y2="${F.B}" stroke="var(--c-h1)" stroke-width="2"/><text x="${F.sx(r.x) + (r.x > kmax * 0.6 ? -8 : 8)}" y="${F.T + 6}" text-anchor="${r.x > kmax * 0.6 ? "end" : "start"}" font-size="13" fill="var(--c-h1)">你的不良數 x = ${r.x}（紫色加總 p = ${fx(r.p, 4)}）</text>`;
+    $("p41").innerHTML = s;
+    const gp = Math.round(r.g * 100);
+    $("b_v1").innerHTML = `<div class="k">判定（${gp}% 信心）</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${r.pass ? "var(--good)" : "var(--bad)"}">${r.pass ? "可以宣稱不良率低於目標" : "還不能宣稱低於目標"}</div><div class="hint" style="font-size:13px">信心上限 ${pct(r.up, 2)} ${r.pass ? "＜" : "≥"} 目標 ${pct(r.p0, 1)}；p = ${fx(r.p, 4)} ${r.p < 1 - r.g ? "＜" : "≥"} ${fx(1 - r.g, 2)}</div>`;
+    $("b_v2").innerHTML = `<div class="k">白話結論</div><div style="font-size:15px;margin-top:2px">測了 ${r.n} 個、${r.x} 個不良（觀察 ${pct(r.rate, 2)}）。有 ${gp}% 信心，整批真正的不良率不超過 <b>${pct(r.up, 2)}</b>。</div>`;
+    $("m_brate").textContent = pct(r.rate, 2); $("m_bup").textContent = pct(r.up, 2); $("m_bp").textContent = fx(r.p, 4); $("m_bn0").textContent = r.n0 + " 個";
+  }
+  function chiCalc() {
+    const n1 = +$("c_n1").value, n2 = +$("c_n2").value, x1 = Math.min(+$("c_x1").value, n1), x2 = Math.min(+$("c_x2").value, n2), N = n1 + n2, X = x1 + x2;
+    if (X === 0 || X === N) return { n1, n2, x1, x2, N, X, none: true };
+    const M = [[x1, n1 - x1], [x2, n2 - x2]], rs = [n1, n2], cs = [X, N - X], E = M.map((r, i) => r.map((_, j) => rs[i] * cs[j] / N));
+    let chi2 = 0; M.forEach((r, i) => r.forEach((o, j) => { chi2 += (o - E[i][j]) ** 2 / E[i][j]; }));
+    const pc = erfc(Math.sqrt(chi2 / 2)), minE = Math.min(...E.flat());
+    const base = lchoose(N, X), pr = k => Math.exp(lchoose(n1, k) + lchoose(n2, X - k) - base), p0 = pr(x1);
+    let pf = 0; for (let k = Math.max(0, X - n2); k <= Math.min(n1, X); k++) { const q = pr(k); if (q <= p0 * (1 + 1e-7)) pf += q; }
+    const fisher = minE < 5, p = fisher ? Math.min(1, pf) : pc;
+    return { n1, n2, x1, x2, N, X, M, E, chi2, pc, pf: Math.min(1, pf), minE, fisher, p, sig: p < 0.05, r1: x1 / n1, r2: x2 / n2, rAll: X / N };
+  }
+  function draw42() {
+    ["c_x1", "c_x2"].forEach((id, i) => { const n = +$(i ? "c_n2" : "c_n1").value; $(id).max = Math.min(n, Math.max(40, Math.round(n * 0.5))); });
+    const r = chiCalc();
+    $("o_cn1").textContent = r.n1; $("o_cn2").textContent = r.n2; $("o_cx1").textContent = r.x1; $("o_cx2").textContent = r.x2;
+    if (r.none) { $("p42").innerHTML = `<text x="20" y="40" font-size="14" fill="var(--muted)">兩組合計的不良數是 0（或全部不良），沒有東西可以比較。</text>`; ["c_v1", "c_v2"].forEach(id => $(id).innerHTML = ""); $("c_steps").innerHTML = ""; texC(); return; }
+    const ymax = Math.max(r.x1, r.x2, r.E[0][0], r.E[1][0]) * 1.3 + 1, yt = (() => { const st = ymax > 40 ? 10 : ymax > 16 ? 5 : ymax > 6 ? 2 : 1, a = []; for (let v = 0; v <= ymax; v += st) a.push(v); return a; })();
+    const F = frame({ svg: "p42", H: 280, x0: 0, x1: 2, y0: 0, y1: ymax, T: 24, L: 48, yt, xl: "", yl: "不良數（件）" });
+    let s = F.s; const gw = (F.R - F.L) / 2, bw = Math.min(110, gw * 0.42);
+    [["A 組", r.x1, r.E[0][0], r.n1, r.r1], ["B 組", r.x2, r.E[1][0], r.n2, r.r2]].forEach(([lab, o, e, n, rt], i) => {
+      const cx = F.L + gw * (i + 0.5);
+      s += `<rect x="${cx - bw / 2}" y="${F.sy(o)}" width="${bw}" height="${F.B - F.sy(o)}" fill="var(--c-alpha)" fill-opacity=".8"/>`;
+      s += `<rect x="${cx - bw / 2 - 6}" y="${F.sy(e)}" width="${bw + 12}" height="${F.B - F.sy(e)}" fill="none" stroke="var(--c-h0)" stroke-width="2" stroke-dasharray="6 4"/>`;
+      s += `<text x="${cx}" y="${Math.min(F.sy(o), F.sy(e)) - 8}" text-anchor="middle" font-size="12.5" fill="var(--ink)">實際 ${o}，期望 ${fx(e, 1)}</text>`;
+      s += `<text x="${cx}" y="${F.B + 18}" text-anchor="middle" font-size="13" fill="var(--ink)">${lab}：${o}/${n}（${pct(rt, 1)}）</text>`;
+    });
+    $("p42").innerHTML = s;
+    const meth = r.fisher ? "Fisher 精確檢定" : "卡方檢定";
+    $("c_v1").innerHTML = `<div class="k">判定（α = 0.05，${meth}）</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${r.sig ? "var(--good)" : "var(--muted)"}">${r.sig ? "兩組的不良率有差" : "看不出兩組有差"}</div><div class="hint" style="font-size:13px">p = ${fx(r.p, 4)} ${r.sig ? "＜" : "≥"} 0.05${r.fisher ? "（期望次數 < 5，已改用 Fisher）" : ""}</div>`;
+    $("c_v2").innerHTML = `<div class="k">兩組不良率</div><div style="font-size:17px;font-weight:700;margin-top:2px">A ${pct(r.r1, 1)}　B ${pct(r.r2, 1)}</div><div class="hint" style="font-size:13px">相差 ${fx(Math.abs(r.r1 - r.r2) * 100, 1)} 個百分點；整體不良率 ${pct(r.rAll, 2)}</div>`;
+    $("c_steps").innerHTML = [
+      `<b>先假設「兩組一樣」（H₀）</b>：兩家的不良率相同。再看資料像不像。`,
+      `<b>算整體不良率</b>：(${r.x1} + ${r.x2}) ÷ (${r.n1} + ${r.n2}) = ${pct(r.rAll, 2)}。`,
+      `<b>算期望次數</b>：如果兩組一樣，A 應有 ${r.n1} × ${pct(r.rAll, 2)} = ${fx(r.E[0][0], 2)} 個不良，B 應有 ${fx(r.E[1][0], 2)} 個（良品也一樣算）。最小的期望次數是 ${fx(r.minE, 2)}${r.minE < 5 ? "，小於 5，卡方會不準，改用 Fisher" : ""}。`,
+      `<b>算卡方值</b>：四格的 (實際 − 期望)² ÷ 期望 加總 = ${fx(r.chi2, 3)}，自由度 (2 − 1) × (2 − 1) = 1。`,
+      `<b>查 p 值</b>：卡方 p = ${fx(r.pc, 4)}；Fisher 精確 p = ${fx(r.pf, 4)}。這次採用 ${meth}，p = ${fx(r.p, 4)}。`,
+      `<b>下判定</b>：${r.sig ? "p 小於 0.05，差異不像運氣，判定兩組不良率有差。" : "p 不小於 0.05，證據不足以說有差。不代表兩組一樣，可能只是件數不夠。"}`,
+      `<b>回到實務</b>：${r.sig ? "有差不代表原因就是「組別」本身，先確認兩組的生產時間、原料批號、檢驗方式是否相同。" : "如果要證明「一樣」，要先訂可接受的差異，再規劃件數。"}`
+    ].map(x => `<li>${x}</li>`).join("");
+    texC();
+  }
+  function texC() {
+    if (!$("texC1")) return;
+    const r = chiCalc();
+    if (r.none) { $("texC1").innerHTML = ""; $("texC2").innerHTML = ""; $("texCNote").textContent = "合計不良數為 0 或全部不良，無法計算。"; return; }
+    const term = (o, e) => `\\dfrac{(${o}-${fx(e, 2)})^2}{${fx(e, 2)}}`;
+    tex($("texC1"), `\\chi^2=${term(r.M[0][0], r.E[0][0])}+${term(r.M[0][1], r.E[0][1])}+${term(r.M[1][0], r.E[1][0])}+${term(r.M[1][1], r.E[1][1])}=${fx(r.chi2, 3)}`);
+    tex($("texC2"), `df=1\;\\Rightarrow\;p_{\\chi^2}=${fx(r.pc, 4)},\\qquad p_{\\text{Fisher}}=${fx(r.pf, 4)}`);
+    $("texCNote").textContent = `最小期望次數 ${fx(r.minE, 2)}，${r.fisher ? "小於 5，採用 Fisher 精確檢定" : "都 ≥ 5，採用卡方檢定"}；p ${r.sig ? "<" : "≥"} 0.05。`;
+  }
+  ["b_n", "b_x", "b_p0"].forEach(id => $(id).addEventListener("input", draw41)); $("b_c").addEventListener("change", draw41);
+  ["c_n1", "c_x1", "c_n2", "c_x2"].forEach(id => $(id).addEventListener("input", draw42));
+
   // ---- 分頁切換 ----
   function showTab(id) {
-    const ok = ["s1", "s2", "s3"].includes(id) ? id : "s1";
-    ["s1", "s2", "s3"].forEach(k => { $(k).hidden = k !== ok; });
+    const ok = ["s1", "s2", "s3", "s4"].includes(id) ? id : "s1";
+    ["s1", "s2", "s3", "s4"].forEach(k => { $(k).hidden = k !== ok; });
     document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
-    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else { all(); draw3b(); }
+    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else if (ok === "s4") { draw41(); draw42(); } else { all(); draw3b(); }
   }
   document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   // 回到統計工作台：GitHub Pages 用相對路徑，其他（claude.ai）用工作台網址
   (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
   showTab(location.hash.slice(1));
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(location.hash.slice(1) || (!$("s3").hidden ? "s3" : $("s2").hidden ? "s1" : "s2")), 150); });
-  window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc };
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4"].find(k => !$(k).hidden) || "s1"), 150); });
+  window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc, cpUpper, propCalc, chiCalc, zeroN };
 })();
 </script>
 </body>

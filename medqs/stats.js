@@ -1188,7 +1188,68 @@
     return { a, b, dropped };
   }
 
-  const api = { binomCdf, betaPpf, crSampleSize, defectUpper, demoReliability, planPoints, nctCdf, nctSf, nctPpf, tPower, tSampleSize, tDetectable, tolK1, tolK2, tolConf2, chi2Ppf, toleranceInterval, parseTable, pairUp, alignRows, chi2Sf, tTestOne, wilcoxonOne, welchAnova, kruskal, blockAnovaK, friedman, sphericity, detLU, analyzeOne, analyzeMulti, lgamma, erfc, normCdf, normSf, normInv, ibeta, tSf, tCdf, tInv, fSf,
+
+  // ---------- 次數資料：單比例（精確二項）、列聯表卡方、Fisher 精確檢定 ----------
+  // 單比例：「不良率有沒有低於目標 p0」。H1: p < p0，p 值 = P(X ≤ x | n, p0)（與 SciPy binomtest alternative="less" 相同）。
+  // 上限用 Clopper-Pearson（精確法）；單邊上限 conf = 雙邊 2conf−1 區間的上限。
+  function cpInterval(x, n, conf) {   // 雙邊 Clopper-Pearson
+    const a = (1 - conf) / 2;
+    return [x <= 0 ? 0 : betaPpf(a, x, n - x + 1), x >= n ? 1 : betaPpf(1 - a, x + 1, n - x)];
+  }
+  function cpUpper(x, n, conf) { return x >= n ? 1 : betaPpf(conf, x + 1, n - x); }   // 單邊上限
+  function propOne(n, x, p0, conf) {
+    conf = conf || 0.95; n = Math.round(n); x = Math.round(x);
+    if (!(n >= 1) || !(x >= 0) || x > n) return { error: "件數要是整數，不良數不能大於測試數。" };
+    if (!(p0 > 0 && p0 < 1)) return { error: "目標不良率要介於 0 與 100% 之間。" };
+    const pLess = binomCdf(x, n, p0), upper = cpUpper(x, n, conf), ci = cpInterval(x, n, conf);
+    // 在同樣的 n 下，最多可以有幾個不良仍能宣稱低於目標
+    let maxX = -1; for (let k = 0; k <= n; k++) { if (cpUpper(k, n, conf) < p0) maxX = k; else break; }
+    return { n, x, p0, conf, rate: x / n, p: pLess, upper, ci, pass: upper < p0, maxX };
+  }
+  // Wilson 分數區間與 Newcombe（混合分數法）兩比例差的信賴區間
+  function wilson(x, n, conf) {
+    const z = normInv(1 - (1 - conf) / 2), p = x / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+    return [Math.max(0, c - h), Math.min(1, c + h)];
+  }
+  function newcombe(x1, n1, x2, n2, conf) {
+    const p1 = x1 / n1, p2 = x2 / n2, [l1, u1] = wilson(x1, n1, conf), [l2, u2] = wilson(x2, n2, conf), d = p1 - p2;
+    return [d - Math.sqrt((p1 - l1) ** 2 + (u2 - p2) ** 2), d + Math.sqrt((u1 - p1) ** 2 + (p2 - l2) ** 2)];
+  }
+  // Fisher 精確檢定（2×2，雙尾）：固定邊際總數下的超幾何分布，加總「機率不大於觀察表」的所有表
+  function fisher2x2(a, b, c, d) {
+    const r1 = a + b, r2 = c + d, c1 = a + c, N = r1 + r2;
+    const lc = (n, k) => lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1), base = lc(N, c1);
+    const pr = k => Math.exp(lc(r1, k) + lc(r2, c1 - k) - base);
+    const lo = Math.max(0, c1 - r2), hi = Math.min(r1, c1), p0 = pr(a);
+    let p = 0; for (let k = lo; k <= hi; k++) { const q = pr(k); if (q <= p0 * (1 + 1e-7)) p += q; }
+    return { p: Math.min(1, p), oddsRatio: b * c === 0 ? (a * d === 0 ? NaN : Infinity) : (a * d) / (b * c) };
+  }
+  // 列聯表卡方獨立性檢定（Pearson，不做連續性校正；與 SciPy chi2_contingency(correction=False) 相同）
+  function chi2Table(M, conf) {
+    conf = conf || 0.95;
+    const R = M.length, C = R ? M[0].length : 0;
+    if (R < 2 || C < 2) return { error: "至少要 2 組、2 種結果（例如 良品／不良）。" };
+    if (M.some(r => r.length !== C || r.some(v => !(v >= 0) || Math.round(v) !== v))) return { error: "每一格都要填 0 或正整數的件數。" };
+    const rs = M.map(r => r.reduce((s, v) => s + v, 0)), cs = M[0].map((_, j) => M.reduce((s, r) => s + r[j], 0)), N = rs.reduce((s, v) => s + v, 0);
+    if (rs.some(v => v === 0)) return { error: "有一組的件數全部是 0，請刪除這一組或補上數字。" };
+    if (cs.some(v => v === 0)) return { error: "有一種結果在每一組都是 0，請刪除這一欄。" };
+    const E = M.map((r, i) => r.map((_, j) => rs[i] * cs[j] / N));
+    let chi2 = 0; const contrib = M.map((r, i) => r.map((o, j) => { const q = (o - E[i][j]) ** 2 / E[i][j]; chi2 += q; return q; }));
+    const adjRes = M.map((r, i) => r.map((o, j) => (o - E[i][j]) / Math.sqrt(E[i][j] * (1 - rs[i] / N) * (1 - cs[j] / N))));
+    const df = (R - 1) * (C - 1), p = chi2Sf(chi2, df), flat = E.flat(), minE = Math.min(...flat), nLow = flat.filter(v => v < 5).length;
+    const cramerV = Math.sqrt(chi2 / (N * (Math.min(R, C) - 1)));
+    const out = { R, C, N, rs, cs, E, chi2, df, p, contrib, adjRes, minE, nLow, fracLow: nLow / flat.length, cramerV, method: "chi2" };
+    out.lowOk = R === 2 && C === 2 ? minE >= 5 : (minE >= 1 && nLow / flat.length <= 0.2);   // Cochran 準則
+    if (R === 2 && C === 2) {
+      const f = fisher2x2(M[0][0], M[0][1], M[1][0], M[1][1]); out.fisher = f;
+      out.diffCI = newcombe(M[0][0], rs[0], M[1][0], rs[1], conf);
+      if (!out.lowOk) out.method = "fisher";
+    }
+    out.pMain = out.method === "fisher" ? out.fisher.p : p;
+    out.rowCI = M.map((r, i) => cpInterval(r[0], rs[i], conf));
+    return out;
+  }
+  const api = { cpInterval, cpUpper, propOne, wilson, newcombe, fisher2x2, chi2Table, binomCdf, betaPpf, crSampleSize, defectUpper, demoReliability, planPoints, nctCdf, nctSf, nctPpf, tPower, tSampleSize, tDetectable, tolK1, tolK2, tolConf2, chi2Ppf, toleranceInterval, parseTable, pairUp, alignRows, chi2Sf, tTestOne, wilcoxonOne, welchAnova, kruskal, blockAnovaK, friedman, sphericity, detLU, analyzeOne, analyzeMulti, lgamma, erfc, normCdf, normSf, normInv, ibeta, tSf, tCdf, tInv, fSf,
     mean, variance, quantile, median, rankAvg, describe,
     tTestPooled, tTestWelch, tTestPaired, mannWhitney, wilcoxon, shapiroWilk,
     oneWayAnova, blockAnova, levene, specStats, analyze, CHECK_ALPHA };

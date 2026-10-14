@@ -162,7 +162,8 @@
     <div class="tool-head"><h2 class="tool-title">假設檢定</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
     <div class="tool-problem"><label for="hypProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="假設檢定功能">
-      <button type="button" role="tab" data-sub="compare" aria-selected="true">比較檢定</button>
+      <button type="button" role="tab" data-sub="compare" aria-selected="true">比較檢定（量測數值）</button>
+      <button type="button" role="tab" data-sub="count" aria-selected="false">次數資料（不良率、類別）</button>
       <button type="button" role="tab" data-sub="tol" aria-selected="false">統計允差區間</button>
     </div>
     <div id="subCompare" data-subview="compare">
@@ -318,6 +319,74 @@
     </div>
     </div>
 
+    <div id="subCount" data-subview="count" hidden>
+      <div class="grid">
+        <main class="card" id="ctPanel">
+          <div class="step">
+            <span class="qref">STEP 1</span>
+            <h2 class="q">你要回答哪一個問題？</h2>
+            <p class="help">數據是「件數」（良品幾個、不良幾個、各種缺陷幾個），不是量測數值時用這裡。量測數值（拉力、厚度）請用「比較檢定」。</p>
+            <div class="ct-qs" id="ctQ" role="group" aria-label="選擇問題">
+              <button type="button" class="ct-q" data-ctq="one" aria-pressed="true"><span class="ct-qt">不良率有沒有低於目標？</span><span class="ct-qs2">一組產品：測了幾個、幾個不良</span></button>
+              <button type="button" class="ct-q" data-ctq="tab" aria-pressed="false"><span class="ct-qt">兩組以上的不良率（或缺陷種類）有沒有差？</span><span class="ct-qs2">每組各有幾個良品、不良品（或各種缺陷）</span></button>
+            </div>
+            <div class="ct-when" id="ctWhenOne">
+              <b>什麼時候會用到</b>
+              <ul>
+                <li>設計驗證：密封、破裂、洩漏試驗測了一批，要宣稱「不良率低於 1%」。</li>
+                <li>進料或製程確認：抽了一批外觀檢查，看不良率有沒有低於公司目標。</li>
+              </ul>
+              <div class="chips" role="group" aria-label="載入示範"><button class="chip" type="button" data-ctex="one0">示範：300 個全過</button><button class="chip" type="button" data-ctex="one3">示範：200 個有 3 個不良</button></div>
+              <p class="hint">不適用：要比較兩組以上 → 選上面第二題。只想知道「要測幾個」→ 到「樣本數規劃」⑤ 或 ⑦。</p>
+            </div>
+            <div class="ct-when" id="ctWhenTab" hidden>
+              <b>什麼時候會用到</b>
+              <ul>
+                <li>兩家供應商、兩條產線、改善前後：良品／不良品各幾個，不良率有沒有差。</li>
+                <li>三個模穴或三個批次：各種缺陷（破裂、毛邊、縮痕）的比例是否一樣。</li>
+              </ul>
+              <div class="chips" role="group" aria-label="載入示範"><button class="chip" type="button" data-ctex="tab2">示範：兩家供應商</button><button class="chip" type="button" data-ctex="tab3">示範：三個模穴的缺陷種類</button><button class="chip" type="button" data-ctex="tabs">示範：改善前後各 20 個</button></div>
+              <p class="hint">不適用：同一批產品「前後各判一次」（成對）要用 McNemar 檢定，這裡沒有提供；量測數值請用「比較檢定」。</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="qref copper">STEP 2</span>
+            <h2 class="q" id="ctStep2">填入件數</h2>
+            <div id="ctOneForm">
+              <div class="fields">
+                <div class="field"><label for="ctN">測了幾個</label><input id="ctN" type="number" min="1" step="1" inputmode="numeric" placeholder="例如 300"></div>
+                <div class="field"><label for="ctX">其中不良幾個</label><input id="ctX" type="number" min="0" step="1" inputmode="numeric" placeholder="例如 0"></div>
+                <div class="field"><label for="ctP0">目標不良率（%）</label><input id="ctP0" type="number" min="0" step="any" inputmode="decimal" placeholder="例如 1"><small>要宣稱「低於」這個值</small></div>
+              </div>
+            </div>
+            <div id="ctTabForm" hidden>
+              <p class="help">每一列是一組（供應商、產線、批次），每一欄是一種結果。名稱可以直接改；「＋」增加組別或結果類別。</p>
+              <div class="scroll-x"><table class="ct-grid" id="ctGrid"></table></div>
+              <div class="run-row" style="margin-top:6px"><button type="button" class="chip" id="ctAddRow">＋ 組別</button><button type="button" class="chip" id="ctAddCol">＋ 結果類別</button></div>
+              <textarea id="ctData" hidden aria-hidden="true"></textarea>
+            </div>
+            <div class="fields">
+              <div class="field"><label for="ctConf">信心水準</label><select id="ctConf"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
+            </div>
+            <div class="run-row">
+              <button class="btn primary" id="ctRun" type="button">計算</button>
+              <a class="linkbtn" href="learn.html#s4" target="_blank" rel="noopener" id="ctLearn">看圖解說明 ↗</a>
+              <span class="hint" id="ctHint"></span>
+            </div>
+          </div>
+        </main>
+        <aside class="card preview" aria-label="次數資料結果" data-ask="次數資料結果">
+          <div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="ctTitle">尚未計算</b></span><span class="ask-slot"></span></div>
+          <div class="preview-body" id="ctOut"><p class="help">選好問題、填入件數後按「計算」。也可以先點示範看看。</p></div>
+        </aside>
+      </div>
+      <div class="sheets" id="ctSheets" hidden>
+        <section class="card sheet" data-ask="次數資料計算明細">
+          <h3>計算明細</h3>
+          <div class="scroll-x"><table id="ctTable"></table></div>
+        </section>
+      </div>
+    </div>
     <div id="subTol" data-subview="tol" hidden>
       <div class="grid">
         <main class="card" id="tlPanel" style="border-top:6px solid var(--teal)">
@@ -1738,8 +1807,8 @@
     const out = L.join("\n"); return out.length > 3000 ? out.slice(0, 3000) + "…" : out;
   }
   const PLAN_Q = "我還沒有分析結果。請依我目前頁面上的設定，說明：這個工具適合解決什麼問題、要怎麼規劃（要收集什麼資料、資料格式、樣本數或水準怎麼決定、要控制什麼條件），以及常見錯誤。必要時先問我 1～2 個關鍵問題。";
-  function hypHas() { return hypSub === "compare" ? !!state.result : hypSub === "power" ? !!pw.result : hypSub === "tol" ? !!tl.result : hypSub === "attr" ? !!at.result : false; }
-  function hypContext() { const pd = ($("hypProblem").value || "").trim(); return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + "【目前頁面：假設檢定 · " + ({ compare: "比較檢定", power: "樣本數與檢定力", tol: "統計允差區間", attr: "計數型抽樣" }[hypSub]) + "】\n" + (!hypHas() ? "【尚未分析】\n【頁面目前的設定】\n" + formSnapshot($("viewAnalyze")) : hypSub === "power" ? powerContext() : hypSub === "tol" ? tolContext() : hypSub === "attr" ? attrContext() : contextText()); }
+  function hypHas() { return hypSub === "compare" ? !!state.result : hypSub === "power" ? !!pw.result : hypSub === "tol" ? !!tl.result : hypSub === "attr" ? !!at.result : hypSub === "count" ? !!CT.result : false; }
+  function hypContext() { const pd = ($("hypProblem").value || "").trim(); return (pd ? "【使用者描述的問題】" + pd + "\n" : "") + "【目前頁面：假設檢定 · " + ({ compare: "比較檢定", power: "樣本數與檢定力", tol: "統計允差區間", attr: "計數型抽樣", count: "次數資料（不良率、類別）" }[hypSub]) + "】\n" + (!hypHas() ? "【尚未分析】\n【頁面目前的設定】\n" + (hypSub === "count" ? ctFormText() : formSnapshot($("viewAnalyze"))) : hypSub === "count" ? ctContext() : hypSub === "power" ? powerContext() : hypSub === "tol" ? tolContext() : hypSub === "attr" ? attrContext() : contextText()); }
   function noteResultChanged() {
     setTimeout(updateChatControls, 0);
     if (chatKey === "hyp" && turns.length) { appendLog([{ role: "note", text: "結果已更新，下一個問題 AI 會依最新結果回答" }]); }
@@ -2103,6 +2172,7 @@
     : chatKey === "fishbone" ? "請先檢查問題點（與定義問題的對話，如果有）：資訊不足時，先向我追問最多 3 個最關鍵的問題（例如產品與批號、發生階段、比例、位置與型態、判定規格），這次不要列原因。資訊已經足夠時，再按分類建議可能的原因，並附 fishbone 區塊。"
     : hypSub === "power" ? "請說明這個樣本數計算：結果代表什麼、各輸入值對結果的影響、實務上要注意什麼（例如 σ 的來源、檢定力不足的風險）。"
     : hypSub === "tol" ? "請說明這個允差區間結果：它代表什麼、是否符合規格、與信賴區間有什麼不同、有哪些需要注意的前提。"
+    : hypSub === "count" ? "請用非統計背景也聽得懂的話說明這個結果：結論是什麼、用了哪個方法以及為什麼、實務上代表什麼、有哪些限制（例如抽樣是否隨機、兩組條件是否相同）。"
     : hypSub === "attr" ? "請說明這個計數型抽樣結果：樣本數或可靠度代表什麼、和 AQL 的差別、寫進設計驗證計畫書時要注意什麼。"
     : "請說明這次的實驗結果：結論是什麼、依據哪個檢定以及為什麼選它、實務上代表什麼、有哪些需要注意的限制。", { tpl: true }));
   $("sendBtn").addEventListener("click", () => {
@@ -2143,7 +2213,7 @@
   })();
 
   // ---------- sub-tabs ----------
-  const SUB_HINT = { compare: "單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法", power: "試驗前估算樣本數，或評估既有樣本數的檢定力（t 檢定）", tol: "常態允差區間：以指定信心水準，涵蓋指定比例的產品", attr: "通過／不通過的試驗：信心度／可靠度樣本數、抽樣方案（AQL）實際能宣稱的可靠度" };
+  const SUB_HINT = { count: "件數資料：單一不良率對目標（精確二項），兩組以上比例或類別分布（卡方，樣本少時自動改用 Fisher）", compare: "單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法", power: "試驗前估算樣本數，或評估既有樣本數的檢定力（t 檢定）", tol: "常態允差區間：以指定信心水準，涵蓋指定比例的產品", attr: "通過／不通過的試驗：信心度／可靠度樣本數、抽樣方案（AQL）實際能宣稱的可靠度" };
   function setSub(name) {
     hypSub = name;
     document.querySelectorAll("#viewAnalyze .subtabs [data-sub]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.sub === name)));
