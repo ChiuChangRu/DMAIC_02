@@ -872,6 +872,28 @@ button.pd-box { padding: 0; background: #fff; cursor: pointer; font: inherit; }
   .flowbar .lab { font-size: 14px; } .fl-t small { display: block; margin: 2px 0 0; }
 }
 @media print { .flow-wrap { display: none !important; } }
+/* 多輪實驗 */
+.rd-badge { display: inline-block; margin-left: 10px; background: var(--act); color: var(--on-act); font-size: 13px; font-weight: 800; border-radius: 999px; padding: 2px 12px; vertical-align: 2px; }
+.rd-next { font: inherit; font-size: 14px; font-weight: 800; background: var(--surface); color: var(--act-text); border: 2px solid var(--act); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+.flowbar li.redo .dot { border-style: dashed; border-color: var(--act); color: var(--act-text); }
+.flowbar li.redo .sub { color: var(--act-text); font-weight: 700; }
+.rd-hist { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.rd-hist summary { cursor: pointer; font-weight: 800; font-size: 14.5px; }
+.rd-tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13.5px; min-width: 620px; }
+.rd-tbl th, .rd-tbl td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; background: var(--surface); vertical-align: top; }
+.rd-tbl th { background: var(--navy-soft); }
+.rd-ng { color: var(--bad); font-weight: 800; } .rd-part { color: var(--warn-ink); font-weight: 800; } .rd-ok { color: var(--good); font-weight: 800; } .rd-now { color: var(--act-text); font-weight: 800; }
+.rd-btns { white-space: nowrap; }
+.rd-a { font: inherit; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 2px 8px; margin-right: 4px; cursor: pointer; color: var(--ink); }
+.rd-a.rd-del:hover { color: var(--bad); border-color: var(--bad); }
+.rd-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: grid; place-items: start center; padding: 80px 16px 16px; overflow-y: auto; }
+.rd-dlg { width: min(580px, 100%); background: var(--surface); color: var(--ink); border: 2px solid var(--act); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.3); padding: 18px 20px; }
+.rd-dlg h3 { margin: 0 0 6px; font-size: 19px; } .rd-dlg h4 { margin: 12px 0 4px; font-size: 14.5px; }
+.rd-dlg .chips { margin: 6px 0 10px; }
+.rd-dlg textarea { width: 100%; font: inherit; border: 1.5px solid var(--act); border-radius: 8px; padding: 8px; background: var(--code-bg); color: var(--ink); }
+.rd-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.rd-view ul { margin: 0; padding-left: 20px; font-size: 14px; }
+.pd-round { margin: 0 0 8px; }
 /* PDCA 分頁狀態 */
 .pd-st { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
 .pd-st li { display: flex; gap: 10px; align-items: baseline; font-size: 14.5px; }
@@ -12210,7 +12232,8 @@ else root.runValidation = runValidation;
       msa: { type: MP.type, p: JSON.parse(JSON.stringify(MP.p)), m: Object.assign({}, MP.m), sheet: MP.sheet ? JSON.parse(JSON.stringify(MP.sheet)) : null, desc: $("mpDesc").value },
       spc: { m: Object.assign({}, SP.m), sheet: SP.sheet ? JSON.parse(JSON.stringify(SP.sheet)) : null, desc: $("spDesc").value },
       reg: { src: REG.src, excl: [...REG.excl] },
-      plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()]))
+      plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()])),
+      rounds: (() => { try { return JSON.parse(JSON.stringify(rdState())); } catch (_) { return null; } })()
     };
     if (withChat) {
       const all = Object.assign({}, chats); all[chatKey] = { turns, log: chatLog };
@@ -12252,6 +12275,7 @@ else root.runValidation = runValidation;
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
     step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("rounds", () => { if (typeof rdRestore === "function") rdRestore(d.rounds); });
     step("count", () => { if (R.ct && typeof ctRun === "function") ctRun(); });
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
     step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
@@ -12784,6 +12808,7 @@ else root.runValidation = runValidation;
     ana: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round"><circle cx="20" cy="20" r="12" stroke="var(--qic-a)" stroke-width="4"/><path d="M29 29 L42 42" stroke="var(--ink)" stroke-width="5"/><path d="M13 20h14M20 13v14" stroke="var(--ink)" stroke-width="2.5" opacity=".5"/></svg>`,
     why: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 6 H42 L28 24 V38 L20 43 V24 Z" fill="var(--qic-a)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><text x="34" y="46" font-size="15" font-weight="800" fill="var(--qic-b)" font-family="var(--font-body)">5?</text></svg>`,
     act: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M30 6a9 9 0 0 0-8 12L8 32a4 4 0 0 0 6 6l14-14a9 9 0 0 0 12-8l-6 3-5-5z" fill="var(--qic-b)" stroke="var(--ink)" stroke-width="2.5"/></svg>`,
+    hist: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M38 18a15 15 0 1 0 2 12" stroke="var(--qic-b)" stroke-width="4"/><path d="M40 8v10H30" stroke="var(--ink)" stroke-width="3.5"/><path d="M24 15v10l6 4" stroke="var(--ink)" stroke-width="3"/></svg>`,
     chk: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="6" width="28" height="36" rx="4" fill="var(--teal-soft)" stroke="var(--ink)" stroke-width="2.5"/><path d="M15 17l3 3 6-6M15 29l3 3 6-6" stroke="var(--qic-a)" stroke-width="3.2"/><path d="M28 18h4M28 30h4" stroke="var(--ink)" stroke-width="2.5"/></svg>`,
     ring: `<svg viewBox="0 0 64 64" aria-hidden="true"><g font-family="var(--font-body)" font-weight="800" font-size="13" text-anchor="middle"><path d="M32 4a28 28 0 0 1 28 28H46a14 14 0 0 0-14-14z" fill="var(--qic-a)"/><path d="M60 32a28 28 0 0 1-28 28V46a14 14 0 0 0 14-14z" fill="var(--qic-b)"/><path d="M32 60A28 28 0 0 1 4 32h14a14 14 0 0 0 14 14z" fill="var(--teal)"/><path d="M4 32A28 28 0 0 1 32 4v14a14 14 0 0 0-14 14z" fill="var(--copper)"/><text x="44" y="22" fill="#fff">P</text><text x="45" y="51" fill="#fff">D</text><text x="20" y="51" fill="#fff">C</text><text x="20" y="22" fill="#fff">A</text></g></svg>`
   };
@@ -12835,10 +12860,13 @@ else root.runValidation = runValidation;
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
       <div><div class="pd-cap">核准</div><ul class="pd-sign"><li>達成率：${ED("ap.rate", "", true)} %</li>${BOX("ap.ok", "PDCA 結案核准")}<li>核准人：${ED("ap.who", "", true)}</li><li>日期：${ED("ap.date", "", true)}</li></ul></div></div>`;
+    let rds = null; try { rds = rdState(); } catch (_) {}
+    const RL = { ng: "未達目標", part: "部分改善", ok: "達到目標" }, stepLab = ["定義問題", "魚骨圖", "驗證項目", "樣本數", "檢定分析", "PDCA 報告"];
+    const hist = rds && rds.list.length ? sec("hist", "歷程", "6　前幾輪的結果", `<table class="pd-tbl pd-hist"><thead><tr><th style="width:62px">輪次</th><th style="width:74px">日期</th><th style="width:92px">從哪一步開始</th><th style="width:76px">結果</th><th>說明</th></tr></thead><tbody>${rds.list.map(x => `<tr><td>第 ${x.n} 輪</td><td>${new Date(x.date).toISOString().slice(0, 10)}</td><td>${x.from >= 0 ? stepLab[x.from] : "—"}</td><td>${RL[x.result] || ""}</td><td>${esc(x.note || "")}</td></tr>`).join("")}<tr><td>第 ${rds.n} 輪</td><td>—</td><td>${rds.from >= 0 ? stepLab[rds.from] : "—"}</td><td>進行中</td><td>本報告</td></tr></tbody></table><p class="pd-note">各輪的完整內容封存在案件中，可在流程列「各輪紀錄」查看或匯出。</p>`) : "";
     const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
     const body = `<div class="pd-sheet"${forFile ? "" : ` id="pdcaSheet"`}>
       <header class="pd-head"><div><div class="pd-eyebrow">醫材品質統計輔助工具 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
-      ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}
+      ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}${hist}
       <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer></div>`;
     return body;
   }
@@ -12851,7 +12879,8 @@ else root.runValidation = runValidation;
     const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
     const res = P.c["res.ok"] ? "達到目標" : P.c["res.part"] ? "部分改善" : P.c["res.ng"] ? "未達目標" : "";
     const row = (ok, t, d, go) => `<li class="${ok ? "ok" : "todo"}"><span class="pd-st-ic">${ok ? "✓" : "○"}</span><span><b>${t}</b>　${d}${go ? `　<button type="button" class="linkbtn" data-route-go="${go}">前往</button>` : ""}</span></li>`;
-    box.innerHTML = `<ul class="pd-st">
+    let rdn = null; try { const o = rdState(); if (o.list.length) rdn = o; } catch (_) {}
+    box.innerHTML = `${rdn ? `<p class="pd-round">目前是<b>第 ${rdn.n} 輪</b>，前 ${rdn.list.length} 輪的結果列在報告第 6 段。</p>` : ""}<ul class="pd-st">
       ${row(!!fb.problem.trim(), "1 記錄問題", fb.problem.trim() ? (blank.length ? `問題已帶入；${blank.join("、")}尚未填寫（可在下方報告補填）` : "問題、地點、時間、人員都有內容") : "尚未填寫問題點", fb.problem.trim() ? "" : "home")}
       ${row(use.length > 0, "2 分析問題", use.length ? `魚骨圖已採用 ${use.length} 個原因` : "魚骨圖還沒有採用的原因", use.length ? "" : "fishbone")}
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
@@ -12970,8 +12999,29 @@ else root.runValidation = runValidation;
       rp: flowTry(() => fb.pdca && (fb.pdca.out || any(fb.pdca.t) || any(fb.pdca.c)))
     };
   }
+  // ---- 多輪實驗：每一輪完整封存（除非使用者刪除），目前畫面資料不清空；退回步驟之後的步驟要「資料有變動」才重新打勾 ----
+  let RD = { n: 1, from: -1, base: {}, list: [] };
+  const RD_RES = { ng: "未達目標", part: "部分改善", ok: "達到目標" };
+  const rdHash = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return String(h >>> 0); };
+  const rdView = ids => ids.map(id => { const v = $(id); if (!v) return ""; return [...v.querySelectorAll("input, textarea, select")].filter(el => el.type !== "file" && el.type !== "button").map(el => el.type === "checkbox" ? (el.checked ? 1 : 0) : el.value).join("\u0001"); }).join("\u0002");
+  function rdSigs() {
+    const J = o => { try { return JSON.stringify(o); } catch (_) { return ""; } };
+    return {
+      def: rdHash(($("homeQ") || {}).value || ""),
+      fb: rdHash(J(fb.factors.map(f => [f.text, f.st, f.cat, f.subs.map(x => [x.text, x.st])]))),
+      vp: rdHash(J([fb.vplan, fb.factors.map(f => f.verify)])),
+      ss: rdHash(rdView(["viewSample"])),
+      an: rdHash(rdView(["viewAnalyze", "viewSPC", "viewMSA", "viewDOE", "viewTaguchi", "viewReg"])),
+      rp: rdHash(J(fb.pdca || {}))
+    };
+  }
+  function rdRedo() {   // 回傳哪些步驟「本輪還沒重做」
+    const r = {}; if (RD.from < 0) return r; const now = rdSigs();
+    FLOW_STEPS.forEach((st, i) => { if (i >= RD.from && RD.base[st.k] != null && RD.base[st.k] === now[st.k]) r[st.k] = true; });
+    return r;
+  }
   let flowMin = false; try { flowMin = localStorage.getItem("mdqs.flow.min") === "1"; } catch (_) {}
-  let flowSig = "", flowNoResume = false;
+  let flowSig = "", flowNoResume = false, flowHistOpen = false;
   function flowCase() { try { if (!caseCur) return null; const e = caseLoadList().find(x => x.id === caseCur.id); return e ? { name: e.name, at: e.savedAt } : null; } catch (_) { return null; } }
   const flowHM = iso => { const d = new Date(iso); return isNaN(d) ? "" : `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   function flowResume() {   // 開啟網頁時：還沒有內容、也沒有目前案件 → 提示最近一次暫存的案件
@@ -12979,21 +13029,76 @@ else root.runValidation = runValidation;
   }
   function flowRender(force) {
     const box = $("flowBar"); if (!box) return;
-    const d = flowDone(), nowI = FLOW_STEPS.findIndex(s => !d[s.k]), nDone = FLOW_STEPS.filter(s => d[s.k]).length;
+    const d0 = flowDone(), redo = rdRedo(), d = {}; FLOW_STEPS.forEach(st => { d[st.k] = d0[st.k] && !redo[st.k]; });
+    const nowI = FLOW_STEPS.findIndex(s => !d[s.k]), nDone = FLOW_STEPS.filter(s => d[s.k]).length;
     const inFlow = FLOW_VIEWS.includes(currentView), mini = flowMin || !inFlow, cs = flowCase(), rs = flowResume();
-    const sig = JSON.stringify([d, mini, cs, rs && rs.id, currentView]);
+    const sig = JSON.stringify([d, redo, mini, cs, rs && rs.id, currentView, RD.n, RD.list.length, flowHistOpen]);
     if (!force && sig === flowSig) return; flowSig = sig;
     const save = `<button type="button" class="fl-save" data-fl="save" title="存成案件（存在這個瀏覽器；換電腦請到「AI 設定與案件存取」匯出）">💾 ${mini ? "暫存" : "暫存進度"}</button>`;
     const caseTxt = cs ? `案件：${esc(cs.name)}　上次暫存 ${flowHM(cs.at)}` : "尚未暫存";
     const resume = rs ? `<div class="fl-resume">繼續上次的案件：<b>${esc(rs.name)}</b>（${flowHM(rs.savedAt)} 暫存）<button type="button" class="fl-mini-btn" data-fl="resume" data-id="${rs.id}">載入</button><button type="button" class="fl-x" data-fl="noresume">不用</button></div>` : "";
     if (mini) {
       box.className = "flow-wrap mini";
-      box.innerHTML = `${resume}<div class="fl-minirow"><button type="button" class="fl-open" data-fl="open">📋 解決問題流程　<b>已完成 ${nDone}／${FLOW_STEPS.length}</b>${nowI >= 0 ? `　下一步：${FLOW_STEPS[nowI].lab}` : "　全部完成"}　展開 ▾</button>${save}</div>`;
+      box.innerHTML = `${resume}<div class="fl-minirow"><button type="button" class="fl-open" data-fl="open">📋 解決問題流程${RD.n > 1 ? `（第 ${RD.n} 輪）` : ""}　<b>已完成 ${nDone}／${FLOW_STEPS.length}</b>${nowI >= 0 ? `　下一步：${FLOW_STEPS[nowI].lab}` : "　全部完成"}　展開 ▾</button>${save}</div>`;
       return;
     }
     box.className = "flow-wrap";
-    const st = (s, i) => { const done = d[s.k], now = i === nowI; return `<li class="${done ? "done" : now ? "now" : ""}"><button type="button" class="st" data-fl="go" data-i="${i}" aria-label="${s.lab}：${done ? "已完成" : now ? "目前在這一步" : "未開始"}"><span class="dot">${done ? "✓" : i + 1}</span><span class="lab">${s.lab}</span><span class="sub">${done ? "已完成" : now ? "目前在這一步" : "未開始"}</span></button></li>`; };
-    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol></div>`;
+    const st = (s, i) => { const done = d[s.k], now = i === nowI, rd = redo[s.k];
+      const sub = done ? "已完成" : now ? (rd ? `第 ${RD.n} 輪：修改中` : "目前在這一步") : rd ? `第 ${RD.n} 輪待重做` : "未開始";
+      return `<li class="${done ? "done" : now ? "now" : rd ? "redo" : ""}"><button type="button" class="st" data-fl="go" data-i="${i}" aria-label="${s.lab}：${sub}"><span class="dot">${done ? "✓" : i + 1}</span><span class="lab">${s.lab}</span><span class="sub">${sub}</span></button></li>`; };
+    const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「開始下一輪」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
+    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="這一輪的結果不理想、要回到某一步再試一次時使用">🔁 開始下一輪</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
+  }
+  function rdDialog() {
+    let dlg = $("rdDlg"); if (dlg) dlg.remove();
+    const chips = (name, opts, def) => `<div class="chips" role="group" data-rdg="${name}">${opts.map(([v, t]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${v === def}">${t}</button>`).join("")}</div>`;
+    document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 開始第 ${RD.n + 1} 輪</h3>
+      <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再從你選的步驟接著改。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
+      <div class="group-label" style="margin-top:10px">第 ${RD.n} 輪的結果</div>${chips("res", [["ng", "未達目標"], ["part", "部分改善"], ["ok", "達到目標"]], "ng")}
+      <div class="group-label">要回到哪一步</div>${chips("from", [["1", "② 魚骨圖（重新找原因）"], ["2", "③ 驗證項目（換驗證方式）"], ["3", "④ 樣本數（加量重測）"], ["4", "⑤ 檢定分析（重新分析）"]], "2")}
+      <div class="group-label">一句話說明（會寫進紀錄與 PDCA 報告）</div><textarea id="rdNote" rows="3" placeholder="例如：延長熱封時間後強度仍未達規格；下一輪改驗證膜材批次"></textarea>
+      <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，開始第 ${RD.n + 1} 輪</button></div></div></div>`);
+    dlg = $("rdDlg");
+    dlg.addEventListener("click", e => {
+      const c = e.target.closest("[data-rdg] [data-v]"); if (c) { c.parentElement.querySelectorAll("[data-v]").forEach(x => x.setAttribute("aria-pressed", String(x === c))); return; }
+      const b = e.target.closest("[data-rd]"); if (!b && e.target !== dlg) return;
+      if (!b || b.dataset.rd === "cancel") { dlg.remove(); return; }
+      const pick = g => (dlg.querySelector(`[data-rdg="${g}"] [aria-pressed="true"]`) || {}).dataset;
+      const res = (pick("res") || {}).v || "ng", from = +((pick("from") || {}).v || 2), note = ($("rdNote").value || "").trim().slice(0, 300);
+      let snap; try { snap = JSON.parse(JSON.stringify(caseCapture(false))); delete snap.rounds; } catch (_) { snap = null; }
+      RD.list.push({ n: RD.n, date: new Date().toISOString(), from: RD.from, result: res, note, snap });
+      RD.n++; RD.from = from; const sg = rdSigs(); RD.base = {}; FLOW_STEPS.forEach((st, i) => { if (i >= from) RD.base[st.k] = sg[st.k]; });
+      dlg.remove(); flowHistOpen = true;
+      const ok = caseStore(!flowCase());
+      try { fbNote(ok ? `已封存第 ${RD.n - 1} 輪並暫存案件，現在是第 ${RD.n} 輪。` : "已封存，但瀏覽器空間不足、案件沒有存成功，請到「AI 設定與案件存取」匯出。"); } catch (_) {}
+      flowRender(true); try { pdcaRender(); } catch (_) {}
+      flowGo(from);
+    });
+    document.addEventListener("keydown", function esc(e) { if (e.key === "Escape" && $("rdDlg")) { $("rdDlg").remove(); document.removeEventListener("keydown", esc); } });
+  }
+  function rdShow(i) {   // 唯讀檢視：只顯示封存內容的重點；完整內容可「匯出」成案件檔
+    const r = RD.list[i]; if (!r) return; const s = r.snap || {}, F = s.fields || {}, f = s.fb || {}, R = s.ran || {};
+    const cats = {}; ((f.cats && f.cats[f.set]) || []).forEach(c => { cats[c.id] = c.name; });
+    const use = (f.factors || []).filter(x => x.st === "use"), excl = (f.factors || []).filter(x => x.st === "excl"), vp = (f.vplan || []).filter(x => x.on);
+    const TN = { hyp: "假設檢定", spc: "SPC", grr: "MSA Gage R&R", bias: "MSA 偏差", lin: "MSA 線性", stab: "MSA 穩定性", attr: "MSA 屬性一致性", doe: "DOE", tg: "田口方法", pw: "樣本數（t 檢定）", at: "樣本數（通過／不通過）", prop: "樣本數（比例）", tolp: "樣本數（允差區間）", doer: "DOE 重複次數", tost: "樣本數（TOST）", ni: "樣本數（不劣性）", reg: "相關與回歸", ct: "次數資料" };
+    const ran = Object.keys(R).filter(k => R[k]).map(k => TN[k] || k);
+    const li = a => a.length ? `<ul>${a.map(x => `<li>${x}</li>`).join("")}</ul>` : `<p class="hint">（無）</p>`;
+    const box = document.createElement("div"); box.id = "rdDlg"; box.className = "rd-wrap";
+    box.innerHTML = `<div class="rd-dlg rd-view" role="dialog" aria-modal="true"><h3>第 ${r.n} 輪（唯讀）<span class="hint" style="font-weight:400;font-size:13px">　封存於 ${flowHM(r.date)}　結果：${RD_RES[r.result] || ""}</span></h3>
+      ${r.note ? `<p><b>說明：</b>${esc(r.note)}</p>` : ""}
+      <h4>問題點</h4><p>${esc(f.problem || F.homeQ || "（無）")}</p>
+      <h4>採用的原因（${use.length}）</h4>${li(use.map(x => `${esc(cats[x.cat && x.cat[f.set]] || "")}：${esc(x.text)}${x.verify ? " ◇" : ""}${x.key ? " ★" : ""}`))}
+      <h4>排除的原因（${excl.length}）</h4>${li(excl.map(x => `${esc(x.text)}${x.reason ? `（理由：${esc(x.reason)}）` : ""}`))}
+      <h4>勾選的驗證項目（${vp.length}）</h4>${li(vp.map(x => `${esc(x.cause)}${x.method ? " — " + esc(x.method) : ""}${x.tool ? `（${esc(x.tool)}）` : ""}`))}
+      <h4>當時有結果的工具</h4><p>${ran.length ? esc(ran.join("、")) : "（無）"}</p>
+      <p class="hint">這裡只列重點。要看當時每個工具的完整數據與結果，按「匯出」存成案件檔，再到「AI 設定與案件存取」匯入（建議另開一個分頁，避免覆蓋目前這一輪）。</p>
+      <div class="rd-row"><button type="button" class="btn small" data-fl-x="exp">匯出這一輪</button><button type="button" class="btn primary small" data-fl-x="close">關閉</button></div></div>`;
+    document.body.appendChild(box);
+    box.addEventListener("click", e => { const b = e.target.closest("[data-fl-x]"); if (e.target === box || (b && b.dataset.flX === "close")) box.remove(); else if (b) rdExport(i); });
+  }
+  function rdExport(i) {
+    const r = RD.list[i]; if (!r || !r.snap) return;
+    try { const cs = flowCase(); caseExport(caseWrap(`${cs ? cs.name : "案件"}（第 ${r.n} 輪，${RD_RES[r.result] || ""}）`, r.snap)); } catch (_) {}
   }
   function flowGo(i) {
     const s = FLOW_STEPS[i]; if (!s) return;
@@ -13009,11 +13114,19 @@ else root.runValidation = runValidation;
       else if (a === "save") { const ok = caseStore(!flowCase()); if (ok) { b.textContent = "✓ 已暫存"; b.classList.add("ok"); setTimeout(() => flowRender(true), 1400); } else document.querySelector('.toolnav [data-route="aisettings"]').click(); }
       else if (a === "resume") { const x = caseLoadList().find(y => y.id === b.dataset.id); if (x) caseOpen(x); }
       else if (a === "noresume") { flowNoResume = true; flowRender(true); }
+      else if (a === "next") rdDialog();
+      else if (a === "hist") { setTimeout(() => { const d = box.querySelector(".rd-hist"); flowHistOpen = !!(d && d.open); }, 0); }
+      else if (a === "view") rdShow(+b.dataset.i);
+      else if (a === "exp") rdExport(+b.dataset.i);
+      else if (a === "del") { if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "確定刪除？"; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "刪除"; } }, 4000); return; }
+        RD.list.splice(+b.dataset.i, 1); if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {} }
     });
     document.querySelector(".toolnav").addEventListener("click", () => setTimeout(() => flowRender(), 0));
     setInterval(() => { try { flowRender(); } catch (_) {} }, 1500);
     try { flowRender(true); } catch (_) {}
   }, 0);
+  function rdState() { return RD; }
+  function rdRestore(o) { RD = o && typeof o === "object" && Array.isArray(o.list) ? { n: o.n || o.list.length + 1, from: typeof o.from === "number" ? o.from : -1, base: o.base || {}, list: o.list } : { n: 1, from: -1, base: {}, list: [] }; try { flowRender(true); } catch (_) {} }
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;

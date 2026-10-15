@@ -8,6 +8,7 @@
     ana: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round"><circle cx="20" cy="20" r="12" stroke="var(--qic-a)" stroke-width="4"/><path d="M29 29 L42 42" stroke="var(--ink)" stroke-width="5"/><path d="M13 20h14M20 13v14" stroke="var(--ink)" stroke-width="2.5" opacity=".5"/></svg>`,
     why: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 6 H42 L28 24 V38 L20 43 V24 Z" fill="var(--qic-a)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><text x="34" y="46" font-size="15" font-weight="800" fill="var(--qic-b)" font-family="var(--font-body)">5?</text></svg>`,
     act: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M30 6a9 9 0 0 0-8 12L8 32a4 4 0 0 0 6 6l14-14a9 9 0 0 0 12-8l-6 3-5-5z" fill="var(--qic-b)" stroke="var(--ink)" stroke-width="2.5"/></svg>`,
+    hist: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M38 18a15 15 0 1 0 2 12" stroke="var(--qic-b)" stroke-width="4"/><path d="M40 8v10H30" stroke="var(--ink)" stroke-width="3.5"/><path d="M24 15v10l6 4" stroke="var(--ink)" stroke-width="3"/></svg>`,
     chk: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="6" width="28" height="36" rx="4" fill="var(--teal-soft)" stroke="var(--ink)" stroke-width="2.5"/><path d="M15 17l3 3 6-6M15 29l3 3 6-6" stroke="var(--qic-a)" stroke-width="3.2"/><path d="M28 18h4M28 30h4" stroke="var(--ink)" stroke-width="2.5"/></svg>`,
     ring: `<svg viewBox="0 0 64 64" aria-hidden="true"><g font-family="var(--font-body)" font-weight="800" font-size="13" text-anchor="middle"><path d="M32 4a28 28 0 0 1 28 28H46a14 14 0 0 0-14-14z" fill="var(--qic-a)"/><path d="M60 32a28 28 0 0 1-28 28V46a14 14 0 0 0 14-14z" fill="var(--qic-b)"/><path d="M32 60A28 28 0 0 1 4 32h14a14 14 0 0 0 14 14z" fill="var(--teal)"/><path d="M4 32A28 28 0 0 1 32 4v14a14 14 0 0 0-14 14z" fill="var(--copper)"/><text x="44" y="22" fill="#fff">P</text><text x="45" y="51" fill="#fff">D</text><text x="20" y="51" fill="#fff">C</text><text x="20" y="22" fill="#fff">A</text></g></svg>`
   };
@@ -59,10 +60,13 @@
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
       <div><div class="pd-cap">核准</div><ul class="pd-sign"><li>達成率：${ED("ap.rate", "", true)} %</li>${BOX("ap.ok", "PDCA 結案核准")}<li>核准人：${ED("ap.who", "", true)}</li><li>日期：${ED("ap.date", "", true)}</li></ul></div></div>`;
+    let rds = null; try { rds = rdState(); } catch (_) {}
+    const RL = { ng: "未達目標", part: "部分改善", ok: "達到目標" }, stepLab = ["定義問題", "魚骨圖", "驗證項目", "樣本數", "檢定分析", "PDCA 報告"];
+    const hist = rds && rds.list.length ? sec("hist", "歷程", "6　前幾輪的結果", `<table class="pd-tbl pd-hist"><thead><tr><th style="width:62px">輪次</th><th style="width:74px">日期</th><th style="width:92px">從哪一步開始</th><th style="width:76px">結果</th><th>說明</th></tr></thead><tbody>${rds.list.map(x => `<tr><td>第 ${x.n} 輪</td><td>${new Date(x.date).toISOString().slice(0, 10)}</td><td>${x.from >= 0 ? stepLab[x.from] : "—"}</td><td>${RL[x.result] || ""}</td><td>${esc(x.note || "")}</td></tr>`).join("")}<tr><td>第 ${rds.n} 輪</td><td>—</td><td>${rds.from >= 0 ? stepLab[rds.from] : "—"}</td><td>進行中</td><td>本報告</td></tr></tbody></table><p class="pd-note">各輪的完整內容封存在案件中，可在流程列「各輪紀錄」查看或匯出。</p>`) : "";
     const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
     const body = `<div class="pd-sheet"${forFile ? "" : ` id="pdcaSheet"`}>
       <header class="pd-head"><div><div class="pd-eyebrow">醫材品質統計輔助工具 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
-      ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}
+      ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}${hist}
       <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer></div>`;
     return body;
   }
@@ -75,7 +79,8 @@
     const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
     const res = P.c["res.ok"] ? "達到目標" : P.c["res.part"] ? "部分改善" : P.c["res.ng"] ? "未達目標" : "";
     const row = (ok, t, d, go) => `<li class="${ok ? "ok" : "todo"}"><span class="pd-st-ic">${ok ? "✓" : "○"}</span><span><b>${t}</b>　${d}${go ? `　<button type="button" class="linkbtn" data-route-go="${go}">前往</button>` : ""}</span></li>`;
-    box.innerHTML = `<ul class="pd-st">
+    let rdn = null; try { const o = rdState(); if (o.list.length) rdn = o; } catch (_) {}
+    box.innerHTML = `${rdn ? `<p class="pd-round">目前是<b>第 ${rdn.n} 輪</b>，前 ${rdn.list.length} 輪的結果列在報告第 6 段。</p>` : ""}<ul class="pd-st">
       ${row(!!fb.problem.trim(), "1 記錄問題", fb.problem.trim() ? (blank.length ? `問題已帶入；${blank.join("、")}尚未填寫（可在下方報告補填）` : "問題、地點、時間、人員都有內容") : "尚未填寫問題點", fb.problem.trim() ? "" : "home")}
       ${row(use.length > 0, "2 分析問題", use.length ? `魚骨圖已採用 ${use.length} 個原因` : "魚骨圖還沒有採用的原因", use.length ? "" : "fishbone")}
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}

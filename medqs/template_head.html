@@ -872,6 +872,28 @@ button.pd-box { padding: 0; background: #fff; cursor: pointer; font: inherit; }
   .flowbar .lab { font-size: 14px; } .fl-t small { display: block; margin: 2px 0 0; }
 }
 @media print { .flow-wrap { display: none !important; } }
+/* 多輪實驗 */
+.rd-badge { display: inline-block; margin-left: 10px; background: var(--act); color: var(--on-act); font-size: 13px; font-weight: 800; border-radius: 999px; padding: 2px 12px; vertical-align: 2px; }
+.rd-next { font: inherit; font-size: 14px; font-weight: 800; background: var(--surface); color: var(--act-text); border: 2px solid var(--act); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+.flowbar li.redo .dot { border-style: dashed; border-color: var(--act); color: var(--act-text); }
+.flowbar li.redo .sub { color: var(--act-text); font-weight: 700; }
+.rd-hist { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.rd-hist summary { cursor: pointer; font-weight: 800; font-size: 14.5px; }
+.rd-tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13.5px; min-width: 620px; }
+.rd-tbl th, .rd-tbl td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; background: var(--surface); vertical-align: top; }
+.rd-tbl th { background: var(--navy-soft); }
+.rd-ng { color: var(--bad); font-weight: 800; } .rd-part { color: var(--warn-ink); font-weight: 800; } .rd-ok { color: var(--good); font-weight: 800; } .rd-now { color: var(--act-text); font-weight: 800; }
+.rd-btns { white-space: nowrap; }
+.rd-a { font: inherit; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 2px 8px; margin-right: 4px; cursor: pointer; color: var(--ink); }
+.rd-a.rd-del:hover { color: var(--bad); border-color: var(--bad); }
+.rd-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: grid; place-items: start center; padding: 80px 16px 16px; overflow-y: auto; }
+.rd-dlg { width: min(580px, 100%); background: var(--surface); color: var(--ink); border: 2px solid var(--act); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.3); padding: 18px 20px; }
+.rd-dlg h3 { margin: 0 0 6px; font-size: 19px; } .rd-dlg h4 { margin: 12px 0 4px; font-size: 14.5px; }
+.rd-dlg .chips { margin: 6px 0 10px; }
+.rd-dlg textarea { width: 100%; font: inherit; border: 1.5px solid var(--act); border-radius: 8px; padding: 8px; background: var(--code-bg); color: var(--ink); }
+.rd-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.rd-view ul { margin: 0; padding-left: 20px; font-size: 14px; }
+.pd-round { margin: 0 0 8px; }
 /* PDCA 分頁狀態 */
 .pd-st { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
 .pd-st li { display: flex; gap: 10px; align-items: baseline; font-size: 14.5px; }

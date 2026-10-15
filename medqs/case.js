@@ -37,7 +37,8 @@
       msa: { type: MP.type, p: JSON.parse(JSON.stringify(MP.p)), m: Object.assign({}, MP.m), sheet: MP.sheet ? JSON.parse(JSON.stringify(MP.sheet)) : null, desc: $("mpDesc").value },
       spc: { m: Object.assign({}, SP.m), sheet: SP.sheet ? JSON.parse(JSON.stringify(SP.sheet)) : null, desc: $("spDesc").value },
       reg: { src: REG.src, excl: [...REG.excl] },
-      plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()]))
+      plans: Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, p.state()])),
+      rounds: (() => { try { return JSON.parse(JSON.stringify(rdState())); } catch (_) { return null; } })()
     };
     if (withChat) {
       const all = Object.assign({}, chats); all[chatKey] = { turns, log: chatLog };
@@ -79,6 +80,7 @@
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
     step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("rounds", () => { if (typeof rdRestore === "function") rdRestore(d.rounds); });
     step("count", () => { if (R.ct && typeof ctRun === "function") ctRun(); });
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
     step("spcRun", () => { if (R.spc && $("spcData").value.trim()) spcRun(); });
