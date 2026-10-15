@@ -15,7 +15,7 @@
   function flowDone() {
     const any = o => o && Object.values(o).some(Boolean);
     return {
-      def: flowTry(() => ($("homeQ").value || "").trim() || (chats.home && chats.home.log && chats.home.log.length) || (chatKey === "home" && chatLog.length)),
+      def: flowTry(() => ($("homeQ").value || "").trim() || (fb.problem || "").trim() || (chats.home && chats.home.log && chats.home.log.length) || (chatKey === "home" && chatLog.length)),
       fb: flowTry(() => fb.factors.some(f => f.st === "use")),
       vp: flowTry(() => (fb.vplan || []).some(x => x.on) || fb.factors.some(f => f.verify && f.st !== "excl")),
       ss: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on); if (v.length) return v.every(svOk); return pw.result || at.result || TQ.prop || TQ.tolp || TQ.doer || TQ.tost || TQ.ni || TQ.aql; }),
@@ -89,7 +89,7 @@
       const pick = g => (dlg.querySelector(`[data-rdg="${g}"] [aria-pressed="true"]`) || {}).dataset;
       const res = (pick("res") || {}).v || "ng", from = 1, note = ($("rdNote").value || "").trim().slice(0, 300);
       let snap; try { snap = JSON.parse(JSON.stringify(caseCapture(false))); delete snap.rounds; } catch (_) { snap = null; }
-      RD.list.push({ n: RD.n, date: new Date().toISOString(), from: RD.from, result: res, note, snap });
+      RD.list.push({ n: RD.n, date: new Date().toISOString(), from: RD.from, result: res, note, snap, view: currentView });
       RD.n++; RD.from = from; const sg = rdSigs(); RD.base = {}; FLOW_STEPS.forEach((st, i) => { if (i >= from) RD.base[st.k] = sg[st.k]; });
       dlg.remove(); flowHistOpen = true;
       const ok = caseStore(!flowCase());
@@ -144,7 +144,12 @@
       else if (a === "undo") { if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = `確定取消第 ${RD.n} 輪？再按一次`; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = `✕ 取消第 ${RD.n} 輪`; } }, 4000); return; }
         const last = RD.list.pop(); RD = RD.list.length || last ? { n: last ? last.n : 1, from: last ? last.from : -1, base: {}, list: RD.list } : { n: 1, from: -1, base: {}, list: [] };
         if (RD.n <= 1 && !RD.list.length) RD = { n: 1, from: -1, base: {}, list: [] };
-        if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {} try { fbNote(`已取消，回到第 ${RD.n} 輪。畫面上的資料沒有變動。`); } catch (_) {} }
+        if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {}
+        // 回到按「重新檢討」之前的頁面；舊紀錄沒有記錄頁面時，回到最後完成的步驟（通常是檢定分析）
+        const dn = flowDone(); let li = -1; FLOW_STEPS.forEach((s, i) => { if (dn[s.k]) li = i; });
+        const back = last && last.view && last.view !== "fishbone" ? last.view : null;
+        if (back) { const nb = document.querySelector(`.toolnav [data-route="${back}"]`); if (nb) nb.click(); window.scrollTo({ top: 0, behavior: "smooth" }); } else if (li >= 0) flowGo(li);
+        try { fbNote(`已取消，回到第 ${RD.n} 輪。畫面上的資料沒有變動。`); } catch (_) {} }
       else if (a === "del") { if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "確定刪除？"; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "刪除"; } }, 4000); return; }
         RD.list.splice(+b.dataset.i, 1); if (!RD.list.length) RD = { n: 1, from: -1, base: {}, list: [] };   // 各輪都刪掉：回到第 1 輪
         if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {} }
