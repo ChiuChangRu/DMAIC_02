@@ -2928,7 +2928,7 @@
   fbLoad();
   fbRenderEditor();
   renderGuide();
-  loadExample(2);
+  // 不再自動載入範例：開啟時假設檢定是空的，避免舊範例數據被誤認為自己的資料（要看範例請按「範例」）
   const start = (location.hash || "").replace("#", "");
   route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression", "pdca"].includes(start) ? start : "home");
 })();

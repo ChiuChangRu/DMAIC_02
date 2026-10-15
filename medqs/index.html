@@ -13135,23 +13135,30 @@ else root.runValidation = runValidation;
     svBar();
   }
   // ---------------- 規劃中的提示列（頁面底部固定） ----------------
+  // 按「規劃」時記下各計算頁目前的結果；只有之後「重新計算」的結果才能帶回，避免帶到別的項目或舊範例的數字
+  const svRef = q => { try { return q === "q1" || q === "q4" ? pw.result : q === "q2" ? TQ.tost : q === "q3" ? TQ.ni : q === "q5" || q === "q6" ? at.result : q === "q7" ? TQ.prop : q === "q8" ? TQ.tolp : q === "q9" ? TQ.doer : null; } catch (_) { return null; } };
+  let svStart = null, svAiBusy = false;
+  const AI_TAG = "（AI 建議，待確認）";
   function svBar() {
     const bar = $("svBar"); if (!bar) return;
     const x = svItems().find(y => y.id === svCur);
     if (!x) { bar.hidden = true; svCur = ""; return; }
     if (bar.contains(document.activeElement) && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName)) return;
     const s = x.ss || {}, q = s.q, man = !!SV_MANUAL[q], qt = (SV_Q.find(o => o[0] === q) || ["", ""])[1];
-    const r = man ? null : svResult(q);
+    const fresh = !man && svRef(q) && svRef(q) !== svStart;   // 按「規劃」之後重新算過
+    const r = fresh ? svResult(q) : null, saved = !man && !r && svOk(x);
     const prevWhy = s.q === q && s.why ? s.why : "";
-    const why = man ? (prevWhy || (q === "none" ? [String(x.tool || "").replace(/^不用統計－|^（不需統計：|）$/g, ""), x.method].filter(Boolean).join("：") : svManualWhy(q))) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : "";
-    bar.dataset.auto = r ? r.why : "";
+    const why = man ? (prevWhy || (q === "none" ? [String(x.tool || "").replace(/^不用統計－|^（不需統計：|）$/g, ""), x.method].filter(Boolean).join("：") : svManualWhy(q))) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : saved ? prevWhy : "";
+    const aiBtn = `<button type="button" class="sv-btn" data-svai="1"${svAiBusy ? " disabled" : ""}>${svAiBusy ? "AI 建議中…" : man ? "請 AI 建議數量與理由" : "請 AI 建議計算條件"}</button>`;
     bar.innerHTML = `<div class="sv-bar-h"><b>正在為「${esc(x.cause || "未命名")}」規劃樣本數</b><span class="sv-why">（${esc(qt)}）</span><button type="button" class="sv-btn" data-svcancel="1">取消</button></div>
       ${man ? `${q === "none" ? "" : `<div class="sv-row"><label for="svN">樣本數</label><input id="svN" type="text" value="${esc(s.q === q ? s.n || "" : "")}" placeholder="例如：n = 10（每批 10，共 3 批）"></div>`}
         <label class="group-label" for="svWhy">${q === "none" ? "不需統計的理由（必填）" : "樣本數理由（必填）"}</label><textarea id="svWhy" rows="3" placeholder="${q === "none" ? "例如：文件審查，非抽樣試驗" : ""}">${esc(why)}</textarea>`
       : r ? `<p class="sv-got">算出：<b>${esc(r.n)}</b>　<span class="sv-why">${esc(r.sum)}</span></p>
         <label class="group-label" for="svWhy">樣本數理由（系統依你的設定產生，可修改；「選定依據」請自己填）</label><textarea id="svWhy" rows="3">${esc(why)}</textarea>`
-      : `<p class="sv-got">請在下方設定條件後按「計算」，算完這裡會出現樣本數與理由。</p>`}
-      ${man || r ? `<div class="sv-bar-f"><span class="hint" id="svHint"></span><button type="button" class="sv-btn p" data-svsave="1">帶回驗證項目</button></div>` : ""}`;
+      : saved ? `<p class="sv-got">目前帶回的：<b>${esc(s.n)}</b>　<span class="sv-why">${esc(s.sum || "")}</span></p><p class="hint" style="margin:0">只改理由：直接修改下面文字後按「帶回」。要改數量：在下方重新設定後按「計算」。</p>
+        <label class="group-label" for="svWhy">樣本數理由（可修改）</label><textarea id="svWhy" rows="3">${esc(why)}</textarea>`
+      : `<p class="sv-got">請在下方設定條件後按「計算」，算完這裡會出現樣本數與理由。不確定條件可以按「${man ? "" : "請 AI 建議計算條件"}」。</p>`}
+      <div class="sv-bar-f"><span class="hint" id="svHint"></span>${q === "none" ? "" : aiBtn}${man || r || saved ? `<button type="button" class="sv-btn p" data-svsave="1">帶回驗證項目</button>` : ""}</div>`;
     bar.hidden = false;
   }
   function svOnResult() { try { if (svCur) svBar(); } catch (_) {} }
@@ -13159,18 +13166,45 @@ else root.runValidation = runValidation;
     const x = svItems().find(y => y.id === svCur); if (!x) return;
     const q = (x.ss || {}).q, man = !!SV_MANUAL[q], why = ($("svWhy") ? $("svWhy").value : "").trim(), h = $("svHint");
     if (!why) { if (h) h.textContent = "理由必須填寫。"; return; }
+    if (why.includes(AI_TAG) || (($("svN") || {}).value || "").includes(AI_TAG)) { if (h) h.textContent = "請確認 AI 建議的內容，確認後刪掉「" + AI_TAG + "」再帶回。"; return; }
     if (man) {
       const n = q === "none" ? "" : ($("svN") ? $("svN").value : "").trim();
       if (q !== "none" && !n) { if (h) h.textContent = "請填樣本數。"; return; }
       x.ss = { q, n, sum: q === "none" ? "" : why.split("\n")[0].slice(0, 80), why };
     } else {
-      const r = svResult(q); if (!r) return;
-      x.ss = { q, n: r.n, sum: r.sum, why, auto: r.why };
+      const fresh = svRef(q) && svRef(q) !== svStart, r = fresh ? svResult(q) : null;
+      if (r) x.ss = { q, n: r.n, sum: r.sum, why, auto: r.why };
+      else if (svOk(x)) x.ss = Object.assign({}, x.ss, { why });   // 只改理由
+      else return;
     }
     const name = x.cause; svCur = ""; fbSave(); svRender(); try { pdcaRender(); } catch (_) {}
     try { flowRender(); } catch (_) {}
     const box = $("svList"); if (box) box.scrollIntoView({ behavior: "smooth", block: "start" });
     try { fbNote(`已把「${name}」的樣本數與理由帶回驗證項目。`); } catch (_) {}
+  }
+  // AI 建議：自行填寫的題目 → 建議數量與理由（填進欄位，標示待確認）；計算題目 → 用本頁的「請 AI 建議設計」填計算條件
+  async function svAi() {
+    const x = svItems().find(y => y.id === svCur); if (!x) return;
+    const q = (x.ss || {}).q, man = !!SV_MANUAL[q], h = $("svHint");
+    if (!man) { const b = document.querySelector("#viewSample .pk-airow button, #viewSample [id$='Ai']"); if (b) { b.click(); if (h) h.textContent = "已請 AI 建議計算條件，填好後請確認、補上 σ 等數據再按「計算」。"; } return; }
+    if (typeof sample !== "function") { if (h) h.textContent = "目前無法使用 AI，請在「AI 設定與案件存取」確認。"; return; }
+    if (svAiBusy) return; svAiBusy = true; svBar();
+    const qt = (SV_Q.find(o => o[0] === q) || ["", ""])[1];
+    const msg = ["你是醫療器材品質與法規的統計顧問。請針對下面這個驗證項目，建議樣本數與樣本數理由，給驗證計畫書使用。",
+      "規則：1. 用繁體中文。2. 不得編造量測數值或實驗結果。3. 引用標準、指引或業界常見做法時，若不確定條次或是否適用，在該句結尾標 *。4. 數量是建議，最後由使用者決定；理由要寫明依據（例如標準要求、風險高低、批次涵蓋），讓稽核看得懂。5. 只回 JSON，不要其他文字。",
+      '格式：{"n": "樣本數（例如：每批 10 件，共 3 批）", "why": "樣本數理由（2～4 句）"}',
+      `【驗證項目】${x.cause}`, `【驗證方式】${x.method || "（未寫）"}`, `【收集資料】${x.data || "（未寫）"}`, `【驗證策略】${x.tool || "（未寫）"}`, `【樣本數類型】${qt}`,
+      ((($("sampleProblem") || {}).value || "").trim() ? "【情境】" + $("sampleProblem").value.trim() : "")].filter(Boolean).join("\n");
+    try {
+      const res = await sample([{ role: "user", content: msg }], { cache: false, modelTier: "default" });
+      const m = String(res.text || "").match(/\{[\s\S]*\}/); let j = null; try { j = m ? JSON.parse(m[0]) : null; } catch (_) {}
+      if (!j || (!j.n && !j.why)) { if (h) h.textContent = "AI 沒有給出可用的建議，請自行填寫。"; return; }
+      svAiBusy = false; svBar();
+      if ($("svN") && j.n) $("svN").value = String(j.n).slice(0, 120) + AI_TAG;
+      if ($("svWhy") && j.why) $("svWhy").value = String(j.why).slice(0, 1500) + "\n" + AI_TAG;
+      const hh = $("svHint"); if (hh) hh.textContent = "已填入 AI 建議。請確認或修改，刪掉「" + AI_TAG + "」後再帶回。";
+    } catch (e) { if (h) h.textContent = "AI 呼叫失敗：" + ((e && e.message) || "請稍後再試"); }
+    finally { if (svAiBusy) { svAiBusy = false; const n = ($("svN") || {}).value, w = ($("svWhy") || {}).value; svBar(); if ($("svN") && n != null) $("svN").value = n; if ($("svWhy") && w != null) $("svWhy").value = w; } }
   }
   (function svInit() {
     const box = $("svList"), bar = $("svBar"); if (!box || !bar) return;
@@ -13185,7 +13219,7 @@ else root.runValidation = runValidation;
       const x = svItems().find(y => y.id === b.dataset.svgo); if (!x) return;
       const sel = box.querySelector(`[data-svq="${x.id}"]`), q = sel ? sel.value : ""; if (!q) return;
       if (!x.ss || x.ss.q !== q) x.ss = { q, n: "", sum: "", why: "" };
-      svCur = x.id; svRender();
+      svCur = x.id; svStart = svRef(q); svRender();
       const pb = $("sampleProblem");   // 情境描述改成這個驗證項目，「請 AI 建議設計」才會針對這一項
       if (pb && (!pb.value.trim() || pb.dataset.auto === pb.value)) { const t = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.value = t; pb.dataset.auto = t; const sr = $("sampleProblemSrc"); if (sr) sr.textContent = "從驗證項目帶入，可直接修改"; }
       else if (pb) { const t = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`, sr = $("sampleProblemSrc"); if (sr && pb.value !== t) { sr.innerHTML = `<button type="button" class="linkbtn" data-svprob="1">改用目前的驗證項目當情境描述</button>`; sr.querySelector("[data-svprob]").onclick = () => { pb.value = t; pb.dataset.auto = t; sr.textContent = "從驗證項目帶入，可直接修改"; }; } }
@@ -13195,6 +13229,7 @@ else root.runValidation = runValidation;
     bar.addEventListener("click", e => {
       if (e.target.closest("[data-svcancel]")) { svCur = ""; svRender(); return; }
       if (e.target.closest("[data-svsave]")) svSave();
+      if (e.target.closest("[data-svai]")) svAi();
     });
     svRender(); setTimeout(svRender, 0);
     const vs = $("viewSample");   // 每次切到樣本數規劃頁都重新產生（網頁開啟時魚骨圖資料可能還沒載入）
@@ -13669,7 +13704,7 @@ else root.runValidation = runValidation;
   fbLoad();
   fbRenderEditor();
   renderGuide();
-  loadExample(2);
+  // 不再自動載入範例：開啟時假設檢定是空的，避免舊範例數據被誤認為自己的資料（要看範例請按「範例」）
   const start = (location.hash || "").replace("#", "");
   route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression", "pdca"].includes(start) ? start : "home");
 })();
