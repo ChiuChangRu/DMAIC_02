@@ -157,6 +157,7 @@
       <section class="card sheet pd-card">
         <h3>PDCA 一頁報告</h3>
         <p class="help">依目前的魚骨圖自動整理成一頁。報告上的文字欄位可以直接點選修改或補填，勾選框可以點選，對策可以新增列；修改會跟著魚骨圖存檔與匯出（黃底＝手動修改過）。魚骨圖本身請在上方修改。</p>
+        <p class="note warn pd-warn">填寫前請自行判斷：人名、單位、地點、客戶或醫院名稱等可識別資料，會存在這個瀏覽器，也會跟著魚骨圖匯出檔、案件存檔一起帶出（不會傳給 AI）。不適合留在工作台的內容，請按「下載報告檔」，在下載的檔案上填寫，存成 PDF 保存。</p>
         <div class="run-row"><button class="btn primary small" type="button" id="pdcaPrint">列印／存成 PDF</button><button class="btn small" type="button" id="pdcaDl">下載報告檔（HTML）</button><button class="btn small" type="button" id="pdcaReset" hidden>清除手動修改</button><span class="hint">列印視窗中選「另存為 PDF」即可存檔；無法開啟列印視窗時，下載報告檔後用瀏覽器開啟再列印。</span></div>
         <div class="pd-wrap" id="pdcaWrap"></div>
       </section>

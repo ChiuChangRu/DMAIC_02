@@ -18,14 +18,16 @@
   }
   // 手動修改：存在 fb.pdca（跟著魚骨圖自動存檔、匯出、案件存檔）。t = 文字欄位覆寫，c = 勾選框，rows = 對策多加的列數
   function pdState() { if (!fb.pdca || typeof fb.pdca !== "object") fb.pdca = {}; const P = fb.pdca; if (!P.t || typeof P.t !== "object") P.t = {}; if (!P.c || typeof P.c !== "object") P.c = {}; if (!(P.rows >= 0)) P.rows = 0; return P; }
-  function pdcaHtml(forFile) {
-    const P = pdState(), edit = !forFile;
+  // mode：screen = 工作台（可填、會存檔）；file = 下載檔（可填、不存檔）；print = 列印（純文字）
+  function pdcaHtml(mode) {
+    mode = mode || "screen"; const forFile = mode !== "screen";
+    const P = pdState(), edit = mode !== "print", keep = mode === "screen";
     const ED = (k, auto, inl) => {   // 可編輯欄位：有手動修改用修改值，沒有就用自動內容；都沒有就留空白線
       auto = auto || ""; const ov = Object.prototype.hasOwnProperty.call(P.t, k) ? P.t[k] : null, val = ov != null ? ov : auto;
       if (!edit) return val ? `<span class="pd-tx${inl ? " pd-in" : ""}">${esc(val)}</span>` : `<span class="pd-line${inl ? " pd-in" : ""}"></span>`;
-      return `<div class="pd-ed${inl ? " pd-in" : ""}${ov != null ? " pd-mod" : ""}" contenteditable="plaintext-only" spellcheck="false" data-k="${k}" data-auto="${esc(auto)}" title="點一下可以修改">${esc(val)}</div>`;
+      return `<div class="pd-ed${inl ? " pd-in" : ""}${keep && ov != null ? " pd-mod" : ""}" contenteditable="plaintext-only" spellcheck="false"${keep ? ` data-k="${k}" data-auto="${esc(auto)}"` : ""} title="點一下可以修改">${esc(val)}</div>`;
     };
-    const BOX = (k, t) => { const on = !!P.c[k]; return `<li>${edit ? `<button type="button" class="pd-box${on ? " on" : ""}" data-c="${k}" aria-pressed="${on}" aria-label="${t.replace(/<[^>]+>/g, "")}"></button>` : `<span class="pd-box${on ? " on" : ""}"></span>`}${t}</li>`; };
+    const BOX = (k, t) => { const on = !!P.c[k]; return `<li>${edit ? `<button type="button" class="pd-box${on ? " on" : ""}" data-c="${keep ? k : ""}" aria-pressed="${on}" aria-label="${t.replace(/<[^>]+>/g, "")}"></button>` : `<span class="pd-box${on ? " on" : ""}"></span>`}${t}</li>`; };
     const prob = fb.problem.trim(), n = st => fb.factors.filter(f => f.st === st).length;
     const nKey = fb.factors.filter(f => f.st === "use" && f.key).length, nVer = fb.factors.filter(f => f.st !== "excl" && f.verify).length;
     const today = new Date().toISOString().slice(0, 10), det = fb.detail || {};
@@ -39,7 +41,7 @@
     // 2 分析問題（魚骨圖本身請在上方修改）
     const svg = fbDiagram();
     const ana = `<div class="pd-ana"><div class="pd-fish">${svg ? svg.replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?" style="max-width:[^"]*"/, ' width="100%"') : `<p class="pd-empty">尚未建立魚骨圖分類。</p>`}</div></div>
-      <p class="pd-note">問題陳述見魚頭（右側方框）。魚骨圖只畫「採用」的原因：採用 ${n("use")}（★ 重要 ${nKey}、◇ 待驗證 ${nVer}）、候選 ${n("cand")}、排除 ${n("excl")}。候選與排除理由見「原因清單」。${edit ? "魚骨圖請在上方 STEP 2 修改。" : ""}</p>
+      <p class="pd-note">問題陳述見魚頭（右側方框）。魚骨圖只畫「採用」的原因：採用 ${n("use")}（★ 重要 ${nKey}、◇ 待驗證 ${nVer}）、候選 ${n("cand")}、排除 ${n("excl")}。候選與排除理由見「原因清單」。${keep ? "魚骨圖請在上方 STEP 2 修改。" : ""}</p>
       ${P.t["ana.note"] || edit ? `<div class="pd-cap pd-cap2">補充說明</div>${ED("ana.note", "")}` : ""}`;
     // 3 找出原因（5 個為什麼）
     const cs = pdCauses(), L = ["A", "B", "C"];
@@ -51,7 +53,7 @@
     const acts = fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => "驗證：" + f.text);
     const nRow = Math.max(4, acts.length) + P.rows;
     const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-w">負責人（Who）</th><th class="pd-w">完成日（When）</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] || "")}</td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
-      ${edit ? `<div class="pd-rowbtn"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
+      ${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
@@ -65,7 +67,7 @@
   }
   function pdCaseName() { try { return caseCur ? "　案件：" + esc(caseCur.name) : ""; } catch (_) { return ""; } }
   function pdModHint() { const P = pdState(), n = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length + P.rows, b = $("pdcaReset"); if (b && !b.dataset.armed) { b.hidden = !n; b.textContent = `清除手動修改（${n}）`; } }
-  function pdcaRender() { const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml(false); pdModHint(); }
+  function pdcaRender() { const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
     for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (_) { continue; } for (const r of rules) if (r.cssText && /\.pd-/.test(r.cssText) && !/@media print/.test(r.cssText)) out += r.cssText + "\n"; }
@@ -76,14 +78,16 @@
     $("pdcaPrint").addEventListener("click", () => {
       pdcaRender();
       let host = $("pdPrintHost"); if (!host) { host = document.createElement("div"); host.id = "pdPrintHost"; document.body.appendChild(host); }
-      host.innerHTML = pdcaHtml(true); document.body.classList.add("pd-printing");
+      host.innerHTML = pdcaHtml("print"); document.body.classList.add("pd-printing");
       const done = () => { document.body.classList.remove("pd-printing"); host.innerHTML = ""; window.removeEventListener("afterprint", done); };
       window.addEventListener("afterprint", done);
       try { window.print(); } catch (_) { done(); fbNote("這個檢視無法開啟列印視窗，請改用「下載報告檔」，用瀏覽器開啟後再列印。"); }
       
     });
     $("pdcaDl").addEventListener("click", () => {
-      const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PDCA 問題解決報告</title><style>:root{${PD_LIGHT}--font-body:${cssVar("--font-body") || "sans-serif"};}body{margin:0;background:#EDEAE4;font-family:var(--font-body);color:var(--ink)}.pd-sheet{margin:16px auto}@media print{body{background:#fff}.pd-sheet{margin:0;box-shadow:none;border:0}}\n${pdcaCss()}</style></head><body>${pdcaHtml(true)}</body></html>`;
+      const bar = `<div class="pd-bar pd-noprint"><b>這個檔案可以直接填寫：</b>點空白欄位打字、點方框勾選、「＋ 新增一列」加對策。<b>填的內容不會存檔，重新整理或關閉就會消失</b>，請用右邊按鈕存成 PDF。<button type="button" onclick="window.print()">列印／存成 PDF</button></div>`;
+      const js = `document.addEventListener("click",function(e){var b=e.target.closest(".pd-box");if(b){b.classList.toggle("on");return;}var a=e.target.closest("[data-pd=addrow]");if(a){var tb=document.querySelector(".pd-act tbody"),r=tb.lastElementChild.cloneNode(true);r.querySelectorAll(".pd-ed").forEach(function(x){x.textContent="";});tb.appendChild(r);}});document.addEventListener("paste",function(e){var el=e.target.closest&&e.target.closest(".pd-ed");if(!el)return;e.preventDefault();document.execCommand("insertText",false,(e.clipboardData||window.clipboardData).getData("text/plain"));});`;
+      const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PDCA 問題解決報告</title><style>:root{${PD_LIGHT}--font-body:${cssVar("--font-body") || "sans-serif"};}body{margin:0;background:#EDEAE4;font-family:var(--font-body);color:var(--ink)}.pd-sheet{margin:12px auto 24px}.pd-bar{max-width:860px;margin:12px auto 0;padding:10px 14px;background:#FFF4D6;border:1px solid #E8B86A;border-radius:6px;font-size:13.5px;line-height:1.6}.pd-bar button{margin-left:8px;font:inherit;font-weight:700;background:#A34A16;color:#fff;border:0;border-radius:6px;padding:4px 12px;cursor:pointer}\n${pdcaCss()}\n@media print{body{background:#fff}.pd-noprint{display:none!important}.pd-sheet{margin:0!important;box-shadow:none!important;border:0!important;padding:0!important;zoom:.78}.pd-ed{background:none!important;box-shadow:none!important}.pd-tbl th,.pd-tbl td{padding:3px 7px}.pd-body{padding:5px 0 6px 10px}.pd-fish svg{max-height:330px}.pd-ed:empty{min-height:1.2em}.pd-cap2:has(+ .pd-ed:empty),.pd-cap2 + .pd-ed:empty,.pd-chk-note:has(.pd-ed:empty){display:none}.pd-ed:empty{border-bottom:1px dashed #B9B0A0}.pd-sec,.pd-tbl tr{break-inside:avoid}@page{size:A4;margin:10mm}}</style></head><body>${bar}${pdcaHtml("file")}<script>${js}<\/script></body></html>`;
       fbSaveFile(fbName("html").replace(/^魚骨圖_/, "PDCA報告_"), html);
     });
     const wrap = $("pdcaWrap");
