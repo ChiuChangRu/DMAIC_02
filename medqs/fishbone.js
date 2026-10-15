@@ -19,6 +19,10 @@
     "fishbone 區塊格式（JSON，放在 ```fishbone 與 ``` 之間，只在有新建議時附上）：",
     "```fishbone",
     '{"problem": "（選填：只有建議改寫問題點時才填）", "factors": [{"cat": "分類名稱", "text": "可能原因", "subs": ["子因子（選填）"]}]}',
+    "```",
+    "8. 使用者要求「驗證規劃」時，不談樣本數（樣本數另外規劃），開頭不要寫總共幾項；回答最後附上 verify 區塊（JSON，放在 ```verify 與 ``` 之間），每個原因一項，推論內容在該欄結尾標 *：",
+    "```verify",
+    '{"items": [{"cause": "原因（照魚骨圖的寫法）", "method": "驗證方式（一句話）", "data": "要收集的資料", "tool": "本網站工具與模式，例如：假設檢定－兩組獨立"}]}',
     "```"
   ].join("\n");
   const FB_HOME_RULE = [
@@ -98,6 +102,7 @@
     if (!o.detail || typeof o.detail !== "object") o.detail = d.detail;
     if (!o.ext || typeof o.ext !== "object") o.ext = null;
     if (o.pdca != null && typeof o.pdca !== "object") o.pdca = {};
+    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || "") })) : [];
     o.factors = o.factors.filter(f => f && typeof f.text === "string").map(f => ({ id: f.id || fid(), ref: typeof f.ref === "string" ? f.ref : "", text: f.text, st: ST_LABEL[f.st] ? f.st : "cand", src: SRC_LABEL[f.src] ? f.src : "user", key: !!f.key, verify: !!f.verify, reason: f.reason || "", cat: f.cat && typeof f.cat === "object" ? f.cat : {},
       subs: (Array.isArray(f.subs) ? f.subs : []).filter(x => x && typeof x.text === "string").map(x => ({ id: x.id || fid(), text: x.text, st: ST_LABEL[x.st] ? x.st : "cand", src: SRC_LABEL[x.src] ? x.src : "user" })) }));
     return o;
@@ -287,6 +292,7 @@
     $("fbTable").innerHTML = `<thead><tr>${FB_HEAD.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>` +
       (rows.length ? rows.map(r => `<tr class="${r[3] === "排除" ? "fb-row-excl" : r[3] === "候選" ? "fb-row-cand" : ""}">${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="7" class="hint">還沒有原因。可以請 AI 建議，或在各分類直接新增。</td></tr>`) + "</tbody>";
     fbRenderVerify();
+    try { vpRender(); } catch (_) {}
     const nc = fb.factors.filter(f => f.st === "cand").length;
     $("fbCandBar").hidden = !nc;
     $("fbCandN").textContent = nc;
@@ -473,7 +479,7 @@
     const n = fb.factors.filter(f => f.st === "cand").length; if (!n) { fbNote("沒有候選原因。"); return; }
     fbAsk(`要刪除全部 ${n} 個候選原因嗎？已採用和已排除的不受影響。`, [{ label: "刪除候選", primary: true, fn: () => { fb.factors = fb.factors.filter(f => f.st !== "cand"); fbRenderEditor(); } }, { label: "取消" }]);
   });
-  $("fbPlanAI").addEventListener("click", () => fbAskAI("請針對標記「待驗證」的原因（沒有的話，針對已採用的原因，重要的優先）逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、用本網站哪個工具與模式分析，以及樣本數用哪個工具估算。用條列，精簡。這次不需要 fishbone 區塊。", { label: "驗證規劃", quote: "" }));
+  $("fbPlanAI").addEventListener("click", () => fbAskAI("請針對標記「待驗證」的原因（沒有的話，針對已採用的原因，重要的優先）逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、用本網站哪個工具與模式分析。用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。", { label: "驗證規劃", quote: "" }));
   $("fbCheckProblem").addEventListener("click", () => fbAskAI("請檢查目前的問題點描述是否具體、可量測：缺少哪些資訊（產品、發生時間、比例、規格）？需要的話，用 fishbone 區塊的 problem 欄位建議改寫（factors 可以是空陣列）。", { label: "問題點", quote: fb.problem.slice(0, 60) }));
   function fbAskAI(q, ctx, o) {
     openPanel(ctx || undefined);

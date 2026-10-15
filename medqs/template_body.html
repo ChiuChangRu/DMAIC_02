@@ -135,6 +135,7 @@
           <p class="help">原因討論完後，把要確認的原因標記「◇ 待驗證」，再決定怎麼驗證、用什麼統計工具。</p>
           <div id="fbVerify"></div>
           <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證方式與統計工具</button><span class="hint">AI 只推薦本網站有的工具；建置中的工具會註明。</span></div>
+          <div id="fbVplan"></div>
         </div>
       </section>
     </div>
@@ -1920,9 +1921,11 @@
     if (key === "msa") text = String(text).replace(/```msaplan[\s\S]*?(```|$)/g, "").trim();
     if (key === "spc") text = String(text).replace(/```spcplan[\s\S]*?(```|$)/g, "").trim();
     if (key === "regression") text = String(text).replace(/```regplan[\s\S]*?(```|$)/g, "").trim();
+    const vpj = key === "fishbone" && final ? vpParse(text) : null;
+    if (key === "fishbone") text = String(text).replace(/```verify[\s\S]*?(```|$)/g, "").trim();
     const sp = fbSplit(text, final);
     if (key === "carried") return mdLite(sp.clean) + (final && sp.sug && sp.sug.factors.length ? `<p class="hint">（這則回答建議的 ${sp.sug.factors.length} 個原因，已在帶入時加進魚骨圖，請到 STEP 2「待決定」逐一採用或排除。）</p>` : "");
-    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (rgj ? rgChatHtml(rgj) : "") + (pkj ? pkp.html(pkj) : "") : "");
+    return mdLite(sp.clean) + (final ? (key === "home" ? homeGotoHtml(text, sp.sug) : sugButton(sp.sug, key)) + (mpj ? mpChatHtml("```msaplan\n" + JSON.stringify(mpj) + "\n```") : "") + (spj ? spChatHtml(spj) : "") + (rgj ? rgChatHtml(rgj) : "") + (vpj ? vpChatHtml(vpj) : "") + (pkj ? pkp.html(pkj) : "") : "");
   }
   function homeGotoHtml(text, sug) {
     const m = String(text).match(/建議工具[:：]\s*([^\n]+)/);

@@ -49,11 +49,12 @@
     const auto = (f, r) => { if (!f) return ""; if (r === 0) return f.text; if (r === 1) return f.subs.filter(x => x.st === "use").map(x => x.text).join("；"); return ""; };
     const why = `<table class="pd-tbl pd-why"><thead><tr><th class="pd-wn">為什麼</th>${head}</tr></thead><tbody>${[0, 1, 2, 3, 4].map(r => `<tr><th class="pd-wn">${r + 1}</th>${L.map((_, i) => `<td>${ED(`why.${i}.${r}`, auto(cs[i], r))}</td>`).join("")}</tr>`).join("")}</tbody></table>
       <p class="pd-note">第 1 層為魚骨圖的原因（優先取 ★ 重要、◇ 待驗證），第 2 層為其子因子；第 3～5 層請往下追問「為什麼」後補上。</p>`;
-    // 4 採取對策
-    const acts = fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => "驗證：" + f.text);
+    // 4 採取對策：有勾選的驗證項目就用勾選的；沒有才用「◇ 待驗證」自動列（避免同一原因出現兩次）
+    const vp = (fb.vplan || []).filter(x => x.on);
+    const acts = vp.length ? vp.map(x => ({ what: "驗證：" + x.cause + (x.method ? " — " + x.method : ""), tool: x.tool })) : fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => ({ what: "驗證：" + f.text, tool: "" }));
     const nRow = Math.max(4, acts.length) + P.rows;
-    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-w">負責人（Who）</th><th class="pd-w">完成日（When）</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] || "")}</td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
-      ${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
+    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">分析工具</th><th class="pd-w">負責人（Who）</th><th class="pd-w">完成日（When）</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
+      ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
@@ -97,10 +98,54 @@
     wrap.addEventListener("click", e => {
       const b = e.target.closest(".pd-box[data-c]"); if (b) { const P = pdState(), k = b.dataset.c; if (P.c[k]) delete P.c[k]; else P.c[k] = true; b.classList.toggle("on", !!P.c[k]); b.setAttribute("aria-pressed", String(!!P.c[k])); pdModHint(); fbSave(); return; }
       const r = e.target.closest("[data-pd]"); if (!r) return; const P = pdState();
-      if (r.dataset.pd === "addrow") P.rows++; else if (r.dataset.pd === "delrow" && P.rows > 0) { const i = Math.max(4, fb.factors.filter(f => f.st !== "excl" && f.verify).length) + P.rows - 1; ["what", "who", "when"].forEach(c => delete P.t[`act.${i}.${c}`]); P.rows--; }
+      if (r.dataset.pd === "addrow") P.rows++; else if (r.dataset.pd === "delrow" && P.rows > 0) { const i = document.querySelectorAll("#pdcaSheet .pd-act tbody tr").length - 1; ["what", "tool", "who", "when"].forEach(c => delete P.t[`act.${i}.${c}`]); P.rows--; }
       pdcaRender(); fbSave(); });
     $("pdcaReset").addEventListener("click", e => { const b = e.currentTarget;
       if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "確定清除？再按一次（無法復原）"; setTimeout(() => { delete b.dataset.armed; pdModHint(); }, 5000); return; }
       delete b.dataset.armed; fb.pdca = {}; pdcaRender(); fbSave(); fbNote("已清除報告上的手動修改。"); });
     pdcaRender();
+  })();
+
+  // =====================================================================
+  // STEP 3 驗證項目清單：AI 建議（verify 區塊）→ 使用者勾選、修改 → 帶入 PDCA 報告第 4 段
+  // =====================================================================
+  function vpParse(text) {
+    const m = String(text).match(/```verify\s*([\s\S]*?)```/); if (!m) return null;
+    try { const o = JSON.parse(m[1]); const it = (Array.isArray(o.items) ? o.items : []).filter(x => x && typeof x.cause === "string" && x.cause.trim()).slice(0, 20)
+      .map(x => ({ cause: x.cause.trim().slice(0, 160), method: String(x.method || "").trim().slice(0, 300), data: String(x.data || "").trim().slice(0, 300), tool: String(x.tool || "").trim().slice(0, 120) }));
+      return it.length ? it : null; } catch (_) { return null; }
+  }
+  function vpChatHtml(items) {
+    return `<div class="fb-sug vp-sug"><p class="hint">AI 建議 ${items.length} 個驗證項目（標 * 為推論）。列入清單後，在 STEP 3 勾選要採用的；可以修改每一欄。</p><button type="button" class="btn small primary" data-vpadd="${esc(JSON.stringify(items))}">列入 STEP 3 驗證項目清單（${items.length} 項）</button></div>`;
+  }
+  const vpKey = x => (x.cause + "|" + x.method).replace(/\s+/g, "");
+  function vpRender() {
+    const box = $("fbVplan"); if (!box) return; if (box.contains(document.activeElement) && document.activeElement.classList.contains("vp-ed")) return;
+    const L = fb.vplan || (fb.vplan = []);
+    const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
+    const nOn = L.filter(x => x.on).length;
+    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>分析工具</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${ed(x, "tool", "分析工具")}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+      <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
+  }
+  function vpChanged(full) { fbSave(); if (full) vpRender(); try { pdcaRender(); } catch (_) {} }
+  (function vpInit() {
+    const box = $("fbVplan"); if (!box) return;
+    box.addEventListener("input", e => { const el = e.target.closest(".vp-ed"); if (!el) return; const x = (fb.vplan || []).find(y => y.id === el.dataset.id); if (!x) return; x[el.dataset.f] = el.innerText.replace(/\n+$/, ""); vpChanged(false); });
+    box.addEventListener("paste", e => { const el = e.target.closest(".vp-ed"); if (!el) return; e.preventDefault(); try { document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } catch (_) {} });
+    box.addEventListener("change", e => { const c = e.target.closest("[data-vpon]"); if (!c) return; const x = (fb.vplan || []).find(y => y.id === c.dataset.vpon); if (x) { x.on = c.checked; vpChanged(true); } });
+    box.addEventListener("click", e => {
+      const d = e.target.closest("[data-vpdel]"); if (d) { fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.vpdel); vpChanged(true); return; }
+      if (e.target.closest("[data-vpnew]")) { (fb.vplan || (fb.vplan = [])).push({ id: fid(), on: true, cause: "", method: "", data: "", tool: "" }); vpChanged(true); const last = box.querySelector("tbody tr:last-child .vp-ed"); if (last) last.focus(); return; }
+      const cl = e.target.closest("[data-vpclean]"); if (cl) { if (!cl.dataset.armed) { cl.dataset.armed = "1"; cl.textContent = "確定刪除未勾選的？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.on); vpChanged(true); }
+    });
+    document.addEventListener("click", e => {   // AI 回答下的「列入清單」
+      const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled) return;
+      let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
+      const L = fb.vplan || (fb.vplan = []), have = new Set(L.map(vpKey)); let n = 0;
+      items.forEach(x => { if (have.has(vpKey(x))) return; L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
+      b.disabled = true; b.textContent = n ? `已列入 ${n} 項（重複的略過）` : "這些項目已在清單中";
+      vpChanged(true); fbNote(n ? `已把 ${n} 個驗證項目列入 STEP 3 清單，請勾選要採用的。` : "這些驗證項目已在清單中。");
+    });
+    vpRender();
   })();
