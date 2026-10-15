@@ -187,6 +187,7 @@
   }
   function toolChanged(k) {
     setTimeout(updateChatControls, 0);
+    if (k === "sample") setTimeout(() => { try { svOnResult(); } catch (_) {} }, 0);
     const note = { role: "note", text: "結果已更新，下一個問題 AI 會依最新結果回答" };
     if (chatKey === k && turns.length) appendLog([note]);
     else if (chats[k] && chats[k].turns && chats[k].turns.length) { const w = document.createElement("div"); w.innerHTML = chats[k].html; w.appendChild(msgNode(note)); chats[k].html = w.innerHTML; (chats[k].log = chats[k].log || []).push(note); }

@@ -787,7 +787,25 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .pd-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .pd-tbl th, .pd-tbl td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; font-size: 13px; color: var(--ink); background: var(--surface); word-break: break-word; }
 .pd-tbl th { font-weight: 700; background: color-mix(in srgb, var(--teal-soft) 70%, #fff); }
-.pd-kv th { width: 120px; } .pd-w { width: 96px; } .pd-tool { width: 150px; }
+.pd-kv th { width: 120px; } .pd-w { width: 62px; } .pd-tool { width: 100px; } .pd-ss { width: 205px; } .pd-act { table-layout: fixed; }
+.pd-ssn { font-weight: 800; } .pd-ssw { font-size: 11.5px; line-height: 1.45; color: var(--muted); margin-top: 2px; } .pd-ssw .pd-tx, .pd-ssw .pd-ed { color: var(--muted); white-space: pre-wrap; } .pd-tx { white-space: pre-wrap; }
+/* 樣本數規劃：驗證項目清單與規劃中提示列 */
+.sv-card { border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); background: color-mix(in srgb, var(--qic-a) 7%, var(--surface)); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
+.sv-card h3 { margin: 0 0 4px; font-size: 18px; }
+.sv-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; min-width: 640px; }
+.sv-tbl th, .sv-tbl td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; background: var(--surface); }
+.sv-tbl th { background: var(--navy-soft); } .sv-tbl td:first-child { min-width: 150px; } .sv-qc { width: 230px; } .sv-rc { width: 300px; } .sv-bc { width: 92px; }
+.sv-tbl tr.sv-act td { background: color-mix(in srgb, var(--act) 9%, var(--surface)); }
+.sv-tbl select { font: inherit; font-size: 13px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); max-width: 100%; }
+.sv-ok { color: var(--good); font-weight: 800; } .sv-no { color: var(--bad); font-weight: 800; } .sv-na { color: var(--muted); font-weight: 700; }
+.sv-why { font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: pre-wrap; } .sv-warn { font-size: 12.5px; color: var(--bad); font-weight: 700; margin-top: 2px; }
+.sv-btn { font: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--act); background: var(--surface); color: var(--act-text); border-radius: 999px; padding: 3px 12px; cursor: pointer; white-space: nowrap; }
+.sv-btn.p { background: var(--act); color: var(--on-act); } .sv-btn:disabled { opacity: .45; cursor: not-allowed; }
+.sv-bar { position: sticky; bottom: 8px; z-index: 30; border: 2px solid var(--act); background: color-mix(in srgb, var(--act) 7%, var(--surface)); box-shadow: 0 6px 22px rgba(0,0,0,.18); border-radius: 12px; padding: 10px 14px; margin: 12px 0; }
+.sv-bar-h { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; } .sv-bar-h b { font-size: 15.5px; } .sv-bar-h .sv-btn { margin-left: auto; }
+.sv-bar textarea, .sv-bar input[type=text] { width: 100%; box-sizing: border-box; font: inherit; font-size: 13.5px; border: 1.5px solid var(--act); border-radius: 8px; padding: 6px 8px; background: var(--code-bg); color: var(--ink); }
+.sv-bar textarea { min-height: 72px; } .sv-row { margin: 6px 0; } .sv-row label { font-weight: 700; font-size: 13px; }
+.sv-got { margin: 6px 0; } .sv-bar-f { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 6px; padding-right: 72px; }
 .pd-why .pd-wn { width: 56px; text-align: center; }
 .pd-abc { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--qic-a); color: #fff; font-size: 12px; margin-right: 6px; }
 .pd-line { display: block; min-height: 1.35em; border-bottom: 1px dashed #B9B0A0; }

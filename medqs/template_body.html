@@ -464,6 +464,7 @@
 
   <section id="viewSample" role="tabpanel" data-view="sample" hidden>
     <div class="tool-head"><h2 class="tool-title">樣本數規劃</h2><span class="hint" id="ssSubHint"></span></div>
+    <section class="sv-card" id="svList" hidden></section>
     <div class="tool-problem"><label for="sampleProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠到新廠區，要證明射出件內徑跟舊廠一樣，要測幾件"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
     <section class="card ss-qcard" id="ssQ">
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
@@ -786,6 +787,7 @@
         <p class="help">這張圖卡的計算功能，要等讀過 ISO 3951-1 原文、確認判定方法（s 法、σ 法）與表格來源後才加入。目前可以先用「允差區間」宣稱比例落在規格內，或用「計數型 AQL」。</p>
       </section>
     </div>
+    <div class="sv-bar" id="svBar" hidden aria-live="polite"></div>
   </section>
 
   <section id="viewReg" role="tabpanel" data-view="regression" hidden>

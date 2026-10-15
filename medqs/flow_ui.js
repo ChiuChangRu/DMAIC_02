@@ -18,7 +18,7 @@
       def: flowTry(() => ($("homeQ").value || "").trim() || (chats.home && chats.home.log && chats.home.log.length) || (chatKey === "home" && chatLog.length)),
       fb: flowTry(() => fb.factors.some(f => f.st === "use")),
       vp: flowTry(() => (fb.vplan || []).some(x => x.on) || fb.factors.some(f => f.verify && f.st !== "excl")),
-      ss: flowTry(() => pw.result || at.result || TQ.prop || TQ.tolp || TQ.doer || TQ.tost || TQ.ni || TQ.aql),
+      ss: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on); if (v.length) return v.every(svOk); return pw.result || at.result || TQ.prop || TQ.tolp || TQ.doer || TQ.tost || TQ.ni || TQ.aql; }),
       an: flowTry(() => (state.result && !Object.values(EXAMPLES).some(e => e && e.text === $("pasteBox").value)) || tl.result || CT.result || TQ.spc || TQ.grr || TQ.bias || TQ.lin || TQ.stab || TQ.attr || TQ.doe || TQ.tg || REG.res),
       rp: flowTry(() => fb.pdca && (fb.pdca.out || any(fb.pdca.t) || any(fb.pdca.c)))
     };

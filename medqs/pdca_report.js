@@ -52,10 +52,12 @@
       <p class="pd-note">第 1 層為魚骨圖的原因（優先取 ★ 重要、◇ 待驗證），第 2 層為其子因子；第 3～5 層請往下追問「為什麼」後補上。</p>`;
     // 4 採取對策：有勾選的驗證項目就用勾選的；沒有才用「◇ 待驗證」自動列（避免同一原因出現兩次）
     const vp = (fb.vplan || []).filter(x => x.on);
-    const acts = vp.length ? vp.map(x => ({ what: "驗證：" + x.cause + (x.method ? " — " + x.method : ""), tool: x.tool })) : fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => ({ what: "驗證：" + f.text, tool: "" }));
+    const ssN = x => { const s = x.ss; if (!s || !s.q) return ""; return s.q === "none" ? "不適用（不需統計）" : s.n || ""; };
+    const ssW = x => { const s = x.ss; if (!s || !s.q) return ""; return s.why || ""; };
+    const acts = vp.length ? vp.map(x => ({ what: "驗證：" + x.cause + (x.method ? " — " + x.method : ""), tool: x.tool, n: ssN(x), why: ssW(x) })) : fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => ({ what: "驗證：" + f.text, tool: "" }));
     const nRow = Math.max(4, acts.length) + P.rows;
-    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">分析工具</th><th class="pd-w">負責人（Who）</th><th class="pd-w">完成日（When）</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
-      ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
+    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">分析工具</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
+      ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
@@ -85,10 +87,11 @@
       ${row(use.length > 0, "2 分析問題", use.length ? `魚骨圖已採用 ${use.length} 個原因` : "魚骨圖還沒有採用的原因", use.length ? "" : "fishbone")}
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
       ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
+      ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "sample" : ""); })() : ""}
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
-  function pdcaRender() { try { pdcaStatus(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
+  function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
     for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (_) { continue; } for (const r of rules) if (r.cssText && /\.pd-/.test(r.cssText) && !/@media print/.test(r.cssText)) out += r.cssText + "\n"; }
@@ -121,7 +124,7 @@
     wrap.addEventListener("click", e => {
       const b = e.target.closest(".pd-box[data-c]"); if (b) { const P = pdState(), k = b.dataset.c; if (P.c[k]) delete P.c[k]; else P.c[k] = true; b.classList.toggle("on", !!P.c[k]); b.setAttribute("aria-pressed", String(!!P.c[k])); pdModHint(); fbSave(); return; }
       const r = e.target.closest("[data-pd]"); if (!r) return; const P = pdState();
-      if (r.dataset.pd === "addrow") P.rows++; else if (r.dataset.pd === "delrow" && P.rows > 0) { const i = document.querySelectorAll("#pdcaSheet .pd-act tbody tr").length - 1; ["what", "tool", "who", "when"].forEach(c => delete P.t[`act.${i}.${c}`]); P.rows--; }
+      if (r.dataset.pd === "addrow") P.rows++; else if (r.dataset.pd === "delrow" && P.rows > 0) { const i = document.querySelectorAll("#pdcaSheet .pd-act tbody tr").length - 1; ["what", "tool", "n", "why", "who", "when"].forEach(c => delete P.t[`act.${i}.${c}`]); P.rows--; }
       pdcaRender(); fbSave(); });
     $("pdcaReset").addEventListener("click", e => { const b = e.currentTarget;
       if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "確定清除？再按一次（無法復原）"; setTimeout(() => { delete b.dataset.armed; pdModHint(); }, 5000); return; }
