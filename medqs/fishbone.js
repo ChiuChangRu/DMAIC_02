@@ -97,6 +97,7 @@
     if (!FB_SETS[o.set]) o.set = "m6";
     if (!o.detail || typeof o.detail !== "object") o.detail = d.detail;
     if (!o.ext || typeof o.ext !== "object") o.ext = null;
+    if (o.pdca != null && typeof o.pdca !== "object") o.pdca = {};
     o.factors = o.factors.filter(f => f && typeof f.text === "string").map(f => ({ id: f.id || fid(), ref: typeof f.ref === "string" ? f.ref : "", text: f.text, st: ST_LABEL[f.st] ? f.st : "cand", src: SRC_LABEL[f.src] ? f.src : "user", key: !!f.key, verify: !!f.verify, reason: f.reason || "", cat: f.cat && typeof f.cat === "object" ? f.cat : {},
       subs: (Array.isArray(f.subs) ? f.subs : []).filter(x => x && typeof x.text === "string").map(x => ({ id: x.id || fid(), text: x.text, st: ST_LABEL[x.st] ? x.st : "cand", src: SRC_LABEL[x.src] ? x.src : "user" })) }));
     return o;
