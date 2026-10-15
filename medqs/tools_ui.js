@@ -404,7 +404,7 @@
       $("grrAnovaTitle").textContent = "Gage R&R ANOVA 表";
       const T = (rows) => table(["來源", "自由度", "平方和 SS", "均方 MS", "F", "p"], rows.map(r => [esc(r.src), r.df, nf(r.ss, 5), r.ms != null ? nf(r.ms, 5) : "", r.F != null ? fmt(r.F, 3) : "", r.p != null ? fmtP(r.p) : ""]));
       $("grrAnovaT").innerHTML = T(res.full.rows) + (res.interactionRemoved ? `<tbody><tr><td colspan="6"><b>交互作用併入誤差後</b></td></tr></tbody>` + T(res.table.rows).replace(/<thead>.*?<\/thead>/, "") : "");
-      $("grrAnovaNote").textContent = res.alphaRemove > 1 ? `設定為不併入交互作用（交互作用 p = ${fmtP(res.interactionP)}）。` : `交互作用 p = ${fmtP(res.interactionP)}，${res.interactionRemoved ? `大於 ${res.alphaRemove}，併入誤差後重新估計（AIAG 做法）。` : `不大於 ${res.alphaRemove}，保留在模型中。`}`;
+      $("grrAnovaNote").textContent = res.alphaRemove > 1 ? `設定為不併入交互作用（交互作用 p ${pEqv(res.interactionP)}）。` : `交互作用 p ${pEqv(res.interactionP)}，${res.interactionRemoved ? `大於 ${res.alphaRemove}，併入誤差後重新估計（AIAG 做法）。` : `不大於 ${res.alphaRemove}，保留在模型中。`}`;
     } else {
       $("grrAnovaTitle").textContent = "平均全距法計算明細";
       $("grrAnovaT").innerHTML = table(["項目", "數值"], [["R̄（各組全距平均）", nf(res.Rbar, 5)], ["X̄diff（操作員平均的最大差）", nf(res.Xdiff, 5)], ["Rp（零件平均的全距）", nf(res.Rp, 5)], ["K1／K2／K3", `${res.consts.K1}／${res.consts.K2}／${res.consts.K3}`], ["EV（重複性 σ）", nf(Math.sqrt(res.vc.rep), 5)], ["AV（再現性 σ）", nf(Math.sqrt(res.vc.op), 5)], ["PV（零件 σ）", nf(Math.sqrt(res.vc.part), 5)]]);
@@ -425,7 +425,7 @@
       + `<div>${ctrlChart(xPanel, null, { h: 200 })}<p class="hint">平均圖：量測系統好時，大多數點（建議 &gt; 50%）應超出界限，代表能分辨零件；目前 ${outX}/${flatX.length} 點（${fmt(100 * outX / flatX.length, 0)}%）超出。</p></div>`;
     $("grrSheets").hidden = false;
     TQ.grr.ctx = [`方法：${method === "anova" ? "ANOVA 法" : "平均全距法"}；${P.ops.length} 位操作員、${P.parts.length} 件零件、每件 ${P.r} 次；研究變異倍數 ${k}σ；公差 ${tol || "未填"}`,
-      method === "anova" ? `交互作用 p = ${fmtP(res.interactionP)}，${res.interactionRemoved ? "已併入誤差" : "保留"}` : "",
+      method === "anova" ? `交互作用 p ${pEqv(res.interactionP)}，${res.interactionRemoved ? "已併入誤差" : "保留"}` : "",
       ...res.rows.map(r => `${r.name.trim()}：變異數 ${nf(r.var, 4)}，%貢獻 ${pc(r.pctContrib, 2)}，%研究變異 ${pc(r.pctSV, 2)}${r.pctTol != null ? "，%公差 " + pc(r.pctTol, 2) : ""}`),
       `ndc = ${res.ndc}`, `X̄ 圖超出界限的點：${outX}/${flatX.length}`, "判斷門檻：%GRR < 10% 可接受、10～30% 有條件、> 30% 不可接受；ndc ≥ 5（AIAG 經驗值）"].filter(Boolean).join("\n");
   }
@@ -650,7 +650,7 @@
     else if (res.method === "lenth") notes0.push(["info", `不重複設計沒有誤差的自由度，用 Lenth 虛擬標準誤（PSE = ${nf(res.PSE, 4)}）判斷；效應絕對值 &gt; ${nf(res.ME, 4)}（邊際誤差 ME）視為顯著。`]);
     if (res.method === "anova" && res.noPureError) notes0.push(["info", `沒有重複，用未指派給效應的 ${res.dfE} 個自由度當誤差（殘差）估計；沒有純誤差，無法檢定適合度缺失。`]);
     if (!sig.length) notes0.push(["info", "沒有顯著效應，不提供建議設定（任何設定的差異都可能只是隨機變異）。"]);
-    if (res.method === "anova" && res.plof != null && res.plof < 0.05) notes0.push(["warn", `適合度缺失（Lack of fit）p = ${fmtP(res.plof)}，模型可能漏了效應（例如曲率），請考慮加中心點或更高階的設計。`]);
+    if (res.method === "anova" && res.plof != null && res.plof < 0.05) notes0.push(["warn", `適合度缺失（Lack of fit）p ${pEqv(res.plof)}，模型可能漏了效應（例如曲率），請考慮加中心點或更高階的設計。`]);
     $("doeOut").innerHTML = `<div class="verdict">${pill(sig.length ? "sig" : "ns", sig.length ? `${sig.length} 個顯著效應（α = 0.05）` : "沒有顯著效應")}
       <p class="big">${sig.length ? "影響最大：" + sig.slice(0, 4).map(e => `${esc(e.name)}（${esc(fName(e.name))}，效應 ${nf(e.effect, 4)}）`).join("、") + (sig.length > 4 ? "…" : "") : "在這次實驗範圍與次數下，沒有偵測到顯著的效應。"}</p>
       ${res.best && sig.length ? `<p>依模型（${res.method === "anova" ? "所有可估計的效應" : "顯著效應"}）${goal === "max" ? "最大化" : goal === "min" ? "最小化" : "接近目標 " + tgt}的設定：<b>${bestTxt}</b>，預測 ${esc(yName)} ≈ ${nf(res.best.pred, 5)}。*需以確認實驗驗證。</p>` : ""}</div>
@@ -745,8 +745,8 @@
         const f = QQ.mixtureFit(X, Y, m, names);
         if (f.error || !(f.dfE >= 1) || !f.terms.every(t => isFinite(t.se))) break;
         const dfAdd = (fit.dfE - f.dfE), F = ((fit.SSE - f.SSE) / dfAdd) / f.MSE, pv = HT.fSf(F, dfAdd, f.dfE);
-        if (dfAdd > 0 && pv < 0.05) { fit = f; autoWhy = `升到${MODEL_NAME[m]}（新增項的序列 F 檢定 p = ${fmtP(pv)}）`; }
-        else { autoWhy += `；${MODEL_NAME[m]}項不顯著（序列 F 檢定 p = ${fmtP(pv)}），不升階`; break; }
+        if (dfAdd > 0 && pv < 0.05) { fit = f; autoWhy = `升到${MODEL_NAME[m]}（新增項的序列 F 檢定 p ${pEqv(pv)}）`; }
+        else { autoWhy += `；${MODEL_NAME[m]}項不顯著（序列 F 檢定 p ${pEqv(pv)}），不升階`; break; }
       }
     } else fit = QQ.mixtureFit(X, Y, want, names);
     if (fit.error) { $("mixHint").innerHTML = `<span class="status ng">${esc(fit.error)}</span>`; return; }

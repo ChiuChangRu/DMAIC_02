@@ -17,6 +17,7 @@
   const vrHas = body => !!body.querySelector(".verdict, svg, .kv, .bignum, table");
   function vrAuto(body) {
     const v0 = body.querySelector(".verdict") || body, v = v0.cloneNode(true); v.querySelectorAll(".pill, button").forEach(e => e.remove());
+    v.querySelectorAll("p, div, h3, h4, li, br").forEach(e => e.insertAdjacentText("beforebegin", "\n"));   // 區塊之間斷句（離線節點的 textContent 不含換行）
     const t = (v.textContent || "").split(/\n+/).map(s => s.replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 2).join("；").replace(/。；/g, "；");
     return t.slice(0, 220);
   }
@@ -70,7 +71,7 @@
     if (!note) { hint.textContent = "請寫依據。"; return; }
     const x = vrItems().find(y => y.id === it); if (!x) return;
     const title = (body.closest(".preview") && body.closest(".preview").querySelector(".preview-head b")) ? body.closest(".preview").querySelector(".preview-head b").textContent.trim() : "";
-    (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: (VR_OUTS[id] || "") + (title && title !== "尚未分析" ? "：" + title : ""), st: st.vrst, note, html: vrSnap(body) });
+    (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: (VR_OUTS[id] || "") + (title && title !== "尚未分析" && !(VR_OUTS[id] || "").includes(title) ? "：" + title : ""), st: st.vrst, note, html: vrSnap(body) });
     fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {}
     const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>${vrNextHtml()}`; }
     const left = vrStatItems().filter(y => !(y.apx || []).length);

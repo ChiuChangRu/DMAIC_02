@@ -130,7 +130,7 @@
         const d = rate(0) - rate(1);
         head = `${esc(rows[0])}的${esc(cols[0])}率 ${ctPct(rate(0))}，${esc(rows[1])} ${ctPct(rate(1))}，相差 <b>${(Math.abs(d) * 100).toFixed(Math.abs(d) < 0.1 ? 2 : 1)} 個百分點</b>（${cpc}% 信賴區間 ${(r.diffCI[0] * 100).toFixed(2)} ～ ${(r.diffCI[1] * 100).toFixed(2)} 個百分點）。`;
       } else head = `比較 ${r.R} 組、${r.C} 種結果，各組的比例${sig ? "不一樣" : "目前看不出不一樣"}。`;
-      const pTxt = `p = ${fmtP(r.pMain)}：如果各組其實一樣，只因抽樣運氣就出現這麼大（或更大）差異的機率${r.pMain < 0.001 ? "不到 0.1%" : "約 " + ctPct(r.pMain)}；${sig ? `低於 ${alpha.toFixed(2)}，判定有差` : `不低於 ${alpha.toFixed(2)}，不能說有差`}。`;
+      const pTxt = `p ${pEqv(r.pMain)}：如果各組其實一樣，只因抽樣運氣就出現這麼大（或更大）差異的機率${r.pMain < 0.001 ? "不到 0.1%" : "約 " + ctPct(r.pMain)}；${sig ? `低於 ${alpha.toFixed(2)}，判定有差` : `不低於 ${alpha.toFixed(2)}，不能說有差`}。`;
       if (sig) {
         const cand = [];
         M.forEach((row, i) => row.forEach((o, j) => { if (two && j > 0) return; const a = r.adjRes[i][j]; if (Math.abs(a) >= 1.96) cand.push({ i, j, o, a }); }));
@@ -164,7 +164,7 @@
     const r = CT.result; if (!r) return ctFormText();
     if (r.kind === "one") return `【次數資料：單一不良率對目標】\n測試數 ${r.n}，不良 ${r.x}，觀察不良率 ${ctPct(r.rate)}\n目標不良率 ${ctPct(r.p0)}，信心水準 ${Math.round(r.conf * 100)}%\n單邊信賴上限（Clopper-Pearson）${ctPct(r.upper)}；雙邊區間 ${ctPct(r.ci[0])}～${ctPct(r.ci[1])}\n精確二項 p 值（H1: p < p0）${fmtP(r.p)}\n判定：${r.pass ? "上限低於目標，可以宣稱" : "上限不低於目標，還不能宣稱"}；同 n 下最多可有 ${r.maxX} 個不良`;
     return `【次數資料：列聯表】\n結果類別：${r.cols.join("、")}\n` + r.rows.map((x, i) => `${x}：${r.M[i].map((v, j) => `${r.cols[j]} ${v}（期望 ${r.E[i][j].toFixed(2)}，校正殘差 ${r.adjRes[i][j].toFixed(2)}）`).join("、")}`).join("\n") +
-      `\n方法：${r.method === "fisher" ? "Fisher 精確檢定（期望次數 < 5，自動改用）" : "Pearson 卡方"}；χ² = ${r.chi2.toFixed(4)}，df = ${r.df}，卡方 p = ${fmtP(r.p)}${r.fisher ? `，Fisher p = ${fmtP(r.fisher.p)}，比例差 CI ${ctPct(r.diffCI[0])}～${ctPct(r.diffCI[1])}` : ""}\n主要 p = ${fmtP(r.pMain)}，α = ${r.alpha.toFixed(2)}，判定：${r.sig ? "有差" : "看不出有差"}\nCramér's V = ${r.cramerV.toFixed(3)}；最小期望次數 ${r.minE.toFixed(2)}，期望 < 5 的格數 ${r.nLow}${r.lowOk ? "" : "（卡方近似可能不準）"}`;
+      `\n方法：${r.method === "fisher" ? "Fisher 精確檢定（期望次數 < 5，自動改用）" : "Pearson 卡方"}；χ² = ${r.chi2.toFixed(4)}，df = ${r.df}，卡方 p ${pEqv(r.p)}${r.fisher ? `，Fisher p ${pEqv(r.fisher.p)}，比例差 CI ${ctPct(r.diffCI[0])}～${ctPct(r.diffCI[1])}` : ""}\n主要 p ${pEqv(r.pMain)}，α = ${r.alpha.toFixed(2)}，判定：${r.sig ? "有差" : "看不出有差"}\nCramér's V = ${r.cramerV.toFixed(3)}；最小期望次數 ${r.minE.toFixed(2)}，期望 < 5 的格數 ${r.nLow}${r.lowOk ? "" : "（卡方近似可能不準）"}`;
   }
 
   // ---------- 事件 ----------

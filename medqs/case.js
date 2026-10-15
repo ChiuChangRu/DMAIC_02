@@ -180,6 +180,18 @@
   // ---- 內建範例：下拉選單選取 → 先警告存檔 → 載入 ----
   const demoBy = id => CASE_DEMOS.find(x => x.id === id);
   $("demoSel").innerHTML = `<option value="">— 選擇範例 —</option>` + CASE_DEMOS.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
+  // 三個 FDA 類型範例：一鍵加入「我的案件清單」（已存在同名案件就略過）
+  (function demoToList() {
+    const fda = CASE_DEMOS.filter(x => x.fda); if (!fda.length) return;
+    const sel = $("demoSel"), host = sel && sel.closest(".fields"); if (!host) return;
+    host.insertAdjacentHTML("afterend", `<div class="run-row" style="margin-top:6px"><button type="button" class="btn small" id="demoAddList">📥 把 ${fda.length} 個 FDA 類型範例加入我的案件清單</button><span class="hint" id="demoAddHint"></span></div>`);
+    $("demoAddList").addEventListener("click", () => {
+      const list = caseLoadList(); let n = 0;
+      fda.slice().reverse().forEach(x => { const name = x.c.name || x.name; if (list.some(y => y.name === name)) return; list.unshift({ id: caseId(), name, savedAt: new Date().toISOString(), c: JSON.parse(JSON.stringify(x.c)) }); n++; });
+      try { caseSaveList(list); } catch (_) { $("demoAddHint").textContent = "瀏覽器空間不足，無法加入。"; return; }
+      caseRender(); $("demoAddHint").textContent = n ? `已加入 ${n} 個，請在下方案件清單開啟。` : "這些範例已經在清單裡。";
+    });
+  })();
   function demoAskHide() { $("demoAsk").hidden = true; $("demoAsk").innerHTML = ""; }
   $("demoSel").addEventListener("change", () => {
     const x = demoBy($("demoSel").value);

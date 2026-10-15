@@ -94,6 +94,7 @@
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
+  let pdStT = 0; function pdStatusSoon() { clearTimeout(pdStT); pdStT = setTimeout(() => { try { pdcaStatus(); flowRender(); } catch (_) {} }, 300); }   // 報告上填寫、勾選後更新上方狀態
   function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
@@ -122,10 +123,10 @@
     document.addEventListener("click", e => { const g = e.target.closest("[data-goto-pdca],[data-route-go]"); if (!g) return; const to = g.dataset.routeGo || "pdca"; const b = document.querySelector(`.toolnav [data-route="${to}"]`); if (b) b.click(); window.scrollTo({ top: 0, behavior: "smooth" }); });
     const wrap = $("pdcaWrap");
     wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el || !el.dataset.k) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
-      if (v === (el.dataset.auto || "")) delete P.t[k]; else P.t[k] = v; el.classList.toggle("pd-mod", k in P.t); pdModHint(); fbSave(); });
+      if (v === (el.dataset.auto || "")) delete P.t[k]; else P.t[k] = v; el.classList.toggle("pd-mod", k in P.t); pdModHint(); fbSave(); pdStatusSoon(); });
     wrap.addEventListener("paste", e => { const el = e.target.closest(".pd-ed"); if (!el) return; e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); try { document.execCommand("insertText", false, t); } catch (_) {} });
     wrap.addEventListener("click", e => {
-      const b = e.target.closest(".pd-box[data-c]"); if (b) { const P = pdState(), k = b.dataset.c; if (P.c[k]) delete P.c[k]; else P.c[k] = true; b.classList.toggle("on", !!P.c[k]); b.setAttribute("aria-pressed", String(!!P.c[k])); pdModHint(); fbSave(); return; }
+      const b = e.target.closest(".pd-box[data-c]"); if (b) { const P = pdState(), k = b.dataset.c; if (P.c[k]) delete P.c[k]; else P.c[k] = true; b.classList.toggle("on", !!P.c[k]); b.setAttribute("aria-pressed", String(!!P.c[k])); pdModHint(); fbSave(); pdStatusSoon(); return; }
       const r = e.target.closest("[data-pd]"); if (!r) return; const P = pdState();
       if (r.dataset.pd === "addrow") P.rows++; else if (r.dataset.pd === "delrow" && P.rows > 0) { const i = document.querySelectorAll("#pdcaSheet .pd-act tbody tr").length - 1; ["what", "tool", "n", "why", "who", "when"].forEach(c => delete P.t[`act.${i}.${c}`]); P.rows--; }
       pdcaRender(); fbSave(); });

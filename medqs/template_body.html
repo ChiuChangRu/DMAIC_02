@@ -1328,6 +1328,7 @@
 
   // ---------- formatting ----------
   function fmtP(p) { if (!isFinite(p)) return "—"; if (p < 0.0001) return "< 0.0001"; return p.toFixed(4); }
+  function pEqv(p) { const s = fmtP(p); return s.startsWith("<") ? s : "= " + s; }   // 「p = < 0.0001」→「p < 0.0001」
   const pEq = p => (isFinite(p) && p < 0.0001 ? "p < 0.0001" : "p = " + fmtP(p));
   function fmt(x, d) {
     if (x === Infinity) return "∞";
@@ -1441,7 +1442,7 @@
     renderDetect(); updateSettingsUI(); markStale();
   });
   let parseTimer;
-  $("pasteBox").addEventListener("input", () => { state.force = null; clearTimeout(parseTimer); parseTimer = setTimeout(() => reparse(false), 200); });
+  $("pasteBox").addEventListener("input", () => { state.force = null; clearTimeout(parseTimer); parseTimer = setTimeout(() => { parseTimer = 0; reparse(false); }, 200); });
 
   // ---------- settings ----------
   function setPressed(groupId, attr, val) {
@@ -1505,6 +1506,7 @@
     return HT.analyzeMulti(data, Object.assign({}, opts, { names: groups.map(s => s.name) }));
   }
   function run() {
+    if (parseTimer) { clearTimeout(parseTimer); parseTimer = 0; reparse(false); }   // 貼上後馬上按「執行分析」：先完成解析
     const hint = $("runHint");
     const g = currentGroups();
     if (!g.length) { hint.textContent = "請先貼上數據並至少勾選一組。"; return; }
@@ -2427,7 +2429,7 @@
     let pill = "", verdict = "";
     if (r.pass === true) { pill = `<span class="pill sig" style="background:var(--good-soft);color:var(--good)">符合規格</span>`; verdict = "允差區間完全落在規格內。"; }
     else if (r.pass === false) { pill = `<span class="pill sig" style="background:var(--bad-soft);color:var(--bad)">超出規格</span>`; verdict = "允差區間超出規格，無法以此信心與涵蓋比例宣稱符合。"; }
-    const normWarn = r.normality.p < 0.05 ? `<div class="note warn">Shapiro-Wilk p = ${fmtP(r.normality.p)} < 0.05，資料可能偏離常態。常態允差區間的結論可能不準確，建議先轉換資料或改用無母數方法。</div>` : "";
+    const normWarn = r.normality.p < 0.05 ? `<div class="note warn">Shapiro-Wilk p ${pEqv(r.normality.p)} < 0.05，資料可能偏離常態。常態允差區間的結論可能不準確，建議先轉換資料或改用無母數方法。</div>` : "";
     $("tlTitle").textContent = `${v.name} · ${sideTxt} · ${fmt(p * 100, p >= 0.999 ? 1 : 0)}% / ${fmt(g * 100, 0)}%`;
     $("tlOut").innerHTML = `<div class="verdict">${pill}<div class="bignum">${intTxt}</div><p class="big">${esc(claim)}${verdict ? " " + verdict : ""}</p></div>${normWarn}
       <div class="kv"><div><span>n</span><b>${r.n}</b></div><div><span>平均</span><b>${fmt(r.mean, dec)}</b></div><div><span>標準差</span><b>${fmt(r.sd, dec)}</b></div><div><span>允差係數 k</span><b>${fmt(r.k, 4)}</b></div></div>
@@ -2442,7 +2444,7 @@
       <tr><td>允差係數 k（${sideTxt}）</td><td class="num">${fmt(r.k, 5)}</td></tr>
       <tr><td>允差區間</td><td class="num">${side === "upper" ? "—" : `x̄ − k·s = ${fmt(r.lo, dec)}`}${side === "two" ? "　～　" : ""}${side === "lower" ? "" : `x̄ + k·s = ${fmt(r.hi, dec)}`}</td></tr>
       <tr><td>規格</td><td class="num">${isFinite(lsl) ? "LSL = " + fmtSig(lsl, 8) : ""}${isFinite(lsl) && isFinite(usl) ? "，" : ""}${isFinite(usl) ? "USL = " + fmtSig(usl, 8) : ""}${!isFinite(lsl) && !isFinite(usl) ? "未提供" : ""}</td></tr>
-      <tr><td>常態性（Shapiro-Wilk）</td><td class="num">W = ${fmt(r.normality.W, 4)}，p = ${fmtP(r.normality.p)}</td></tr></tbody>`;
+      <tr><td>常態性（Shapiro-Wilk）</td><td class="num">W = ${fmt(r.normality.W, 4)}，p ${pEqv(r.normality.p)}</td></tr></tbody>`;
     $("tlSheets").hidden = false;
     noteResultChanged();
   }
