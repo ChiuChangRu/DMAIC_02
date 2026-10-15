@@ -78,7 +78,7 @@
     const chips = (name, opts, def) => `<div class="chips" role="group" data-rdg="${name}">${opts.map(([v, t]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${v === def}">${t}</button>`).join("")}</div>`;
     document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 重新檢討魚骨圖（第 ${RD.n + 1} 輪）</h3>
       <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再回到魚骨圖重新檢討原因。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
-      <div class="group-label" style="margin-top:10px">第 ${RD.n} 輪的結果</div>${chips("res", [["ng", "未達目標"], ["part", "部分改善"], ["ok", "達到目標"]], "ng")}
+      <div class="group-label" style="margin-top:10px">第 ${RD.n} 輪的結果</div>${chips("res", [["ng", "未達目標"], ["part", "部分改善"]], "ng")}<p class="hint" style="margin:4px 0 0">已達到目標就不需要重新檢討：請到 PDCA 報告勾選「達到目標」並核准結案。</p>
       <div class="group-label">一句話說明（會寫進紀錄與 PDCA 報告）</div><textarea id="rdNote" rows="3" placeholder="例如：延長熱封時間後強度仍未達規格；下一輪改驗證膜材批次"></textarea>
       <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，回到魚骨圖</button></div></div></div>`);
     dlg = $("rdDlg");
@@ -142,7 +142,8 @@
       else if (a === "view") rdShow(+b.dataset.i);
       else if (a === "exp") rdExport(+b.dataset.i);
       else if (a === "del") { if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "確定刪除？"; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "刪除"; } }, 4000); return; }
-        RD.list.splice(+b.dataset.i, 1); if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {} }
+        RD.list.splice(+b.dataset.i, 1); if (!RD.list.length) RD = { n: 1, from: -1, base: {}, list: [] };   // 各輪都刪掉：回到第 1 輪
+        if (flowCase()) caseStore(false); flowRender(true); try { pdcaRender(); } catch (_) {} }
     });
     document.querySelector(".toolnav").addEventListener("click", () => setTimeout(() => flowRender(), 0));
     setInterval(() => { try { flowRender(); } catch (_) {} }, 1500);
