@@ -77,6 +77,7 @@
   (function pdcaInit() {
     if (!$("pdcaWrap")) return;
     $("pdcaPrint").addEventListener("click", () => {
+      pdState().out = true; fbSave();
       pdcaRender();
       let host = $("pdPrintHost"); if (!host) { host = document.createElement("div"); host.id = "pdPrintHost"; document.body.appendChild(host); }
       host.innerHTML = pdcaHtml("print"); document.body.classList.add("pd-printing");
@@ -86,6 +87,7 @@
       
     });
     $("pdcaDl").addEventListener("click", () => {
+      pdState().out = true; fbSave();
       const bar = `<div class="pd-bar pd-noprint"><b>這個檔案可以直接填寫：</b>點空白欄位打字、點方框勾選、「＋ 新增一列」加對策。<b>填的內容不會存檔，重新整理或關閉就會消失</b>，請用右邊按鈕存成 PDF。<button type="button" onclick="window.print()">列印／存成 PDF</button></div>`;
       const js = `document.addEventListener("click",function(e){var b=e.target.closest(".pd-box");if(b){b.classList.toggle("on");return;}var a=e.target.closest("[data-pd=addrow]");if(a){var tb=document.querySelector(".pd-act tbody"),r=tb.lastElementChild.cloneNode(true);r.querySelectorAll(".pd-ed").forEach(function(x){x.textContent="";});tb.appendChild(r);}});document.addEventListener("paste",function(e){var el=e.target.closest&&e.target.closest(".pd-ed");if(!el)return;e.preventDefault();document.execCommand("insertText",false,(e.clipboardData||window.clipboardData).getData("text/plain"));});`;
       const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PDCA 問題解決報告</title><style>:root{${PD_LIGHT}--font-body:${cssVar("--font-body") || "sans-serif"};}body{margin:0;background:#EDEAE4;font-family:var(--font-body);color:var(--ink)}.pd-sheet{margin:12px auto 24px}.pd-bar{max-width:860px;margin:12px auto 0;padding:10px 14px;background:#FFF4D6;border:1px solid #E8B86A;border-radius:6px;font-size:13.5px;line-height:1.6}.pd-bar button{margin-left:8px;font:inherit;font-weight:700;background:#A34A16;color:#fff;border:0;border-radius:6px;padding:4px 12px;cursor:pointer}\n${pdcaCss()}\n@media print{body{background:#fff}.pd-noprint{display:none!important}.pd-sheet{margin:0!important;box-shadow:none!important;border:0!important;padding:0!important;zoom:.78}.pd-ed{background:none!important;box-shadow:none!important}.pd-tbl th,.pd-tbl td{padding:3px 7px}.pd-body{padding:5px 0 6px 10px}.pd-fish svg{max-height:330px}.pd-ed:empty{min-height:1.2em}.pd-cap2:has(+ .pd-ed:empty),.pd-cap2 + .pd-ed:empty,.pd-chk-note:has(.pd-ed:empty){display:none}.pd-ed:empty{border-bottom:1px dashed #B9B0A0}.pd-sec,.pd-tbl tr{break-inside:avoid}@page{size:A4;margin:10mm}}</style></head><body>${bar}${pdcaHtml("file")}<script>${js}<\/script></body></html>`;

@@ -827,6 +827,46 @@ button.pd-box { padding: 0; background: #fff; cursor: pointer; font: inherit; }
   .pd-sec, .pd-tbl tr { break-inside: avoid; }
   @page { size: A4; margin: 10mm; }
 }
+/* 解決問題流程列 */
+.flow-wrap { margin: 14px 0 6px; }
+.flowbar { background: color-mix(in srgb, var(--qic-a) 12%, var(--surface)); border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); border-radius: 16px; padding: 14px 18px 16px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.fl-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.fl-t { font-size: 18px; font-weight: 800; color: var(--ink); }
+.fl-t small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 10px; }
+.fl-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fl-save-t { font-size: 12.5px; color: var(--muted); }
+.fl-save { font: inherit; font-size: 14px; font-weight: 800; background: var(--act); color: var(--on-act); border: 0; border-radius: 999px; padding: 6px 16px; cursor: pointer; }
+.fl-save.ok { background: var(--good); }
+.fl-x { border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; border-radius: 999px; padding: 4px 12px; }
+.flowbar ol { list-style: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; }
+.flowbar li { position: relative; display: flex; justify-content: center; }
+.flowbar li + li::before { content: ""; position: absolute; left: -50%; right: 50%; top: 26px; height: 4px; background: var(--line); z-index: 0; }
+.flowbar li.done + li::before { background: var(--qic-a); }
+.flowbar .st { position: relative; z-index: 1; font: inherit; border: 0; background: none; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 4px; }
+.flowbar .dot { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; font-weight: 800; border: 3px solid var(--muted); color: var(--muted); background: var(--surface); transition: transform .15s; }
+.flowbar .st:hover .dot { transform: scale(1.07); }
+.flowbar .lab { font-size: 16px; font-weight: 800; }
+.flowbar .sub { font-size: 12.5px; color: var(--muted); }
+.flowbar .done .dot { background: var(--qic-a); border-color: var(--qic-a); color: #fff; }
+.flowbar .done .sub { color: var(--qic-a); font-weight: 700; }
+.flowbar .now .dot { background: var(--act); border-color: var(--act); color: #fff; animation: flPulse 1.6s ease-out infinite; }
+.flowbar .now .lab, .flowbar .now .sub { color: var(--act-text); } .flowbar .now .sub { font-weight: 700; }
+.flowbar li.now + li::before { background: linear-gradient(90deg, var(--act) 0 30%, var(--line) 30% 100%); background-size: 200% 100%; animation: flFlow 1.6s linear infinite; }
+@keyframes flPulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--act) 55%, transparent); } 70% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--act) 0%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes flFlow { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .flowbar .now .dot { animation: none; box-shadow: 0 0 0 6px color-mix(in srgb, var(--act) 25%, transparent); } .flowbar li.now + li::before { animation: none; } }
+.fl-minirow { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.fl-open { font: inherit; font-size: 14px; font-weight: 700; border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); background: color-mix(in srgb, var(--qic-a) 12%, var(--surface)); color: var(--ink); border-radius: 999px; padding: 6px 16px; cursor: pointer; }
+.fl-open b { color: var(--qic-a); }
+.fl-resume { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; font-size: 14px; }
+.fl-mini-btn { font: inherit; font-size: 13px; font-weight: 700; background: var(--act); color: var(--on-act); border: 0; border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+@media (max-width: 720px) {
+  .flowbar ol { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
+  .flowbar li:nth-child(4)::before { display: none; }
+  .flowbar .dot { width: 40px; height: 40px; font-size: 16px; } .flowbar li + li::before { top: 20px; }
+  .flowbar .lab { font-size: 14px; } .fl-t small { display: block; margin: 2px 0 0; }
+}
+@media print { .flow-wrap { display: none !important; } }
 /* 魚骨圖 STEP 3 驗證項目清單 */
 .vp-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin: 12px 0 6px; }
 .vp-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
