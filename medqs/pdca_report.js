@@ -2,7 +2,7 @@
   // 魚骨圖 · PDCA 一頁報告：只呈現魚骨圖分頁現有的資料，缺的欄位留空白（列印後手寫補齊）
   // 不改變問答流程；不由 AI 補欄位。版面為自行設計的五段式（記錄／分析／原因／對策／驗證）。
   // =====================================================================
-  const PD_LIGHT = "--surface:#FFFFFF;--bg:#F5F1EA;--ink:#1F2933;--muted:#5A6570;--line:#D9D0BF;--grid:#ECE6DA;--teal:#4F7F7A;--teal-soft:#E2EEEC;--copper:#B87333;--copper-soft:#F7E8D9;--copper-text:#985C24;--qic-a:#3E9C8F;--qic-b:#E06A2C;";
+  const PD_LIGHT = "--surface:#FFFFFF;--bg:#F5F1EA;--ink:#1F2933;--muted:#5A6570;--line:#D9D0BF;--grid:#ECE6DA;--teal:#4F7F7A;--teal-soft:#E2EEEC;--copper:#B87333;--copper-soft:#F7E8D9;--copper-text:#985C24;--qic-a:#3E9C8F;--qic-b:#E06A2C;--chart-a:#1A8A74;--chart-b:#B66B31;--good:#2E7A4C;--good-soft:#E1F0E6;--bad:#B03A3A;--bad-soft:#F6E1E0;--warn-soft:#FBF1DC;--warn-ink:#7A5410;--code-bg:#FCFAF6;--navy-soft:#E3E8EE;--grid:#ECE6DA;";
   const pdIco = {
     rec: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 L44 40 H4 Z" fill="var(--qic-b)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 18 v11" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="34.5" r="2.4" fill="var(--ink)"/></svg>`,
     ana: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round"><circle cx="20" cy="20" r="12" stroke="var(--qic-a)" stroke-width="4"/><path d="M29 29 L42 42" stroke="var(--ink)" stroke-width="5"/><path d="M13 20h14M20 13v14" stroke="var(--ink)" stroke-width="2.5" opacity=".5"/></svg>`,
@@ -59,7 +59,8 @@
     const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">驗證策略</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
       ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
-    const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
+    let vrT = ""; try { vrT = vrTableHtml(mode); } catch (_) {}
+    const chk = vrT + `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
       <div><div class="pd-cap">核准</div><ul class="pd-sign"><li>達成率：${ED("ap.rate", "", true)} %</li>${BOX("ap.ok", "PDCA 結案核准")}<li>核准人：${ED("ap.who", "", true)}</li><li>日期：${ED("ap.date", "", true)}</li></ul></div></div>`;
     let rds = null; try { rds = rdState(); } catch (_) {}
@@ -69,7 +70,7 @@
     const body = `<div class="pd-sheet"${forFile ? "" : ` id="pdcaSheet"`}>
       <header class="pd-head"><div><div class="pd-eyebrow">醫材品質統計輔助工具 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
       ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}${hist}
-      <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer></div>`;
+      <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer>${(() => { try { return vrApxHtml(mode); } catch (_) { return ""; } })()}</div>`;
     return body;
   }
   function pdCaseName() { try { return caseCur ? "　案件：" + esc(caseCur.name) : ""; } catch (_) { return ""; } }
@@ -88,6 +89,8 @@
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
       ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
       ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "sample" : ""); })() : ""}
+      ${(() => { let L = []; try { L = vrItems(); } catch (_) {} if (!L.length) return ""; const st = L.filter(x => !vrNonStat(x)), ns = L.filter(x => vrNonStat(x)), a = st.filter(x => (x.apx || []).length).length, b = ns.filter(x => (x.vr || {}).st).length;
+        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 檢定分析的結果下方按「存成驗證結果」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "hypothesis" : ""); })()}
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
@@ -118,7 +121,7 @@
     });
     document.addEventListener("click", e => { const g = e.target.closest("[data-goto-pdca],[data-route-go]"); if (!g) return; const to = g.dataset.routeGo || "pdca"; const b = document.querySelector(`.toolnav [data-route="${to}"]`); if (b) b.click(); window.scrollTo({ top: 0, behavior: "smooth" }); });
     const wrap = $("pdcaWrap");
-    wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
+    wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el || !el.dataset.k) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
       if (v === (el.dataset.auto || "")) delete P.t[k]; else P.t[k] = v; el.classList.toggle("pd-mod", k in P.t); pdModHint(); fbSave(); });
     wrap.addEventListener("paste", e => { const el = e.target.closest(".pd-ed"); if (!el) return; e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); try { document.execCommand("insertText", false, t); } catch (_) {} });
     wrap.addEventListener("click", e => {

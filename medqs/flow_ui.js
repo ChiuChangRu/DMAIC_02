@@ -19,7 +19,7 @@
       fb: flowTry(() => fb.factors.some(f => f.st === "use")),
       vp: flowTry(() => (fb.vplan || []).some(x => x.on) || fb.factors.some(f => f.verify && f.st !== "excl")),
       ss: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on); if (v.length) return v.every(svOk); return pw.result || at.result || TQ.prop || TQ.tolp || TQ.doer || TQ.tost || TQ.ni || TQ.aql; }),
-      an: flowTry(() => (state.result && !Object.values(EXAMPLES).some(e => e && e.text === $("pasteBox").value)) || tl.result || CT.result || TQ.spc || TQ.grr || TQ.bias || TQ.lin || TQ.stab || TQ.attr || TQ.doe || TQ.tg || REG.res),
+      an: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on && !vrNonStat(x)); if (v.length) return v.every(x => (x.apx || []).length); return (state.result && !Object.values(EXAMPLES).some(e => e && e.text === $("pasteBox").value)) || tl.result || CT.result || TQ.spc || TQ.grr || TQ.bias || TQ.lin || TQ.stab || TQ.attr || TQ.doe || TQ.tg || REG.res; }),
       rp: flowTry(() => fb.pdca && (fb.pdca.out || any(fb.pdca.t) || any(fb.pdca.c)))
     };
   }
@@ -70,25 +70,24 @@
     const st = (s, i) => { const done = d[s.k], now = i === nowI, rd = redo[s.k];
       const sub = done ? "已完成" : now ? (rd ? `第 ${RD.n} 輪：修改中` : "目前在這一步") : rd ? `第 ${RD.n} 輪待重做` : "未開始";
       return `<li class="${done ? "done" : now ? "now" : rd ? "redo" : ""}"><button type="button" class="st" data-fl="go" data-i="${i}" aria-label="${s.lab}：${sub}"><span class="dot">${done ? "✓" : i + 1}</span><span class="lab">${s.lab}</span><span class="sub">${sub}</span></button></li>`; };
-    const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「開始下一輪」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
-    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="這一輪的結果不理想、要回到某一步再試一次時使用">🔁 開始下一輪</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
+    const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「重新檢討魚骨圖」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
+    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="驗證結果不理想、要重新檢討原因時使用：封存這一輪，回到魚骨圖">🔁 重新檢討魚骨圖</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
   }
   function rdDialog() {
     let dlg = $("rdDlg"); if (dlg) dlg.remove();
     const chips = (name, opts, def) => `<div class="chips" role="group" data-rdg="${name}">${opts.map(([v, t]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${v === def}">${t}</button>`).join("")}</div>`;
-    document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 開始第 ${RD.n + 1} 輪</h3>
-      <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再從你選的步驟接著改。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
+    document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 重新檢討魚骨圖（第 ${RD.n + 1} 輪）</h3>
+      <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再回到魚骨圖重新檢討原因。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
       <div class="group-label" style="margin-top:10px">第 ${RD.n} 輪的結果</div>${chips("res", [["ng", "未達目標"], ["part", "部分改善"], ["ok", "達到目標"]], "ng")}
-      <div class="group-label">要回到哪一步</div>${chips("from", [["1", "② 魚骨圖（重新找原因）"], ["2", "③ 驗證項目（換驗證方式）"], ["3", "④ 樣本數（加量重測）"], ["4", "⑤ 檢定分析（重新分析）"]], "2")}
       <div class="group-label">一句話說明（會寫進紀錄與 PDCA 報告）</div><textarea id="rdNote" rows="3" placeholder="例如：延長熱封時間後強度仍未達規格；下一輪改驗證膜材批次"></textarea>
-      <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，開始第 ${RD.n + 1} 輪</button></div></div></div>`);
+      <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，回到魚骨圖</button></div></div></div>`);
     dlg = $("rdDlg");
     dlg.addEventListener("click", e => {
       const c = e.target.closest("[data-rdg] [data-v]"); if (c) { c.parentElement.querySelectorAll("[data-v]").forEach(x => x.setAttribute("aria-pressed", String(x === c))); return; }
       const b = e.target.closest("[data-rd]"); if (!b && e.target !== dlg) return;
       if (!b || b.dataset.rd === "cancel") { dlg.remove(); return; }
       const pick = g => (dlg.querySelector(`[data-rdg="${g}"] [aria-pressed="true"]`) || {}).dataset;
-      const res = (pick("res") || {}).v || "ng", from = +((pick("from") || {}).v || 2), note = ($("rdNote").value || "").trim().slice(0, 300);
+      const res = (pick("res") || {}).v || "ng", from = 1, note = ($("rdNote").value || "").trim().slice(0, 300);
       let snap; try { snap = JSON.parse(JSON.stringify(caseCapture(false))); delete snap.rounds; } catch (_) { snap = null; }
       RD.list.push({ n: RD.n, date: new Date().toISOString(), from: RD.from, result: res, note, snap });
       RD.n++; RD.from = from; const sg = rdSigs(); RD.base = {}; FLOW_STEPS.forEach((st, i) => { if (i >= from) RD.base[st.k] = sg[st.k]; });

@@ -770,7 +770,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .ss-qgrid .ssq[aria-pressed="true"] .ssq-n { background: var(--on-act); color: var(--act); }
 /* 魚骨圖 · PDCA 一頁報告（紙張樣式，深色模式也維持白紙，方便列印） */
 .pd-wrap { overflow-x: auto; padding: 4px 0 8px; }
-.pd-sheet { --surface:#FFFFFF; --bg:#F5F1EA; --ink:#1F2933; --muted:#5A6570; --line:#D9D0BF; --grid:#ECE6DA; --teal:#4F7F7A; --teal-soft:#E2EEEC; --copper:#B87333; --copper-soft:#F7E8D9; --copper-text:#985C24; --qic-a:#3E9C8F; --qic-b:#E06A2C;
+.pd-sheet { --surface:#FFFFFF; --bg:#F5F1EA; --ink:#1F2933; --muted:#5A6570; --line:#D9D0BF; --grid:#ECE6DA; --teal:#4F7F7A; --teal-soft:#E2EEEC; --copper:#B87333; --copper-soft:#F7E8D9; --copper-text:#985C24; --qic-a:#3E9C8F; --qic-b:#E06A2C; --chart-a:#1A8A74; --chart-b:#B66B31; --good:#2E7A4C; --good-soft:#E1F0E6; --bad:#B03A3A; --bad-soft:#F6E1E0; --warn-soft:#FBF1DC; --warn-ink:#7A5410; --code-bg:#FCFAF6; --navy-soft:#E3E8EE;
   background: var(--surface); color: var(--ink); max-width: 860px; min-width: 640px; margin: 0 auto; padding: 22px 26px 16px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font-size: 13.5px; line-height: 1.5; }
 .pd-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 3px solid var(--ink); padding-bottom: 10px; margin-bottom: 4px; }
 .pd-head h3::before, .pd-head h3::after { content: none !important; display: none !important; }
@@ -788,8 +788,30 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .pd-tbl th, .pd-tbl td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; font-size: 13px; color: var(--ink); background: var(--surface); word-break: break-word; }
 .pd-tbl th { font-weight: 700; background: color-mix(in srgb, var(--teal-soft) 70%, #fff); }
 .pd-kv th { width: 120px; } .pd-w { width: 62px; } .pd-tool { width: 100px; } .pd-ss { width: 205px; } .pd-act { table-layout: fixed; }
+.pd-vr { margin-bottom: 10px; } .pd-vr-ok { color: var(--good); font-weight: 800; } .pd-vr-ng { color: var(--bad); font-weight: 800; } .pd-vr-tbd { color: var(--warn-ink); font-weight: 800; } .pd-vr-none { color: var(--muted); }
+.pd-vrsel { font: inherit; font-size: 12.5px; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: #FFFBEF; color: var(--ink); max-width: 100%; }
+.pd-apx { break-before: page; page-break-before: always; margin-top: 18px; border-top: 3px double var(--ink); padding-top: 8px; }
+.pd-apxh { margin: 4px 0 8px; font-size: 18px; } .pd-apxh::before, .pd-apxh::after { content: none !important; display: none !important; } .pd-apx1 { margin: 12px 0 18px; } .pd-apx1 + .pd-apx1 { border-top: 1px solid var(--line); padding-top: 10px; } .pd-apx1 h4 { margin: 0 0 2px; font-size: 15px; }
+.pd-apxb { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-top: 6px; font-size: 13px; overflow: hidden; }
+.pd-apxb svg { max-width: 100%; height: auto; } .pd-apxb table { border-collapse: collapse; font-size: 12px; } .pd-apxb th, .pd-apxb td { border: 1px solid var(--line); padding: 3px 6px; text-align: left; }
+.pd-apxb .verdict { display: grid; gap: 6px; } .pd-apxb .verdict p { margin: 0; } .pd-apxb .big { font-size: 16px; font-weight: 700; }
+.pd-apxb .pill { display: inline-flex; font-weight: 700; font-size: 12.5px; border-radius: 999px; padding: 2px 10px; justify-self: start; background: var(--navy-soft); }
+.pd-apxb .pill.sig { background: var(--copper-soft); color: var(--copper-text); } .pd-apxb .pill.good, .pd-apxb .pill.eqok { background: var(--good-soft); color: var(--good); } .pd-apxb .pill.bad { background: var(--bad-soft); color: var(--bad); } .pd-apxb .pill.warn { background: var(--warn-soft); color: var(--warn-ink); }
+.pd-apxb .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; } .pd-apxb .kv div { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; } .pd-apxb .kv span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; } .pd-apxb .kv b { font-family: var(--font-mono, monospace); font-weight: 500; }
+.pd-apxb .bignum { font-family: var(--font-mono, monospace); font-size: 26px; } .pd-apxb .hint, .pd-apxb .help { color: var(--muted); font-size: 12px; } .pd-apxb .status.ok { color: var(--good); font-weight: 700; } .pd-apxb .status.ng { color: var(--bad); font-weight: 700; }
 .pd-ssn { font-weight: 800; } .pd-ssw { font-size: 11.5px; line-height: 1.45; color: var(--muted); margin-top: 2px; } .pd-ssw .pd-tx, .pd-ssw .pd-ed { color: var(--muted); white-space: pre-wrap; } .pd-tx { white-space: pre-wrap; }
 /* 樣本數規劃：驗證項目清單與規劃中提示列 */
+/* 存成驗證結果（分析工具結果下方） */
+.vr-slot { padding: 0 18px 16px; }
+.vr-open { font: inherit; font-size: 13.5px; font-weight: 700; border: 1.5px dashed var(--act); background: transparent; color: var(--act-text); border-radius: 10px; padding: 8px 14px; cursor: pointer; width: 100%; text-align: left; }
+.vr-pick { border: 2px solid var(--act); background: color-mix(in srgb, var(--act) 7%, var(--surface)); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.vr-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; } .vr-row > label { font-weight: 700; font-size: 13px; min-width: 60px; }
+.vr-col { display: block; } .vr-col label { display: block; margin-bottom: 4px; } .vr-end { justify-content: flex-end; }
+.vr-pick select, .vr-pick input { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1.5px solid var(--act); border-radius: 8px; background: var(--surface); color: var(--ink); max-width: 100%; }
+.vr-pick input { width: 100%; box-sizing: border-box; } .vr-pick select { flex: 1; min-width: 0; }
+.vr-chip { font: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.vr-chip[aria-pressed="true"] { background: var(--act); border-color: var(--act); color: var(--on-act); }
+.vr-done { font-size: 13.5px; font-weight: 700; color: var(--good); padding: 8px 2px; }
 .vp-next { margin-left: auto; } .vp-next:disabled { opacity: .5; cursor: not-allowed; } .vp-next-hint { text-align: right; margin: 4px 0 0; }
 .vp-dup { font-size: 12px; color: var(--bad); font-weight: 700; margin-top: 2px; }
 .sv-card { border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); background: color-mix(in srgb, var(--qic-a) 7%, var(--surface)); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }

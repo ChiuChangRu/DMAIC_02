@@ -79,7 +79,8 @@
     const R = d.ran || {};
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
-    step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("hyp", () => { if (EXAMPLES[2] && ($("pasteBox").value || "").trim() === EXAMPLES[2].text.trim()) { $("clearBtn").click(); return; }   // 舊版自動載入的轉廠範例：不再還原
+      if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
     step("rounds", () => { if (typeof rdRestore === "function") rdRestore(d.rounds); });
     step("count", () => { if (R.ct && typeof ctRun === "function") ctRun(); });
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });

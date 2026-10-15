@@ -770,7 +770,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .ss-qgrid .ssq[aria-pressed="true"] .ssq-n { background: var(--on-act); color: var(--act); }
 /* 魚骨圖 · PDCA 一頁報告（紙張樣式，深色模式也維持白紙，方便列印） */
 .pd-wrap { overflow-x: auto; padding: 4px 0 8px; }
-.pd-sheet { --surface:#FFFFFF; --bg:#F5F1EA; --ink:#1F2933; --muted:#5A6570; --line:#D9D0BF; --grid:#ECE6DA; --teal:#4F7F7A; --teal-soft:#E2EEEC; --copper:#B87333; --copper-soft:#F7E8D9; --copper-text:#985C24; --qic-a:#3E9C8F; --qic-b:#E06A2C;
+.pd-sheet { --surface:#FFFFFF; --bg:#F5F1EA; --ink:#1F2933; --muted:#5A6570; --line:#D9D0BF; --grid:#ECE6DA; --teal:#4F7F7A; --teal-soft:#E2EEEC; --copper:#B87333; --copper-soft:#F7E8D9; --copper-text:#985C24; --qic-a:#3E9C8F; --qic-b:#E06A2C; --chart-a:#1A8A74; --chart-b:#B66B31; --good:#2E7A4C; --good-soft:#E1F0E6; --bad:#B03A3A; --bad-soft:#F6E1E0; --warn-soft:#FBF1DC; --warn-ink:#7A5410; --code-bg:#FCFAF6; --navy-soft:#E3E8EE;
   background: var(--surface); color: var(--ink); max-width: 860px; min-width: 640px; margin: 0 auto; padding: 22px 26px 16px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font-size: 13.5px; line-height: 1.5; }
 .pd-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 3px solid var(--ink); padding-bottom: 10px; margin-bottom: 4px; }
 .pd-head h3::before, .pd-head h3::after { content: none !important; display: none !important; }
@@ -788,8 +788,30 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .pd-tbl th, .pd-tbl td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; font-size: 13px; color: var(--ink); background: var(--surface); word-break: break-word; }
 .pd-tbl th { font-weight: 700; background: color-mix(in srgb, var(--teal-soft) 70%, #fff); }
 .pd-kv th { width: 120px; } .pd-w { width: 62px; } .pd-tool { width: 100px; } .pd-ss { width: 205px; } .pd-act { table-layout: fixed; }
+.pd-vr { margin-bottom: 10px; } .pd-vr-ok { color: var(--good); font-weight: 800; } .pd-vr-ng { color: var(--bad); font-weight: 800; } .pd-vr-tbd { color: var(--warn-ink); font-weight: 800; } .pd-vr-none { color: var(--muted); }
+.pd-vrsel { font: inherit; font-size: 12.5px; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: #FFFBEF; color: var(--ink); max-width: 100%; }
+.pd-apx { break-before: page; page-break-before: always; margin-top: 18px; border-top: 3px double var(--ink); padding-top: 8px; }
+.pd-apxh { margin: 4px 0 8px; font-size: 18px; } .pd-apxh::before, .pd-apxh::after { content: none !important; display: none !important; } .pd-apx1 { margin: 12px 0 18px; } .pd-apx1 + .pd-apx1 { border-top: 1px solid var(--line); padding-top: 10px; } .pd-apx1 h4 { margin: 0 0 2px; font-size: 15px; }
+.pd-apxb { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-top: 6px; font-size: 13px; overflow: hidden; }
+.pd-apxb svg { max-width: 100%; height: auto; } .pd-apxb table { border-collapse: collapse; font-size: 12px; } .pd-apxb th, .pd-apxb td { border: 1px solid var(--line); padding: 3px 6px; text-align: left; }
+.pd-apxb .verdict { display: grid; gap: 6px; } .pd-apxb .verdict p { margin: 0; } .pd-apxb .big { font-size: 16px; font-weight: 700; }
+.pd-apxb .pill { display: inline-flex; font-weight: 700; font-size: 12.5px; border-radius: 999px; padding: 2px 10px; justify-self: start; background: var(--navy-soft); }
+.pd-apxb .pill.sig { background: var(--copper-soft); color: var(--copper-text); } .pd-apxb .pill.good, .pd-apxb .pill.eqok { background: var(--good-soft); color: var(--good); } .pd-apxb .pill.bad { background: var(--bad-soft); color: var(--bad); } .pd-apxb .pill.warn { background: var(--warn-soft); color: var(--warn-ink); }
+.pd-apxb .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; } .pd-apxb .kv div { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; } .pd-apxb .kv span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; } .pd-apxb .kv b { font-family: var(--font-mono, monospace); font-weight: 500; }
+.pd-apxb .bignum { font-family: var(--font-mono, monospace); font-size: 26px; } .pd-apxb .hint, .pd-apxb .help { color: var(--muted); font-size: 12px; } .pd-apxb .status.ok { color: var(--good); font-weight: 700; } .pd-apxb .status.ng { color: var(--bad); font-weight: 700; }
 .pd-ssn { font-weight: 800; } .pd-ssw { font-size: 11.5px; line-height: 1.45; color: var(--muted); margin-top: 2px; } .pd-ssw .pd-tx, .pd-ssw .pd-ed { color: var(--muted); white-space: pre-wrap; } .pd-tx { white-space: pre-wrap; }
 /* 樣本數規劃：驗證項目清單與規劃中提示列 */
+/* 存成驗證結果（分析工具結果下方） */
+.vr-slot { padding: 0 18px 16px; }
+.vr-open { font: inherit; font-size: 13.5px; font-weight: 700; border: 1.5px dashed var(--act); background: transparent; color: var(--act-text); border-radius: 10px; padding: 8px 14px; cursor: pointer; width: 100%; text-align: left; }
+.vr-pick { border: 2px solid var(--act); background: color-mix(in srgb, var(--act) 7%, var(--surface)); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.vr-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; } .vr-row > label { font-weight: 700; font-size: 13px; min-width: 60px; }
+.vr-col { display: block; } .vr-col label { display: block; margin-bottom: 4px; } .vr-end { justify-content: flex-end; }
+.vr-pick select, .vr-pick input { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1.5px solid var(--act); border-radius: 8px; background: var(--surface); color: var(--ink); max-width: 100%; }
+.vr-pick input { width: 100%; box-sizing: border-box; } .vr-pick select { flex: 1; min-width: 0; }
+.vr-chip { font: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.vr-chip[aria-pressed="true"] { background: var(--act); border-color: var(--act); color: var(--on-act); }
+.vr-done { font-size: 13.5px; font-weight: 700; color: var(--good); padding: 8px 2px; }
 .vp-next { margin-left: auto; } .vp-next:disabled { opacity: .5; cursor: not-allowed; } .vp-next-hint { text-align: right; margin: 4px 0 0; }
 .vp-dup { font-size: 12px; color: var(--bad); font-weight: 700; margin-top: 2px; }
 .sv-card { border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); background: color-mix(in srgb, var(--qic-a) 7%, var(--surface)); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
@@ -1242,12 +1264,11 @@ body.novice .nb-line { display: block; }
           <p class="help">直接從 Excel 選取範圍後貼上，直式（每欄一組）或橫式（每列一組）都可以。第一列或第一欄是文字時會當成組別名稱。依納入的組數自動判定：1 組對目標值、2 組互比、3 組以上整體比較。</p>
           <div class="chips" role="group" aria-label="載入範例">
             <button class="chip" type="button" data-example="1">範例：單組</button>
-            <button class="chip" type="button" data-example="2">範例：兩組</button>
             <button class="chip" type="button" data-example="3">範例：三組</button>
             <button class="chip" type="button" id="clearBtn">清除</button>
           </div>
           <div class="pub-pick"><label for="pubHypSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubHypSel"></select><p class="hint" id="pubHypDesc"></p></div>
-          <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;轉廠前&#9;轉廠後&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
+          <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;A 組&#9;B 組&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
           <div class="detect" id="detect" aria-live="polite"></div>
         </div>
 
@@ -5360,7 +5381,7 @@ else root.runValidation = runValidation;
     $("pairedChip").textContent = k >= 3 ? "重複量測" : "成對樣本";
     $("modeHelp").textContent = state.mode === "paired"
       ? (k >= 3 ? "同一批樣品在各條件下都量測，依列對應，例如同一批樣品在 3 個時間點量測。" : "同一個樣品量兩次，例如同一批樣品處理前、後；依列配對。")
-      : (k >= 3 ? "各組是不同的樣品，例如三家供應商各自抽樣。" : "兩組是不同的樣品，例如轉廠前、後各自抽樣。");
+      : (k >= 3 ? "各組是不同的樣品，例如三家供應商各自抽樣。" : "兩組是不同的樣品，例如兩家供應商各自抽樣。");
     const eq = state.goal === "equiv" && k <= 2;
     $("goalBlock").hidden = k >= 3;
     $("goalHelp").textContent = k >= 3 ? "" : eq
@@ -6622,7 +6643,7 @@ else root.runValidation = runValidation;
     if (!o.detail || typeof o.detail !== "object") o.detail = d.detail;
     if (!o.ext || typeof o.ext !== "object") o.ext = null;
     if (o.pdca != null && typeof o.pdca !== "object") o.pdca = {};
-    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000) } : undefined })) : [];
+    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000) } : undefined, vr: x.vr && typeof x.vr === "object" ? { st: String(x.vr.st || "").slice(0, 4), note: String(x.vr.note || "").slice(0, 1000) } : undefined, apx: Array.isArray(x.apx) ? x.apx.filter(a => a && typeof a === "object").map(a => ({ id: a.id || fid(), at: +a.at || Date.now(), tool: String(a.tool || "").slice(0, 200), st: String(a.st || "").slice(0, 4), note: String(a.note || "").slice(0, 1000), html: String(a.html || "").slice(0, 400000) })) : [] })) : [];
     o.factors = o.factors.filter(f => f && typeof f.text === "string").map(f => ({ id: f.id || fid(), ref: typeof f.ref === "string" ? f.ref : "", text: f.text, st: ST_LABEL[f.st] ? f.st : "cand", src: SRC_LABEL[f.src] ? f.src : "user", key: !!f.key, verify: !!f.verify, reason: f.reason || "", cat: f.cat && typeof f.cat === "object" ? f.cat : {},
       subs: (Array.isArray(f.subs) ? f.subs : []).filter(x => x && typeof x.text === "string").map(x => ({ id: x.id || fid(), text: x.text, st: ST_LABEL[x.st] ? x.st : "cand", src: SRC_LABEL[x.src] ? x.src : "user" })) }));
     return o;
@@ -11041,7 +11062,7 @@ else root.runValidation = runValidation;
       return "已套用到下方 STEP 2（" + L.join("、") + "）。組數與樣本數依貼上的數據判定。";
     },
     help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
-    descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
+    descPh: "例如：A 線、B 線各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
     goLabel: "產生記錄表",
     role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。再判斷檢定目的 goal：要證明「有差／改善了」用 diff；要證明「一樣／同等／沒有改變」（例如和 510(k) 比對品比較、轉廠、變更前後、換料、換供應商）用 equiv（同等性 TOST），並在理由中說明「沒有顯著差異不等於相同」。同等界限 eqd（Δ）只有使用者提供才填，否則填 null，並說明 Δ 要在看數據前依臨床或功能需求、比對品規格決定。",
     example: '{"purpose":"two","relation":"ind","groups":["轉廠前","轉廠後"],"n":15,"alt":"two-sided","alpha":0.05,"goal":"diff","eqd":null,"target":null,"lsl":null,"usl":null}',
@@ -11051,7 +11072,7 @@ else root.runValidation = runValidation;
     fields: [
       { k: "purpose", lab: "要比較什麼", type: "select", opts: [["one", "單組對目標值"], ["two", "兩組比較"], ["multi", "3 組以上"]] },
       { k: "relation", lab: "樣本關係", type: "select", opts: [["ind", "獨立（兩組是不同的樣品）"], ["paired", "成對（同一個樣品量兩次）"]], show: m => m.purpose === "two" },
-      { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 轉廠前, 轉廠後" },
+      { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 A 線, B 線" },
       { k: "n", lab: "每組樣本數", type: "int", lo: 2, hi: 500 },
       { k: "goal", lab: "檢定目的", type: "select", opts: [["diff", "差異：有沒有差"], ["equiv", "同等性（TOST）：差在 ±Δ 內"]], show: m => m.purpose !== "multi" },
       { k: "eqd", lab: "同等界限 Δ（±）", type: "num", ph: "必填，看數據前決定", show: m => m.purpose !== "multi" && m.goal === "equiv" },
@@ -12303,7 +12324,8 @@ else root.runValidation = runValidation;
     const R = d.ran || {};
     step("doe", () => { if (d.doeY) { doeFactorsUI(); doeGenerate(d.doeY); if (R.doe) doeRun(); } });
     step("tg", () => { tgFactorsUI(); tgNoiseUI(); if (d.tgY) { if (tgGenerate(d.tgY) !== false && R.tg) $("tgRun").click(); } });
-    step("hyp", () => { if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
+    step("hyp", () => { if (EXAMPLES[2] && ($("pasteBox").value || "").trim() === EXAMPLES[2].text.trim()) { $("clearBtn").click(); return; }   // 舊版自動載入的轉廠範例：不再還原
+      if (($("pasteBox").value || "").trim()) { pkHypTouched = true; reparse(false); if (R.hyp) run(); } });
     step("rounds", () => { if (typeof rdRestore === "function") rdRestore(d.rounds); });
     step("count", () => { if (R.ct && typeof ctRun === "function") ctRun(); });
     step("reg", () => { const g = d.reg || {}; REG.excl = new Set(Array.isArray(g.excl) ? g.excl : []); regRestore(Object.assign({}, d.fields, { __regSrc: g.src || "" }), R.reg); });
@@ -12831,7 +12853,7 @@ else root.runValidation = runValidation;
   // 魚骨圖 · PDCA 一頁報告：只呈現魚骨圖分頁現有的資料，缺的欄位留空白（列印後手寫補齊）
   // 不改變問答流程；不由 AI 補欄位。版面為自行設計的五段式（記錄／分析／原因／對策／驗證）。
   // =====================================================================
-  const PD_LIGHT = "--surface:#FFFFFF;--bg:#F5F1EA;--ink:#1F2933;--muted:#5A6570;--line:#D9D0BF;--grid:#ECE6DA;--teal:#4F7F7A;--teal-soft:#E2EEEC;--copper:#B87333;--copper-soft:#F7E8D9;--copper-text:#985C24;--qic-a:#3E9C8F;--qic-b:#E06A2C;";
+  const PD_LIGHT = "--surface:#FFFFFF;--bg:#F5F1EA;--ink:#1F2933;--muted:#5A6570;--line:#D9D0BF;--grid:#ECE6DA;--teal:#4F7F7A;--teal-soft:#E2EEEC;--copper:#B87333;--copper-soft:#F7E8D9;--copper-text:#985C24;--qic-a:#3E9C8F;--qic-b:#E06A2C;--chart-a:#1A8A74;--chart-b:#B66B31;--good:#2E7A4C;--good-soft:#E1F0E6;--bad:#B03A3A;--bad-soft:#F6E1E0;--warn-soft:#FBF1DC;--warn-ink:#7A5410;--code-bg:#FCFAF6;--navy-soft:#E3E8EE;--grid:#ECE6DA;";
   const pdIco = {
     rec: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 L44 40 H4 Z" fill="var(--qic-b)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 18 v11" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="34.5" r="2.4" fill="var(--ink)"/></svg>`,
     ana: `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke-linecap="round"><circle cx="20" cy="20" r="12" stroke="var(--qic-a)" stroke-width="4"/><path d="M29 29 L42 42" stroke="var(--ink)" stroke-width="5"/><path d="M13 20h14M20 13v14" stroke="var(--ink)" stroke-width="2.5" opacity=".5"/></svg>`,
@@ -12888,7 +12910,8 @@ else root.runValidation = runValidation;
     const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">驗證策略</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
       ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
-    const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
+    let vrT = ""; try { vrT = vrTableHtml(mode); } catch (_) {}
+    const chk = vrT + `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
       <div><div class="pd-cap">標準化</div><ul>${BOX("std.new", "新增標準")}${BOX("std.upd", "更新既有標準")}<li>${edit ? "" : ""}文件編號：${ED("std.doc", "", true)}</li></ul></div>
       <div><div class="pd-cap">核准</div><ul class="pd-sign"><li>達成率：${ED("ap.rate", "", true)} %</li>${BOX("ap.ok", "PDCA 結案核准")}<li>核准人：${ED("ap.who", "", true)}</li><li>日期：${ED("ap.date", "", true)}</li></ul></div></div>`;
     let rds = null; try { rds = rdState(); } catch (_) {}
@@ -12898,7 +12921,7 @@ else root.runValidation = runValidation;
     const body = `<div class="pd-sheet"${forFile ? "" : ` id="pdcaSheet"`}>
       <header class="pd-head"><div><div class="pd-eyebrow">醫材品質統計輔助工具 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
       ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}${hist}
-      <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer></div>`;
+      <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer>${(() => { try { return vrApxHtml(mode); } catch (_) { return ""; } })()}</div>`;
     return body;
   }
   function pdCaseName() { try { return caseCur ? "　案件：" + esc(caseCur.name) : ""; } catch (_) { return ""; } }
@@ -12917,6 +12940,8 @@ else root.runValidation = runValidation;
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
       ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
       ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "sample" : ""); })() : ""}
+      ${(() => { let L = []; try { L = vrItems(); } catch (_) {} if (!L.length) return ""; const st = L.filter(x => !vrNonStat(x)), ns = L.filter(x => vrNonStat(x)), a = st.filter(x => (x.apx || []).length).length, b = ns.filter(x => (x.vr || {}).st).length;
+        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 檢定分析的結果下方按「存成驗證結果」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "hypothesis" : ""); })()}
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
@@ -12947,7 +12972,7 @@ else root.runValidation = runValidation;
     });
     document.addEventListener("click", e => { const g = e.target.closest("[data-goto-pdca],[data-route-go]"); if (!g) return; const to = g.dataset.routeGo || "pdca"; const b = document.querySelector(`.toolnav [data-route="${to}"]`); if (b) b.click(); window.scrollTo({ top: 0, behavior: "smooth" }); });
     const wrap = $("pdcaWrap");
-    wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
+    wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el || !el.dataset.k) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
       if (v === (el.dataset.auto || "")) delete P.t[k]; else P.t[k] = v; el.classList.toggle("pd-mod", k in P.t); pdModHint(); fbSave(); });
     wrap.addEventListener("paste", e => { const el = e.target.closest(".pd-ed"); if (!el) return; e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); try { document.execCommand("insertText", false, t); } catch (_) {} });
     wrap.addEventListener("click", e => {
@@ -13236,6 +13261,110 @@ else root.runValidation = runValidation;
     if (vs) new MutationObserver(() => { if (!vs.hidden) svRender(); }).observe(vs, { attributes: true, attributeFilter: ["hidden"] });
   })();
   // =====================================================================
+  // 驗證結果 ↔ 驗證項目：分析工具的結果「存成驗證結果」→ PDCA 報告第 5 段各項結論＋附錄（統計驗證報告）
+  // 統計類項目在分析工具存入（保留每一次存入，除非使用者刪除）；不用統計的項目在 PDCA 報告直接選結論、寫依據。
+  // 資料：fb.vplan[i].apx = [{ id, at, tool, st, note, html }]、fb.vplan[i].vr = { st, note }（不用統計的項目）
+  // =====================================================================
+  const VR_ST = { ok: "原因成立", ng: "原因不成立", tbd: "待定" };
+  const VR_OUTS = { previewBody: "假設檢定", ctOut: "假設檢定－次數資料", tlOut: "假設檢定－統計允差區間", regOut: "相關與回歸", spcOut: "SPC 管制圖", grrOut: "MSA－Gage R&R", biasOut: "MSA－偏差", linOut: "MSA－線性", stabOut: "MSA－穩定性", attrOut: "MSA－屬性一致性", doeOut: "DOE", mixOut: "DOE－混料設計", tgOut: "田口方法" };
+  const vrNonStat = x => /不用統計|不需統計/.test(x.tool || "") || !!(x.ss && x.ss.q === "none");
+  const vrItems = () => (fb.vplan || []).filter(x => x.on);
+  const vrStatItems = () => vrItems().filter(x => !vrNonStat(x));
+  // 目前的結論：統計類取最後一次存入；不用統計的取報告上填的
+  function vrNow(x) {
+    if (vrNonStat(x)) { const v = x.vr || {}; return { st: v.st || "", note: v.note || "", n: 0 }; }
+    const L = x.apx || []; const a = L[L.length - 1]; return a ? { st: a.st, note: a.note, n: L.length } : { st: "", note: "", n: 0 };
+  }
+  // ---------------- 分析工具結果下方：存成驗證結果 ----------------
+  const vrHas = body => !!body.querySelector(".verdict, svg, .kv, .bignum, table");
+  function vrAuto(body) {
+    const v0 = body.querySelector(".verdict") || body, v = v0.cloneNode(true); v.querySelectorAll(".pill, button").forEach(e => e.remove());
+    const t = (v.textContent || "").split(/\n+/).map(s => s.replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 2).join("；").replace(/。；/g, "；");
+    return t.slice(0, 220);
+  }
+  function vrSlotHtml(id, open) {
+    const L = vrStatItems();
+    if (!open) return `<button type="button" class="vr-open" data-vropen="${id}">📎 存成驗證結果（附在 PDCA 報告當附錄）</button>`;
+    if (!L.length) return `<div class="vr-pick"><b>📎 存成驗證結果</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
+    const body = $(id), auto = body ? vrAuto(body) : "", tool = VR_OUTS[id] || "";
+    const guess = L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
+    return `<div class="vr-pick" data-vrbox="${id}"><b>📎 存成驗證結果</b><span class="hint">　存入當時的結果畫面會附在 PDCA 報告後面</span>
+      <div class="vr-row"><label>驗證項目</label><select data-vrit="1">${L.map(x => `<option value="${x.id}"${x === guess ? " selected" : ""}>${esc(x.cause || "（未命名）")}${x.tool ? "（" + esc(x.tool) + "）" : ""}${(x.apx || []).length ? `　已存 ${(x.apx || []).length} 份` : ""}</option>`).join("")}</select></div>
+      <div class="vr-row"><label>結論</label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
+      <div class="vr-row vr-col"><label>依據（系統依結果產生，可修改）</label><input type="text" data-vrnote="1" value="${esc(auto)}"></div>
+      <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn p" data-vrsave="${id}">存入驗證結果 →</button></div></div>`;
+  }
+  function vrSlot(id, open) {
+    const body = $(id); if (!body) return;
+    let s = body.nextElementSibling; if (!s || !s.classList.contains("vr-slot")) { s = document.createElement("div"); s.className = "vr-slot"; body.after(s); }
+    if (!vrHas(body)) { s.hidden = true; s.innerHTML = ""; return; }
+    if (s.dataset.open === "1" && !open && s.innerHTML) return;   // 正在填寫，不重畫
+    s.hidden = false; s.dataset.open = open ? "1" : ""; s.innerHTML = vrSlotHtml(id, open);
+  }
+  function vrSnap(body) {   // 只存結果卡：去掉按鈕、輸入框與互動元件
+    const c = body.cloneNode(true);
+    c.querySelectorAll("button, input, select, textarea, script, .ss2hyp, .ask-slot, .vr-slot, details > summary ~ .run-row").forEach(e => e.remove());
+    c.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+    c.querySelectorAll("*").forEach(e => { [...e.attributes].forEach(a => { if (/^on/i.test(a.name)) e.removeAttribute(a.name); }); });
+    let h = c.innerHTML.replace(/\s{2,}/g, " ");
+    if (h.length > 400000) h = h.replace(/<svg[\s\S]*?<\/svg>/g, "<p>（圖表過大未存入）</p>");
+    return h.slice(0, 400000);
+  }
+  function vrSave(id) {
+    const box = document.querySelector(`[data-vrbox="${id}"]`), body = $(id); if (!box || !body) return;
+    const hint = box.querySelector("[data-vrhint]"), it = box.querySelector("[data-vrit]").value, st = (box.querySelector("[data-vrst][aria-pressed='true']") || {}).dataset;
+    const note = box.querySelector("[data-vrnote]").value.trim();
+    if (!st) { hint.textContent = "請選結論。"; return; }
+    if (!note) { hint.textContent = "請寫依據。"; return; }
+    const x = vrItems().find(y => y.id === it); if (!x) return;
+    const title = (body.closest(".preview") && body.closest(".preview").querySelector(".preview-head b")) ? body.closest(".preview").querySelector(".preview-head b").textContent.trim() : "";
+    (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: (VR_OUTS[id] || "") + (title && title !== "尚未分析" ? "：" + title : ""), st: st.vrst, note, html: vrSnap(body) });
+    fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {}
+    const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>`; }
+    const left = vrStatItems().filter(y => !(y.apx || []).length).length;
+    try { fbNote(left ? `已存入。還有 ${left} 個統計驗證項目沒有結果。` : "所有統計驗證項目都有結果了。不用統計的項目請到 PDCA 報告第 5 段填寫。"); } catch (_) {}
+  }
+  (function vrInit() {
+    Object.keys(VR_OUTS).forEach(id => { const b = $(id); if (!b) return; new MutationObserver(() => vrSlot(id)).observe(b, { childList: true, subtree: false }); vrSlot(id); });
+    document.addEventListener("click", e => {
+      const o = e.target.closest("[data-vropen]"); if (o) { vrSlot(o.dataset.vropen, true); return; }
+      const c = e.target.closest("[data-vrclose]"); if (c) { const s = $(c.dataset.vrclose).nextElementSibling; if (s) s.dataset.open = ""; vrSlot(c.dataset.vrclose); return; }
+      const st = e.target.closest(".vr-pick [data-vrst]"); if (st) { st.parentElement.querySelectorAll("[data-vrst]").forEach(b => b.setAttribute("aria-pressed", String(b === st))); return; }
+      const sv = e.target.closest("[data-vrsave]"); if (sv) vrSave(sv.dataset.vrsave);
+    });
+  })();
+  // ---------------- PDCA 報告：第 5 段各項結論、附錄 ----------------
+  function vrTableHtml(mode) {
+    const L = vrItems(); if (!L.length) return "";
+    const keep = mode === "screen", edit = mode !== "print"; let k = 0;
+    const apxNo = {}; L.forEach(x => { if (!vrNonStat(x) && (x.apx || []).length) apxNo[x.id] = (x.apx || []).map(() => ++k); });
+    const stCell = (x, v) => {
+      if (!vrNonStat(x)) return v.st ? `<span class="pd-vr-${v.st}">${VR_ST[v.st]}</span>` : `<span class="pd-vr-none">尚未驗證</span>`;
+      if (!edit) return v.st ? `<span class="pd-vr-${v.st}">${VR_ST[v.st]}</span>` : `<span class="pd-line"></span>`;
+      return `<select class="pd-vrsel"${keep ? ` data-vrx="${x.id}"` : ""}><option value="">請選擇</option>${Object.entries(VR_ST).map(([s, t]) => `<option value="${s}"${v.st === s ? " selected" : ""}>${t}</option>`).join("")}</select>`;
+    };
+    const noteCell = (x, v) => {
+      if (!vrNonStat(x) || !edit) return v.note ? esc(v.note) : vrNonStat(x) ? `<span class="pd-line"></span>` : "";
+      return `<div class="pd-ed"${keep ? ` data-vrn="${x.id}"` : ""} contenteditable="plaintext-only" spellcheck="false" title="點一下可以修改">${esc(v.note)}</div>`;
+    };
+    return `<div class="pd-cap">各驗證項目的結論</div><table class="pd-tbl pd-vr"><thead><tr><th>驗證項目</th><th class="pd-tool">驗證策略</th><th style="width:100px">結論</th><th>依據</th><th style="width:58px">附錄</th></tr></thead><tbody>${L.map(x => { const v = vrNow(x); return `<tr><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td>${stCell(x, v)}</td><td>${noteCell(x, v)}</td><td>${apxNo[x.id] ? apxNo[x.id].map(n => "附錄 " + n).join("<br>") : "—"}</td></tr>`; }).join("")}</tbody></table>
+      <p class="pd-note">統計類項目的結論來自 ⑤ 檢定分析「存成驗證結果」（多份時以最後一份為準）；不用統計的項目在這裡選結論、寫依據。</p>`;
+  }
+  function vrApxHtml(mode) {
+    const keep = mode === "screen"; let k = 0, out = "";
+    vrItems().forEach(x => { if (vrNonStat(x)) return; (x.apx || []).forEach(a => { k++;
+      out += `<section class="pd-apx1"><h4>附錄 ${k}　${esc(x.cause)}</h4><div class="pd-note">${esc(a.tool || "")}｜存入 ${new Date(a.at).toISOString().slice(0, 10)}｜結論：<b class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</b>｜依據：${esc(a.note || "")}${keep ? `　<button type="button" class="pd-mini pd-noprint" data-vrdel="${x.id}|${a.id}">刪除這份</button>` : ""}</div><div class="pd-apxb">${a.html}</div></section>`; }); });
+    return out ? `<div class="pd-apx"><h3 class="pd-apxh">附錄　統計驗證報告</h3>${out}</div>` : "";
+  }
+  (function vrPdInit() {
+    const w = $("pdcaWrap"); if (!w) return;
+    w.addEventListener("change", e => { const s = e.target.closest("[data-vrx]"); if (!s) return; const x = vrItems().find(y => y.id === s.dataset.vrx); if (!x) return; x.vr = Object.assign({}, x.vr, { st: s.value }); fbSave(); try { pdcaStatus(); flowRender(); } catch (_) {} });
+    w.addEventListener("input", e => { const d = e.target.closest("[data-vrn]"); if (!d) return; const x = vrItems().find(y => y.id === d.dataset.vrn); if (!x) return; x.vr = Object.assign({}, x.vr, { note: d.innerText.replace(/\n+$/, "") }); fbSave(); });
+    w.addEventListener("click", e => { const d = e.target.closest("[data-vrdel]"); if (!d) return;
+      if (!d.dataset.armed) { d.dataset.armed = "1"; d.textContent = "確定刪除？再按一次"; setTimeout(() => { if (d.isConnected) { delete d.dataset.armed; d.textContent = "刪除這份"; } }, 5000); return; }
+      const [xi, ai] = d.dataset.vrdel.split("|"), x = (fb.vplan || []).find(y => y.id === xi); if (!x) return; x.apx = (x.apx || []).filter(a => a.id !== ai); fbSave(); pdcaRender(); try { flowRender(); } catch (_) {} });
+  })();
+  // =====================================================================
   // 解決問題流程列：工具分頁不變（每個工具都能直接用）；流程列只依資料判斷進度、提供跳轉與「暫存進度」。
   // 暫存＝按了才存（存成案件，存在這個瀏覽器）；不自動存。
   // =====================================================================
@@ -13256,7 +13385,7 @@ else root.runValidation = runValidation;
       fb: flowTry(() => fb.factors.some(f => f.st === "use")),
       vp: flowTry(() => (fb.vplan || []).some(x => x.on) || fb.factors.some(f => f.verify && f.st !== "excl")),
       ss: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on); if (v.length) return v.every(svOk); return pw.result || at.result || TQ.prop || TQ.tolp || TQ.doer || TQ.tost || TQ.ni || TQ.aql; }),
-      an: flowTry(() => (state.result && !Object.values(EXAMPLES).some(e => e && e.text === $("pasteBox").value)) || tl.result || CT.result || TQ.spc || TQ.grr || TQ.bias || TQ.lin || TQ.stab || TQ.attr || TQ.doe || TQ.tg || REG.res),
+      an: flowTry(() => { const v = (fb.vplan || []).filter(x => x.on && !vrNonStat(x)); if (v.length) return v.every(x => (x.apx || []).length); return (state.result && !Object.values(EXAMPLES).some(e => e && e.text === $("pasteBox").value)) || tl.result || CT.result || TQ.spc || TQ.grr || TQ.bias || TQ.lin || TQ.stab || TQ.attr || TQ.doe || TQ.tg || REG.res; }),
       rp: flowTry(() => fb.pdca && (fb.pdca.out || any(fb.pdca.t) || any(fb.pdca.c)))
     };
   }
@@ -13307,25 +13436,24 @@ else root.runValidation = runValidation;
     const st = (s, i) => { const done = d[s.k], now = i === nowI, rd = redo[s.k];
       const sub = done ? "已完成" : now ? (rd ? `第 ${RD.n} 輪：修改中` : "目前在這一步") : rd ? `第 ${RD.n} 輪待重做` : "未開始";
       return `<li class="${done ? "done" : now ? "now" : rd ? "redo" : ""}"><button type="button" class="st" data-fl="go" data-i="${i}" aria-label="${s.lab}：${sub}"><span class="dot">${done ? "✓" : i + 1}</span><span class="lab">${s.lab}</span><span class="sub">${sub}</span></button></li>`; };
-    const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「開始下一輪」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
-    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="這一輪的結果不理想、要回到某一步再試一次時使用">🔁 開始下一輪</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
+    const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「重新檢討魚骨圖」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
+    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="驗證結果不理想、要重新檢討原因時使用：封存這一輪，回到魚骨圖">🔁 重新檢討魚骨圖</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
   }
   function rdDialog() {
     let dlg = $("rdDlg"); if (dlg) dlg.remove();
     const chips = (name, opts, def) => `<div class="chips" role="group" data-rdg="${name}">${opts.map(([v, t]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${v === def}">${t}</button>`).join("")}</div>`;
-    document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 開始第 ${RD.n + 1} 輪</h3>
-      <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再從你選的步驟接著改。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
+    document.body.insertAdjacentHTML("beforeend", `<div id="rdDlg" class="rd-wrap"><div class="rd-dlg" role="dialog" aria-modal="true" aria-labelledby="rdT"><h3 id="rdT">🔁 重新檢討魚骨圖（第 ${RD.n + 1} 輪）</h3>
+      <p class="help" style="margin:0">先把第 ${RD.n} 輪完整封存，再回到魚骨圖重新檢討原因。目前畫面上的資料不會清空；封存時會一併暫存案件。</p>
       <div class="group-label" style="margin-top:10px">第 ${RD.n} 輪的結果</div>${chips("res", [["ng", "未達目標"], ["part", "部分改善"], ["ok", "達到目標"]], "ng")}
-      <div class="group-label">要回到哪一步</div>${chips("from", [["1", "② 魚骨圖（重新找原因）"], ["2", "③ 驗證項目（換驗證方式）"], ["3", "④ 樣本數（加量重測）"], ["4", "⑤ 檢定分析（重新分析）"]], "2")}
       <div class="group-label">一句話說明（會寫進紀錄與 PDCA 報告）</div><textarea id="rdNote" rows="3" placeholder="例如：延長熱封時間後強度仍未達規格；下一輪改驗證膜材批次"></textarea>
-      <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，開始第 ${RD.n + 1} 輪</button></div></div></div>`);
+      <div class="rd-row"><button type="button" class="btn small" data-rd="cancel">取消</button><button type="button" class="btn primary small" data-rd="ok">封存第 ${RD.n} 輪，回到魚骨圖</button></div></div></div>`);
     dlg = $("rdDlg");
     dlg.addEventListener("click", e => {
       const c = e.target.closest("[data-rdg] [data-v]"); if (c) { c.parentElement.querySelectorAll("[data-v]").forEach(x => x.setAttribute("aria-pressed", String(x === c))); return; }
       const b = e.target.closest("[data-rd]"); if (!b && e.target !== dlg) return;
       if (!b || b.dataset.rd === "cancel") { dlg.remove(); return; }
       const pick = g => (dlg.querySelector(`[data-rdg="${g}"] [aria-pressed="true"]`) || {}).dataset;
-      const res = (pick("res") || {}).v || "ng", from = +((pick("from") || {}).v || 2), note = ($("rdNote").value || "").trim().slice(0, 300);
+      const res = (pick("res") || {}).v || "ng", from = 1, note = ($("rdNote").value || "").trim().slice(0, 300);
       let snap; try { snap = JSON.parse(JSON.stringify(caseCapture(false))); delete snap.rounds; } catch (_) { snap = null; }
       RD.list.push({ n: RD.n, date: new Date().toISOString(), from: RD.from, result: res, note, snap });
       RD.n++; RD.from = from; const sg = rdSigs(); RD.base = {}; FLOW_STEPS.forEach((st, i) => { if (i >= from) RD.base[st.k] = sg[st.k]; });

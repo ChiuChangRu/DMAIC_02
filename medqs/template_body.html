@@ -199,12 +199,11 @@
           <p class="help">直接從 Excel 選取範圍後貼上，直式（每欄一組）或橫式（每列一組）都可以。第一列或第一欄是文字時會當成組別名稱。依納入的組數自動判定：1 組對目標值、2 組互比、3 組以上整體比較。</p>
           <div class="chips" role="group" aria-label="載入範例">
             <button class="chip" type="button" data-example="1">範例：單組</button>
-            <button class="chip" type="button" data-example="2">範例：兩組</button>
             <button class="chip" type="button" data-example="3">範例：三組</button>
             <button class="chip" type="button" id="clearBtn">清除</button>
           </div>
           <div class="pub-pick"><label for="pubHypSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubHypSel"></select><p class="hint" id="pubHypDesc"></p></div>
-          <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;轉廠前&#9;轉廠後&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
+          <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;A 組&#9;B 組&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
           <div class="detect" id="detect" aria-live="polite"></div>
         </div>
 
@@ -1454,7 +1453,7 @@
     $("pairedChip").textContent = k >= 3 ? "重複量測" : "成對樣本";
     $("modeHelp").textContent = state.mode === "paired"
       ? (k >= 3 ? "同一批樣品在各條件下都量測，依列對應，例如同一批樣品在 3 個時間點量測。" : "同一個樣品量兩次，例如同一批樣品處理前、後；依列配對。")
-      : (k >= 3 ? "各組是不同的樣品，例如三家供應商各自抽樣。" : "兩組是不同的樣品，例如轉廠前、後各自抽樣。");
+      : (k >= 3 ? "各組是不同的樣品，例如三家供應商各自抽樣。" : "兩組是不同的樣品，例如兩家供應商各自抽樣。");
     const eq = state.goal === "equiv" && k <= 2;
     $("goalBlock").hidden = k >= 3;
     $("goalHelp").textContent = k >= 3 ? "" : eq

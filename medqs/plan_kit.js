@@ -313,7 +313,7 @@
       return "已套用到下方 STEP 2（" + L.join("、") + "）。組數與樣本數依貼上的數據判定。";
     },
     help: "流程：① 描述要比較什麼，請 AI 建議試驗設計（AI 不產生數值）→ ② 程式檢查，你修改 → ③ 產生記錄表 → ④ 填入量測值 → ⑤ 帶入下方分析（統計全部由程式計算）。",
-    descPh: "例如：轉廠前後各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
+    descPh: "例如：A 線、B 線各抽一批導管，比較拉伸強度是否有差異；規格下限 15 N",
     goLabel: "產生記錄表",
     role: "你是比較試驗（假設檢定）的設計助手。依使用者描述，建議試驗設計：one（單組對目標值）、two（兩組比較）、multi（3 組以上）；兩組時判斷獨立（ind）還是成對（paired：同一個樣品量兩次、或同一批樣品分兩種方法量）。再判斷檢定目的 goal：要證明「有差／改善了」用 diff；要證明「一樣／同等／沒有改變」（例如和 510(k) 比對品比較、轉廠、變更前後、換料、換供應商）用 equiv（同等性 TOST），並在理由中說明「沒有顯著差異不等於相同」。同等界限 eqd（Δ）只有使用者提供才填，否則填 null，並說明 Δ 要在看數據前依臨床或功能需求、比對品規格決定。",
     example: '{"purpose":"two","relation":"ind","groups":["轉廠前","轉廠後"],"n":15,"alt":"two-sided","alpha":0.05,"goal":"diff","eqd":null,"target":null,"lsl":null,"usl":null}',
@@ -323,7 +323,7 @@
     fields: [
       { k: "purpose", lab: "要比較什麼", type: "select", opts: [["one", "單組對目標值"], ["two", "兩組比較"], ["multi", "3 組以上"]] },
       { k: "relation", lab: "樣本關係", type: "select", opts: [["ind", "獨立（兩組是不同的樣品）"], ["paired", "成對（同一個樣品量兩次）"]], show: m => m.purpose === "two" },
-      { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 轉廠前, 轉廠後" },
+      { k: "groups", lab: "組別名稱（逗號分隔）", type: "text", ph: "例如 A 線, B 線" },
       { k: "n", lab: "每組樣本數", type: "int", lo: 2, hi: 500 },
       { k: "goal", lab: "檢定目的", type: "select", opts: [["diff", "差異：有沒有差"], ["equiv", "同等性（TOST）：差在 ±Δ 內"]], show: m => m.purpose !== "multi" },
       { k: "eqd", lab: "同等界限 Δ（±）", type: "num", ph: "必填，看數據前決定", show: m => m.purpose !== "multi" && m.goal === "equiv" },
