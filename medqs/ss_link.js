@@ -10,7 +10,7 @@
   const svNum = x => (x == null || !isFinite(x) ? "—" : String(+(+x).toPrecision(6)));
   function svGuessQ(tool) {
     const t = String(tool || "");
-    if (/不需統計/.test(t)) return "none";
+    if (/不需統計|不用統計/.test(t)) return "none";
     if (/對目標/.test(t)) return "q4";
     if (/兩組獨立|兩組成對/.test(t)) return "q1";
     if (/同等/.test(t)) return "q2";
@@ -91,7 +91,7 @@
     box.innerHTML = `<h3>驗證項目的樣本數（魚骨圖 STEP 3 勾選的 ${L.length} 項）</h3><p class="help" style="margin:0">每一項選「要證明什麼」，再按「規劃」算出樣本數；數量與理由會帶進 PDCA 報告第 4 段。</p>
       <div class="scroll-x"><table class="sv-tbl"><thead><tr><th>驗證項目</th><th class="sv-qc">要證明什麼</th><th class="sv-rc">樣本數與理由</th><th class="sv-bc"></th></tr></thead><tbody>${L.map(x => {
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
-        return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">工具：${esc(x.tool)}</div>` : ""}</td>
+        return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>
           <td><select data-svq="${x.id}" aria-label="要證明什麼">${SV_Q.map(o => `<option value="${o[0]}"${o[0] === q ? " selected" : ""}>${o[1]}</option>`).join("")}</select></td>
           <td>${cell(x)}</td><td><button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
       }).join("")}</tbody></table></div>
@@ -107,7 +107,7 @@
     const s = x.ss || {}, q = s.q, man = !!SV_MANUAL[q], qt = (SV_Q.find(o => o[0] === q) || ["", ""])[1];
     const r = man ? null : svResult(q);
     const prevWhy = s.q === q && s.why ? s.why : "";
-    const why = man ? (prevWhy || svManualWhy(q)) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : "";
+    const why = man ? (prevWhy || (q === "none" ? [String(x.tool || "").replace(/^不用統計－|^（不需統計：|）$/g, ""), x.method].filter(Boolean).join("：") : svManualWhy(q))) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : "";
     bar.dataset.auto = r ? r.why : "";
     bar.innerHTML = `<div class="sv-bar-h"><b>正在為「${esc(x.cause || "未命名")}」規劃樣本數</b><span class="sv-why">（${esc(qt)}）</span><button type="button" class="sv-btn" data-svcancel="1">取消</button></div>
       ${man ? `${q === "none" ? "" : `<div class="sv-row"><label for="svN">樣本數</label><input id="svN" type="text" value="${esc(s.q === q ? s.n || "" : "")}" placeholder="例如：n = 10（每批 10，共 3 批）"></div>`}

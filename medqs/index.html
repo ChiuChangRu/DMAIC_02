@@ -790,6 +790,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .pd-kv th { width: 120px; } .pd-w { width: 62px; } .pd-tool { width: 100px; } .pd-ss { width: 205px; } .pd-act { table-layout: fixed; }
 .pd-ssn { font-weight: 800; } .pd-ssw { font-size: 11.5px; line-height: 1.45; color: var(--muted); margin-top: 2px; } .pd-ssw .pd-tx, .pd-ssw .pd-ed { color: var(--muted); white-space: pre-wrap; } .pd-tx { white-space: pre-wrap; }
 /* 樣本數規劃：驗證項目清單與規劃中提示列 */
+.vp-dup { font-size: 12px; color: var(--bad); font-weight: 700; margin-top: 2px; }
 .sv-card { border: 2px solid color-mix(in srgb, var(--qic-a) 55%, var(--line)); background: color-mix(in srgb, var(--qic-a) 7%, var(--surface)); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
 .sv-card h3 { margin: 0 0 4px; font-size: 18px; }
 .sv-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; min-width: 640px; }
@@ -1180,7 +1181,7 @@ body.novice .nb-line { display: block; }
           <h2 class="q">驗證規劃</h2>
           <p class="help">原因討論完後，把要確認的原因標記「◇ 待驗證」，再決定怎麼驗證、用什麼統計工具。</p>
           <div id="fbVerify"></div>
-          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證方式與統計工具</button><span class="hint">AI 只推薦本網站有的工具；建置中的工具會註明。</span></div>
+          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證策略</button><span class="hint">不用統計就能確認的，AI 會直接建議其他策略；問第二次只列清單中沒有的原因。</span></div>
           <div id="fbVplan"></div>
         </div>
       </section>
@@ -6538,9 +6539,9 @@ else root.runValidation = runValidation;
     "```fishbone",
     '{"problem": "（選填：只有建議改寫問題點時才填）", "factors": [{"cat": "分類名稱", "text": "可能原因", "subs": ["子因子（選填）"]}]}',
     "```",
-    "8. 使用者要求「驗證規劃」時，不談樣本數（樣本數另外規劃），開頭不要寫總共幾項；回答最後附上 verify 區塊（JSON，放在 ```verify 與 ``` 之間），每個原因一項，推論內容在該欄結尾標 *：",
+    "8. 使用者要求「驗證規劃」時，不談樣本數（樣本數另外規劃），開頭不要寫總共幾項；每個原因先想最省力、足以確認的驗證策略：不需要統計就能確認的（文件審查／比對、修改 IFU／標示、設計變更／防呆、100% 全檢、供應商管制、引用既有資料或文獻、工程判斷），直接用這些策略，不要硬套統計；確實需要數據比較或推論時，才用本網站的統計工具。同一個原因只列一次，不要拆成多項；使用者訊息若列出清單中已有的原因，不要重複列出。回答最後附上 verify 區塊（JSON，放在 ```verify 與 ``` 之間），每個原因一項，推論內容在該欄結尾標 *：",
     "```verify",
-    '{"items": [{"cause": "原因（照魚骨圖的寫法）", "method": "驗證方式（一句話）", "data": "要收集的資料", "tool": "本網站工具與模式，例如：假設檢定－兩組獨立"}]}',
+    '{"items": [{"cause": "原因（照魚骨圖的寫法）", "method": "驗證方式（一句話）", "data": "要收集的資料", "tool": "驗證策略：本網站工具與模式（例如：假設檢定－兩組獨立），或不用統計的策略（寫成：不用統計－文件審查／比對）"}]}',
     "```"
   ].join("\n");
   const FB_HOME_RULE = [
@@ -7000,7 +7001,8 @@ else root.runValidation = runValidation;
   $("fbPlanAI").addEventListener("click", () => {   // 依目前有沒有「◇ 待驗證」決定要 AI 針對哪些原因，避免回答開頭出現「沒有待驗證」讓人誤會
     const nVer = fb.factors.filter(f => f.verify && f.st !== "excl").length, nUse = fb.factors.filter(f => f.st === "use").length;
     const target = nVer ? `標記「◇ 待驗證」的 ${nVer} 個原因` : nUse ? `已採用的 ${nUse} 個原因（使用者還沒標記待驗證；重要的優先，回答開頭不必說明這點）` : "目前的候選原因（還沒有採用的原因；請提醒使用者先在 STEP 2 採用）";
-    fbAskAI(`請針對${target}逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、用本網站哪個工具與模式分析。用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。`, { label: "驗證規劃", quote: "" });
+    const have = (fb.vplan || []).map(x => x.cause.trim()).filter(Boolean);
+    fbAskAI(`請針對${target}逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、驗證策略（不用統計就能確認的直接寫策略；需要統計才寫本網站工具與模式）。同一個原因只列一次。${have.length ? `驗證項目清單已經有這些原因，不要重複列出，只列清單中沒有的：${have.slice(0, 30).join("；")}。` : ""}用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。`, { label: "驗證規劃", quote: "" });
   });
   $("fbCheckProblem").addEventListener("click", () => fbAskAI("請檢查目前的問題點描述是否具體、可量測：缺少哪些資訊（產品、發生時間、比例、規格）？需要的話，用 fishbone 區塊的 problem 欄位建議改寫（factors 可以是空陣列）。", { label: "問題點", quote: fb.problem.slice(0, 60) }));
   function fbAskAI(q, ctx, o) {
@@ -12879,7 +12881,7 @@ else root.runValidation = runValidation;
     const ssW = x => { const s = x.ss; if (!s || !s.q) return ""; return s.why || ""; };
     const acts = vp.length ? vp.map(x => ({ what: "驗證：" + x.cause + (x.method ? " — " + x.method : ""), tool: x.tool, n: ssN(x), why: ssW(x) })) : fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => ({ what: "驗證：" + f.text, tool: "" }));
     const nRow = Math.max(4, acts.length) + P.rows;
-    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">分析工具</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
+    const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">驗證策略</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
       ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
     const chk = `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
@@ -12968,16 +12970,26 @@ else root.runValidation = runValidation;
     return `<div class="fb-sug vp-sug"><p class="hint">AI 建議 ${items.length} 個驗證項目（標 * 為推論）。列入清單後，在 STEP 3 勾選要採用的；可以修改每一欄。</p><button type="button" class="btn small primary" data-vpadd="${esc(JSON.stringify(items))}">列入 STEP 3 驗證項目清單（${items.length} 項）</button></div>`;
   }
   const vpKey = x => (x.cause + "|" + x.method).replace(/\s+/g, "");
+  // 相似原因判斷（AI 問兩次時寫法略有不同）：去掉標點、* 後比較字元雙字組重疊（Dice ≥ 0.6）
+  const vpNorm = t => String(t || "").replace(/[\s*＊，。、；：:,.;（）()「」『』！!？?－\-／/]/g, "");
+  function vpSim(a, b) {
+    a = vpNorm(a); b = vpNorm(b); if (!a || !b) return 0; if (a === b || a.includes(b) || b.includes(a)) return 1;
+    const g = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); m.set(k, (m.get(k) || 0) + 1); } return m; };
+    const A = g(a), B = g(b); let hit = 0; A.forEach((v, k) => { hit += Math.min(v, B.get(k) || 0); });
+    return 2 * hit / Math.max(1, a.length - 1 + b.length - 1);
+  }
+  const VP_SIM = 0.6;
   function vpRender() {
     const box = $("fbVplan"); if (!box) return; if (box.contains(document.activeElement) && (document.activeElement.classList.contains("vp-ed") || document.activeElement.classList.contains("vp-tool"))) return;
     const L = fb.vplan || (fb.vplan = []);
     const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
     const nOn = L.filter(x => x.on).length;
+    const dupOf = L.map((x, i) => { for (let j = 0; j < i; j++) if (vpSim(L[j].cause, x.cause) >= VP_SIM) return j + 1; return 0; });
     box.innerHTML = `<datalist id="vpToolList">${VP_TOOLS.map(t => `<option value="${t}"></option>`).join("")}</datalist><div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
-      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>分析工具</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td><input class="vp-tool" list="vpToolList" data-id="${x.id}" value="${esc(x.tool)}" placeholder="自行輸入，或點選下拉" aria-label="分析工具"></td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td><input class="vp-tool" list="vpToolList" data-id="${x.id}" value="${esc(x.tool)}" placeholder="點選下拉，或自行輸入" aria-label="驗證策略"></td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
-  const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "（不需統計：工程判斷／檢查）"];
+  const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
   function vpChanged(full) { fbSave(); if (full) vpRender(); try { pdcaRender(); } catch (_) {} }
   (function vpInit() {
     const box = $("fbVplan"); if (!box) return;
@@ -12994,9 +13006,10 @@ else root.runValidation = runValidation;
       const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled) return;
       let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
       const L = fb.vplan || (fb.vplan = []), have = new Set(L.map(vpKey)); let n = 0;
-      items.forEach(x => { if (have.has(vpKey(x))) return; L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
-      b.disabled = true; b.textContent = n ? `已列入 ${n} 項（重複的略過）` : "這些項目已在清單中";
-      vpChanged(true); fbNote(n ? `已把 ${n} 個驗證項目列入 STEP 3 清單，請勾選要採用的。` : "這些驗證項目已在清單中。");
+      let skip = 0;
+      items.forEach(x => { if (have.has(vpKey(x)) || L.some(y => vpSim(y.cause, x.cause) >= VP_SIM)) { skip++; return; } L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
+      b.disabled = true; b.textContent = n ? `已列入 ${n} 項${skip ? `（${skip} 項和清單中的原因相同或相似，略過）` : ""}` : "這些原因都已在清單中";
+      vpChanged(true); fbNote(n ? `已把 ${n} 個驗證項目列入 STEP 3 清單${skip ? `，略過 ${skip} 個相同或相似的原因` : ""}，請勾選要採用的。` : "這些原因都已在清單中（相同或相似），沒有新增。");
     });
     vpRender();
   })();
@@ -13012,7 +13025,7 @@ else root.runValidation = runValidation;
   const svNum = x => (x == null || !isFinite(x) ? "—" : String(+(+x).toPrecision(6)));
   function svGuessQ(tool) {
     const t = String(tool || "");
-    if (/不需統計/.test(t)) return "none";
+    if (/不需統計|不用統計/.test(t)) return "none";
     if (/對目標/.test(t)) return "q4";
     if (/兩組獨立|兩組成對/.test(t)) return "q1";
     if (/同等/.test(t)) return "q2";
@@ -13093,7 +13106,7 @@ else root.runValidation = runValidation;
     box.innerHTML = `<h3>驗證項目的樣本數（魚骨圖 STEP 3 勾選的 ${L.length} 項）</h3><p class="help" style="margin:0">每一項選「要證明什麼」，再按「規劃」算出樣本數；數量與理由會帶進 PDCA 報告第 4 段。</p>
       <div class="scroll-x"><table class="sv-tbl"><thead><tr><th>驗證項目</th><th class="sv-qc">要證明什麼</th><th class="sv-rc">樣本數與理由</th><th class="sv-bc"></th></tr></thead><tbody>${L.map(x => {
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
-        return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">工具：${esc(x.tool)}</div>` : ""}</td>
+        return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>
           <td><select data-svq="${x.id}" aria-label="要證明什麼">${SV_Q.map(o => `<option value="${o[0]}"${o[0] === q ? " selected" : ""}>${o[1]}</option>`).join("")}</select></td>
           <td>${cell(x)}</td><td><button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
       }).join("")}</tbody></table></div>
@@ -13109,7 +13122,7 @@ else root.runValidation = runValidation;
     const s = x.ss || {}, q = s.q, man = !!SV_MANUAL[q], qt = (SV_Q.find(o => o[0] === q) || ["", ""])[1];
     const r = man ? null : svResult(q);
     const prevWhy = s.q === q && s.why ? s.why : "";
-    const why = man ? (prevWhy || svManualWhy(q)) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : "";
+    const why = man ? (prevWhy || (q === "none" ? [String(x.tool || "").replace(/^不用統計－|^（不需統計：|）$/g, ""), x.method].filter(Boolean).join("：") : svManualWhy(q))) : r ? (s.q === q && s.auto === r.why && prevWhy ? prevWhy : r.why) : "";
     bar.dataset.auto = r ? r.why : "";
     bar.innerHTML = `<div class="sv-bar-h"><b>正在為「${esc(x.cause || "未命名")}」規劃樣本數</b><span class="sv-why">（${esc(qt)}）</span><button type="button" class="sv-btn" data-svcancel="1">取消</button></div>
       ${man ? `${q === "none" ? "" : `<div class="sv-row"><label for="svN">樣本數</label><input id="svN" type="text" value="${esc(s.q === q ? s.n || "" : "")}" placeholder="例如：n = 10（每批 10，共 3 批）"></div>`}
