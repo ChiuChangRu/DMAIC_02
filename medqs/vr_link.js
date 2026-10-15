@@ -22,15 +22,15 @@
   }
   function vrSlotHtml(id, open) {
     const L = vrStatItems();
-    if (!open) return `<button type="button" class="vr-open" data-vropen="${id}">📎 存成驗證結果（附在 PDCA 報告當附錄）</button>`;
+    if (!open) { const d = L.filter(x => (x.apx || []).length).length; return `<button type="button" class="vr-open" data-vropen="${id}">📎 存成驗證結果（附在 PDCA 報告當附錄）${L.length ? `　<span class="vr-prog">統計驗證已完成 ${d}／${L.length}</span>` : ""}</button>`; }
     if (!L.length) return `<div class="vr-pick"><b>📎 存成驗證結果</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
     const body = $(id), auto = body ? vrAuto(body) : "", tool = VR_OUTS[id] || "";
     const guess = L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
     return `<div class="vr-pick" data-vrbox="${id}"><b>📎 存成驗證結果</b><span class="hint">　存入當時的結果畫面會附在 PDCA 報告後面</span>
       <div class="vr-row"><label>驗證項目</label><select data-vrit="1">${L.map(x => `<option value="${x.id}"${x === guess ? " selected" : ""}>${esc(x.cause || "（未命名）")}${x.tool ? "（" + esc(x.tool) + "）" : ""}${(x.apx || []).length ? `　已存 ${(x.apx || []).length} 份` : ""}</option>`).join("")}</select></div>
-      <div class="vr-row"><label>結論</label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
+      <div class="vr-row"><label>結論 <span class="vr-req">必選</span></label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
       <div class="vr-row vr-col"><label>依據（系統依結果產生，可修改）</label><input type="text" data-vrnote="1" value="${esc(auto)}"></div>
-      <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn p" data-vrsave="${id}">存入驗證結果 →</button></div></div>`;
+      <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn vr-save" data-vrsave="${id}">✓ 存入驗證結果</button></div></div>`;
   }
   function vrSlot(id, open) {
     const body = $(id); if (!body) return;
@@ -48,17 +48,31 @@
     if (h.length > 400000) h = h.replace(/<svg[\s\S]*?<\/svg>/g, "<p>（圖表過大未存入）</p>");
     return h.slice(0, 400000);
   }
+  // 驗證策略 → 對應的分析頁
+  function vrRoute(tool) {
+    const t = String(tool || "");
+    if (/次數|不良率|卡方/.test(t)) return ["hypothesis", "count"]; if (/允差/.test(t)) return ["hypothesis", "tol"]; if (/假設檢定/.test(t)) return ["hypothesis", "compare"];
+    if (/回歸|相關/.test(t)) return ["regression"]; if (/SPC|管制/.test(t)) return ["spc"];
+    if (/MSA/.test(t)) return ["msa", /偏差/.test(t) ? "bias" : /線性/.test(t) ? "lin" : /穩定/.test(t) ? "stab" : /屬性/.test(t) ? "attr" : "grr"];
+    if (/混料/.test(t)) return ["doe", "mix"]; if (/DOE|實驗設計/.test(t)) return ["doe", "fact"]; if (/田口/.test(t)) return ["taguchi"];
+    return ["hypothesis", "compare"];
+  }
+  function vrNextHtml() {
+    const left = vrStatItems().filter(y => !(y.apx || []).length);
+    if (!left.length) return `<div class="vr-next-box"><b>統計驗證都完成了。</b>不用統計的項目請到 PDCA 報告第 5 段選結論、寫依據。　<button type="button" class="sv-btn vr-save" data-route-go="pdca">前往 PDCA 報告 →</button></div>`;
+    return `<div class="vr-next-box"><b>還沒驗證的（${left.length} 項）：</b>按「驗證這一項 →」會到對應的分析頁，貼上這一項的數據再分析。<ul>${left.map(x => `<li><span>${esc(x.cause)}<small>${esc(x.tool || "")}</small></span><button type="button" class="sv-btn p" data-vrnext="${x.id}">驗證這一項 →</button></li>`).join("")}</ul></div>`;
+  }
   function vrSave(id) {
     const box = document.querySelector(`[data-vrbox="${id}"]`), body = $(id); if (!box || !body) return;
     const hint = box.querySelector("[data-vrhint]"), it = box.querySelector("[data-vrit]").value, st = (box.querySelector("[data-vrst][aria-pressed='true']") || {}).dataset;
     const note = box.querySelector("[data-vrnote]").value.trim();
-    if (!st) { hint.textContent = "請選結論。"; return; }
+    if (!st) { hint.textContent = "⚠ 還沒存：請先選結論（原因成立／不成立／待定）"; const r = box.querySelector("[data-vrst]").parentElement; r.classList.add("vr-need"); r.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     if (!note) { hint.textContent = "請寫依據。"; return; }
     const x = vrItems().find(y => y.id === it); if (!x) return;
     const title = (body.closest(".preview") && body.closest(".preview").querySelector(".preview-head b")) ? body.closest(".preview").querySelector(".preview-head b").textContent.trim() : "";
     (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: (VR_OUTS[id] || "") + (title && title !== "尚未分析" ? "：" + title : ""), st: st.vrst, note, html: vrSnap(body) });
     fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {}
-    const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>`; }
+    const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>${vrNextHtml()}`; }
     const left = vrStatItems().filter(y => !(y.apx || []).length).length;
     try { fbNote(left ? `已存入。還有 ${left} 個統計驗證項目沒有結果。` : "所有統計驗證項目都有結果了。不用統計的項目請到 PDCA 報告第 5 段填寫。"); } catch (_) {}
   }
@@ -67,8 +81,15 @@
     document.addEventListener("click", e => {
       const o = e.target.closest("[data-vropen]"); if (o) { vrSlot(o.dataset.vropen, true); return; }
       const c = e.target.closest("[data-vrclose]"); if (c) { const s = $(c.dataset.vrclose).nextElementSibling; if (s) s.dataset.open = ""; vrSlot(c.dataset.vrclose); return; }
-      const st = e.target.closest(".vr-pick [data-vrst]"); if (st) { st.parentElement.querySelectorAll("[data-vrst]").forEach(b => b.setAttribute("aria-pressed", String(b === st))); return; }
-      const sv = e.target.closest("[data-vrsave]"); if (sv) vrSave(sv.dataset.vrsave);
+      const st = e.target.closest(".vr-pick [data-vrst]"); if (st) { st.parentElement.classList.remove("vr-need"); st.parentElement.querySelectorAll("[data-vrst]").forEach(b => b.setAttribute("aria-pressed", String(b === st))); const h = st.closest(".vr-pick").querySelector("[data-vrhint]"); if (h) h.textContent = ""; return; }
+      const sv = e.target.closest("[data-vrsave]"); if (sv) { vrSave(sv.dataset.vrsave); return; }
+      const nx = e.target.closest("[data-vrnext]"); if (nx) { const x = vrItems().find(y => y.id === nx.dataset.vrnext); if (!x) return; const [r, sub] = vrRoute(x.tool);
+        if (r === "hypothesis" && sub === "compare" && currentView === "hypothesis") { try { $("clearBtn").click(); } catch (_) {} }   // 同一頁換下一項：清掉上一項的數據（已存在附錄）
+        try { gotoTool(r, sub); } catch (_) { const b = document.querySelector(`.toolnav [data-route="${r}"]`); if (b) b.click(); }
+        const pb = $({ hypothesis: "hypProblem", regression: "regressionProblem", spc: "spcProblem", msa: "msaProblem", doe: "doeProblem", taguchi: "taguchiProblem" }[r]);
+        if (pb) { pb.value = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.dataset.auto = pb.value; }
+        try { fbNote(`現在驗證「${x.cause}」：貼上這一項的數據後分析，再按結果下方的「存成驗證結果」。`); } catch (_) {}
+        window.scrollTo({ top: 0, behavior: "smooth" }); }
     });
   })();
   // ---------------- PDCA 報告：第 5 段各項結論、附錄 ----------------

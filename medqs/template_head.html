@@ -811,6 +811,13 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .vr-pick input { width: 100%; box-sizing: border-box; } .vr-pick select { flex: 1; min-width: 0; }
 .vr-chip { font: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
 .vr-chip[aria-pressed="true"] { background: var(--act); border-color: var(--act); color: var(--on-act); }
+.sv-btn.vr-save { background: var(--good); border-color: var(--good); color: #fff; }
+.vr-pick [data-vrhint] { color: var(--bad); font-weight: 800; } .vr-req { font-size: 11px; color: var(--bad); font-weight: 700; }
+.vr-need { outline: 2px solid var(--bad); outline-offset: 4px; border-radius: 8px; } .vr-need .vr-chip { border-color: var(--bad); }
+.vr-prog { font-weight: 800; color: var(--good); }
+.vr-next-box { border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; background: var(--surface); }
+.vr-next-box ul { list-style: none; margin: 6px 0 0; padding: 0; } .vr-next-box li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.vr-next-box li small { display: block; color: var(--muted); font-size: 12px; }
 .vr-done { font-size: 13.5px; font-weight: 700; color: var(--good); padding: 8px 2px; }
 .vp-next { margin-left: auto; } .vp-next:disabled { opacity: .5; cursor: not-allowed; } .vp-next-hint { text-align: right; margin: 4px 0 0; }
 .vp-dup { font-size: 12px; color: var(--bad); font-weight: 700; margin-top: 2px; }
