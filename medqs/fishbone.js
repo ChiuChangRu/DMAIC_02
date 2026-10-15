@@ -311,7 +311,7 @@
     const carry = `<div class="run-row fb-carry"><span class="group-label">帶入統計工具的確認區：</span><button type="button" class="btn small" data-pkfb="doe">→ DOE</button><button type="button" class="btn small" data-pkfb="taguchi">→ 田口方法</button><button type="button" class="btn small" data-pkfb="spc">→ SPC 分層欄位</button></div><p class="hint">按 DOE、田口方法會到該工具頁，列出魚骨圖的原因讓你勾選要帶入哪些；帶入的是原因名稱，到確認區後可改成因子名稱（例如「封口溫度不足」→「封口溫度 (°C)」）；水準、數量等數字要自己填。${meas ? "" : ""}</p>${meas ? `<p class="note warn">有「量測」相關的原因：建議先做 <button type="button" class="linkbtn" data-go="msa">MSA</button>，確認量測系統可信，再用量測數據驗證其他原因*。</p>` : ""}`;
     $("fbVerify").innerHTML = (ver.length || keys.length)
       ? `<div class="scroll-x"><table><thead><tr><th>分類</th><th>原因</th><th>標記</th><th></th></tr></thead><tbody>${ver.map(f => row2(f, "◇ 待驗證" + (f.key ? "、★ 重要" : ""))).join("")}${keys.map(f => row2(f, "★ 重要（未標待驗證）")).join("")}</tbody></table></div>${carry}${tools}`
-      : `<p class="hint">還沒有標記「◇ 待驗證」的原因。在 STEP 2 的原因下方按「◇ 待驗證」即可加入。</p>${tools}`;
+      : `<p class="hint">（選填）在 STEP 2 的原因下方按「◇ 待驗證」，AI 建議驗證策略時會優先針對這些原因。</p>${tools}`;
   }
   function fbToolsText() {
     const T = typeof TOOLS !== "undefined" ? TOOLS : [];

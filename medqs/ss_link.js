@@ -157,5 +157,7 @@
       if (e.target.closest("[data-svcancel]")) { svCur = ""; svRender(); return; }
       if (e.target.closest("[data-svsave]")) svSave();
     });
-    svRender();
+    svRender(); setTimeout(svRender, 0);
+    const vs = $("viewSample");   // 每次切到樣本數規劃頁都重新產生（網頁開啟時魚骨圖資料可能還沒載入）
+    if (vs) new MutationObserver(() => { if (!vs.hidden) svRender(); }).observe(vs, { attributes: true, attributeFilter: ["hidden"] });
   })();
