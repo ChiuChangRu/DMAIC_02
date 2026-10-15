@@ -680,6 +680,11 @@ tr.aq-rej td { color: var(--bad); }
 .ss-qbanner[hidden] { display: none; }
 .ss-qbanner b.t { font-size: 17px; }
 .ss-qbanner ul { margin: 0; padding-left: 20px; font-size: 14.5px; line-height: 1.6; }
+.ss-qbanner .npd-go { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+@media (max-width: 640px) { .ss-qbanner .npd-go { grid-template-columns: minmax(0, 1fr); } }
+.ss-qbanner .npd-btn { margin: 0; border-color: var(--teal); }
+.ss-qbanner .npd-btn:hover { background: var(--teal-soft); }
+.ss-qbanner > div + div { margin-top: 6px; }
 .eq-basis { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 8px; margin-top: 6px; }
 @media (max-width: 640px) { .eq-basis { grid-template-columns: 1fr; } }
 .eq-paste { margin-top: 8px; display: grid; gap: 6px; }

@@ -15,23 +15,50 @@
     q9: { sub: "doer", title: "⑪ 實驗要重複幾次？", prep: ["設計（例如全因子 2³）", "重複量測的波動（σ）與要偵測的效應（Δ）"], note: "" },
     q10: { sub: "guide", title: "⑫ MSA、SPC 要收多少？", prep: [], note: "以下是業界手冊與常見做法的建議數量。" },
     q11: { sub: "aql", title: "⑨ 進料、出貨抽檢：抽多少、幾個不良算不合格？", prep: ["批量 N（這一批有多少個）", "檢驗水準：未指定時用一般 II", "AQL：依不良的嚴重程度（主要、次要）由權責單位決定；關鍵不良應全檢"], note: "這是給連續多批的批次檢驗用的（ISO 2859-1:2026）。設計驗證、確效只抽一次時，請改用 ⑤ 或 ⑧。" },
-    q12: { sub: "aqlv", title: "⑩ 用量測數值判批次合格，可以少抽一點嗎？", prep: ["規格界限（單邊或雙邊）", "數據要接近常態分布"], note: "計量型 AQL（ISO 3951-1）準備中。" }
+    q12: { sub: "aqlv", title: "⑩ 用量測數值判批次合格，可以少抽一點嗎？", prep: ["規格界限（單邊或雙邊）", "數據要接近常態分布"], note: "計量型 AQL（ISO 3951-1）準備中。" },
+    q13: { sub: "", guide: true, title: "★ 新產品開發（設計驗證、510(k)）：每個測試要測幾個？", prep: [], note: "" }
   };
+  // 新產品開發導引：先查規定，再依「這個測試要證明什麼」帶到對應題目
+  const NPD_GO = [
+    ["q8", "有合格標準，而且量得到數值", "拉力、爆破壓、穿刺力、尺寸、流量", "建議優先：通常比 ⑤ 少很多"],
+    ["q5", "有合格標準，結果只有過／不過", "洩漏、破裂、外觀、組裝、BI 結果", ""],
+    ["q2", "要證明和比對品（predicate）一樣", "例如穿刺力和市售品相當", "不能用「沒有顯著差異」代替"],
+    ["q3", "只要證明不比比對品差", "例如拉力不低於市售品", "比 ② 需要的數量少"]
+  ];
+  function npdBannerHtml() {
+    return `<b class="t">★ 新產品開發：每個測試要測幾個？</b>
+      <div class="hint">按順序看三步。每個測試的樣本數理由都要寫進驗證計畫書。</div>
+      <div><b>第 1 步　先查有沒有規定（有規定就照做，理由最充分）</b><ul>
+        <li>產品專屬的 FDA 指引：例如 PTA 導管指引要求額定爆破壓 99.9%／95%、氣球疲勞 90%／95%</li>
+        <li>測試引用的標準有規定數量時，照標準做：例如滅菌確效、生物相容性、顆粒（USP &lt;788&gt;）*</li>
+        <li>人因可用性驗證：FDA 指引建議每個使用者族群至少 15 人</li>
+        <li>公司程序（統計技術、抽樣計畫 SOP）</li></ul></div>
+      <div><b>第 2 步　沒有規定時，看這個測試要證明什麼</b>
+        <div class="npd-go">${NPD_GO.map(g => `<button type="button" class="ssq npd-btn" data-goq="${g[0]}"><span class="ssq-t">${esc(g[1])}</span><span class="ssq-s">${esc(g[2])}${g[3] ? `　｜　${esc(g[3])}` : ""}</span></button>`).join("")}</div>
+        <ul><li><b>沒有合格標準，只是了解特性</b>（例如 SEM 觀察、失效模式分析）：不需要統計計算，常見 3～5 個，寫明工程判斷的理由*。</li></ul></div>
+      <div><b>第 3 步　樣品怎麼選（每個測試都要寫）</b><ul>
+        <li>用成品：經過滅菌、老化等所有製程；不是成品要說明差異不影響結果</li>
+        <li>規格很多時，測最差情況，或「四個角」（最大／最小 × 最長／最短），並說明為什麼能代表全部規格</li>
+        <li>取多個生產批，涵蓋批與批之間的差異（常見 3 批*）</li></ul>
+        <div class="hint">依據：FDA《Recommended Content and Format of Non-Clinical Bench Performance Testing Information in Premarket Submissions》（2019）：樣本數要有科學理由，依測試目的、風險分析與抽樣計畫決定。</div></div>`;
+  }
   let ssCurQ = "", ssQBusy = false;
   function ssBanner() {
     const b = $("ssQBanner"), q = SSQ[ssCurQ];
     if (!q) { b.hidden = true; return; }
-    b.innerHTML = `<b class="t">${esc(q.title)}</b>${q.prep.length ? `<div class="hint">這題要準備：</div><ul>${q.prep.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}${q.note ? `<div class="hint">${esc(q.note)}</div>` : ""}`;
+    b.innerHTML = q.guide ? npdBannerHtml() : `<b class="t">${esc(q.title)}</b>${q.prep.length ? `<div class="hint">這題要準備：</div><ul>${q.prep.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}${q.note ? `<div class="hint">${esc(q.note)}</div>` : ""}`;
     b.hidden = false;
   }
+  $("ssQBanner").addEventListener("click", e => { const b = e.target.closest("[data-goq]"); if (b) ssPick(b.dataset.goq); });
   function ssPick(q, opts) {
     const d = SSQ[q]; if (!d) return;
     ssCurQ = q;
     $("ssQ").querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.q === q)));
-    ssQBusy = true; setSampleSub(d.sub); ssQBusy = false;
+    if (d.guide) $("viewSample").querySelectorAll("[data-tview]").forEach(v => { v.hidden = true; });
+    else { ssQBusy = true; setSampleSub(d.sub); ssQBusy = false; }
     if (d.set && !(opts && opts.keep)) d.set();
     ssBanner(); ssTileMark();
-    if (!(opts && opts.noScroll)) $("ssTilesCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!(opts && opts.noScroll)) (d.guide ? $("ssQBanner") : $("ssTilesCard")).scrollIntoView({ behavior: "smooth", block: "start" });
   }
   // 從進階分頁或其他頁面切換時，同步到對應的問題
   function ssSyncFromSub(s) {

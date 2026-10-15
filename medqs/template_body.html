@@ -453,6 +453,9 @@
     <section class="card ss-qcard" id="ssQ">
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
       <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
+      <div class="ss-qgrid ss-npd" style="grid-template-columns:minmax(0,1fr)">
+        <button type="button" class="ssq" data-q="q13" style="--qic-a:var(--qic-b);margin-bottom:0"><span class="ssq-n" aria-hidden="true">★</span><span class="ssq-t">新產品開發（設計驗證、510(k)）：每個測試要測幾個？</span><span class="ssq-s">不知道從哪一題開始時選這裡：先查規定，再依「這個測試要證明什麼」帶你到對應的題目</span></button>
+      </div>
       <div class="ss-qgrid">
         <div class="ss-qgrp"><div class="ss-qhd"><svg class="ss-qsvg" viewBox="0 0 96 64" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="12" width="22" height="42" rx="3" fill="var(--qic-a)"/><rect x="64" y="8" width="22" height="46" rx="3" fill="var(--qic-b)"/><path d="M38 32h17M49 25l7 7-7 7" stroke="currentColor" stroke-width="4.5"/></svg><div class="ss-qgl">變更／比較</div><div class="ss-qgd">比較兩組，或變更前後</div></div>
           <button type="button" class="ssq" data-q="q1"><span class="ssq-n" aria-hidden="true">1</span><span class="ssq-t">改善後有沒有變好？兩條線、兩家料有沒有差？</span><span class="ssq-s">找原因、驗證改善效果（證明有差）</span></button>
@@ -568,10 +571,19 @@
               </div>
               <p class="help" id="atModeHelp" style="margin-top:6px"></p>
             </div>
+            <div class="rc-pick" id="atRcPick" data-rc="at" style="background:var(--warn-soft);border-radius:10px;padding:12px 14px;display:grid;gap:8px">
+              <div class="group-label" style="color:var(--warn-ink)">不知道怎麼選？先回答一題：這個項目不合格，最嚴重會怎樣？</div>
+              <div class="chips" role="group" aria-label="失效嚴重度">
+                <button class="chip" type="button" data-sev="hi" aria-pressed="false">可能讓病人受重傷</button>
+                <button class="chip" type="button" data-sev="mid" aria-pressed="false">可能輕微受傷，或要換一支重來</button>
+                <button class="chip" type="button" data-sev="lo" aria-pressed="false">不影響安全（外觀、手感）</button>
+              </div>
+              <p class="help rc-why" style="margin:0;color:var(--ink)">選一個，系統會幫你填好下面三個參數並算出結果。</p>
+            </div>
             <div class="fields">
-              <div class="field"><label for="atC">信心水準</label><select id="atC"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
-              <div class="field" id="atRF"><label for="atR">要宣稱的可靠度</label><select id="atR"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select></div>
-              <div class="field" id="atCF"><label for="atCc">允許失效數</label><select id="atCc"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select></div>
+              <div class="field"><label for="atC">信心水準</label><select id="atC"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
+              <div class="field" id="atRF"><label for="atR">要宣稱的可靠度</label><select id="atR"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>壞了越嚴重，選越高（看上方建議）</small></div>
+              <div class="field" id="atCF"><label for="atCc">允許失效數</label><select id="atCc"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select><small>建議 0；允許 1 個，要多測約一半以上</small></div>
               <div class="field" id="atNF" hidden><label for="atN">樣本數 n</label><input id="atN" type="number" step="1" min="1" inputmode="numeric"></div>
               <div class="field" id="atAcF" hidden><label for="atAc">允收數 Ac／實際失效數</label><input id="atAc" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
               <div class="field" id="atAqlF" hidden><label for="atAql">AQL（%）</label><input id="atAql" type="number" step="any" min="0" placeholder="選填，例如 1.5" inputmode="decimal"></div>
@@ -593,6 +605,11 @@
           <h3 id="atTableTitle">對照表</h3>
           <p class="help" id="atTableHelp"></p>
           <div class="scroll-x"><table id="atTable"></table></div>
+        </section>
+        <section class="card sheet" id="atAlt" data-ask="樣本數太多時的做法" hidden>
+          <h3>樣本數太多時的做法</h3>
+          <p class="help">高可靠度用「全部通過」證明，需要的數量會很大。以下三種做法都能減少樣本數，選用哪一種要寫進計畫書並說明理由。</p>
+          <div id="atAltBody"></div>
         </section>
       </div>
     </div>
@@ -629,17 +646,28 @@
           <p class="help">設計驗證常要宣稱「95% 信心下，99% 的產品符合規格」。這裡估算要測幾個樣本，數據拿到後再到「假設檢定 · 統計允差區間」計算。</p>
           <div class="group-label">方法</div>
           <div class="chips" id="tpMethod" role="group" aria-label="方法"><button class="chip" type="button" data-v="norm" aria-pressed="true">常態（需估計平均與標準差）</button><button class="chip" type="button" data-v="np" aria-pressed="false">無母數（不假設分布）</button></div>
+          <p class="help" style="margin-top:6px">一般選「常態」。完全沒有前期數據，或數據明顯歪一邊時，才選「無母數」（要測的數量多很多）。</p>
           <div class="group-label" style="margin-top:10px">方向</div>
           <div class="chips" id="tpSide" role="group" aria-label="方向"><button class="chip" type="button" data-v="lower" aria-pressed="true">單邊下限</button><button class="chip" type="button" data-v="upper" aria-pressed="false">單邊上限</button><button class="chip" type="button" data-v="two" aria-pressed="false">雙邊</button></div>
+          <p class="help" style="margin-top:6px">看規格怎麼寫：只有「至少多少」（拉力、爆破壓）選單邊下限；只有「不超過多少」（穿刺力、洩漏量）選單邊上限；有上下限（尺寸）選雙邊。</p>
+          <div class="rc-pick" data-rc="tp" style="background:var(--warn-soft);border-radius:10px;padding:12px 14px;display:grid;gap:8px;margin-top:10px">
+            <div class="group-label" style="color:var(--warn-ink)">不知道比例怎麼選？先回答一題：這個項目不合格，最嚴重會怎樣？</div>
+            <div class="chips" role="group" aria-label="失效嚴重度">
+              <button class="chip" type="button" data-sev="hi" aria-pressed="false">可能讓病人受重傷</button>
+              <button class="chip" type="button" data-sev="mid" aria-pressed="false">可能輕微受傷，或要換一支重來</button>
+              <button class="chip" type="button" data-sev="lo" aria-pressed="false">不影響安全（外觀、手感）</button>
+            </div>
+            <p class="help rc-why" style="margin:0;color:var(--ink)">選一個，系統會幫你填好涵蓋比例與信心水準。</p>
+          </div>
           <div class="fields">
-            <div class="field"><label for="tpP">涵蓋比例</label><select id="tpP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select></div>
-            <div class="field"><label for="tpG">信心水準</label><select id="tpG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
+            <div class="field"><label for="tpP">涵蓋比例</label><select id="tpP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>至少多少比例的產品要在規格內；壞了越嚴重選越高</small></div>
+            <div class="field"><label for="tpG">信心水準</label><select id="tpG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
           </div>
           <div class="fields tp-norm">
-            <div class="field"><label for="tpMu">預期平均 μ</label><input id="tpMu" type="number" step="any" inputmode="decimal" placeholder="前期數據"></div>
-            <div class="field"><label for="tpSd">預期標準差 σ</label><input id="tpSd" type="number" step="any" min="0" inputmode="decimal" placeholder="前期數據"></div>
-            <div class="field tp-lsl"><label for="tpLsl">規格下限 LSL</label><input id="tpLsl" type="number" step="any" inputmode="decimal"></div>
-            <div class="field tp-usl" hidden><label for="tpUsl">規格上限 USL</label><input id="tpUsl" type="number" step="any" inputmode="decimal"></div>
+            <div class="field"><label for="tpMu">預期平均 μ</label><input id="tpMu" type="number" step="any" inputmode="decimal" placeholder="前期數據"><small>從前期試做、預試驗（先量 5～10 個）或類似產品的數據來</small></div>
+            <div class="field"><label for="tpSd">預期標準差 σ</label><input id="tpSd" type="number" step="any" min="0" inputmode="decimal" placeholder="前期數據"><small>同上；Excel 用 STDEV.S。寧可估大一點，比較保險*</small></div>
+            <div class="field tp-lsl"><label for="tpLsl">規格下限 LSL</label><input id="tpLsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的下限</small></div>
+            <div class="field tp-usl" hidden><label for="tpUsl">規格上限 USL</label><input id="tpUsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的上限</small></div>
           </div>
           <div class="run-row"><button class="btn primary" id="tpRun" type="button">計算</button><button class="chip" type="button" id="tpEx">範例：黏合強度</button><span class="hint" id="tpHint"></span></div>
         </div></main>
@@ -2432,7 +2460,7 @@
     $("atModeHelp").textContent = m === "plan"
       ? "試驗前決定要測幾個：在允許的失效數以內全部通過，即可用指定信心水準宣稱達到該可靠度。"
       : "已有抽樣方案（例如 ISO 2859-1 查出的 n 與 Ac）或已完成試驗：算出它實際能宣稱的可靠度，以及允收機率曲線。";
-    $("atRF").hidden = m !== "plan"; $("atCF").hidden = m !== "plan";
+    $("atRF").hidden = m !== "plan"; $("atCF").hidden = m !== "plan"; $("atRcPick").hidden = m !== "plan";
     $("atNF").hidden = m !== "eval"; $("atAcF").hidden = m !== "eval"; $("atAqlF").hidden = m !== "eval"; $("atIsoNote").hidden = m !== "eval";
   }
   atUI();
@@ -2475,7 +2503,22 @@
       $("atTableHelp").textContent = "列為允許的失效數，欄為要宣稱的可靠度。允許失效數愈多，需要的樣本數愈多，但單一失效不會直接判定試驗失敗。";
       $("atTable").innerHTML = `<thead><tr><th class="num">允許失效</th>${Rs.map(r => `<th class="num">可靠度 ${pct(r, r >= 0.999 ? 1 : 0)}</th>`).join("")}</tr></thead><tbody>` +
         cs.map(cc => `<tr><td class="num">${cc}</td>${Rs.map(r => { const v = HT.crSampleSize(C, r, cc); return `<td class="num${r === R && cc === c ? " hlc" : ""}">${v}</td>`; }).join("")}</tr>`).join("") + "</tbody>";
+      // 樣本數太多時的做法：計量型對照（單邊常態允差因子）與反推可宣稱的可靠度
+      const altNs = [10, 15, 20, 30, 50], nAff = 30, relAff = HT.demoReliability(nAff, 0, C);
+      at.result.alt = altNs.map(m => ({ n: m, k: window.SS.tolK(m, R, C, "one") }));
+      const rTxt = pct(R, R >= 0.999 ? 1 : 0), cTxt = pct(C, 0);
+      $("atAltBody").innerHTML = `<ol class="reasons">
+        <li><b>量得到數值，就改用計量型（減量最多）</b>：拉力、爆破壓、穿刺力、尺寸這類能量出數字的特性，記錄數值，不要只記「過／不過」。同樣 ${rTxt} 可靠度、${cTxt} 信心，改用允差區間時樣本數取決於「平均離規格多遠」：
+          <div class="scroll-x" style="margin:8px 0"><table class="mini"><thead><tr><th class="num">樣本數 n</th><th class="num">平均至少要離規格幾個標準差（k）</th><th class="num">約相當於 Ppk ≥</th></tr></thead><tbody>${at.result.alt.map(a => `<tr><td class="num">${a.n}</td><td class="num">${fmt(a.k, 3)}</td><td class="num">${fmt(a.k / 3, 2)}</td></tr>`).join("")}</tbody></table></div>
+          <p class="hint">判定：樣本平均 − k × 樣本標準差 ≥ 規格下限（規格上限則用 ＋）。k 為單邊常態允差因子（非中心 t 精確解，與 SciPy 比對確效）。前提是資料接近常態、量測系統可信（MSA）。製程能力不足時，加樣本也過不了，應先改善製程*。</p>
+          <button type="button" class="btn small" data-at-go="q8">帶入 ${rTxt}／${cTxt}，到 ⑧ 算樣本數</button></li>
+        <li><b>依風險決定可靠度，不是每項都要 99%</b>：可靠度與信心水準依 ISO 14971 的失效嚴重度與公司程序決定*。例如 ${cTxt} 信心下，90% 可靠度需 ${HT.crSampleSize(C, 0.9, 0)} 個、95% 需 ${HT.crSampleSize(C, 0.95, 0)} 個、99% 需 ${HT.crSampleSize(C, 0.99, 0)} 個（皆 0 失效）。</li>
+        <li><b>先定做得到的數量，再反推可宣稱多少</b>：例如做 ${nAff} 個全部通過，可用 ${cTxt} 信心宣稱可靠度至少 ${pct(relAff, 1)}。這個結論是否足夠，要由風險評估判斷並記錄*。
+          <div style="margin-top:8px"><button type="button" class="btn small" data-at-go="q6">到 ⑥ 用其他數量反推</button></div></li>
+      </ol>`;
+      $("atAlt").hidden = false;
     } else {
+      $("atAlt").hidden = true;
       const n = Math.round(Number($("atN").value)), ac = Math.round(Number($("atAc").value));
       const aqlPct = numVal("atAql"), aql = isFinite(aqlPct) ? aqlPct / 100 : null;
       if (!(n >= 1)) { hint.textContent = "請填寫樣本數 n。"; return; }
@@ -2503,11 +2546,46 @@
     toolChanged("sample");
   }
   $("atRun").addEventListener("click", atRun);
+  // 參數建議：用「不合格最嚴重會怎樣」幫非統計背景的使用者選可靠度（涵蓋比例）與信心水準
+  const RC_SEV = {
+    hi: { R: 0.99, C: 0.95, ex: "例如：針或導管斷在體內、接頭脫落、高壓注射時爆破、無菌包裝破損" },
+    mid: { R: 0.95, C: 0.95, ex: "例如：少量滲漏、流速不足、刻度不清，需要換一支重來" },
+    lo: { R: 0.9, C: 0.95, ex: "例如：外觀刮痕、印刷模糊、顏色差異" }
+  };
+  document.querySelectorAll(".rc-pick").forEach(box => box.addEventListener("click", e => {
+    const b = e.target.closest("[data-sev]"); if (!b) return;
+    box.querySelectorAll("[data-sev]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    const sv = b.dataset.sev, s = RC_SEV[sv], rT = pct(s.R, 0), cT = pct(s.C, 0), bad = Math.round(1 / (1 - s.R));
+    const note = "這是常見做法的範例，公司程序（風險管理、統計技術）有規定時以公司為準*。";
+    if (box.dataset.rc === "at") {
+      $("atR").value = String(s.R); $("atC").value = String(s.C); $("atCc").value = "0";
+      const n = HT.crSampleSize(s.C, s.R, 0);
+      box.querySelector(".rc-why").innerHTML = `<b>建議：可靠度 ${rT}、信心水準 ${cT}、允許失效 0 個（已填好）。</b><br>白話：測 ${n} 個全部通過，就能說「我們有 ${cT} 的把握，每 ${bad} 個產品壞不到 1 個」。<br>${s.ex}。` +
+        (sv !== "lo" ? `<br>覺得 ${n} 個太多？這類項目常能量出數值（例如爆破壓力、拉力），製程夠穩定時，改用 ⑧ 允差區間常只要 10～30 個*。` : "") + `<br><span class="hint">${note}</span>`;
+      $("atRun").click();
+    } else {
+      $("tpP").value = String(s.R); $("tpG").value = String(s.C);
+      box.querySelector(".rc-why").innerHTML = `<b>建議：涵蓋比例 ${rT}、信心水準 ${cT}（已填好）。</b><br>白話：量完後可以說「我們有 ${cT} 的把握，至少 ${rT} 的產品在規格內」。<br>${s.ex}。<br>下一步：填預期平均、標準差和規格，再按「計算」。<br><span class="hint">${note}</span>`;
+    }
+  }));
+  $("atAlt").addEventListener("click", e => {
+    const b = e.target.closest("[data-at-go]"), r = at.result; if (!b || !r || r.mode !== "plan") return;
+    const q = b.dataset.atGo, qb = document.querySelector(`#ssQ [data-q="${q}"]`);
+    if (qb) qb.click();
+    if (q === "q8") {
+      const cm = document.querySelector('#tpMethod [data-v="norm"]'), cs = document.querySelector('#tpSide [data-v="lower"]');
+      if (cm) cm.click(); if (cs) cs.click();
+      $("tpP").value = String(r.R); $("tpG").value = String(r.C);
+    } else {
+      $("atN").value = "30"; $("atAc").value = "0"; $("atRun").click();
+    }
+  });
   function attrContext() {
     const r = at.result; if (!r) return "";
     if (r.mode === "plan") return ["【計數型抽樣：規劃樣本數】",
       `信心水準 C=${r.C}；要宣稱的可靠度 R=${r.R}；允許失效數 c=${r.c}；所需樣本數 n=${r.n}`,
       `此方案 LTPD（允收 10%）=${pct(r.pts.p10, 3)}；95% 允收的不良率=${pct(r.pts.p95, 3)}`,
+      r.alt ? `若改用計量型（單邊常態允差區間，同 R/C）：${r.alt.map(a => `n=${a.n} 時平均需離規格 k=${fmt(a.k, 3)} 個標準差`).join("；")}` : "",
       "計算方法：二項分布（成功試驗法；允許失效時為 Clopper-Pearson 上界）。假設樣品隨機抽樣、彼此獨立。"].join("\n");
     return ["【計數型抽樣：評估抽樣方案或試驗結果】",
       `樣本數 n=${r.n}；允收數或實際失效數 Ac=${r.ac}；信心水準 C=${r.C}`,
