@@ -31,20 +31,19 @@
     <div class="sheets">
       <section class="card sheet home-ai" id="homeAiCard">
         <h3>問 AI：描述你的問題</h3>
-        <p class="help">先用一段話描述，AI 會追問細節、建議下一步要用的工具。不確定怎麼描述，可以往下從「情境」挑一題。</p>
         <div class="home-ask">
           <label for="homeQ" class="group-label" id="homeQLab">描述你的問題（產品、發生情況、比例、規格越具體越好）</label>
           <textarea id="homeQ" rows="3" placeholder="例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）"></textarea>
           <div class="fb-drop" id="homeDrop">
-            <div class="fb-drop-row"><b>附件</b><span class="hint">照片、PDF、Word（.docx）或文字檔，可拖曳到這裡；會和問題一起送給 AI，前往魚骨圖時也會一起帶過去</span><button class="btn small" type="button" id="homeAttPick">選擇檔案</button></div>
+            <div class="fb-drop-row"><b>附件</b><span class="hint">照片、PDF、Word（.docx）或文字檔，可拖曳到這裡</span><button class="btn small" type="button" id="homeAttPick">選擇檔案</button></div>
             <input type="file" id="homeAttFile" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.csv,.md">
             <ul class="fb-att-list" id="homeAttList"></ul>
             <label class="fb-chk"><input type="checkbox" id="homePdfImg"> PDF 有照片或圖表時，也把有文字的頁面轉成圖片送給 AI</label>
             <p class="hint" id="homeAttNote" hidden></p>
           </div>
           <div class="km-box" id="kmBox">
-            <label class="fb-chk"><input type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告），問 AI 時會自動找出相關段落一起參考，並標註來源</label>
-            <div class="fb-drop-row"><span class="hint">可拖曳多個 .md 檔到這裡；檔案只在這個瀏覽器讀取，送給 AI 的只有檢索到的相關段落</span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
+            <label class="fb-chk"><input type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告）</label>
+            <div class="fb-drop-row"><span></span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
             <input type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
             <p class="hint" id="kmInfo"></p>
@@ -1141,7 +1140,6 @@
         <p class="hint" id="caseHint" aria-live="polite"></p>
         <h4 style="margin:14px 0 6px">這個瀏覽器的案件清單</h4>
         <div class="scroll-x" id="caseList"></div>
-        <p class="hint">清單存在這台電腦的這個瀏覽器；清除瀏覽器資料、換電腦或用無痕視窗時就看不到，重要案件請另外匯出。請不要在案件名稱或內容中輸入客戶、病患、批號等可識別資訊。</p>
       </section>
       <section class="card sheet" id="byokSheet">
         <h3>AI 連線方式</h3>
@@ -2621,7 +2619,7 @@
     $("guideCats").innerHTML = GUIDE.map(c => c.cat).concat([AI_CAT]).map(c => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === guideCat}">${esc(c)}</button>`).join("");
     const isAI = guideCat === AI_CAT;
     $("amCommon").hidden = isAI;
-    $("homeQLab").textContent = isAI ? "描述你遇到的問題（產品、發生情況、比例、規格越具體越好；例如要找原因、或不確定該用哪個工具）" : "補充你的狀況（選填）：會和上面選的情境一起送給 AI";
+    $("homeQLab").textContent = isAI ? "描述你遇到的問題（產品、發生情況、比例、規格越具體越好；例如要找原因、或不確定該用哪個工具）" : "補充你的狀況（選填）";
     $("homeQ").placeholder = isAI ? "例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）" : "例如：產品／零件、批量、目前的不良率或量測數據、規格、已經做過的試驗";
     if (isAI) { guideSel = null; return; }
     const cat = GUIDE.find(c => c.cat === guideCat);
