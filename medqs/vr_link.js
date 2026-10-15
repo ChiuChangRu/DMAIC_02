@@ -1,5 +1,5 @@
   // =====================================================================
-  // 驗證結果 ↔ 驗證項目：分析工具的結果「存成驗證結果」→ PDCA 報告第 5 段各項結論＋附錄（統計驗證報告）
+  // 驗證結果 ↔ 驗證項目：分析工具的結果「驗證結束，並儲存到報告」→ PDCA 報告第 5 段各項結論＋附錄（統計驗證報告）
   // 統計類項目在分析工具存入（保留每一次存入，除非使用者刪除）；不用統計的項目在 PDCA 報告直接選結論、寫依據。
   // 資料：fb.vplan[i].apx = [{ id, at, tool, st, note, html }]、fb.vplan[i].vr = { st, note }（不用統計的項目）
   // =====================================================================
@@ -22,15 +22,15 @@
   }
   function vrSlotHtml(id, open) {
     const L = vrStatItems();
-    if (!open) { const d = L.filter(x => (x.apx || []).length).length; return `<button type="button" class="vr-open" data-vropen="${id}">📎 存成驗證結果（附在 PDCA 報告當附錄）${L.length ? `　<span class="vr-prog">統計驗證已完成 ${d}／${L.length}</span>` : ""}</button>`; }
-    if (!L.length) return `<div class="vr-pick"><b>📎 存成驗證結果</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
+    if (!open) { const d = L.filter(x => (x.apx || []).length).length; return `<button type="button" class="vr-open" data-vropen="${id}">✓ 驗證結束，並儲存到報告${L.length ? `　<span class="vr-prog">統計驗證已完成 ${d}／${L.length}</span>` : ""}</button>`; }
+    if (!L.length) return `<div class="vr-pick"><b>✓ 驗證結束，並儲存到報告</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
     const body = $(id), auto = body ? vrAuto(body) : "", tool = VR_OUTS[id] || "";
     const guess = L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
-    return `<div class="vr-pick" data-vrbox="${id}"><b>📎 存成驗證結果</b><span class="hint">　存入當時的結果畫面會附在 PDCA 報告後面</span>
+    return `<div class="vr-pick" data-vrbox="${id}"><b>✓ 驗證結束，並儲存到報告</b><span class="hint">　這份結果畫面會附在 PDCA 報告後面（附錄）</span>
       <div class="vr-row"><label>驗證項目</label><select data-vrit="1">${L.map(x => `<option value="${x.id}"${x === guess ? " selected" : ""}>${esc(x.cause || "（未命名）")}${x.tool ? "（" + esc(x.tool) + "）" : ""}${(x.apx || []).length ? `　已存 ${(x.apx || []).length} 份` : ""}</option>`).join("")}</select></div>
       <div class="vr-row"><label>結論 <span class="vr-req">必選</span></label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
       <div class="vr-row vr-col"><label>依據（系統依結果產生，可修改）</label><input type="text" data-vrnote="1" value="${esc(auto)}"></div>
-      <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn vr-save" data-vrsave="${id}">✓ 存入驗證結果</button></div></div>`;
+      <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn vr-save" data-vrsave="${id}">✓ 驗證結束，儲存到報告</button></div></div>`;
   }
   function vrSlot(id, open) {
     const body = $(id); if (!body) return;
@@ -88,7 +88,7 @@
         try { gotoTool(r, sub); } catch (_) { const b = document.querySelector(`.toolnav [data-route="${r}"]`); if (b) b.click(); }
         const pb = $({ hypothesis: "hypProblem", regression: "regressionProblem", spc: "spcProblem", msa: "msaProblem", doe: "doeProblem", taguchi: "taguchiProblem" }[r]);
         if (pb) { pb.value = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.dataset.auto = pb.value; }
-        try { fbNote(`現在驗證「${x.cause}」：貼上這一項的數據後分析，再按結果下方的「存成驗證結果」。`); } catch (_) {}
+        try { fbNote(`現在驗證「${x.cause}」：貼上這一項的數據後分析，再按結果下方的「驗證結束，並儲存到報告」。`); } catch (_) {}
         window.scrollTo({ top: 0, behavior: "smooth" }); }
     });
   })();
@@ -107,7 +107,7 @@
       return `<div class="pd-ed"${keep ? ` data-vrn="${x.id}"` : ""} contenteditable="plaintext-only" spellcheck="false" title="點一下可以修改">${esc(v.note)}</div>`;
     };
     return `<div class="pd-cap">各驗證項目的結論</div><table class="pd-tbl pd-vr"><thead><tr><th>驗證項目</th><th class="pd-tool">驗證策略</th><th style="width:100px">結論</th><th>依據</th><th style="width:58px">附錄</th></tr></thead><tbody>${L.map(x => { const v = vrNow(x); return `<tr><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td>${stCell(x, v)}</td><td>${noteCell(x, v)}</td><td>${apxNo[x.id] ? apxNo[x.id].map(n => "附錄 " + n).join("<br>") : "—"}</td></tr>`; }).join("")}</tbody></table>
-      <p class="pd-note">統計類項目的結論來自 ⑤ 檢定分析「存成驗證結果」（多份時以最後一份為準）；不用統計的項目在這裡選結論、寫依據。</p>`;
+      <p class="pd-note">統計類項目的結論來自 ⑤ 檢定分析「驗證結束，並儲存到報告」（多份時以最後一份為準）；不用統計的項目在這裡選結論、寫依據。</p>`;
   }
   function vrApxHtml(mode) {
     const keep = mode === "screen"; let k = 0, out = "";

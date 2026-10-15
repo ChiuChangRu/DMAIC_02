@@ -90,7 +90,7 @@
       ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
       ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "sample" : ""); })() : ""}
       ${(() => { let L = []; try { L = vrItems(); } catch (_) {} if (!L.length) return ""; const st = L.filter(x => !vrNonStat(x)), ns = L.filter(x => vrNonStat(x)), a = st.filter(x => (x.apx || []).length).length, b = ns.filter(x => (x.vr || {}).st).length;
-        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 檢定分析的結果下方按「存成驗證結果」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "hypothesis" : ""); })()}
+        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 檢定分析的結果下方按「驗證結束，並儲存到報告」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "hypothesis" : ""); })()}
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
