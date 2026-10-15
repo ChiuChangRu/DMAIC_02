@@ -597,7 +597,10 @@
   const carried = {};
   const toolProblems = {};
   function homeLogNow() { return (chatKey === "home" ? chatLog : (chats.home && chats.home.log) || []).filter(m => m.role !== "note"); }
-  function lastHomeQ(log) { return ([...log].reverse().find(m => m.role === "user") || {}).text || ""; }
+  function lastHomeQ(log) {   // 只取使用者自己打的問題；按鈕送出的指令（例如「列出可能原因」）不算
+    const us = [...log].reverse().filter(m => m.role === "user"), own = us.find(m => !m.label || /^你/.test(m.label));
+    return (own || {}).text || "";
+  }
   function onHomeAnswer(text) {
     homeVer++;
     homeSug = fbSplit(text, true).sug;

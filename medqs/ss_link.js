@@ -150,6 +150,9 @@
       const sel = box.querySelector(`[data-svq="${x.id}"]`), q = sel ? sel.value : ""; if (!q) return;
       if (!x.ss || x.ss.q !== q) x.ss = { q, n: "", sum: "", why: "" };
       svCur = x.id; svRender();
+      const pb = $("sampleProblem");   // 情境描述改成這個驗證項目，「請 AI 建議設計」才會針對這一項
+      if (pb && (!pb.value.trim() || pb.dataset.auto === pb.value)) { const t = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.value = t; pb.dataset.auto = t; const sr = $("sampleProblemSrc"); if (sr) sr.textContent = "從驗證項目帶入，可直接修改"; }
+      else if (pb) { const t = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`, sr = $("sampleProblemSrc"); if (sr && pb.value !== t) { sr.innerHTML = `<button type="button" class="linkbtn" data-svprob="1">改用目前的驗證項目當情境描述</button>`; sr.querySelector("[data-svprob]").onclick = () => { pb.value = t; pb.dataset.auto = t; sr.textContent = "從驗證項目帶入，可直接修改"; }; } }
       if ((!SV_MANUAL[q] || q === "q10") && SSQ[q]) ssPick(q);
       else bar.scrollIntoView({ behavior: "smooth", block: "end" });
     });
