@@ -572,7 +572,7 @@
       if (homeAtt.items.length && !fbAtt.items.length) { fbAtt.items = homeAtt.items.map(a => Object.assign({}, a, { sent: false })); fbAtt.render(); }
       chatPrefix = homeTranscript(homeLog);
       appendLog([{ role: "note", text: "以下延續自定義問題的對話" }, ...homeLog.map(m => Object.assign({}, m, { carried: true })), { role: "note", text: "定義問題對話到此。可以按「請 AI 先追問細節」讓 AI 補齊問題點，或直接提問。" }]);
-      updateChatControls(); fbSaveNow(); openPanel();
+      updateChatControls(); fbSaveNow(); closePanel(); $("aiDot").hidden = false;   // AI 收成右下角按鈕（有紅點），避免一進魚骨圖就被大面板擋住
     };
     const apply = replaceProblem => {
       if (replaceProblem || !fb.problem.trim()) fb.problem = (sug.problem || lastQ).slice(0, 200);
@@ -627,7 +627,7 @@
       return;
     }
     const g = e.target.closest("[data-goto]");
-    if (g) { if (chatKey === "home") closePanel(); gotoTool(g.dataset.goto, g.dataset.sub); return; }
+    if (g) { closePanel(); gotoTool(g.dataset.goto, g.dataset.sub); return; }
     const qa = e.target.closest("[data-askf]");
     if (qa) { e.preventDefault(); fbAskAI(`請說明「${qa.dataset.askf}」為什麼可能是這個問題的原因：依據是什麼（推論請標 *）、在什麼條件下才成立、要怎麼驗證？這次不需要 fishbone 區塊。`, { label: "AI 建議的原因", quote: qa.dataset.askf }); return; }
     const all = e.target.closest("[data-sugall]");

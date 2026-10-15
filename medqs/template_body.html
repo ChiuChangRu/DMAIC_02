@@ -21,6 +21,7 @@
       <button type="button" role="tab" data-route="doe" aria-selected="false">DOE</button>
       <button type="button" role="tab" data-route="taguchi" aria-selected="false">田口方法</button>
       <button type="button" role="tab" data-route="validation" aria-selected="false">確效</button>
+      <button type="button" role="tab" data-route="pdca" aria-selected="false">PDCA 報告</button>
     </nav>
     <p class="case-badge" id="caseBadge" hidden></p>
   </header>
@@ -28,24 +29,9 @@
 
   <section id="viewHome" role="tabpanel" data-view="home">
     <div class="sheets">
-      <section class="card sheet persp-sheet" aria-label="AI 回答視角">
-        <h3>AI 要用什麼角度回答？</h3>
-        <p class="help"><span class="pill ns" id="homePerspNote"></span></p>
-        <div class="chips" id="homePersp" role="group" aria-label="AI 回答視角"></div>
-      </section>
-      <section class="card sheet guide" id="guideSheet">
-        <h3>我想解決什麼問題</h3>
-        <div class="chips need-cats" id="guideCats" role="group" aria-label="我想解決什麼問題"></div>
-        <div class="tools-inline" aria-label="工具">
-          <div class="home-grid" id="toolCards"></div>
-          <p class="help" id="recLine"></p>
-        </div>
-        <div id="amCommon" class="am-common" hidden>
-          <div class="guide-body">
-            <div class="guide-list" id="guideList" role="list"></div>
-            <div class="guide-card" id="guideCard" aria-live="polite"></div>
-          </div>
-        </div>
+      <section class="card sheet home-ai" id="homeAiCard">
+        <h3>問 AI：描述你的問題</h3>
+        <p class="help">先用一段話描述，AI 會追問細節、建議下一步要用的工具。不確定怎麼描述，可以往下從「情境」挑一題。</p>
         <div class="home-ask">
           <label for="homeQ" class="group-label" id="homeQLab">描述你的問題（產品、發生情況、比例、規格越具體越好）</label>
           <textarea id="homeQ" rows="3" placeholder="例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）"></textarea>
@@ -70,6 +56,25 @@
           <p class="hint" id="homeQHint"></p>
           <details class="ext-out" id="kmOut" hidden><summary id="kmOutSum"></summary><div id="kmOutBody"></div></details>
           <details class="ext-out" id="extOut" hidden><summary id="extOutSum"></summary><div id="extOutBody"></div></details>
+        </div>
+      </section>
+      <section class="card sheet persp-sheet" aria-label="AI 回答視角">
+        <h3>AI 要用什麼角度回答？</h3>
+        <p class="help"><span class="pill ns" id="homePerspNote"></span></p>
+        <div class="chips" id="homePersp" role="group" aria-label="AI 回答視角"></div>
+      </section>
+      <section class="card sheet guide" id="guideSheet">
+        <h3>或從情境開始：我想解決什麼問題</h3>
+        <div class="chips need-cats" id="guideCats" role="group" aria-label="我想解決什麼問題"></div>
+        <div class="tools-inline" aria-label="工具">
+          <div class="home-grid" id="toolCards"></div>
+          <p class="help" id="recLine"></p>
+        </div>
+        <div id="amCommon" class="am-common" hidden>
+          <div class="guide-body">
+            <div class="guide-list" id="guideList" role="list"></div>
+            <div class="guide-card" id="guideCard" aria-live="polite"></div>
+          </div>
         </div>
         <button id="guideAsk" type="button" hidden></button>
       </section>
@@ -156,6 +161,18 @@
         <textarea id="fbCopyBox" class="fb-copybox" hidden aria-label="表格內容" readonly></textarea>
         <div class="scroll-x"><table id="fbTable"></table></div>
       </section>
+      <section class="card sheet pd-moved">
+        <h3>PDCA 一頁報告</h3>
+        <p class="help">報告已移到最後的「PDCA 報告」分頁，會依目前的魚骨圖、驗證項目自動整理。<button type="button" class="linkbtn" data-goto-pdca="1">前往 PDCA 報告 →</button></p>
+      </section>
+    </div>
+  </section>
+
+
+  <section id="viewPdca" role="tabpanel" data-view="pdca" hidden>
+    <div class="tool-head"><h2 class="tool-title">PDCA 報告</h2><span class="hint">把定義問題、魚骨圖、驗證項目整理成一頁，可補填、列印或下載</span></div>
+    <section class="card sheet pd-status" aria-label="報告狀態"><h3>目前狀態</h3><div id="pdcaStatus"></div></section>
+    <div class="sheets">
       <section class="card sheet pd-card">
         <h3>PDCA 一頁報告</h3>
         <p class="help">依目前的魚骨圖自動整理成一頁。報告上的文字欄位可以直接點選修改或補填，勾選框可以點選，對策可以新增列；修改會跟著魚骨圖存檔與匯出（黃底＝手動修改過）。魚骨圖本身請在上方修改。</p>
@@ -165,7 +182,6 @@
       </section>
     </div>
   </section>
-
 
   <section id="viewAnalyze" role="tabpanel" data-view="hypothesis" hidden>
     <div class="tool-head"><h2 class="tool-title">假設檢定</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
@@ -2854,7 +2870,7 @@
   let valRan = false, currentView = "home";
   function route(name) {
     const tool = TOOLS.find(t => t.id === name);
-    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression"].includes(name) ? name : (tool ? "placeholder" : "home");
+    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression", "pdca"].includes(name) ? name : (tool ? "placeholder" : "home");
     if (view === "home" && name !== "home") name = "home";
     document.querySelectorAll(".toolnav [data-route]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.route === name)));
     document.querySelectorAll("[data-view]").forEach(sec => { sec.hidden = sec.dataset.view !== view; });
@@ -2914,6 +2930,6 @@
   renderGuide();
   loadExample(2);
   const start = (location.hash || "").replace("#", "");
-  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression"].includes(start) ? start : "home");
+  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression", "pdca"].includes(start) ? start : "home");
 })();
 </script>

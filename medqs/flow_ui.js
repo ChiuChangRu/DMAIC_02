@@ -8,9 +8,9 @@
     { k: "vp", lab: "驗證項目", go: ["fishbone", "fbVerify"] },
     { k: "ss", lab: "樣本數", go: ["sample"] },
     { k: "an", lab: "檢定分析", go: ["hypothesis"] },
-    { k: "rp", lab: "PDCA 報告", go: ["fishbone", "pdcaWrap"] }
+    { k: "rp", lab: "PDCA 報告", go: ["pdca"] }
   ];
-  const FLOW_VIEWS = ["home", "fishbone", "sample", "hypothesis"];
+  const FLOW_VIEWS = ["home", "fishbone", "sample", "hypothesis", "pdca"];
   const flowTry = f => { try { return !!f(); } catch (_) { return false; } };
   function flowDone() {
     const any = o => o && Object.values(o).some(Boolean);

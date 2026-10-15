@@ -68,7 +68,22 @@
   }
   function pdCaseName() { try { return caseCur ? "　案件：" + esc(caseCur.name) : ""; } catch (_) { return ""; } }
   function pdModHint() { const P = pdState(), n = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length + P.rows, b = $("pdcaReset"); if (b && !b.dataset.armed) { b.hidden = !n; b.textContent = `清除手動修改（${n}）`; } }
-  function pdcaRender() { const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
+  function pdcaStatus() {
+    const box = $("pdcaStatus"); if (!box) return; const P = pdState();
+    const use = fb.factors.filter(f => f.st === "use"), ver = fb.factors.filter(f => f.st !== "excl" && f.verify), vp = (fb.vplan || []).filter(x => x.on);
+    const blank = ["rec.where", "rec.when", "rec.who"].filter(k => !(P.t[k] || "").trim() && !(k === "rec.when" && (fb.detail && fb.detail.when || "").trim())).map(k => ({ "rec.where": "地點", "rec.when": "時間", "rec.who": "人員" })[k]);
+    const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
+    const res = P.c["res.ok"] ? "達到目標" : P.c["res.part"] ? "部分改善" : P.c["res.ng"] ? "未達目標" : "";
+    const row = (ok, t, d, go) => `<li class="${ok ? "ok" : "todo"}"><span class="pd-st-ic">${ok ? "✓" : "○"}</span><span><b>${t}</b>　${d}${go ? `　<button type="button" class="linkbtn" data-route-go="${go}">前往</button>` : ""}</span></li>`;
+    box.innerHTML = `<ul class="pd-st">
+      ${row(!!fb.problem.trim(), "1 記錄問題", fb.problem.trim() ? (blank.length ? `問題已帶入；${blank.join("、")}尚未填寫（可在下方報告補填）` : "問題、地點、時間、人員都有內容") : "尚未填寫問題點", fb.problem.trim() ? "" : "home")}
+      ${row(use.length > 0, "2 分析問題", use.length ? `魚骨圖已採用 ${use.length} 個原因` : "魚骨圖還沒有採用的原因", use.length ? "" : "fishbone")}
+      ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
+      ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
+      ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
+    </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
+  }
+  function pdcaRender() { try { pdcaStatus(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
     for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (_) { continue; } for (const r of rules) if (r.cssText && /\.pd-/.test(r.cssText) && !/@media print/.test(r.cssText)) out += r.cssText + "\n"; }
@@ -93,6 +108,7 @@
       const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PDCA 問題解決報告</title><style>:root{${PD_LIGHT}--font-body:${cssVar("--font-body") || "sans-serif"};}body{margin:0;background:#EDEAE4;font-family:var(--font-body);color:var(--ink)}.pd-sheet{margin:12px auto 24px}.pd-bar{max-width:860px;margin:12px auto 0;padding:10px 14px;background:#FFF4D6;border:1px solid #E8B86A;border-radius:6px;font-size:13.5px;line-height:1.6}.pd-bar button{margin-left:8px;font:inherit;font-weight:700;background:#A34A16;color:#fff;border:0;border-radius:6px;padding:4px 12px;cursor:pointer}\n${pdcaCss()}\n@media print{body{background:#fff}.pd-noprint{display:none!important}.pd-sheet{margin:0!important;box-shadow:none!important;border:0!important;padding:0!important;zoom:.78}.pd-ed{background:none!important;box-shadow:none!important}.pd-tbl th,.pd-tbl td{padding:3px 7px}.pd-body{padding:5px 0 6px 10px}.pd-fish svg{max-height:330px}.pd-ed:empty{min-height:1.2em}.pd-cap2:has(+ .pd-ed:empty),.pd-cap2 + .pd-ed:empty,.pd-chk-note:has(.pd-ed:empty){display:none}.pd-ed:empty{border-bottom:1px dashed #B9B0A0}.pd-sec,.pd-tbl tr{break-inside:avoid}@page{size:A4;margin:10mm}}</style></head><body>${bar}${pdcaHtml("file")}<script>${js}<\/script></body></html>`;
       fbSaveFile(fbName("html").replace(/^魚骨圖_/, "PDCA報告_"), html);
     });
+    document.addEventListener("click", e => { const g = e.target.closest("[data-goto-pdca],[data-route-go]"); if (!g) return; const to = g.dataset.routeGo || "pdca"; const b = document.querySelector(`.toolnav [data-route="${to}"]`); if (b) b.click(); window.scrollTo({ top: 0, behavior: "smooth" }); });
     const wrap = $("pdcaWrap");
     wrap.addEventListener("input", e => { const el = e.target.closest(".pd-ed"); if (!el) return; const P = pdState(), k = el.dataset.k, v = el.innerText.replace(/\n+$/, "");
       if (v === (el.dataset.auto || "")) delete P.t[k]; else P.t[k] = v; el.classList.toggle("pd-mod", k in P.t); pdModHint(); fbSave(); });
@@ -122,17 +138,19 @@
   }
   const vpKey = x => (x.cause + "|" + x.method).replace(/\s+/g, "");
   function vpRender() {
-    const box = $("fbVplan"); if (!box) return; if (box.contains(document.activeElement) && document.activeElement.classList.contains("vp-ed")) return;
+    const box = $("fbVplan"); if (!box) return; if (box.contains(document.activeElement) && (document.activeElement.classList.contains("vp-ed") || document.activeElement.classList.contains("vp-tool"))) return;
     const L = fb.vplan || (fb.vplan = []);
     const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
     const nOn = L.filter(x => x.on).length;
-    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
-      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>分析工具</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${ed(x, "tool", "分析工具")}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+    box.innerHTML = `<datalist id="vpToolList">${VP_TOOLS.map(t => `<option value="${t}"></option>`).join("")}</datalist><div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>分析工具</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td><input class="vp-tool" list="vpToolList" data-id="${x.id}" value="${esc(x.tool)}" placeholder="自行輸入，或點選下拉" aria-label="分析工具"></td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
+  const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "（不需統計：工程判斷／檢查）"];
   function vpChanged(full) { fbSave(); if (full) vpRender(); try { pdcaRender(); } catch (_) {} }
   (function vpInit() {
     const box = $("fbVplan"); if (!box) return;
+    box.addEventListener("input", e => { const ti = e.target.closest(".vp-tool"); if (!ti) return; const x = (fb.vplan || []).find(y => y.id === ti.dataset.id); if (!x) return; x.tool = ti.value; fbSave(); try { pdcaRender(); } catch (_) {} });
     box.addEventListener("input", e => { const el = e.target.closest(".vp-ed"); if (!el) return; const x = (fb.vplan || []).find(y => y.id === el.dataset.id); if (!x) return; x[el.dataset.f] = el.innerText.replace(/\n+$/, ""); vpChanged(false); });
     box.addEventListener("paste", e => { const el = e.target.closest(".vp-ed"); if (!el) return; e.preventDefault(); try { document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } catch (_) {} });
     box.addEventListener("change", e => { const c = e.target.closest("[data-vpon]"); if (!c) return; const x = (fb.vplan || []).find(y => y.id === c.dataset.vpon); if (x) { x.on = c.checked; vpChanged(true); } });
