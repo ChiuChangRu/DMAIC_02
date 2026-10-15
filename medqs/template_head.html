@@ -763,6 +763,56 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .ss-qgrid .ssq[aria-pressed="true"] { background: var(--act); border-color: var(--act); }
 .ss-qgrid .ssq[aria-pressed="true"] .ssq-t, .ss-qgrid .ssq[aria-pressed="true"] .ssq-s { color: var(--on-act); }
 .ss-qgrid .ssq[aria-pressed="true"] .ssq-n { background: var(--on-act); color: var(--act); }
+/* 魚骨圖 · PDCA 一頁報告（紙張樣式，深色模式也維持白紙，方便列印） */
+.pd-wrap { overflow-x: auto; padding: 4px 0 8px; }
+.pd-sheet { --surface:#FFFFFF; --bg:#F5F1EA; --ink:#1F2933; --muted:#5A6570; --line:#D9D0BF; --grid:#ECE6DA; --teal:#4F7F7A; --teal-soft:#E2EEEC; --copper:#B87333; --copper-soft:#F7E8D9; --copper-text:#985C24; --qic-a:#3E9C8F; --qic-b:#E06A2C;
+  background: var(--surface); color: var(--ink); max-width: 860px; min-width: 640px; margin: 0 auto; padding: 22px 26px 16px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font-size: 13.5px; line-height: 1.5; }
+.pd-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 3px solid var(--ink); padding-bottom: 10px; margin-bottom: 4px; }
+.pd-head h3::before, .pd-head h3::after { content: none !important; display: none !important; }
+.pd-head h3 { margin: 2px 0; padding: 0; font-size: 26px; font-weight: 800; letter-spacing: .02em; color: var(--ink); }
+.pd-eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--copper-text); }
+.pd-meta { font-size: 12px; color: var(--muted); }
+.pd-ring svg { width: 58px; height: 58px; display: block; }
+.pd-sec { display: grid; grid-template-columns: 64px minmax(0, 1fr); border-bottom: 1.5px solid var(--ink); }
+.pd-ico { display: grid; justify-items: center; align-content: center; gap: 4px; border-right: 1px solid var(--line); padding: 8px 4px; }
+.pd-ico svg { width: 42px; height: 42px; }
+.pd-tag { font-size: 11px; font-weight: 800; color: #fff; background: var(--ink); border-radius: 4px; padding: 0 6px; }
+.pd-body { padding: 8px 0 10px 12px; min-width: 0; }
+.pd-body h4 { margin: 0 0 6px; text-align: center; font-size: 15.5px; font-weight: 800; color: var(--ink); }
+.pd-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.pd-tbl th, .pd-tbl td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; font-size: 13px; color: var(--ink); background: var(--surface); word-break: break-word; }
+.pd-tbl th { font-weight: 700; background: color-mix(in srgb, var(--teal-soft) 70%, #fff); }
+.pd-kv th { width: 120px; } .pd-w { width: 120px; }
+.pd-why .pd-wn { width: 56px; text-align: center; }
+.pd-abc { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--qic-a); color: #fff; font-size: 12px; margin-right: 6px; }
+.pd-line { display: block; min-height: 1.35em; border-bottom: 1px dashed #B9B0A0; }
+.pd-line.pd-in { display: inline-block; min-width: 9em; vertical-align: bottom; } .pd-line.pd-sh { min-width: 3em; }
+.pd-ana { display: block; }
+.pd-fish { border: 1px solid var(--line); border-radius: 4px; padding: 4px; min-width: 0; }
+.pd-fish svg { display: block; width: 100%; height: auto; }
+.pd-stmt { border: 1.5px solid var(--ink); border-radius: 4px; display: flex; flex-direction: column; }
+.pd-cap { font-size: 12px; font-weight: 800; color: var(--ink); background: color-mix(in srgb, var(--teal-soft) 70%, #fff); padding: 3px 8px; border-bottom: 1px solid var(--line); }
+.pd-stmt-t { padding: 8px; font-weight: 700; flex: 1; }
+.pd-note { margin: 5px 0 0; font-size: 11.5px; color: var(--muted); }
+.pd-empty { color: var(--muted); padding: 20px; text-align: center; }
+.pd-chk { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); }
+.pd-chk > div + div { border-left: 1px solid var(--line); }
+.pd-chk ul { list-style: none; margin: 0; padding: 6px 10px 8px; display: grid; gap: 5px; }
+.pd-box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--ink); border-radius: 2px; margin-right: 7px; vertical-align: -2px; }
+.pd-foot { font-size: 11px; color: var(--muted); padding-top: 8px; }
+#pdPrintHost { display: none; }
+@media print {
+  body.pd-printing > *:not(#pdPrintHost) { display: none !important; }
+  body.pd-printing { background: #fff !important; margin: 0; }
+  body.pd-printing #pdPrintHost { display: block !important; }
+  #pdPrintHost .pd-sheet { max-width: none; min-width: 0; margin: 0; border: 0; box-shadow: none; padding: 0; }
+  #pdPrintHost .pd-sheet { zoom: .8; }
+  #pdPrintHost .pd-tbl th, #pdPrintHost .pd-tbl td { padding: 3px 7px; }
+  #pdPrintHost .pd-body { padding: 5px 0 6px 10px; }
+  #pdPrintHost .pd-fish svg { max-height: 330px; }
+  .pd-sec, .pd-tbl tr { break-inside: avoid; }
+  @page { size: A4; margin: 10mm; }
+}
 /* 假設檢定 · 次數資料 */
 #ctPanel, #ctPanel .step, #ctTabForm { min-width: 0; } #ctTabForm .scroll-x { max-width: 100%; overflow-x: auto; }
 .ct-qs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 8px 0 10px; }

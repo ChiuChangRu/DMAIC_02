@@ -290,6 +290,7 @@
     $("fbCandBar").hidden = !nc;
     $("fbCandN").textContent = nc;
     $("fbClearTpl").hidden = !fb.factors.some(f => f.st === "cand" && f.src === "tpl");
+    try { pdcaRender(); } catch (_) {}
     fbSave();
   }
   function fbCatName(f) { const c = fbCats().find(c => c.id === f.cat[fb.set]); return c ? c.name : "未分類"; }

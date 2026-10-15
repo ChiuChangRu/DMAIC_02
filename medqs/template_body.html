@@ -154,6 +154,12 @@
         <textarea id="fbCopyBox" class="fb-copybox" hidden aria-label="表格內容" readonly></textarea>
         <div class="scroll-x"><table id="fbTable"></table></div>
       </section>
+      <section class="card sheet pd-card">
+        <h3>PDCA 一頁報告</h3>
+        <p class="help">依目前的魚骨圖自動整理成一頁。只呈現現有內容，沒有資料的欄位留空白，列印後可手寫補齊。</p>
+        <div class="run-row"><button class="btn primary small" type="button" id="pdcaPrint">列印／存成 PDF</button><button class="btn small" type="button" id="pdcaDl">下載報告檔（HTML）</button><span class="hint">列印視窗中選「另存為 PDF」即可存檔；無法開啟列印視窗時，下載報告檔後用瀏覽器開啟再列印。</span></div>
+        <div class="pd-wrap" id="pdcaWrap"></div>
+      </section>
     </div>
   </section>
 
