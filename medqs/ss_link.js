@@ -86,16 +86,16 @@
       const s = x.ss || {};
       if (s.q === "none") return s.why ? `<span class="sv-na">不需統計</span><div class="sv-why">${esc(s.why)}</div>` : `<span class="sv-no">請寫理由</span>`;
       if (!svOk(x)) return `<span class="sv-no">尚未規劃</span>`;
-      return `<span class="sv-ok">${esc(s.n)}</span><div class="sv-why">${esc(s.sum || s.why.split("\n")[0])}</div>${svNoBasis(x) ? `<div class="sv-warn">理由還有空白（＿＿）或「請填」沒寫</div>` : ""}`;
+      return `<span class="sv-ok">${esc(s.n)}</span>${SV_MANUAL[s.q] ? "" : `<div class="sv-meth">計算方式：${esc((SV_Q.find(o => o[0] === s.q) || ["", ""])[1])}</div>`}<div class="sv-why">${esc(s.sum || s.why.split("\n")[0])}</div>${svNoBasis(x) ? `<div class="sv-warn">理由還有空白（＿＿）或「請填」沒寫</div>` : ""}`;
     };
     box.innerHTML = `<h3>驗證項目的樣本數（魚骨圖 STEP 3 勾選的 ${L.length} 項）</h3><p class="help" style="margin:0">每一項選「要證明什麼」，再按「規劃」算出樣本數；數量與理由會帶進 PDCA 報告第 4 段。</p>
       <div class="scroll-x"><table class="sv-tbl"><thead><tr><th>驗證項目</th><th class="sv-qc">要證明什麼</th><th class="sv-rc">樣本數與理由</th><th class="sv-bc"></th></tr></thead><tbody>${L.map(x => {
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
         return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>
           <td><select data-svq="${x.id}" aria-label="要證明什麼">${SV_Q.map(o => `<option value="${o[0]}"${o[0] === q ? " selected" : ""}>${o[1]}</option>`).join("")}</select></td>
-          <td>${cell(x)}</td><td><button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
+          <td>${cell(x)}</td><td class="sv-bcell">${svOk(x) && !SV_MANUAL[s.q] && SSQ[s.q] ? `<button type="button" class="sv-btn sv-view${svViewing === x.id ? " on" : ""}" data-svview="${x.id}" title="在下方顯示這一項當時的計算方法與條件">🔍 查看計算</button>` : ""}<button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
       }).join("")}</tbody></table></div>
-      <p class="hint" style="margin:6px 0 0">已完成 ${nOk}／${L.length}。${nOk < L.length ? "全部完成後，流程列「④ 樣本數」才會打勾。" : "全部完成。"}</p>`;
+      <p class="hint sv-viewnote" id="svViewNote"${svViewing ? "" : " hidden"}>${svViewing ? svViewMsg : ""}</p><p class="hint" style="margin:6px 0 0">已完成 ${nOk}／${L.length}。${nOk < L.length ? "全部完成後，流程列「④ 樣本數」才會打勾。" : "全部完成。"}</p>`;
     svBar();
   }
   // ---------------- 規劃中的提示列（頁面底部固定） ----------------
@@ -125,6 +125,29 @@
       <div class="sv-bar-f"><span class="hint" id="svHint"></span>${q === "none" ? "" : aiBtn}${man || r || saved ? `<button type="button" class="sv-btn p" data-svsave="1">帶回驗證項目</button>` : ""}</div>`;
     bar.hidden = false;
   }
+  // 每一項存下當時計算頁的輸入（欄位＋選項），之後可「查看計算」還原到下方計算頁
+  let svViewing = "", svViewMsg = "";
+  const svBox = q => { const d = SSQ[q]; return d && d.sub ? $("viewSample").querySelector(`[data-tview="${d.sub}"]`) : null; };
+  function svSnapInp(q) {
+    const box = svBox(q); if (!box) return null; const f = {}, c = {};
+    box.querySelectorAll("input[id], select[id], textarea[id]").forEach(el => { if (el.type === "file" || el.type === "button" || /Data$|SdData/.test(el.id)) return; f[el.id] = el.type === "checkbox" ? (el.checked ? "1" : "") : String(el.value).slice(0, 200); });
+    box.querySelectorAll(".chips[id]").forEach(g => { const b = g.querySelector('[aria-pressed="true"]'); if (b && b.dataset.v != null) c[g.id] = b.dataset.v; });
+    return { sub: SSQ[q].sub, f, c };
+  }
+  function svView(x) {
+    const s = x.ss || {}, q = s.q; if (!SSQ[q]) return;
+    svCur = ""; svViewing = x.id; ssPick(q, { keep: true, noScroll: true });
+    const box = svBox(q), inp = s.inp;
+    if (box && inp) {
+      Object.entries(inp.c || {}).forEach(([id, v]) => { const b = $(id) && $(id).querySelector(`[data-v="${v}"]`); if (b && b.getAttribute("aria-pressed") !== "true") b.click(); });
+      Object.entries(inp.f || {}).forEach(([id, v]) => { const el = $(id); if (!el || !box.contains(el)) return; if (el.type === "checkbox") el.checked = v === "1"; else el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); });
+      const run = box.querySelector('button[id$="Run"]'); if (run) run.click();
+    }
+    const qt = (SV_Q.find(o => o[0] === q) || ["", ""])[1];
+    svViewMsg = inp ? `🔍 下方顯示的是「<b>${esc(x.cause)}</b>」的計算：<b>${esc(qt)}</b>（已還原當時的條件並重新計算，算出 ${esc(s.n)}）。` : `🔍「<b>${esc(x.cause)}</b>」用的是 <b>${esc(qt)}</b>。這一項是舊版存的，沒有保存計算條件，條件請看理由：${esc(s.sum || "")}`;
+    svRender();
+    if (box && !box.hidden) setTimeout(() => box.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
   function svOnResult() { try { if (svCur) svBar(); } catch (_) {} }
   function svSave() {
     const x = svItems().find(y => y.id === svCur); if (!x) return;
@@ -137,7 +160,7 @@
       x.ss = { q, n, sum: q === "none" ? "" : why.split("\n")[0].slice(0, 80), why };
     } else {
       const fresh = svRef(q) && svRef(q) !== svStart, r = fresh ? svResult(q) : null;
-      if (r) x.ss = { q, n: r.n, sum: r.sum, why, auto: r.why };
+      if (r) x.ss = { q, n: r.n, sum: r.sum, why, auto: r.why, inp: svSnapInp(q) };
       else if (svOk(x)) x.ss = Object.assign({}, x.ss, { why });   // 只改理由
       else return;
     }
@@ -179,7 +202,8 @@
       if (svCur === x.id) svCur = ""; fbSave(); svRender(); try { pdcaRender(); } catch (_) {}
     });
     box.addEventListener("click", e => {
-      const b = e.target.closest("[data-svgo]"); if (!b) return;
+      const vw = e.target.closest("[data-svview]"); if (vw) { const x = svItems().find(y => y.id === vw.dataset.svview); if (x) svView(x); return; }
+      const b = e.target.closest("[data-svgo]"); if (!b) return; svViewing = ""; const vn = $("svViewNote"); if (vn) vn.hidden = true;
       const x = svItems().find(y => y.id === b.dataset.svgo); if (!x) return;
       const sel = box.querySelector(`[data-svq="${x.id}"]`), q = sel ? sel.value : ""; if (!q) return;
       if (!x.ss || x.ss.q !== q) x.ss = { q, n: "", sum: "", why: "" };
