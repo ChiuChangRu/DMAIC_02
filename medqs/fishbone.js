@@ -479,7 +479,11 @@
     const n = fb.factors.filter(f => f.st === "cand").length; if (!n) { fbNote("沒有候選原因。"); return; }
     fbAsk(`要刪除全部 ${n} 個候選原因嗎？已採用和已排除的不受影響。`, [{ label: "刪除候選", primary: true, fn: () => { fb.factors = fb.factors.filter(f => f.st !== "cand"); fbRenderEditor(); } }, { label: "取消" }]);
   });
-  $("fbPlanAI").addEventListener("click", () => fbAskAI("請針對標記「待驗證」的原因（沒有的話，針對已採用的原因，重要的優先）逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、用本網站哪個工具與模式分析。用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。", { label: "驗證規劃", quote: "" }));
+  $("fbPlanAI").addEventListener("click", () => {   // 依目前有沒有「◇ 待驗證」決定要 AI 針對哪些原因，避免回答開頭出現「沒有待驗證」讓人誤會
+    const nVer = fb.factors.filter(f => f.verify && f.st !== "excl").length, nUse = fb.factors.filter(f => f.st === "use").length;
+    const target = nVer ? `標記「◇ 待驗證」的 ${nVer} 個原因` : nUse ? `已採用的 ${nUse} 個原因（使用者還沒標記待驗證；重要的優先，回答開頭不必說明這點）` : "目前的候選原因（還沒有採用的原因；請提醒使用者先在 STEP 2 採用）";
+    fbAskAI(`請針對${target}逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、用本網站哪個工具與模式分析。用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。`, { label: "驗證規劃", quote: "" });
+  });
   $("fbCheckProblem").addEventListener("click", () => fbAskAI("請檢查目前的問題點描述是否具體、可量測：缺少哪些資訊（產品、發生時間、比例、規格）？需要的話，用 fishbone 區塊的 problem 欄位建議改寫（factors 可以是空陣列）。", { label: "問題點", quote: fb.problem.slice(0, 60) }));
   function fbAskAI(q, ctx, o) {
     openPanel(ctx || undefined);
