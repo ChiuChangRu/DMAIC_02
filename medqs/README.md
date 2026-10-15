@@ -1,4 +1,4 @@
-# 醫材品質統計工作台（原始碼）
+# 醫材品質統計輔助工具（原始碼）
 
 - `index.html`：建置好的完整網頁（單一檔案），可直接放到 GitHub Pages。
 - 原始碼：`template_head.html`、`template_body.html`、各 `.js`（stats/quality/taguchi/sample 為計算引擎；其餘為介面）、`tiles/tiles.json`（圖示）。

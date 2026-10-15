@@ -702,7 +702,7 @@
     try { await navigator.clipboard.writeText(tsv); fbNote("已複製，可直接貼到 Excel 或 Word。"); }
     catch (_) { const ta = $("fbCopyBox"); ta.hidden = false; ta.value = tsv; ta.focus(); ta.select(); fbNote("瀏覽器不允許自動複製，已選取下方文字，請按 Ctrl+C。"); }
   });
-  $("fbExport").addEventListener("click", () => fbSaveFile(fbName("json"), JSON.stringify({ app: "醫材品質統計工作台", kind: "fishbone", v: 1, savedAt: new Date().toISOString(), fb, chat: fbChatState() }, null, 1)));
+  $("fbExport").addEventListener("click", () => fbSaveFile(fbName("json"), JSON.stringify({ app: "醫材品質統計輔助工具", kind: "fishbone", v: 1, savedAt: new Date().toISOString(), fb, chat: fbChatState() }, null, 1)));
   $("fbImportBtn").addEventListener("click", () => $("fbFile").click());
   $("fbFile").addEventListener("change", async () => {
     const file = $("fbFile").files[0]; $("fbFile").value = ""; if (!file) return;

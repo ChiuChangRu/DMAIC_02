@@ -18,7 +18,7 @@
   }
   // 手動修改：存在 fb.pdca（跟著魚骨圖自動存檔、匯出、案件存檔）。t = 文字欄位覆寫，c = 勾選框，rows = 對策多加的列數
   function pdState() { if (!fb.pdca || typeof fb.pdca !== "object") fb.pdca = {}; const P = fb.pdca; if (!P.t || typeof P.t !== "object") P.t = {}; if (!P.c || typeof P.c !== "object") P.c = {}; if (!(P.rows >= 0)) P.rows = 0; return P; }
-  // mode：screen = 工作台（可填、會存檔）；file = 下載檔（可填、不存檔）；print = 列印（純文字）
+  // mode：screen = 輔助工具（可填、會存檔）；file = 下載檔（可填、不存檔）；print = 列印（純文字）
   function pdcaHtml(mode) {
     mode = mode || "screen"; const forFile = mode !== "screen";
     const P = pdState(), edit = mode !== "print", keep = mode === "screen";

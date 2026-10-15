@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>醫材品質統計工作台</title></head><body><title>醫材品質統計工作台</title>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>醫材品質統計輔助工具</title></head><body><title>醫材品質統計輔助工具</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+TC:wght@500;600&display=swap">
@@ -939,7 +939,7 @@ body.novice .nb-line { display: block; }
     <div class="top-row">
       <div>
         <div class="eyebrow">Medical Device Quality Statistics</div>
-        <h1>醫材品質統計工作台</h1>
+        <h1>醫材品質統計輔助工具</h1>
       </div>
       <div class="top-actions"><span class="ai-chips" id="aiChips" role="status" aria-live="polite"></span><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
     </div>
@@ -1091,7 +1091,7 @@ body.novice .nb-line { display: block; }
       <section class="card sheet pd-card">
         <h3>PDCA 一頁報告</h3>
         <p class="help">依目前的魚骨圖自動整理成一頁。報告上的文字欄位可以直接點選修改或補填，勾選框可以點選，對策可以新增列；修改會跟著魚骨圖存檔與匯出（黃底＝手動修改過）。魚骨圖本身請在上方修改。</p>
-        <p class="note warn pd-warn">填寫前請自行判斷：人名、單位、地點、客戶或醫院名稱等可識別資料，會存在這個瀏覽器，也會跟著魚骨圖匯出檔、案件存檔一起帶出（不會傳給 AI）。不適合留在工作台的內容，請按「下載報告檔」，在下載的檔案上填寫，存成 PDF 保存。</p>
+        <p class="note warn pd-warn">填寫前請自行判斷：人名、單位、地點、客戶或醫院名稱等可識別資料，會存在這個瀏覽器，也會跟著魚骨圖匯出檔、案件存檔一起帶出（不會傳給 AI）。不適合留在輔助工具的內容，請按「下載報告檔」，在下載的檔案上填寫，存成 PDF 保存。</p>
         <div class="run-row"><button class="btn primary small" type="button" id="pdcaPrint">列印／存成 PDF</button><button class="btn small" type="button" id="pdcaDl">下載報告檔（HTML）</button><button class="btn small" type="button" id="pdcaReset" hidden>清除手動修改</button><span class="hint">列印視窗中選「另存為 PDF」即可存檔；無法開啟列印視窗時，下載報告檔後用瀏覽器開啟再列印。</span></div>
         <div class="pd-wrap" id="pdcaWrap"></div>
       </section>
@@ -2177,7 +2177,7 @@ body.novice .nb-line { display: block; }
   <button class="sel-ask" id="selAsk" type="button" hidden>問 AI</button>
 
   <footer>
-    <span><b>醫材品質統計工作台</b> · 統計引擎 <span id="engineVer"></span></span>
+    <span><b>醫材品質統計輔助工具</b> · 統計引擎 <span id="engineVer"></span></span>
     <span>資料只在你的瀏覽器中計算；使用 AI 說明時，結果摘要與數據會送給 Claude，請先去識別化（客戶、病患、批號等）。計算結果、確效資料與報告僅供參考，不擔保正確、完整或符合任何法規；用於產品放行、法規申報或品質判定前，請依公司程序自行確認。</span>
   </footer>
 </div>
@@ -5630,7 +5630,7 @@ else root.runValidation = runValidation;
     setCtx(null); updateChatControls();
   }
   const GUIDE_RULES = [
-    "你是醫療器材研發與品質部門的統計與品質顧問，任務是做「AI 診斷分析」：先釐清使用者遇到的問題（資訊不足就先追問），提出可能的方向，再建議在「醫材品質統計工作台」該用哪些工具與統計模式、準備什麼資料。請用繁體中文回答，絕對不要使用簡體中文。",
+    "你是醫療器材研發與品質部門的統計與品質顧問，任務是做「AI 診斷分析」：先釐清使用者遇到的問題（資訊不足就先追問），提出可能的方向，再建議在「醫材品質統計輔助工具」該用哪些工具與統計模式、準備什麼資料。請用繁體中文回答，絕對不要使用簡體中文。",
     "規則：",
     "1. 只推薦下方【網站工具與模式】中列出的工具；標示「建置中」的工具要說明尚未提供，並建議目前可用的替代做法。",
     "2. 資料型態不清楚時（連續數值或通過／不通過、獨立或成對、幾組、是否有規格），先用一到兩個問題向使用者確認，再給建議。",
@@ -7015,7 +7015,7 @@ else root.runValidation = runValidation;
     try { await navigator.clipboard.writeText(tsv); fbNote("已複製，可直接貼到 Excel 或 Word。"); }
     catch (_) { const ta = $("fbCopyBox"); ta.hidden = false; ta.value = tsv; ta.focus(); ta.select(); fbNote("瀏覽器不允許自動複製，已選取下方文字，請按 Ctrl+C。"); }
   });
-  $("fbExport").addEventListener("click", () => fbSaveFile(fbName("json"), JSON.stringify({ app: "醫材品質統計工作台", kind: "fishbone", v: 1, savedAt: new Date().toISOString(), fb, chat: fbChatState() }, null, 1)));
+  $("fbExport").addEventListener("click", () => fbSaveFile(fbName("json"), JSON.stringify({ app: "醫材品質統計輔助工具", kind: "fishbone", v: 1, savedAt: new Date().toISOString(), fb, chat: fbChatState() }, null, 1)));
   $("fbImportBtn").addEventListener("click", () => $("fbFile").click());
   $("fbFile").addEventListener("change", async () => {
     const file = $("fbFile").files[0]; $("fbFile").value = ""; if (!file) return;
@@ -12596,7 +12596,7 @@ else root.runValidation = runValidation;
   }
   // 手動修改：存在 fb.pdca（跟著魚骨圖自動存檔、匯出、案件存檔）。t = 文字欄位覆寫，c = 勾選框，rows = 對策多加的列數
   function pdState() { if (!fb.pdca || typeof fb.pdca !== "object") fb.pdca = {}; const P = fb.pdca; if (!P.t || typeof P.t !== "object") P.t = {}; if (!P.c || typeof P.c !== "object") P.c = {}; if (!(P.rows >= 0)) P.rows = 0; return P; }
-  // mode：screen = 工作台（可填、會存檔）；file = 下載檔（可填、不存檔）；print = 列印（純文字）
+  // mode：screen = 輔助工具（可填、會存檔）；file = 下載檔（可填、不存檔）；print = 列印（純文字）
   function pdcaHtml(mode) {
     mode = mode || "screen"; const forFile = mode !== "screen";
     const P = pdState(), edit = mode !== "print", keep = mode === "screen";

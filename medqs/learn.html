@@ -121,11 +121,11 @@ footer a, .card a { color: var(--act-text); }
 <header class="top">
   <div class="top-row">
     <div>
-      <div class="eyebrow">醫材品質統計工作台 · 觀念篇</div>
+      <div class="eyebrow">醫材品質統計輔助工具 · 觀念篇</div>
       <h1>統計觀念圖解</h1>
       <p class="lede">用可以拖拉的圖，看懂工具背後的觀念。所有數字都由本頁程式即時計算。</p>
     </div>
-    <a class="top-link" href="index.html">回到統計工作台 →</a>
+    <a class="top-link" href="index.html">回到統計輔助工具 →</a>
   </div>
   <nav class="tabs" aria-label="章節">
     <a href="#s1" data-tab="s1" aria-current="true">1 假設檢定</a>
@@ -213,7 +213,7 @@ footer a, .card a { color: var(--act-text); }
       <div class="tex-row"><div class="tex" data-tex="n = \left(\dfrac{(z_{1-\alpha}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>③ 所需樣本數（單尾）。</b>由 ② 解 n。α、β 越小或 δ/σ 越小，n 越大；δ 減半，n 變 4 倍。</div></div>
       <div class="tex-row"><div class="tex" data-tex="n \approx \left(\dfrac{(z_{1-\alpha/2}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>④ 雙尾。</b>臨界值改 z<sub>1−α/2</sub>；忽略另一側極小的尾巴面積，所以是近似。</div></div>
       <div class="tex-row"><div class="tex" data-tex="n_{g} = 2\left(\dfrac{(z_{1-\alpha/2}+z_{1-\beta})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>⑤ 兩組獨立比較（每組 n<sub>g</sub>）。</b>兩組平均相減，變異加倍，所以多乘 2。</div></div>
-      <div class="tex-row"><div class="tex" data-tex="n = \left(\dfrac{(t_{1-\alpha,\,n-1}+t_{1-\beta,\,n-1})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>⑥ σ 未知（用樣本估計）。</b>改用 t 分位數，n 在兩邊都出現，要迭代（NIST 範例：9 → 11）。工作台用非中心 t 精確計算。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="n = \left(\dfrac{(t_{1-\alpha,\,n-1}+t_{1-\beta,\,n-1})\,\sigma}{\delta}\right)^{2}"></div><div class="tex-note"><b>⑥ σ 未知（用樣本估計）。</b>改用 t 分位數，n 在兩邊都出現，要迭代（NIST 範例：9 → 11）。輔助工具用非中心 t 精確計算。</div></div>
       <div class="tex-row"><div class="tex" data-tex="1-\alpha = \sum_{k=0}^{Ac}\binom{n}{k}p_{\mathrm{AQL}}^{\,k}(1-p_{\mathrm{AQL}})^{n-k}"></div><div class="tex-note"><b>⑦ AQL 計數抽樣：生產者風險 α。</b>批的不良率剛好等於 AQL 時，被允收的機率是 1 − α。</div></div>
       <div class="tex-row"><div class="tex" data-tex="\beta = \sum_{k=0}^{Ac}\binom{n}{k}p_{\mathrm{RQL}}^{\,k}(1-p_{\mathrm{RQL}})^{n-k}"></div><div class="tex-note"><b>⑦′ 消費者風險 β。</b>批的不良率在 RQL 時仍被允收的機率。α、β 都由 n 與 Ac 決定；要兩者都小，只能加大 n。</div></div>
       <div class="tex-row"><div class="tex" data-tex="n = \dfrac{\ln(1-C)}{\ln R},\qquad C = 1-\beta,\; R = 1-p_{\mathrm{RQL}}"></div><div class="tex-note"><b>⑧ 成功試驗法（Ac = 0）。</b>⑦ 在 Ac = 0 的特例：0.95<sup>n</sup> ≤ 0.05，得 95/95 需 n = 59。</div></div>
@@ -358,7 +358,7 @@ footer a, .card a { color: var(--act-text); }
   <section class="card" id="s2-4">
     <span class="qref">2-4</span>
     <h3>Δ 怎麼取得：最關鍵、也最常被問</h3>
-    <p class="help">Δ 讀作「delta」，意思是「差多少以內，我們就說一樣」。這像驗收前先講好「尺寸誤差多少以內算合格」，不是量完才決定。它<b>不是統計算出來的，也不能問 AI 要一個數字</b>，要由你們依產品的功能、風險與要求決定，並寫下依據。以下比照工作台「新手模式」的格式：白話、什麼時候訂、訂錯會怎樣、醫材例子。</p>
+    <p class="help">Δ 讀作「delta」，意思是「差多少以內，我們就說一樣」。這像驗收前先講好「尺寸誤差多少以內算合格」，不是量完才決定。它<b>不是統計算出來的，也不能問 AI 要一個數字</b>，要由你們依產品的功能、風險與要求決定，並寫下依據。以下比照輔助工具「新手模式」的格式：白話、什麼時候訂、訂錯會怎樣、醫材例子。</p>
     <div class="two">
       <div class="inner"><h4 style="margin:0 0 6px">白話</h4><p style="margin:0">新、舊的平均差在 ±Δ 之內，就當作一樣。Δ 是工程或臨床判斷，不是統計結果。</p></div>
       <div class="inner"><h4 style="margin:0 0 6px">什麼時候訂</h4><p style="margin:0"><b>量測之前</b>，寫進驗證計畫書。可以參考規格寬度的一部分、功能或臨床影響、舊廠批次間的變異（見下表的六類依據）。</p></div>
@@ -367,7 +367,7 @@ footer a, .card a { color: var(--act-text); }
     </div>
 
     <h4 style="margin:16px 0 6px">Δ 的六類依據：去哪裡找資料</h4>
-    <p class="help" style="margin-top:0">這六類與工作台「Δ 的依據」下拉選單相同。選最主要的一類，再用一句話寫出具體內容。</p>
+    <p class="help" style="margin-top:0">這六類與輔助工具「Δ 的依據」下拉選單相同。選最主要的一類，再用一句話寫出具體內容。</p>
     <div class="scroll-x"><table>
       <tr><th>依據</th><th>去哪裡取得</th><th>可以回答的問題</th><th>寫進計畫書的說法（示意*）</th></tr>
       <tr><td><b>功能／臨床影響</b></td><td>設計輸入、風險分析（ISO 14971）、組裝或功能驗證、使用者回饋</td><td>差多少會開始影響使用或安全？</td><td>內徑差 0.02 mm 內不影響組裝（依組裝驗證）</td></tr>
@@ -405,7 +405,7 @@ footer a, .card a { color: var(--act-text); }
       </div>
       <p class="hint" id="dl_note" style="font-size:13.5px;margin-top:8px"></p>
     </div>
-    <p class="hint" style="font-size:13px;margin-top:8px">這是近似算法，只用來感受 Δ 與 σ 的關係。正式規劃請用工作台「樣本數規劃 → 同等性」圖卡。選擇依據時，工作台也會顯示「Δ 約為公差的幾 %」。</p>
+    <p class="hint" style="font-size:13px;margin-top:8px">這是近似算法，只用來感受 Δ 與 σ 的關係。正式規劃請用輔助工具「樣本數規劃 → 同等性」圖卡。選擇依據時，輔助工具也會顯示「Δ 約為公差的幾 %」。</p>
   </section>
 
   <!-- 2-5 -->
@@ -422,13 +422,13 @@ footer a, .card a { color: var(--act-text); }
       <div class="tex" id="texT1"></div>
       <div class="tex-note" id="texTNote"></div>
     </div>
-    <div class="note">這是常態近似，只用來理解 Δ/σ 對樣本數的影響。實際規劃請用工作台「樣本數規劃 → 同等性」，它用精確計算，也能設定「真實差異不為 0」的情況；通常會比近似式多幾個。</div>
+    <div class="note">這是常態近似，只用來理解 Δ/σ 對樣本數的影響。實際規劃請用輔助工具「樣本數規劃 → 同等性」，它用精確計算，也能設定「真實差異不為 0」的情況；通常會比近似式多幾個。</div>
   </section>
 
   <!-- 2-6 -->
   <section class="card" id="s2-6">
     <span class="qref">2-6</span>
-    <h3>在工作台怎麼做</h3>
+    <h3>在輔助工具怎麼做</h3>
     <div class="two">
       <div class="inner">
         <h4 style="margin:0 0 6px">規劃階段（量之前）</h4>
@@ -447,13 +447,13 @@ footer a, .card a { color: var(--act-text); }
         </ol>
       </div>
     </div>
-    <p class="help" style="margin-top:12px">只怕「變差」、變好沒關係時，用非劣性檢定（只做一邊），工作台的樣本數規劃也有對應圖卡。</p>
+    <p class="help" style="margin-top:12px">只怕「變差」、變好沒關係時，用非劣性檢定（只做一邊），輔助工具的樣本數規劃也有對應圖卡。</p>
   </section>
 </section>
 
 <section id="s3" hidden>
   <h2 class="sec">3　t 檢定入門：比較平均值</h2>
-  <p class="sec-lede">新製程做出來的產品，平均強度真的比舊的高嗎？換了供應商，來料的平均尺寸有沒有變？你不可能把整批都量過，只能抽幾件來量，再用這幾件去推測整批。但抽樣有運氣成分：這次抽到的幾件，剛好偏高或偏低都有可能。t 檢定要回答的就是：<b>「看到的差異，是真的有差，還是剛好抽到的運氣？」</b>它專門用在「抽的件數不多、整批的分散程度也不知道」的情況，是工作台「假設檢定」最常用的一組。本節先認識幾個詞，再看圖、動手算，最後說明怎麼選、用在哪裡。</p>
+  <p class="sec-lede">新製程做出來的產品，平均強度真的比舊的高嗎？換了供應商，來料的平均尺寸有沒有變？你不可能把整批都量過，只能抽幾件來量，再用這幾件去推測整批。但抽樣有運氣成分：這次抽到的幾件，剛好偏高或偏低都有可能。t 檢定要回答的就是：<b>「看到的差異，是真的有差，還是剛好抽到的運氣？」</b>它專門用在「抽的件數不多、整批的分散程度也不知道」的情況，是輔助工具「假設檢定」最常用的一組。本節先認識幾個詞，再看圖、動手算，最後說明怎麼選、用在哪裡。</p>
 
   <!-- 3-1 -->
   <section class="card" id="s3-0">
@@ -602,7 +602,7 @@ footer a, .card a { color: var(--act-text); }
         <ul class="tight">
           <li>資料偏得很厲害或有離群值，而且件數少：改用「不假設資料形狀」的無母數檢定（單組與成對用 Wilcoxon 符號等級檢定，兩組獨立用 Mann-Whitney 檢定）。</li>
           <li>兩組分散程度差很多：用 Welch，不用合併的 Student。</li>
-          <li>工作台會幫你檢查「資料是否呈鐘形」（Shapiro-Wilk 檢定）與「兩組分散程度是否相近」（Levene 檢定），也提供 Wilcoxon、Mann-Whitney 等無母數檢定，有疑慮時可以對照看結果是否一致。</li>
+          <li>輔助工具會幫你檢查「資料是否呈鐘形」（Shapiro-Wilk 檢定）與「兩組分散程度是否相近」（Levene 檢定），也提供 Wilcoxon、Mann-Whitney 等無母數檢定，有疑慮時可以對照看結果是否一致。</li>
         </ul>
       </div>
     </div>
@@ -646,7 +646,7 @@ footer a, .card a { color: var(--act-text); }
   <!-- 3-6 -->
   <section class="card" id="s3-6">
     <span class="qref">3-7</span>
-    <h3>在工作台怎麼做</h3>
+    <h3>在輔助工具怎麼做</h3>
     <div class="two">
       <div class="inner">
         <h4 style="margin:0 0 6px">規劃階段（量之前）</h4>
@@ -685,7 +685,7 @@ footer a, .card a { color: var(--act-text); }
       <tr><td><b>期望次數</b></td><td>「如果各組其實一樣」時，每一格「應該」看到幾件。卡方檢定就是在比「實際」和「期望」差多少。</td><td>兩組各 200 個、合計 15 個不良，各組期望都是 7.5 個不良。</td></tr>
       <tr><td><b>卡方值（χ²）</b></td><td>把每一格「實際 − 期望」的差距加總成一個數字。越大，越不像「各組一樣」。</td><td>χ² = 5.6。</td></tr>
       <tr><td><b>p 值</b></td><td>和第 3 節一樣：先假設「其實沒有差」，光靠運氣就看到這麼大（或更大）差異的機率。<b>它不是「沒有差的機率」。</b></td><td>p = 0.018：如果兩家其實一樣，只有約 1.8% 的機會看到這麼大的差異。</td></tr>
-      <tr><td><b>Fisher 精確檢定</b></td><td>件數太少時，卡方的近似算法會不準；Fisher 直接把所有可能的情況算出來，件數少也準。工作台會自動切換。</td><td>改善前後各測 20 個。</td></tr>
+      <tr><td><b>Fisher 精確檢定</b></td><td>件數太少時，卡方的近似算法會不準；Fisher 直接把所有可能的情況算出來，件數少也準。輔助工具會自動切換。</td><td>改善前後各測 20 個。</td></tr>
     </table></div>
   </section>
 
@@ -749,7 +749,7 @@ footer a, .card a { color: var(--act-text); }
     <ul class="tight help" style="margin-top:12px">
       <li><b>試試把兩組件數都拉大、不良率不變</b>（例如 A 12/200 → 24/400）：差距一樣，但件數多了，p 值變小。和 t 檢定一樣，量得越多越容易看出差。</li>
       <li><b>試試把件數拉小</b>（例如各 20 個）：期望次數小於 5 時，畫面會改用 Fisher 精確檢定。卡方的算法在件數少時會失準。</li>
-      <li><b>三組以上、或缺陷分成好幾種</b>：做法完全一樣，只是表格變大。工作台的「假設檢定 → 次數資料」可以直接填任意列數、欄數。</li>
+      <li><b>三組以上、或缺陷分成好幾種</b>：做法完全一樣，只是表格變大。輔助工具的「假設檢定 → 次數資料」可以直接填任意列數、欄數。</li>
     </ul>
   </section>
 
@@ -762,7 +762,7 @@ footer a, .card a { color: var(--act-text); }
       <div class="tex-row"><div class="tex" data-tex="p_U:\ P(X\le x\mid n,p_U)=1-\gamma\qquad (x=0\ \Rightarrow\ p_U=1-(1-\gamma)^{1/n}\approx 3/n)"></div><div class="tex-note"><b>② 信心上限（Clopper-Pearson）。</b>找一個不良率 p<sub>U</sub>，讓「看到這麼少不良」的機率剛好只剩 1 − γ（γ 是信心水準，95% 時剩 5%）。上限低於目標，等於 p 值小於 1 − γ，兩種說法結論一致。</div></div>
       <div class="tex-row"><div class="tex" data-tex="E_{ij}=\dfrac{(\text{第 }i\text{ 列合計})\times(\text{第 }j\text{ 欄合計})}{\text{總件數}}"></div><div class="tex-note"><b>③ 期望次數。</b>「如果各組一樣」，每組的不良率都等於整體不良率，所以期望不良數 = 這組件數 × 整體不良率。</div></div>
       <div class="tex-row"><div class="tex" data-tex="\chi^2=\sum_{\text{每一格}}\dfrac{(O-E)^2}{E},\qquad df=(\text{組數}-1)\times(\text{結果類別數}-1)"></div><div class="tex-note"><b>④ 卡方值與自由度。</b>每一格的差距平方，除以期望次數（期望大的格子，差一點不算什麼），再全部加總。p 值由卡方分布查出。</div></div>
-      <div class="tex-row"><div class="tex" data-tex="z_{ij}=\dfrac{O_{ij}-E_{ij}}{\sqrt{E_{ij}\,(1-\text{列比例})(1-\text{欄比例})}}"></div><div class="tex-note"><b>⑤ 差異主要來自哪一格（校正殘差）。</b>每一格自己算一個類似 z 的值，超過 ±1.96 的格子就是「比預期多（或少）」得明顯的地方。工作台結果的「差異主要來自」就是用這個。</div></div>
+      <div class="tex-row"><div class="tex" data-tex="z_{ij}=\dfrac{O_{ij}-E_{ij}}{\sqrt{E_{ij}\,(1-\text{列比例})(1-\text{欄比例})}}"></div><div class="tex-note"><b>⑤ 差異主要來自哪一格（校正殘差）。</b>每一格自己算一個類似 z 的值，超過 ±1.96 的格子就是「比預期多（或少）」得明顯的地方。輔助工具結果的「差異主要來自」就是用這個。</div></div>
       <div class="tex-row"><div class="tex" data-tex="P(\text{表})=\dfrac{\binom{r_1}{a}\binom{r_2}{c}}{\binom{N}{a+c}}\ \ \Rightarrow\ \ p=\sum_{P(\text{表})\le P(\text{觀察})}P(\text{表})"></div><div class="tex-note"><b>⑥ Fisher 精確檢定（2×2）。</b>固定兩組件數與總不良數，把所有可能的分法逐一算出機率，加總「和觀察到的一樣罕見或更罕見」的情況。件數少時用它。</div></div>
     </div>
     <div class="tex-live">
@@ -779,9 +779,9 @@ footer a, .card a { color: var(--act-text); }
     <div class="scroll-x"><table>
       <tr><th>你手上的資料</th><th>用哪一種</th><th>要注意什麼</th></tr>
       <tr><td>一組產品：測了幾個、幾個不良，要跟目標不良率比</td><td>精確二項檢定（看信心上限）</td><td>目標要在試驗前訂好；目標很低時需要很多件</td></tr>
-      <tr><td>兩組：各自良品／不良品幾個</td><td>卡方檢定；件數少時 Fisher 精確檢定</td><td>每件只屬於一組；期望次數有小於 5 的格子時改用 Fisher（工作台自動）</td></tr>
+      <tr><td>兩組：各自良品／不良品幾個</td><td>卡方檢定；件數少時 Fisher 精確檢定</td><td>每件只屬於一組；期望次數有小於 5 的格子時改用 Fisher（輔助工具自動）</td></tr>
       <tr><td>三組以上，或缺陷分成好幾種</td><td>卡方檢定（列聯表）</td><td>期望次數小於 5 的格子超過 2 成時不準，把少見的類別合併成「其他」</td></tr>
-      <tr><td>同一批產品「前後各判一次」（例如兩位檢驗員判同一批）</td><td>不是卡方，要用 McNemar 檢定</td><td>資料是成對的，工作台目前沒有提供；判定一致性可用 MSA 的屬性一致性分析</td></tr>
+      <tr><td>同一批產品「前後各判一次」（例如兩位檢驗員判同一批）</td><td>不是卡方，要用 McNemar 檢定</td><td>資料是成對的，輔助工具目前沒有提供；判定一致性可用 MSA 的屬性一致性分析</td></tr>
       <tr><td>量測數值（拉力、厚度）</td><td>不是本節，用 t 檢定或 ANOVA（第 3 節）</td><td>不要把量測值先分成「合格／不合格」再做卡方，會損失很多資訊</td></tr>
     </table></div>
     <div class="two" style="margin-top:12px">
@@ -820,7 +820,7 @@ footer a, .card a { color: var(--act-text); }
 
   <section class="card" id="s4-7">
     <span class="qref">4-7</span>
-    <h3>在工作台怎麼做</h3>
+    <h3>在輔助工具怎麼做</h3>
     <div class="two">
       <div class="inner">
         <h4 style="margin:0 0 6px">規劃階段（測之前）</h4>
@@ -857,7 +857,7 @@ footer a, .card a { color: var(--act-text); }
 </section>
 
 <footer>
-  計算方法：常態分布（σ 視為已知的近似）、t 分布、二項分布、卡方分布與 Fisher 精確檢定（超幾何分布），由本頁 JavaScript 計算，未使用 AI 產生數值。工作台的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計工作台</a>
+  計算方法：常態分布（σ 視為已知的近似）、t 分布、二項分布、卡方分布與 Fisher 精確檢定（超幾何分布），由本頁 JavaScript 計算，未使用 AI 產生數值。輔助工具的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計輔助工具</a>
 </footer>
 </div>
 
@@ -1017,7 +1017,7 @@ footer a, .card a { color: var(--act-text); }
     if (!(S.d > 0)) { $("texLive2").innerHTML = ""; $("texLiveNote").textContent = "δ = 0 時沒有「要偵測的差異」，無法計算所需樣本數。"; return; }
     const nReq = Math.pow((za + zp) * S.s / S.d, 2);
     tex($("texLive2"), `n=\\left(\\dfrac{(${f3(za)}+${f3(zp)})\\times ${fx(S.s, 1)}}{${fx(S.d, 2)}}\\right)^{2}=${fx(nReq, 2)}\\;\\Rightarrow\\;n=${Math.ceil(nReq)}`);
-    $("texLiveNote").textContent = `目標檢定力 ${pct(pw, 0)}（z = ${f3(zp)}）需 n = ${Math.ceil(nReq)}（常態近似，σ 已知）。σ 用樣本估計時請用工作台「樣本數規劃」的 t 分布精確計算，n 會略大。${two ? "雙尾的 β 忽略另一側尾巴，是近似值。" : ""}`;
+    $("texLiveNote").textContent = `目標檢定力 ${pct(pw, 0)}（z = ${f3(zp)}）需 n = ${Math.ceil(nReq)}（常態近似，σ 已知）。σ 用樣本估計時請用輔助工具「樣本數規劃」的 t 分布精確計算，n 會略大。${two ? "雙尾的 β 忽略另一側尾巴，是近似值。" : ""}`;
   }
   $("i_pw").addEventListener("change", texLive);
   (function loadKatex() { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"; sc.onload = texAll; sc.onerror = texAll; document.head.appendChild(sc); })();
@@ -1283,7 +1283,7 @@ footer a, .card a { color: var(--act-text); }
   }
   document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
-  // 回到統計工作台：GitHub Pages 用相對路徑，其他（claude.ai）用工作台網址
+  // 回到統計輔助工具：GitHub Pages 用相對路徑，其他（claude.ai）用輔助工具網址
   (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
   showTab(location.hash.slice(1));
   let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4"].find(k => !$(k).hidden) || "s1"), 150); });
