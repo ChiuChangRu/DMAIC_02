@@ -160,15 +160,30 @@
     const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
     const nOn = L.filter(x => x.on).length;
     const dupOf = L.map((x, i) => { for (let j = 0; j < i; j++) if (vpSim(L[j].cause, x.cause) >= VP_SIM) return j + 1; return 0; });
-    box.innerHTML = `<datalist id="vpToolList">${VP_TOOLS.map(t => `<option value="${t}"></option>`).join("")}</datalist><div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
-      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td><input class="vp-tool" list="vpToolList" data-id="${x.id}" value="${esc(x.tool)}" placeholder="點選下拉，或自行輸入" aria-label="驗證策略"></td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
   const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
+  // 驗證策略：一般下拉選單（datalist 在格子有字時只列出相符的選項，看起來像不能改）；選「自行輸入…」才換成文字框
+  let vpCustom = "";
+  function vpToolCell(x) {
+    const v = x.tool || "";
+    if (vpCustom === x.id) return `<input class="vp-tool" data-id="${x.id}" value="${esc(v)}" placeholder="輸入驗證策略，按 Enter 完成" aria-label="驗證策略（自行輸入）">`;
+    const stat = VP_TOOLS.filter(t => !/^不用統計/.test(t)), non = VP_TOOLS.filter(t => /^不用統計/.test(t)), other = v && !VP_TOOLS.includes(v);
+    const o = t => `<option value="${esc(t)}"${t === v ? " selected" : ""}>${esc(t)}</option>`;
+    return `<select class="vp-tool" data-id="${x.id}" aria-label="驗證策略">${v ? "" : `<option value="" selected>請選擇</option>`}${other ? `<option value="${esc(v)}" selected>${esc(v)}</option>` : ""}<optgroup label="統計工具">${stat.map(o).join("")}</optgroup><optgroup label="不用統計">${non.map(o).join("")}</optgroup><optgroup label="其他"><option value="__custom">✎ 自行輸入…</option></optgroup></select>`;
+  }
   function vpChanged(full) { fbSave(); if (full) vpRender(); try { pdcaRender(); } catch (_) {} }
   (function vpInit() {
     const box = $("fbVplan"); if (!box) return;
-    box.addEventListener("input", e => { const ti = e.target.closest(".vp-tool"); if (!ti) return; const x = (fb.vplan || []).find(y => y.id === ti.dataset.id); if (!x) return; x.tool = ti.value; fbSave(); try { pdcaRender(); } catch (_) {} });
+    box.addEventListener("input", e => { const ti = e.target.closest("input.vp-tool"); if (!ti) return; const x = (fb.vplan || []).find(y => y.id === ti.dataset.id); if (!x) return; x.tool = ti.value; fbSave(); try { pdcaRender(); } catch (_) {} });
+    box.addEventListener("change", e => { const s = e.target.closest("select.vp-tool"); if (!s) return; const x = (fb.vplan || []).find(y => y.id === s.dataset.id); if (!x) return;
+      if (s.value === "__custom") { vpCustom = x.id; vpRender(); const i = box.querySelector(`input.vp-tool[data-id="${x.id}"]`); if (i) { i.focus(); i.select(); } return; }
+      x.tool = s.value; vpChanged(true); });
+    const vpDone = i => { if (vpCustom !== i.dataset.id) return; vpCustom = ""; setTimeout(() => vpChanged(true), 0); };
+    box.addEventListener("focusout", e => { const i = e.target.closest("input.vp-tool"); if (i) vpDone(i); });
+    box.addEventListener("keydown", e => { const i = e.target.closest("input.vp-tool"); if (i && e.key === "Enter") { e.preventDefault(); i.blur(); } });
     box.addEventListener("input", e => { const el = e.target.closest(".vp-ed"); if (!el) return; const x = (fb.vplan || []).find(y => y.id === el.dataset.id); if (!x) return; x[el.dataset.f] = el.innerText.replace(/\n+$/, ""); vpChanged(false); });
     box.addEventListener("paste", e => { const el = e.target.closest(".vp-ed"); if (!el) return; e.preventDefault(); try { document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } catch (_) {} });
     box.addEventListener("change", e => { const c = e.target.closest("[data-vpon]"); if (!c) return; const x = (fb.vplan || []).find(y => y.id === c.dataset.vpon); if (x) { x.on = c.checked; vpChanged(true); } });
