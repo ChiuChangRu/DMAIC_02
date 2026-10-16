@@ -57,7 +57,7 @@
     const acts = vp.length ? vp.map(x => ({ what: "驗證：" + x.cause + (x.method ? " — " + x.method : ""), tool: x.tool, n: ssN(x), why: ssW(x) })) : fb.factors.filter(f => f.st !== "excl" && f.verify).map(f => ({ what: "驗證：" + f.text, tool: "" }));
     const nRow = Math.max(4, acts.length) + P.rows;
     const act = `<table class="pd-tbl pd-act"><thead><tr><th>對策／行動（What）</th><th class="pd-tool">驗證策略</th><th class="pd-ss">樣本數與理由</th><th class="pd-w">負責人</th><th class="pd-w">完成日</th></tr></thead><tbody>${Array.from({ length: nRow }, (_, i) => `<tr><td>${ED(`act.${i}.what`, acts[i] ? acts[i].what : "")}</td><td>${ED(`act.${i}.tool`, acts[i] ? acts[i].tool : "")}</td><td class="pd-ssc"><div class="pd-ssn">${ED(`act.${i}.n`, acts[i] ? acts[i].n || "" : "")}</div><div class="pd-ssw">${ED(`act.${i}.why`, acts[i] ? acts[i].why || "" : "")}</div></td><td>${ED(`act.${i}.who`, "")}</td><td>${ED(`act.${i}.when`, "")}</td></tr>`).join("")}</tbody></table>
-      ${keep && vp.length ? `<p class="pd-note">對策取自 STEP 3 勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
+      ${keep && vp.length ? `<p class="pd-note">對策取自 ③ 驗證計畫勾選的 ${vp.length} 個驗證項目；樣本數與理由取自「樣本數規劃」頁的驗證項目清單。</p>` : ""}${edit ? `<div class="pd-rowbtn pd-noprint"><button type="button" class="pd-mini" data-pd="addrow">＋ 新增一列</button>${keep && P.rows ? `<button type="button" class="pd-mini" data-pd="delrow">－ 刪除最後一列</button>` : ""}</div>` : ""}`;
     // 5 驗證結果
     let vrT = ""; try { vrT = vrTableHtml(mode); } catch (_) {}
     const chk = vrT + `<div class="pd-chk"><div><div class="pd-cap">結果</div><ul>${BOX("res.ok", "達到目標")}${BOX("res.part", "部分改善")}${BOX("res.ng", "未達目標")}</ul>${P.t["res.note"] || edit ? `<div class="pd-chk-note">${ED("res.note", "")}</div>` : ""}</div>
@@ -87,15 +87,15 @@
       ${row(!!fb.problem.trim(), "1 記錄問題", fb.problem.trim() ? (blank.length ? `問題已帶入；${blank.join("、")}尚未填寫（可在下方報告補填）` : "問題、地點、時間、人員都有內容") : "尚未填寫問題點", fb.problem.trim() ? "" : "home")}
       ${row(use.length > 0, "2 分析問題", use.length ? `魚骨圖已採用 ${use.length} 個原因` : "魚骨圖還沒有採用的原因", use.length ? "" : "fishbone")}
       ${row(use.length > 0, "3 找出原因", use.length ? `A／B／C 取前 ${Math.min(3, use.length)} 個原因；第 3～5 層需自行追問補填` : "需先在魚骨圖採用原因", "")}
-      ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 STEP 3 勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到魚骨圖 STEP 3 勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "fishbone")}
-      ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "sample" : ""); })() : ""}
+      ${row(vp.length > 0 || ver.length > 0, "4 採取對策", vp.length ? `採用 ③ 驗證計畫勾選的 ${vp.length} 個驗證項目` : ver.length ? `暫用 ${ver.length} 個「◇ 待驗證」原因；建議到 ③ 驗證計畫勾選驗證項目` : "還沒有驗證項目", vp.length ? "" : "plan")}
+      ${vp.length ? (() => { const ok = vp.filter(x => { try { return svOk(x); } catch (_) { return false; } }).length, nb = vp.filter(x => { try { return svNoBasis(x); } catch (_) { return false; } }).length; return row(ok === vp.length && !nb, "4 樣本數與理由", ok < vp.length ? `${ok}／${vp.length} 個驗證項目已有樣本數與理由；沒寫是稽核缺失（ISO 13485 §7.3.6）` : nb ? `${nb} 個項目的理由還有空白（＿＿）或「請填」沒寫` : `${vp.length} 個驗證項目都有樣本數與理由`, ok < vp.length || nb ? "plan" : ""); })() : ""}
       ${(() => { let L = []; try { L = vrItems(); } catch (_) {} if (!L.length) return ""; const st = L.filter(x => !vrNonStat(x)), ns = L.filter(x => vrNonStat(x)), a = st.filter(x => (x.apx || []).length).length, b = ns.filter(x => (x.vr || {}).st).length;
-        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 統計分析的結果下方按「驗證結束，並儲存到報告」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "hypothesis" : ""); })()}
+        return row(a === st.length && b === ns.length, "5 各項驗證結論", `統計類 ${a}／${st.length} 項已存入結果${st.length ? "（在 ⑤ 統計分析的結果下方按「驗證結束，並儲存到報告」）" : ""}；不用統計 ${b}／${ns.length} 項已填結論（在下方報告第 5 段）`, a < st.length ? "plan" : ""); })()}
       ${row(!!res, "5 驗證結果", res ? `已勾選：${res}` : "驗證完成後，在下方報告勾選結果與核准", "")}
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
   let pdStT = 0; function pdStatusSoon() { clearTimeout(pdStT); pdStT = setTimeout(() => { try { pdcaStatus(); flowRender(); } catch (_) {} }, 300); }   // 報告上填寫、勾選後更新上方狀態
-  function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} try { vfRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
+  function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} try { vfRender(); } catch (_) {} try { hubRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
     for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (_) { continue; } for (const r of rules) if (r.cssText && /\.pd-/.test(r.cssText) && !/@media print/.test(r.cssText)) out += r.cssText + "\n"; }
@@ -146,7 +146,7 @@
       return it.length ? it : null; } catch (_) { return null; }
   }
   function vpChatHtml(items) {
-    return `<div class="fb-sug vp-sug"><p class="hint">AI 建議 ${items.length} 個驗證項目（標 * 為推論）。列入清單後，在 STEP 3 勾選要採用的；可以修改每一欄。</p><button type="button" class="btn small primary" data-vpadd="${esc(JSON.stringify(items))}">列入 STEP 3 驗證項目清單（${items.length} 項）</button></div>`;
+    return `<div class="fb-sug vp-sug"><p class="hint">AI 建議 ${items.length} 個驗證項目（標 * 為推論）。列入清單後，在 ③ 驗證計畫勾選要採用的；可以修改每一欄。</p><button type="button" class="btn small primary" data-vpadd="${esc(JSON.stringify(items))}">列入 ③ 驗證計畫（${items.length} 項）</button></div>`;
   }
   const vpKey = x => (x.cause + "|" + x.method).replace(/\s+/g, "");
   // 相似原因判斷（AI 問兩次時寫法略有不同）：去掉標點、* 後比較字元雙字組重疊（Dice ≥ 0.6）
@@ -166,7 +166,7 @@
     const dupOf = L.map((x, i) => { for (let j = 0; j < i; j++) if (vpSim(L[j].cause, x.cause) >= VP_SIM) return j + 1; return 0; });
     box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
       ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
-      <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}${L.length ? `<button type="button" class="btn primary small vp-next" data-route-go="sample"${nOn ? "" : " disabled"}>下一步：樣本數規劃${nOn ? `（${nOn} 項）` : ""} →</button>` : ""}</div>${L.length && !nOn ? `<p class="hint vp-next-hint">先在「採用」欄勾選要驗證的項目，才能到下一步。</p>` : ""}`;
+      <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
   const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
   // 驗證策略：一般下拉選單（datalist 在格子有字時只列出相符的選項，看起來像不能改）；選「自行輸入…」才換成文字框
@@ -205,7 +205,7 @@
       b.disabled = true; b.textContent = n ? `已列入 ${n} 項${skip ? `（${skip} 項和清單中的原因相同或相似，略過）` : ""}` : "這些原因都已在清單中";
       vpChanged(true);
       try { closePanel(); $("aiDot").hidden = false; const bx = $("fbVplan"); if (bx) setTimeout(() => bx.scrollIntoView({ behavior: "smooth", block: "start" }), 50); } catch (_) {}   // 跟帶入魚骨圖一樣：AI 收成右下角按鈕
-      fbNote(n ? `已把 ${n} 個驗證項目列入 STEP 3 清單${skip ? `，略過 ${skip} 個相同或相似的原因` : ""}，請勾選要採用的。` : "這些原因都已在清單中（相同或相似），沒有新增。");
+      fbNote(n ? `已把 ${n} 個驗證項目列入 ③ 驗證計畫清單${skip ? `，略過 ${skip} 個相同或相似的原因` : ""}，請勾選要採用的。` : "這些原因都已在清單中（相同或相似），沒有新增。");
     });
     vpRender();
   })();

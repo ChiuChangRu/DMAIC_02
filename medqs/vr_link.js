@@ -68,14 +68,15 @@
   function vrSlotHtml(id, open) {
     const L = vrStatItems();
     if (!open) { const d = L.filter(x => (x.apx || []).length).length; return `<button type="button" class="vr-open" data-vropen="${id}">✓ 驗證結束，並儲存到報告${L.length ? `　<span class="vr-prog">統計驗證已完成 ${d}／${L.length}</span>` : ""}</button>`; }
-    if (!L.length) return `<div class="vr-pick"><b>✓ 驗證結束，並儲存到報告</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
+    if (!L.length) return `<div class="vr-pick"><b>✓ 驗證結束，並儲存到報告</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在 ③ 驗證計畫勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
     const body = $(id), auto = body ? vrAuto(body) : "", tool = VR_OUTS[id] || "";
     const guess = L.find(x => x.id === vrFocus) || L.find(x => tool && (x.tool || "").includes(tool.split("－")[0]) && !(x.apx || []).length) || L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
-    const act = body ? vrActual(id, body) : null;
+    const act = body ? vrActual(id, body) : null, own = VR_OWN[id] ? vrItems().find(y => y.id === VR_OWN[id]) : null;
     return `<div class="vr-pick" data-vrbox="${id}"><b>✓ 驗證結束，並儲存到報告</b><span class="hint">　這份結果畫面會附在 PDCA 報告後面（附錄）</span>
       <div class="vr-row"><label>驗證項目</label><select data-vrit="1">${L.map(x => `<option value="${x.id}"${x === guess ? " selected" : ""}>${esc(x.cause || "（未命名）")}${x.tool ? "（" + esc(x.tool) + "）" : ""}${(x.apx || []).length ? `　已存 ${(x.apx || []).length} 份` : ""}</option>`).join("")}</select></div>
       <div class="vr-row"><label>結論 <span class="vr-req">必選</span></label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
       <div class="vr-row vr-col"><label>依據（系統依結果產生，可修改）</label><input type="text" data-vrnote="1" value="${esc(auto)}"></div>
+      ${own && own !== guess ? `<p class="vr-ownwarn">⚠ 畫面上的結果是「${esc(own.cause)}」的數據算出來的，不是選的這一項。請確認，或先貼上這一項的數據重新分析。</p>` : ""}
       <div class="vr-plan" data-vrplan="1">${vrPlanBox(guess, act ? act.txt : "")}</div>
       <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn vr-save" data-vrsave="${id}">✓ 驗證結束，儲存到報告</button></div></div>`;
   }
@@ -116,6 +117,43 @@
     if (!left.length) return `<div class="vr-next-box"><b>統計驗證都完成了。</b>不用統計的項目請到 PDCA 報告第 5 段選結論、寫依據。　<button type="button" class="sv-btn vr-save" data-route-go="pdca">前往 PDCA 報告 →</button></div>`;
     return `<div class="vr-next-box"><b>還沒驗證的（${left.length} 項）：</b>按「驗證這一項 →」會到對應的分析頁，貼上這一項的數據再分析。<ul>${left.map(x => `<li><span>${esc(x.cause)}<small>${esc(x.tool || "")}</small></span><button type="button" class="sv-btn p" data-vrnext="${x.id}">驗證這一項 →</button></li>`).join("")}</ul></div>`;
   }
+  // ---------------- 每個驗證項目各存一份分析數據（同一個工具給多個項目用，不互相蓋掉） ----------------
+  const VR_RUN = { previewBody: () => run(), ctOut: () => ctRun(), tlOut: () => $("tlRun").click(), regOut: () => $("regRun").click(), spcOut: () => spcRun(), grrOut: () => grrRun(), biasOut: () => biasRun(), linOut: () => linRun(), stabOut: () => stabRun(), attrOut: () => attrRun(), doeOut: () => doeRun(), mixOut: () => $("mixRun").click(), tgOut: () => $("tgRun").click() };
+  const VR_OWN = {};   // 結果區 id → 目前畫面上的結果屬於哪個驗證項目
+  let vrRestoring = false;
+  function vrOutOf(x) { const [r, sub] = vrRoute(x.tool); return r === "hypothesis" ? ({ count: "ctOut", tol: "tlOut" }[sub] || "previewBody") : r === "regression" ? "regOut" : r === "spc" ? "spcOut" : r === "msa" ? (sub || "grr") + "Out" : r === "doe" ? (sub === "mix" ? "mixOut" : "doeOut") : r === "taguchi" ? "tgOut" : "previewBody"; }
+  const vrSkipEl = el => !el.id || el.type === "file" || el.type === "button" || /Problem$|ProblemSrc$/.test(el.id) || el.closest(".vf-bar, .crumb, .vr-slot, #aiPanel");
+  function vrSnapView(route, outId) {
+    const v = document.querySelector(`[data-view="${route}"]`); if (!v) return null;
+    const f = {}, c = {}, s = {};
+    v.querySelectorAll("input, select, textarea").forEach(el => { if (vrSkipEl(el)) return; f[el.id] = el.type === "checkbox" ? !!el.checked : String(el.value).slice(0, 200000); });
+    v.querySelectorAll(".chips[id]").forEach(g => { const b = g.querySelector('[aria-pressed="true"]'); if (!b) return; const a = ["v", "mode", "alt", "goal"].find(k => b.dataset[k] != null); if (a) c[g.id] = [a, b.dataset[a]]; });
+    v.querySelectorAll(".subtabs[id], .subtabs").forEach((g, i) => { const b = g.querySelector('[aria-selected="true"]'); if (b) s[g.id || route + ":" + i] = b.dataset.tsub || b.dataset.sub || ""; });
+    const ex = {};
+    try { if (route === "doe") { ex.doeF = JSON.parse(JSON.stringify(doeF)); ex.doeY = doe ? JSON.parse(JSON.stringify(doe.y)) : null; ex.mixY = mix ? JSON.parse(JSON.stringify(mix.y)) : null; } } catch (_) {}
+    try { if (route === "taguchi") { ex.tgF = JSON.parse(JSON.stringify(tgF)); ex.tgNoise = tgNoise.slice(); ex.tgY = tg ? JSON.parse(JSON.stringify(tg.y)) : null; } } catch (_) {}
+    return { route, out: outId, f, c, s, ex };
+  }
+  function vrRestoreView(x) {
+    const a = x.ana; if (!a || !a.snap) return false; const S = a.snap, v = document.querySelector(`[data-view="${S.route}"]`); if (!v) return false;
+    vrRestoring = true;
+    try {
+      Object.entries(S.s || {}).forEach(([k, val]) => { const g = k.includes(":") ? v.querySelectorAll(".subtabs")[+k.split(":")[1]] : $(k); const b = g && g.querySelector(`[data-tsub="${val}"], [data-sub="${val}"]`); if (b && b.getAttribute("aria-selected") !== "true") b.click(); });
+      Object.entries(S.c || {}).forEach(([id, [k, val]]) => { const g = $(id), b = g && g.querySelector(`[data-${k}="${val}"]`); if (b && b.getAttribute("aria-pressed") !== "true") b.click(); });
+      const ids = Object.keys(S.f || {}).filter(id => $(id) && v.contains($(id)));
+      const ord = id => $(id).tagName === "TEXTAREA" ? 0 : $(id).tagName === "SELECT" ? 1 : 2;
+      const put = id => { const el = $(id), val = S.f[id]; if (el.type === "checkbox") { if (el.checked !== !!val) { el.checked = !!val; el.dispatchEvent(new Event("change", { bubbles: true })); } return; } if (el.value === String(val)) return; el.value = String(val); if (id !== "tlBox") el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true })); };
+      ids.sort((p, q) => ord(p) - ord(q)).forEach(put);
+      ids.filter(id => $(id).tagName === "SELECT").forEach(put);   // 選單選項可能要等數據貼上後才出現（例如回歸的 X／Y）
+      const E = S.ex || {};
+      if (S.route === "doe") { if (Array.isArray(E.doeF)) E.doeF.forEach((f, i) => { if (doeF[i] && f) doeF[i] = Object.assign({}, f); }); doeFactorsUI(); if (E.doeY && S.out === "doeOut") doeGenerate(E.doeY); if (E.mixY && S.out === "mixOut") mixGenerate(E.mixY); }
+      if (S.route === "taguchi") { if (Array.isArray(E.tgF)) E.tgF.forEach((f, i) => { if (tgF[i] && f) tgF[i] = JSON.parse(JSON.stringify(f)); }); if (Array.isArray(E.tgNoise)) E.tgNoise.forEach((n, i) => { if (i < tgNoise.length) tgNoise[i] = n; }); tgFactorsUI(); tgNoiseUI(); if (E.tgY) tgGenerate(E.tgY); }
+      if (S.out === "previewBody") { try { reparse(false); } catch (_) {} }
+      const r = VR_RUN[S.out]; if (r) r();
+      VR_OWN[S.out] = x.id;
+    } catch (e) { console.warn("vrRestoreView", e); }
+    vrRestoring = false; return true;
+  }
   function vrSave(id) {
     const box = document.querySelector(`[data-vrbox="${id}"]`), body = $(id); if (!box || !body) return;
     const hint = box.querySelector("[data-vrhint]"), it = box.querySelector("[data-vrit]").value, st = (box.querySelector("[data-vrst][aria-pressed='true']") || {}).dataset;
@@ -129,6 +167,7 @@
     const toolStr = (VR_OUTS[id] || "") + (title && title !== "尚未分析" && !(VR_OUTS[id] || "").includes(title) ? "：" + title : "");
     (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: toolStr, st: st.vrst, note, html: vrSnap(body), plan: pl, act: actTxt.trim(), dev, devWhy, meth: vrMeth(id, body, toolStr), key: vrKey(id, note, body) });
     fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {} try { vfRender(); } catch (_) {}
+    try { const rt = (document.querySelector(`[data-view] #${id}`) || body).closest("[data-view]").dataset.view; x.ana = { snap: vrSnapView(rt, id), at: Date.now() }; VR_OWN[id] = x.id; fbSave(); } catch (_) {}
     const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>${vrNextHtml()}`; }
     const left = vrStatItems().filter(y => !(y.apx || []).length);
     if (left.length) { setTimeout(() => vrGo(left[0], x.cause), 600); return; }   // 自動到下一個未驗證的統計因子
@@ -138,15 +177,16 @@
   document.addEventListener("change", e => {
     const it = e.target.closest(".vr-pick [data-vrit]"); if (it) { const box = it.closest(".vr-pick"), x = vrItems().find(y => y.id === it.value), pb = box.querySelector("[data-vrplan]"), a = box.querySelector("[data-vract]"); if (pb) pb.innerHTML = vrPlanBox(x, a ? a.value : ""); return; }
     const ac = e.target.closest(".vr-pick [data-vract]"); if (ac) { const box = ac.closest(".vr-pick"), x = vrItems().find(y => y.id === box.querySelector("[data-vrit]").value), pb = box.querySelector("[data-vrplan]"), dv = (box.querySelector("[data-vrdev]") || {}).value || ""; if (pb) { pb.innerHTML = vrPlanBox(x, ac.value); const d = pb.querySelector("[data-vrdev]"); if (d) d.value = dv; } }
-    const fs = e.target.closest("[data-vfsel]"); if (fs) { vrFocus = fs.value; const x = vrItems().find(y => y.id === vrFocus); if (x) vrSetProblem(x, fs.dataset.vfsel); vfRender(); }
+    const fs = e.target.closest("[data-vfsel]"); if (fs) { vrFocus = fs.value; const x = vrItems().find(y => y.id === vrFocus); if (x) { vrSetProblem(x, fs.dataset.vfsel); if (x.ana && x.ana.snap && VR_OWN[vrOutOf(x)] !== x.id && x.ana.snap.route === fs.dataset.vfsel) vrRestoreView(x); } vfRender(); }
   });
   (function vrInit() {
-    Object.keys(VR_OUTS).forEach(id => { const b = $(id); if (!b) return; new MutationObserver(() => vrSlot(id)).observe(b, { childList: true, subtree: false }); vrSlot(id); });
+    Object.keys(VR_OUTS).forEach(id => { const b = $(id); if (!b) return; new MutationObserver(() => { if (!vrRestoring && vrFocus && vrHas(b)) { const fx = vrItems().find(y => y.id === vrFocus); if (fx && vrOutOf(fx) === id) VR_OWN[id] = vrFocus; } vrSlot(id); try { vfRender(); } catch (_) {} }).observe(b, { childList: true, subtree: false }); vrSlot(id); });
     document.addEventListener("click", e => {
       const o = e.target.closest("[data-vropen]"); if (o) { vrSlot(o.dataset.vropen, true); return; }
       const c = e.target.closest("[data-vrclose]"); if (c) { const s = $(c.dataset.vrclose).nextElementSibling; if (s) s.dataset.open = ""; vrSlot(c.dataset.vrclose); return; }
       const st = e.target.closest(".vr-pick [data-vrst]"); if (st) { st.parentElement.classList.remove("vr-need"); st.parentElement.querySelectorAll("[data-vrst]").forEach(b => b.setAttribute("aria-pressed", String(b === st))); const h = st.closest(".vr-pick").querySelector("[data-vrhint]"); if (h) h.textContent = ""; return; }
       const sv = e.target.closest("[data-vrsave]"); if (sv) { vrSave(sv.dataset.vrsave); return; }
+      const vl = e.target.closest("[data-vfload]"); if (vl) { const x = vrItems().find(y => y.id === vl.dataset.vfload); if (x) { vrRestoreView(x); vfRender(); } return; }
       const fg = e.target.closest("[data-vfgo]"); if (fg) { const x = vrItems().find(y => y.id === fg.dataset.vfgo); if (x) { const b = document.querySelector('.toolnav [data-route="sample"]'); if (b) b.click(); setTimeout(() => { try { svView(x); } catch (_) {} }, 120); } return; }
       const nx = e.target.closest("[data-vrnext]"); if (nx) { const x = vrItems().find(y => y.id === nx.dataset.vrnext); if (x) vrGo(x); }
     });
@@ -174,17 +214,22 @@
       bar.hidden = false;
       bar.innerHTML = `<div class="vf-row"><b>目前驗證</b><select data-vfsel="${r}" aria-label="目前驗證的因子"><option value="">— 選擇要驗證的因子 —</option>${sorted.map(y => `<option value="${y.id}"${x && y.id === x.id ? " selected" : ""}>${mine(y) ? "" : "（其他工具）"}${esc(y.cause || "（未命名）")}${(y.apx || []).length ? "　✓ 已存" : ""}</option>`).join("")}</select>
         ${x ? `<span class="vf-st ${nA ? "ok" : ""}">${nA ? `已存 ${nA} 份` : "尚未存結果"}</span>${nA ? `<button type="button" class="linkbtn" data-vrres="${x.id}">📊 看已存的結果（附錄 ${vrApxNos(x).join("、")}）</button>` : ""}` : `<span class="hint">選了之後，存結果時會自動帶這一項，並顯示它的樣本數規劃。</span>`}</div>
+        ${x ? (() => { const out = vrOutOf(x), ow = VR_OWN[out], owx = ow ? L.find(y => y.id === ow) : null; if (ow === x.id) return `<div class="vf-row vf-sub"><span class="vf-own ok">下方是這一項的數據與結果</span></div>`; return `<div class="vf-row vf-sub">${owx ? `<span class="vf-own">⚠ 下方目前是「${esc(owx.cause)}」的數據</span>` : ""}${x.ana && x.ana.snap ? `<button type="button" class="btn small" data-vfload="${x.id}">載入這一項存過的數據</button>` : `<span class="hint">這一項還沒有數據：${owx ? "請清掉下方數據，" : ""}貼上這一項的數據後分析</span>`}</div>`; })() : ""}
         ${x ? `<div class="vf-row vf-sub"><span>策略：${esc(x.tool || "—")}${mine(x) ? "" : `　<b class="vf-warn">這一項的策略不是這個工具</b>`}</span><span>樣本數規劃：${pl ? `<b>${esc(pl.n)}</b>（${esc(pl.meth)}${pl.sum ? "：" + esc(pl.sum.slice(0, 80)) : ""}）` : `<span class="vf-warn">尚未規劃</span>`}</span>${pl && x.ss && x.ss.inp ? `<button type="button" class="linkbtn" data-vfgo="${x.id}">🔍 查看計算</button>` : ""}</div>` : ""}`;
     });
   }
   setTimeout(() => { try { vfRender(); Object.values(VF_VIEWS).forEach(vid => { const v = $(vid); if (v) new MutationObserver(() => { if (!v.hidden) vfRender(); }).observe(v, { attributes: true, attributeFilter: ["hidden"] }); }); } catch (_) {} }, 0);
   function vrGo(x, done) {   // 到這一個驗證項目的分析頁（存入後自動呼叫）
+    navCtx = "plan";
     { const [r, sub] = vrRoute(x.tool);
         if (r === "hypothesis" && sub === "compare" && currentView === "hypothesis") { try { $("clearBtn").click(); } catch (_) {} }   // 同一頁換下一項：清掉上一項的數據（已存在附錄）
         try { gotoTool(r, sub); } catch (_) { const b = document.querySelector(`.toolnav [data-route="${r}"]`); if (b) b.click(); }
-        vrFocus = x.id; vrSetProblem(x, r); vfRender();
+        vrFocus = x.id; vrSetProblem(x, r);
+        const out = vrOutOf(x);
+        if (x.ana && x.ana.snap && VR_OWN[out] !== x.id) setTimeout(() => { vrRestoreView(x); vfRender(); }, 60);
+        vfRender();
         try { fbNote(`${done ? `已儲存「${done}」到報告。` : ""}現在驗證「${x.cause}」：貼上這一項的數據後分析，再按結果下方的「驗證結束，並儲存到報告」。`); } catch (_) {}
-        setTimeout(() => { const v = document.querySelector(`[data-view="${r}"]`), t = v && v.querySelector(".tool-problem"); (t || v || document.body).scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
+        setTimeout(() => { const v = document.querySelector(`[data-view="${r}"]`); (v || document.body).scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
   }
   // ---------------- PDCA 報告：第 5 段各項結論、附錄 ----------------
   function vrTableHtml(mode) {

@@ -9,23 +9,41 @@
       </div>
       <div class="top-actions"><span class="ai-chips" id="aiChips" role="status" aria-live="polite"></span><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
     </div>
-    <nav class="tabs toolnav" role="tablist" aria-label="工具">
-      <button type="button" role="tab" data-route="aisettings" aria-selected="false">AI 設定與案件存取</button>
-      <button type="button" role="tab" data-route="home" aria-selected="true">定義問題</button>
-      <button type="button" role="tab" data-route="fishbone" aria-selected="false">魚骨圖</button>
-      <button type="button" role="tab" data-route="sample" aria-selected="false">樣本數規劃</button>
-      <button type="button" role="tab" data-route="hypothesis" aria-selected="false">假設檢定</button>
-      <button type="button" role="tab" data-route="regression" aria-selected="false">相關與回歸</button>
-      <button type="button" role="tab" data-route="msa" aria-selected="false">MSA</button>
-      <button type="button" role="tab" data-route="spc" aria-selected="false">SPC</button>
-      <button type="button" role="tab" data-route="doe" aria-selected="false">DOE</button>
-      <button type="button" role="tab" data-route="taguchi" aria-selected="false">田口方法</button>
-      <button type="button" role="tab" data-route="validation" aria-selected="false">確效</button>
-      <button type="button" role="tab" data-route="pdca" aria-selected="false">PDCA 報告</button>
+    <nav class="tabs toolnav" role="tablist" aria-label="流程與工具">
+      <button type="button" role="tab" class="nv-step" data-route="home" data-step="def" aria-selected="true"><span class="nv-n">1</span>定義問題</button><span class="nv-arr" aria-hidden="true">›</span>
+      <button type="button" role="tab" class="nv-step" data-route="fishbone" data-step="fb" aria-selected="false"><span class="nv-n">2</span>魚骨圖</button><span class="nv-arr" aria-hidden="true">›</span>
+      <button type="button" role="tab" class="nv-step" data-route="plan" data-step="plan" aria-selected="false"><span class="nv-n">3</span>驗證計畫</button><span class="nv-arr" aria-hidden="true">›</span>
+      <button type="button" role="tab" class="nv-step" data-route="pdca" data-step="rp" aria-selected="false"><span class="nv-n">4</span>PDCA 報告</button>
+      <span class="nv-sp"></span>
+      <button type="button" role="tab" class="nv-side" data-route="toolbox" aria-selected="false">🧰 工具箱</button>
+      <button type="button" role="tab" class="nv-side" data-route="aisettings" aria-selected="false">⚙ 設定與案件</button>
+      <span class="nv-hid" aria-hidden="true"><button type="button" data-route="sample" tabindex="-1">樣本數規劃</button><button type="button" data-route="hypothesis" tabindex="-1">假設檢定</button><button type="button" data-route="regression" tabindex="-1">相關與回歸</button><button type="button" data-route="msa" tabindex="-1">MSA</button><button type="button" data-route="spc" tabindex="-1">SPC</button><button type="button" data-route="doe" tabindex="-1">DOE</button><button type="button" data-route="taguchi" tabindex="-1">田口方法</button><button type="button" data-route="validation" tabindex="-1">計算驗證</button></span>
     </nav>
     <p class="case-badge" id="caseBadge" hidden></p>
   </header>
   <div id="flowBar" class="flow-wrap" aria-label="解決問題流程"></div>
+
+  <section id="viewPlan" role="tabpanel" data-view="plan" hidden>
+    <div class="tool-head"><h2 class="tool-title">③ 驗證計畫</h2><span class="hint">每個要驗證的原因一列，從左到右走完：驗證策略 → 樣本數 → 數據與分析 → 結論</span></div>
+    <p class="hint fb-msg plan-msg" id="planMsg" aria-live="polite"></p>
+    <div id="planSum"></div>
+    <div id="planHub"></div>
+    <details class="card plan-edit" id="planEdit">
+      <summary><b>編輯驗證項目</b><span class="hint">　新增、修改、勾選要驗證的原因；請 AI 建議驗證策略</span></summary>
+      <div class="step">
+          <details class="plan-fbv"><summary>魚骨圖標記「◇ 待驗證／★ 重要」的原因</summary><div id="fbVerify"></div></details>
+          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證策略</button><span class="hint">不用統計就能確認的，AI 會直接建議其他策略；問第二次只列清單中沒有的原因。</span></div>
+          <div id="fbVplan"></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="viewToolbox" role="tabpanel" data-view="toolbox" hidden>
+    <div class="tool-head"><h2 class="tool-title">🧰 工具箱</h2><span class="hint">不走流程，直接用任何一個工具；依「要回答的問題」分組</span></div>
+    <input type="search" class="tb-search" id="tbSearch" placeholder="🔍 用一句話找方法，例如：兩條線的拉力有沒有差／要測幾個才能宣稱 95/95" aria-label="搜尋方法">
+    <div class="tb-grid" id="tbGrid"></div>
+    <p class="hint" id="tbNone" hidden>找不到符合的方法，請換個說法，或到「定義問題」問 AI。</p>
+  </section>
 
   <section id="viewHome" role="tabpanel" data-view="home">
     <div class="sheets">
@@ -133,14 +151,12 @@
         <div class="fb-svgwrap" id="fbSvgWrap"><div class="fb-svg scroll-x" id="fbSvg"></div><div class="fb-pop" id="fbPop" hidden role="dialog" aria-label="修改"></div></div>
         <p class="hint fb-legend">點圖上的文字可直接修改：點原因可改文字、排除（含理由）、移動分類、加子因子；點分類名稱可新增原因；點問題點可改寫。★ 重要　◇ 待驗證　· 子因子</p>
       </aside>
-      <section class="card fb-edit">
+      <section class="card fb-edit fb-moved">
         <div class="step">
           <span class="qref">STEP 3</span>
-          <h2 class="q">驗證規劃</h2>
-          <p class="help">原因討論完後，按「請 AI 建議驗證策略」或自行新增，在下方清單勾選要驗證的項目；勾好後按「下一步：樣本數規劃」。</p>
-          <div id="fbVerify"></div>
-          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證策略</button><span class="hint">不用統計就能確認的，AI 會直接建議其他策略；問第二次只列清單中沒有的原因。</span></div>
-          <div id="fbVplan"></div>
+          <h2 class="q">驗證規劃 → 已移到「③ 驗證計畫」</h2>
+          <p class="help">原因討論完後，到 ③ 驗證計畫 請 AI 建議驗證策略或自行新增項目；每個項目在那裡走完 樣本數 → 數據與分析 → 結論。</p>
+          <div class="run-row"><button class="btn primary" type="button" data-route-go="plan">前往 ③ 驗證計畫 →</button></div>
         </div>
       </section>
     </div>
@@ -1830,9 +1846,11 @@
   let hypSub = "compare";
   let chatKey = "home";
   const chats = {};
-  function modeKey() { return currentView === "home" ? "home" : currentView === "hypothesis" ? "hyp" : currentView === "fishbone" ? "fishbone" : ["spc", "msa", "doe", "taguchi", "sample", "regression"].includes(currentView) ? currentView : "none"; }
+  function modeKey() { return currentView === "plan" ? "fishbone" : currentView === "home" ? "home" : currentView === "hypothesis" ? "hyp" : currentView === "fishbone" ? "fishbone" : ["spc", "msa", "doe", "taguchi", "sample", "regression"].includes(currentView) ? currentView : "none"; }
   const isTool = k => k === "spc" || k === "msa" || k === "doe" || k === "taguchi" || k === "sample" || k === "regression";
-  const AI_VIEWS = ["hypothesis", "home", "fishbone", "spc", "msa", "doe", "taguchi", "sample", "regression"];
+  const AI_VIEWS = ["hypothesis", "home", "fishbone", "spc", "msa", "doe", "taguchi", "sample", "regression", "plan"];
+  const NAV_TOOLS = ["sample", "hypothesis", "regression", "msa", "spc", "doe", "taguchi", "validation"];
+  let navCtx = "toolbox";   // 工具頁的來源：plan＝從驗證計畫的項目進來；toolbox＝從工具箱
   // AI 在各工具分頁隨時可用：沒有結果時用於規劃與教學（看頁面目前的設定），有結果時解讀結果
   function hasData(k) {
     k = k || chatKey;
@@ -2871,9 +2889,10 @@
   let valRan = false, currentView = "home";
   function route(name) {
     const tool = TOOLS.find(t => t.id === name);
-    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression", "pdca"].includes(name) ? name : (tool ? "placeholder" : "home");
+    const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression", "pdca", "plan", "toolbox"].includes(name) ? name : (tool ? "placeholder" : "home");
     if (view === "home" && name !== "home") name = "home";
-    document.querySelectorAll(".toolnav [data-route]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.route === name)));
+    const navSel = NAV_TOOLS.includes(name) ? (navCtx === "plan" ? "plan" : "toolbox") : name;   // 工具頁：從驗證計畫進來就亮「驗證計畫」，否則亮「工具箱」
+    document.querySelectorAll(".toolnav [data-route]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.route === navSel)));
     document.querySelectorAll("[data-view]").forEach(sec => { sec.hidden = sec.dataset.view !== view; });
     currentView = view;
     const aiView = AI_VIEWS.includes(view);
@@ -2931,6 +2950,6 @@
   renderGuide();
   // 不再自動載入範例：開啟時假設檢定是空的，避免舊範例數據被誤認為自己的資料（要看範例請按「範例」）
   const start = (location.hash || "").replace("#", "");
-  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression", "pdca"].includes(start) ? start : "home");
+  route(["hypothesis", "fishbone", "sample", "spc", "msa", "doe", "taguchi", "validation", "aisettings", "regression", "pdca", "plan", "toolbox"].includes(start) ? start : "home");
 })();
 </script>

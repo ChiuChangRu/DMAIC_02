@@ -88,7 +88,7 @@
       if (!svOk(x)) return `<span class="sv-no">尚未規劃</span>`;
       return `<span class="sv-ok">${esc(s.n)}</span>${SV_MANUAL[s.q] ? "" : `<div class="sv-meth">計算方式：${esc((SV_Q.find(o => o[0] === s.q) || ["", ""])[1])}</div>`}<div class="sv-why">${esc(s.sum || s.why.split("\n")[0])}</div>${svNoBasis(x) ? `<div class="sv-warn">理由還有空白（＿＿）或「請填」沒寫</div>` : ""}`;
     };
-    box.innerHTML = `<h3>驗證項目的樣本數（魚骨圖 STEP 3 勾選的 ${L.length} 項）</h3><p class="help" style="margin:0">每一項選「要證明什麼」，再按「規劃」算出樣本數；數量與理由會帶進 PDCA 報告第 4 段。</p>
+    box.innerHTML = `<h3>驗證項目的樣本數（③ 驗證計畫勾選的 ${L.length} 項）</h3><p class="help" style="margin:0">每一項選「要證明什麼」，再按「規劃」算出樣本數；數量與理由會帶進 PDCA 報告第 4 段。</p>
       <div class="scroll-x"><table class="sv-tbl"><thead><tr><th>驗證項目</th><th class="sv-qc">要證明什麼</th><th class="sv-rc">樣本數與理由</th><th class="sv-bc"></th></tr></thead><tbody>${L.map(x => {
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
         return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>

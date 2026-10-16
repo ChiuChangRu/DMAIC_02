@@ -59,21 +59,15 @@
     let nApx = 0; try { nApx = (fb.vplan || []).reduce((t, x) => t + (x.apx || []).length, 0); } catch (_) {}
     const sig = JSON.stringify([d, redo, mini, cs, rs && rs.id, currentView, RD.n, RD.list.length, flowHistOpen, nApx]);
     if (!force && sig === flowSig) return; flowSig = sig;
-    const save = `<button type="button" class="fl-save" data-fl="save" title="存成案件（存在這個瀏覽器；換電腦請到「AI 設定與案件存取」匯出）">💾 ${mini ? "暫存" : "暫存進度"}</button>`;
+    const save = `<button type="button" class="fl-save" data-fl="save" title="存成案件（存在這個瀏覽器；換電腦請到「AI 設定與案件存取」匯出）">💾 暫存進度</button>`;
     const caseTxt = cs ? `案件：${esc(cs.name)}　上次暫存 ${flowHM(cs.at)}` : "尚未暫存";
     const resume = rs ? `<div class="fl-resume">繼續上次的案件：<b>${esc(rs.name)}</b>（${flowHM(rs.savedAt)} 暫存）<button type="button" class="fl-mini-btn" data-fl="resume" data-id="${rs.id}">載入</button><button type="button" class="fl-x" data-fl="noresume">不用</button></div>` : "";
-    if (mini) {
-      box.className = "flow-wrap mini";
-      box.innerHTML = `${resume}<div class="fl-minirow"><button type="button" class="fl-open" data-fl="open">📋 解決問題流程${RD.n > 1 ? `（第 ${RD.n} 輪）` : ""}　<b>已完成 ${nDone}／${FLOW_STEPS.length}</b>${nowI >= 0 ? `　下一步：${FLOW_STEPS[nowI].lab}` : "　全部完成"}　展開 ▾</button>${save}</div>`;
-      return;
-    }
-    box.className = "flow-wrap";
-    const st = (s, i) => { const done = d[s.k], now = i === nowI, rd = redo[s.k];
-      let sub = done ? "已完成" : now ? (rd ? `第 ${RD.n} 輪：修改中` : "目前在這一步") : rd ? `第 ${RD.n} 輪待重做` : "未開始";
-      if (s.k === "an" && !done) { try { const L = vrStatItems(); if (L.length) { const a = L.filter(x => (x.apx || []).length).length; if (a) sub = `已存 ${a}／${L.length} 項`; } } catch (_) {} }
-      return `<li class="${done ? "done" : now ? "now" : rd ? "redo" : ""}"><button type="button" class="st" data-fl="go" data-i="${i}" aria-label="${s.lab}：${sub}"><span class="dot">${done ? "✓" : i + 1}</span><span class="lab">${s.lab}</span><span class="sub">${sub}</span></button></li>`; };
+    // 上方導覽的四步顯示完成狀態：③ 驗證計畫＝驗證項目、樣本數、統計分析都完成
+    const navD = { def: d.def, fb: d.fb, plan: d.vp && d.ss && d.an, rp: d.rp };
+    document.querySelectorAll(".toolnav [data-step]").forEach(b => { const k = b.dataset.step; b.classList.toggle("nv-done", !!navD[k]); const n = b.querySelector(".nv-n"); if (n) n.textContent = navD[k] ? "✓" : ({ def: 1, fb: 2, plan: 3, rp: 4 })[k]; });
+    box.className = "flow-wrap slim";
     const hist = RD.list.length ? `<details class="rd-hist"${flowHistOpen ? " open" : ""}><summary data-fl="hist">各輪紀錄（${RD.list.length + 1}）</summary><div class="scroll-x"><table class="rd-tbl"><thead><tr><th>輪次</th><th>日期</th><th>從哪一步開始</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${RD.list.map((r, i) => `<tr><td>第 ${r.n} 輪</td><td>${flowHM(r.date)}</td><td>${r.from >= 0 ? FLOW_STEPS[r.from].lab : "—"}</td><td class="${r.result === "ok" ? "rd-ok" : r.result === "part" ? "rd-part" : "rd-ng"}">${RD_RES[r.result] || ""}</td><td>${esc(r.note || "")}</td><td class="rd-btns"><button type="button" class="rd-a" data-fl="view" data-i="${i}">查看</button><button type="button" class="rd-a" data-fl="exp" data-i="${i}">匯出</button><button type="button" class="rd-a rd-del" data-fl="del" data-i="${i}">刪除</button></td></tr>`).join("")}<tr><td>第 ${RD.n} 輪</td><td>—</td><td>${RD.from >= 0 ? FLOW_STEPS[RD.from].lab : "—"}</td><td class="rd-now">進行中</td><td></td><td></td></tr></tbody></table></div><p class="hint">每一輪按「重新檢討魚骨圖」時完整封存（問題、原因、驗證項目、各工具資料與結果、報告）；除非按「刪除」，不會消失。</p></details>` : "";
-    box.innerHTML = `${resume}<div class="flowbar"><div class="fl-top"><span class="fl-t">解決問題流程${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>${RD.list.length ? `<button type="button" class="rd-undo" data-fl="undo" title="誤按「重新檢討魚骨圖」時使用：刪掉剛封存的那一輪紀錄，回到第 ${RD.n - 1} 輪（畫面資料不變）">✕ 取消第 ${RD.n} 輪</button>` : ""}` : ""}<small>不一定要照順序，每個工具都能直接用</small></span><span class="fl-act"><button type="button" class="rd-next" data-fl="next" title="驗證結果不理想、要重新檢討原因時使用：封存這一輪，回到魚骨圖">🔁 重新檢討魚骨圖</button><span class="fl-save-t">${caseTxt}</span>${save}<button type="button" class="fl-x" data-fl="min">收起 ▴</button></span></div><ol>${FLOW_STEPS.map(st).join("")}</ol>${hist}</div>`;
+    box.innerHTML = `${resume}<div class="flowbar fl-slim"><span class="fl-case">${RD.n > 1 ? `<span class="rd-badge">第 ${RD.n} 輪</span>${RD.list.length ? `<button type="button" class="rd-undo" data-fl="undo" title="誤按「重新檢討魚骨圖」時使用：刪掉剛封存的那一輪紀錄，回到第 ${RD.n - 1} 輪（畫面資料不變）">✕ 取消第 ${RD.n} 輪</button>` : ""}` : ""}<span class="fl-save-t">${caseTxt}</span></span><span class="fl-act">${save}<button type="button" class="rd-next" data-fl="next" title="驗證結果不理想、要重新檢討原因時使用：封存這一輪，回到魚骨圖">🔁 重新檢討魚骨圖</button></span></div>${hist}`;
   }
   function rdDialog() {
     let dlg = $("rdDlg"); if (dlg) dlg.remove();
