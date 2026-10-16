@@ -1165,6 +1165,12 @@ nav.toolnav .nv-side { background: transparent; border-radius: 0; }
 /* 四步驟流程底色加強 */
 nav.toolnav .nv-flow { background: rgba(216,153,95,.26); box-shadow: inset 0 0 0 1.5px rgba(216,153,95,.45); }
 nav.toolnav .nv-flow:has([aria-selected="true"]) { background: rgba(216,153,95,.38); box-shadow: inset 0 0 0 1.5px rgba(216,153,95,.7); }
+/* 分組標題：方法一／方法二 */
+nav.toolnav .nv-lab { display: inline-flex; flex-direction: column; justify-content: center; align-self: center; padding: 0 8px 4px 6px; line-height: 1.2; white-space: nowrap; color: rgba(255,255,255,.75); }
+nav.toolnav .nv-lab small { font-size: 11px; letter-spacing: .08em; color: rgba(255,255,255,.6); }
+nav.toolnav .nv-lab b { font-size: 13px; color: #f0c08f; }
+nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); margin-right: 4px; }
+@media (max-width: 720px) { nav.toolnav .nv-flow .nv-lab { flex: 1 1 100%; flex-direction: row; gap: 6px; align-items: baseline; border-right: 0; padding-top: 4px; } }
 </style>
 
 <div class="wrap">
@@ -1176,9 +1182,9 @@ nav.toolnav .nv-flow:has([aria-selected="true"]) { background: rgba(216,153,95,.
       </div>
       <div class="top-actions"><span class="ai-chips" id="aiChips" role="status" aria-live="polite"></span><a class="btn ghost-light small" id="learnLink" href="learn.html" target="_blank" rel="noopener">統計觀念圖解 ↗</a></div>
     </div>
-    <nav class="tabs toolnav" role="tablist" aria-label="工具箱、解決問題流程與設定">
-      <span class="nv-grp nv-tb"><button type="button" role="tab" class="nv-side" data-route="toolbox" aria-selected="false">🧰 工具箱</button></span>
-      <span class="nv-grp nv-flow"><button type="button" role="tab" class="nv-step" data-route="home" data-step="def" aria-selected="true"><span class="nv-n">1</span>定義問題</button><span class="nv-arr" aria-hidden="true">›</span>
+    <nav class="tabs toolnav" role="tablist" aria-label="方法一：工具箱；方法二：PDCA 改善流程；設定與案件">
+      <span class="nv-grp nv-tb"><span class="nv-lab" aria-hidden="true"><small>方法一</small></span><button type="button" role="tab" class="nv-side" data-route="toolbox" aria-selected="false">🧰 工具箱</button></span>
+      <span class="nv-grp nv-flow"><span class="nv-lab" aria-hidden="true"><small>方法二</small><b>PDCA 改善流程</b></span><button type="button" role="tab" class="nv-step" data-route="home" data-step="def" aria-selected="true"><span class="nv-n">1</span>定義問題</button><span class="nv-arr" aria-hidden="true">›</span>
       <button type="button" role="tab" class="nv-step" data-route="fishbone" data-step="fb" aria-selected="false"><span class="nv-n">2</span>魚骨圖</button><span class="nv-arr" aria-hidden="true">›</span>
       <button type="button" role="tab" class="nv-step" data-route="plan" data-step="plan" aria-selected="false"><span class="nv-n">3</span>驗證計畫</button><span class="nv-arr" aria-hidden="true">›</span>
       <button type="button" role="tab" class="nv-step" data-route="pdca" data-step="rp" aria-selected="false"><span class="nv-n">4</span>PDCA 報告</button></span>
