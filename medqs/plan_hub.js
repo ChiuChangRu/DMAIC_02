@@ -105,13 +105,26 @@
     if (extra === "equiv") { const c = document.querySelector('#goalChips [data-goal="equiv"]'); if (c) c.click(); }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+  // 工具便利貼（和 ① 定義問題 的工具圖卡同一組圖）；AI 建議時加框、標順序，其他變淡
+  const TB_TILE_ORDER = ["fishbone", "sample", "hypothesis", "regression", "msa", "spc", "doe", "taguchi"];
+  function tbTilesRender() {
+    const g = $("tbTiles"); if (!g) return; let T = []; try { T = TOOLS; } catch (_) {}
+    g.innerHTML = TB_TILE_ORDER.map(id => { const t = T.find(x => x.id === id) || { name: id, desc: "" }; let src = ""; try { src = TILE_IMG[id] || ""; } catch (_) {}
+      return `<button type="button" class="tool-card tile" data-tbtile="${id}" title="${esc(t.desc || "")}" aria-label="${esc(t.name)}：${esc(t.desc || "")}"><span class="tile-img"><img src="${src}" alt="" decoding="async"></span></button>`; }).join("");
+  }
+  function tbTilesMark(routes) {
+    const cards = [...document.querySelectorAll("#tbTiles [data-tbtile]")];
+    cards.forEach(c => { const i = routes.indexOf(c.dataset.tbtile); c.classList.toggle("rec", routes.length > 0 && i >= 0); c.classList.toggle("dim", routes.length > 0 && i < 0);
+      let o = c.querySelector(".tile-order"); if (i >= 0) { if (!o) { o = document.createElement("span"); o.className = "tile-order"; c.appendChild(o); } o.textContent = i + 1; } else if (o) o.remove(); });
+  }
   (function tbInit() {
-    if (!$("tbGrid")) return; tbRender();
+    if (!$("tbGrid")) return; tbRender(); setTimeout(tbTilesRender, 0);
+    $("tbTiles").addEventListener("click", e => { const b = e.target.closest("[data-tbtile]"); if (b) tbOpen(b.dataset.tbtile, ""); });
     $("tbGrid").addEventListener("click", e => { const b = e.target.closest("[data-tb]"); if (!b) return; const [r, s] = b.dataset.tb.split("|"); tbOpen(r, s); });
     $("tbLog").addEventListener("click", e => { const b = e.target.closest("[data-tb]"); if (!b) return; const [r, s] = b.dataset.tb.split("|"); tbOpen(r, s); });
     $("tbAsk").addEventListener("click", tbAsk);
     $("tbQ").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); tbAsk(); } });
-    $("tbClear").addEventListener("click", () => { TB_TURNS = []; $("tbLog").innerHTML = ""; $("tbClear").hidden = true; $("tbAiMsg").textContent = ""; tbMark([]); tbFilter(""); $("tbQ").value = ""; $("tbQ").focus(); });
+    $("tbClear").addEventListener("click", () => { TB_TURNS = []; $("tbLog").innerHTML = ""; $("tbClear").hidden = true; $("tbAiMsg").textContent = ""; tbMark([]); tbTilesMark([]); tbFilter(""); $("tbQ").value = ""; $("tbQ").focus(); });
   })();
 
   // ---------------- 工具箱：AI 問答選工具 ----------------
@@ -160,7 +173,7 @@
       const res = await sample(turns, { cache: false, modelTier: "default" });
       const txt = String((res && res.text) || ""), m = txt.match(/\{[\s\S]*\}/); let j = null; try { j = m ? JSON.parse(m[0]) : null; } catch (_) {}
       if (!j) { wait.innerHTML = "<p>AI 沒有給出可用的建議，請換個說法再問。</p>"; return; }
-      const r = tbReplyHtml(j); wait.innerHTML = r.html; tbMark(r.ids);
+      const r = tbReplyHtml(j); wait.innerHTML = r.html; tbMark(r.ids); tbTilesMark([...new Set(r.ids.map(id => (TB_LIST.find(t => t.id === id) || {}).r).filter(x => x && x !== "learn" && x !== "validation"))]);
       TB_TURNS = turns.concat([{ role: "assistant", content: m[0] }]);
     } catch (e) { wait.innerHTML = `<p>AI 呼叫失敗：${esc((e && e.message) || "請稍後再試")}</p>`; }
     finally { tbBusy = false; $("tbAsk").disabled = false; $("tbQ").focus(); }
