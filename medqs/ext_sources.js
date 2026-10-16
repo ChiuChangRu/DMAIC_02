@@ -1,39 +1,47 @@
   // =====================================================================
-  // 其他外部資料庫：openFDA（召回＋MAUDE）、PubMed、PatentsView、Health Canada
+  // 其他外部資料庫：openFDA（召回＋MAUDE）、USPTO（patent-mcp 連接器）、PubMed、Health Canada
   // 檢索到的紀錄一律附編號與連結；AI 依紀錄提出的原因必須引用編號（ref），
   // 沒有紀錄依據的原因視為 AI 推論，文字結尾加 *（程式會再檢查一次）。
   // 只送英文關鍵字與產品代碼到外部網站，不送客戶、批號、病患等資料。
   // =====================================================================
   const XS = [
-    { id: "openfda", name: "openFDA（美國 FDA 召回＋MAUDE 不良事件）", short: "openFDA" },
-    { id: "pubmed", name: "PubMed（醫學、材料文獻）", short: "PubMed" },
-    { id: "patents", name: "PatentsView（美國專利，需免費金鑰）", short: "PatentsView" },
-    { id: "hc", name: "Health Canada（加拿大回收與安全警訊）", short: "Health Canada" }
+    { id: "openfda", name: "FDA API", tip: "openFDA：美國 FDA 召回＋MAUDE 不良事件（網頁直接查詢）", short: "openFDA" },
+    { id: "uspto", name: "USPTO", tip: "USPTO：美國專利全文（同類產品的設計、失效對策）；需在 claude.ai 連接「USPTO Patents」連接器", short: "USPTO" },
+    { id: "pubmed", name: "PubMed", tip: "PubMed：醫學、材料文獻", short: "PubMed" },
+    { id: "hc", name: "Health Canada", tip: "Health Canada：加拿大回收與安全警訊（網頁直接下載公開資料檔）", short: "Health Canada" }
   ];
-  const XS_KEY = "mdqs.xs.v1", PV_KEY = "mdqs.pv.key";
-  let pubmedServer = null;
+  const XS_KEY = "mdqs.xs.v1";
+  let pubmedServer = null, usptoServer = null;
   (async () => {
     // 在 claude.ai 開啟時，PubMed 走連接器（平台不允許網頁直接連外部網站時仍可用）
-    try { const ns = window.claude && window.claude.use ? await window.claude.use("mcp") : null; if (!ns) return; const r = await ns.listTools(); const s = (r.servers || []).find(x => /pubmed/i.test(x.server)); if (s) pubmedServer = s.server; } catch (_) {}
+    try { const ns = window.claude && window.claude.use ? await window.claude.use("mcp") : null; if (!ns) { xsUsptoState(); return; } const r = await ns.listTools(); const L = r.servers || []; const s = L.find(x => /pubmed/i.test(x.server)); if (s) pubmedServer = s.server;
+      const u = L.find(x => (x.tools || []).some(t => (t.name || t) === "patent_search")) || L.find(x => /uspto|patent/i.test(x.server)); if (u) usptoServer = u.server; } catch (_) {}
+    xsUsptoState();
   })();
+  // USPTO 走自架的 patent-mcp 連接器；沒連接時停用並說明
+  function xsUsptoState() { const c = document.querySelector('#xsBox [data-xs="uspto"]'); if (!c) return; const na = c.closest("label").querySelector(".xs-na"); c.disabled = !usptoServer; if (!usptoServer) c.checked = false; if (na) na.textContent = usptoServer ? "" : "（未連接）"; }
+  // 有官方圖示就用圖示，沒有就用縮寫文字標籤
+  function srcIco(id, name) { const u = SRC_ICO[id]; return u ? `<img class="src-ico" src="${u}" alt="" width="18" height="18">` : `<span class="src-ico src-txt" aria-hidden="true">${esc({ uspto: "US", nq: "N" }[id] || name.slice(0, 1))}</span>`; }
   function xsUI() {
     const wrap = $("extWrap"); if (!wrap || $("xsBox")) return;
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(XS_KEY) || "{}"); } catch (_) {}
-    let pv = ""; try { pv = localStorage.getItem(PV_KEY) || ""; } catch (_) {}
     wrap.insertAdjacentHTML("afterend", `<div class="xs-box" id="xsBox">
-      <div class="xs-head"><b>檢索外部資料庫</b></div>
-      <div class="xs-list" id="xsList">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
-      <div class="xs-pv" id="xsPv"${saved.patents ? "" : " hidden"}><label for="xsPvKey" class="hint">PatentsView API 金鑰（到 USPTO 開發者網站免費申請；只存在這個瀏覽器）</label><input type="password" id="xsPvKey" autocomplete="off" value="${esc(pv)}" placeholder="貼上金鑰"></div>
-      <p class="hint xs-note">這些網站是否允許網頁直接查詢，依開啟方式而定；連不上時會說明原因，並附上可自行查詢的網址。</p>
+      <div class="xs-head"><b>資料來源</b><span class="hint">勾選後 AI 會一起查；滑鼠移到名稱上看說明</span></div>
+      <div class="xs-list src-row" id="xsList">${XS.map(s => `<label class="fb-chk src-chip" title="${esc(s.tip)}"><input type="checkbox" data-xs="${s.id}"${saved[s.id] && s.id !== "uspto" ? " checked" : ""}> ${srcIco(s.id, s.name)}<span>${esc(s.name)}<span class="hint xs-na"></span></span></label>`).join("")}</div>
+      <div id="xsKmSlot"></div>
     </div>`);
     // NyquistAI 併入同一個清單（第一項）；不在 claude.ai 或沒連接時停用並說明
     $("xsList").prepend(wrap); wrap.classList.remove("ext-chk");
-    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（目前開啟方式無法使用）"; }
-    else { $("extChk").disabled = true; $("extNa").textContent = "（尚未偵測到 NyquistAI 連接器）"; }
+    // 公司 KM 也併入同一列（最後一項）；上傳區只在勾選後顯示
+    const kl = $("kmChkLab"); if (kl) { $("xsList").appendChild(kl); const ki = kl.querySelector("input"); if (ki && !kl.querySelector(".src-ico")) ki.insertAdjacentHTML("afterend", " " + srcIco("km", "KM")); }
+    { const ni = wrap.querySelector("input"); if (ni && !wrap.querySelector(".src-ico")) ni.insertAdjacentHTML("afterend", " " + srcIco("nq", "NyquistAI")); }
+    const kb = $("kmBox"), kp = document.querySelector(".keep-box"); if (kb) $("xsKmSlot").appendChild(kb); if (kp) $("xsKmSlot").appendChild(kp);
+    xsUsptoState();
+    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（無法使用）"; $("extWrap").title += "。目前開啟方式無法使用（要在 claude.ai 裡開啟）"; }
+    else { $("extChk").disabled = true; $("extNa").textContent = "（未連接）"; }
     $("xsBox").addEventListener("change", e => {
       const c = e.target.closest("[data-xs]");
-      if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} $("xsPv").hidden = !o.patents; }
-      if (e.target.id === "xsPvKey") { try { const v = e.target.value.trim(); v ? localStorage.setItem(PV_KEY, v) : localStorage.removeItem(PV_KEY); } catch (_) {} }
+      if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} }
     });
   }
   xsUI();
@@ -94,16 +102,17 @@
     const items = arts.filter(a => a.pmid).map(a => ({ ref: "PMID " + a.pmid, kind: "文獻", date: a.year || "", title: clip(a.title, 160), text: `${a.journal || ""}；摘要：${clip(a.abs, 400) || "（無摘要）"}`, url: "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/", doi: a.doi ? "https://doi.org/" + a.doi : "" }));
     return { items, sum: `依 PubMed 檢索，查詢式：${q}`, manual };
   }
-  // ---- PatentsView ----
-  async function xsPatents(plan) {
+  // ---- USPTO（自架 patent-mcp 連接器的 patent_search；回傳欄位依 ppubs 檢索結果，未經實際連線驗證*）----
+  async function xsUSPTO(plan) {
     const terms = xsTerms(plan.queries[0] || ""), manual = [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(terms.join(" "))]];
-    const key = ($("xsPvKey") && $("xsPvKey").value.trim()) || "";
-    if (!key) { const er = new Error("沒有填 PatentsView 金鑰，略過"); er.code = "nokey"; er.manual = manual; throw er; }
+    if (!usptoServer || !mcpNs) { const er = new Error("尚未連接 USPTO Patents 連接器"); er.manual = manual; throw er; }
     if (!terms.length) return { items: [], sum: "沒有可用的關鍵字", manual };
-    const body = { q: { _or: [{ patent_abstract: { _text_all: terms.join(" ") } }, { patent_title: { _text_all: terms.join(" ") } }] }, f: ["patent_id", "patent_title", "patent_date", "patent_abstract"], s: [{ patent_date: "desc" }], o: { size: 6 } };
-    const j = await getJSON("https://search.patentsview.org/api/v1/patent/", { method: "POST", headers: { "Content-Type": "application/json", "X-Api-Key": key }, body: JSON.stringify(body) });
-    const items = ((j && j.patents) || []).map(p => ({ ref: "US " + p.patent_id, kind: "專利", date: p.patent_date || "", title: clip(p.patent_title, 160), text: "摘要：" + clip(p.patent_abstract, 380), url: "https://patents.google.com/patent/US" + p.patent_id }));
-    return { items, sum: `PatentsView 符合 ${(j && j.total_hits) || items.length} 筆（列出最新幾筆）`, manual };
+    const query = terms.join(" AND ");
+    const res = await mcpNs.callTool(usptoServer, "patent_search", { query, kind: "both", limit: 6 });
+    const p = res && res.payload; if (!p || typeof p !== "object") throw new Error("USPTO 回應格式無法解讀");
+    const pick = (o, re) => { const k = Object.keys(o).find(k => re.test(k) && typeof o[k] === "string"); return k ? o[k] : ""; };
+    const items = (p.results || []).map(h => { const g = String(h.guid || ""), no = g.replace(/^US-?/, "").replace(/-/g, ""); return { ref: "US " + (g.replace(/^US-/, "").split("-")[0] || pick(h, /DocumentNumber/i)), kind: h.type === "US-PGPUB" ? "公開申請案" : "專利", date: String(h.datePublished || "").slice(0, 10), title: clip(h.inventionTitle || pick(h, /title/i), 160), text: "摘要：" + (clip(pick(h, /abstract/i).replace(/<[^>]+>/g, ""), 380) || "（檢索結果未附摘要）"), url: no ? "https://patents.google.com/patent/US" + no : "" }; });
+    return { items, sum: `USPTO 全文檢索「${query}」符合 ${p.total ?? items.length} 筆（含核准專利與公開申請案，列出最新幾筆）`, manual };
   }
   // ---- Health Canada（整份公開資料檔，在瀏覽器內篩選）----
   let hcCache = null;
@@ -123,10 +132,10 @@
   const XS_MANUAL = {
     openfda: () => [["FDA 召回資料庫", "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm"], ["MAUDE 查詢", "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/search.cfm"]],
     pubmed: plan => [["PubMed 查詢", "https://pubmed.ncbi.nlm.nih.gov/?term=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
-    patents: plan => [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
+    uspto: plan => [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
     hc: () => [["Health Canada 回收與安全警訊", "https://recalls-rappels.canada.ca/en"]]
   };
-  const XS_RUN = { openfda: xsOpenFDA, pubmed: xsPubMed, patents: xsPatents, hc: xsHC };
+  const XS_RUN = { openfda: xsOpenFDA, uspto: xsUSPTO, pubmed: xsPubMed, hc: xsHC };
   async function xsSearch(plan, ids) {
     return Promise.all(ids.map(async id => {
       const S = XS.find(s => s.id === id);

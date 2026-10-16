@@ -85,14 +85,15 @@
             <p class="hint" id="homeAttNote" hidden></p>
           </div>
           <div class="km-box" id="kmBox">
-            <label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告）</label>
+            <label class="fb-chk src-chip" id="kmChkLab" title="公司 KM＊（demo）：預設使用內建示範資料（虛構，僅供試用）；也可以改用自己上傳的 .md 檔"><input autocomplete="off" type="checkbox" id="kmChk"> <span>公司 KM*（demo）</span></label>
+            <p class="hint" id="kmDemoLine"></p>
             <div class="fb-drop-row"><span></span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
             <input autocomplete="off" type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
             <p class="hint" id="kmInfo"></p>
           </div>
           <div class="keep-box"><label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
-          <label class="fb-chk xs-nq" id="extWrap"><input autocomplete="off" type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
+          <label class="fb-chk xs-nq src-chip" id="extWrap" title="NyquistAI：FDA 召回＋不良事件。限 Claude Pro 以上方案，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍"><input autocomplete="off" type="checkbox" id="extChk"> <span>NyquistAI<span class="hint" id="extNa"></span></span></label>
           <div class="run-row home-go"><button class="btn primary" id="homeQBtn" type="button">AI 診斷分析</button></div>
           <div id="homeChoice" class="home-choice" hidden></div>
           <p class="hint" id="homeQHint"></p>

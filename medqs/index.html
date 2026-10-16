@@ -1179,6 +1179,19 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
 #viewToolbox #guideSheet { margin: 0 0 16px; }
 .tb-all { margin: 6px 0 8px; font-size: 17px; }
 .home-rec { margin: 8px 0 0; }
+/* 資料來源：精簡成一列勾選 */
+.xs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.xs-list.src-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.src-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); cursor: pointer; font-weight: 600; font-size: 14px; margin: 0; }
+.src-chip:has(input:checked) { border-color: var(--copper); background: color-mix(in srgb, var(--copper) 12%, var(--surface)); }
+.src-chip:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.src-chip .hint { font-weight: 400; font-size: 12px; margin-left: 2px; }
+.xs-nq.src-chip { grid-column: auto; }
+#xsKmSlot .km-box, #xsKmSlot .keep-box { margin-top: 8px; }
+#kmDemoLine { margin: 6px 0 0; }
+.src-ico { width: 18px; height: 18px; flex: 0 0 18px; object-fit: contain; border-radius: 3px; }
+.src-txt { display: inline-grid; place-items: center; font-size: 10px; font-weight: 800; color: #fff; background: #4a5a6a; letter-spacing: -.02em; }
+.src-chip:has(input:disabled) .src-ico { filter: grayscale(1); }
 </style>
 
 <div class="wrap">
@@ -1266,14 +1279,15 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
             <p class="hint" id="homeAttNote" hidden></p>
           </div>
           <div class="km-box" id="kmBox">
-            <label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告）</label>
+            <label class="fb-chk src-chip" id="kmChkLab" title="公司 KM＊（demo）：預設使用內建示範資料（虛構，僅供試用）；也可以改用自己上傳的 .md 檔"><input autocomplete="off" type="checkbox" id="kmChk"> <span>公司 KM*（demo）</span></label>
+            <p class="hint" id="kmDemoLine"></p>
             <div class="fb-drop-row"><span></span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
             <input autocomplete="off" type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
             <p class="hint" id="kmInfo"></p>
           </div>
           <div class="keep-box"><label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
-          <label class="fb-chk xs-nq" id="extWrap"><input autocomplete="off" type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
+          <label class="fb-chk xs-nq src-chip" id="extWrap" title="NyquistAI：FDA 召回＋不良事件。限 Claude Pro 以上方案，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍"><input autocomplete="off" type="checkbox" id="extChk"> <span>NyquistAI<span class="hint" id="extNa"></span></span></label>
           <div class="run-row home-go"><button class="btn primary" id="homeQBtn" type="button">AI 診斷分析</button></div>
           <div id="homeChoice" class="home-choice" hidden></div>
           <p class="hint" id="homeQHint"></p>
@@ -7958,42 +7972,60 @@ else root.runValidation = runValidation;
     $("fbExtSum").textContent = fe ? extSumText(fe, "其他廠參考案例") : "";
   }
   const EXT_RULE = "【檢索外部案例的回答方式】在建議工具之外，增加一段「其他廠經驗」：只根據上方 NyquistAI 資料整理同類產品常見的召回原因、根本原因分類與器材問題，每項附召回編號或件數；資料很少、不相關或查無資料時，直接寫「查無相關的外部案例」，不要推測或編造。適合當作魚骨圖候選原因的，放進 fishbone 區塊，該項加上 \"src\":\"ext\" 與 \"ref\":\"召回編號或 MAUDE\"。";
+  // 資料來源圖示（各機構網站的 favicon，內嵌避免外部載入）：
+  //   openFDA：github.com/FDA/open.fda.gov src/favicon.png；Health Canada：canada.ca 共用的 GCWeb favicon（github.com/wet-boew/GCWeb）；
+  //   PubMed：Simple Icons（CC0）pubmed 圖示，PubMed 藍 #326599；公司 KM：通用書本圖示。
+  //   NyquistAI、USPTO：這個環境取不到官方 favicon，暫用文字標籤（待提供圖檔）
+  const SRC_ICO = {
+    openfda: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAs1AAALNQESsfkXAAACzklEQVRYhc1XMWgiURCdbGHrXmETRGKl3dl5jcFuQbAPNkkZRBITCJcD4TwIXI4DlSCSMjaSXpBsJ0mT6/a6XGUQSWMR06Y4j9kb977f+T/rehfuwcrun/n/vfXPzJ9dm06nEASRUs8EgBRNdcbN3ES3jFm2L8g/O2lYnq8roGI/6FR8OrHWq+JApNQ7BYADya8+buaONeTb9PhdFGEs+/KRUu8DABwBQEi6jsimI0e8BYC+WbbNQAKInJtnkE1HviAiiIA3fmxm2W4oyOdEBBHgF/j2Ty/4OkEE/PBjmzQsB4NNI6I9aVg7QQRsAcAzM/5MNg8aES453szSsLqw3B/0T6z1vjgQKfU2AOAMADZp6BYAdsfN3D23gFm2Mf9xjbBI7gIFvMYV3r9KhfevGjJX4Er4t7BSFiQztQu8VlnD+weK3RFWsfe0T0ARvdXKRx0VuZDn7bubwx3OL9YZ4P5fAkCChh4B4OuwEP/sCSh2R6eKCoeRnWjlo3PBJZHPsCAi1hls0IuEJN+fJOLYKHZHJh0s3HbgxHMf5IhtZjvOGHIgroNYZ+CW4hTjIOKdD3KViE2NLyL1L0uxL6AANsgEXM9uaY/bGl85Dm5fWNsxWvkoNgZ1CgwZGIR74phGBJcJu4qyjVz1YSE+cbeglY9iJ1OhFJkBozctZ4BCBJuGw0Ic56alAww5KpgB+LBSJZwFnKoG+MH/V4qxk6HT61Uw9w8IPdwTda5shlCFOxdqBGbKHu25h2SmlqV+gMXdzWHVE8A0kKwIqu3fmAqH0Z4eFuKefzJTwz7jo0bAmqEgBzqU+sx2XCrKa4hsS8HQtM4qEQkNgc7Gws9ZgCICp5kfAVn6XFIBe7iyYNO12o8aGy+AvtFUIuYbyN/4oijb7hm/tAD8UYjgyLG8YieDRBj14uV1OctArgPYnGD77HDkIrCZED/P8WBZlhwA4BfNyIfuzQXhwwAAAABJRU5ErkJggg==",
+    hc: "data:image/png;base64,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",
+    pubmed: "data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMzI2NTk5IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOC4yMyA3Ljk4MmwuMDA2LTEuMDA1QzcuODQ2IDEuNDE3IDUuMDk2IDAgNS4wOTYgMGwuMDQ4IDIuMjkxQzMuNzMgMS4wNTYgMi42IDEuNDQ0IDIuNiAxLjQ0NGwuMTE4IDE1LjMwN3M0LjIxOC0xLjc5NiA1LjQyOCA1LjUwNUMxMC4yMzggMTMuNTM1IDIxLjQwMSAyNCAyMS40MDEgMjRWOVMxMC41Mi0uMTggOC4yMzEgNy45ODJ6bTkuNzkgOS45NDFsLTEuMDQ2LTUuMjMyLTEuOTA0IDQuNTA3aC0uOTZsLTEuNzItNC4zMDEtMS4wNDYgNS4wNEg5LjMyMWwyLjA5My05LjM5aC44MDJsMi40OTEgNS41NDMgMi41MDgtNS41NTdoLjg2OWwyLjA3NSA5LjM5aC0yLjEzOHoiLz48L3N2Zz4=",
+    km: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmY2ZjZhIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTQgMTkuNUEyLjUgMi41IDAgMCAxIDYuNSAxN0gyMFYzSDYuNUEyLjUgMi41IDAgMCAwIDQgNS41eiIvPjxwYXRoIGQ9Ik00IDE5LjVBMi41IDIuNSAwIDAgMCA2LjUgMjJIMjB2LTUiLz48L3N2Zz4="
+  };
   // =====================================================================
-  // 其他外部資料庫：openFDA（召回＋MAUDE）、PubMed、PatentsView、Health Canada
+  // 其他外部資料庫：openFDA（召回＋MAUDE）、USPTO（patent-mcp 連接器）、PubMed、Health Canada
   // 檢索到的紀錄一律附編號與連結；AI 依紀錄提出的原因必須引用編號（ref），
   // 沒有紀錄依據的原因視為 AI 推論，文字結尾加 *（程式會再檢查一次）。
   // 只送英文關鍵字與產品代碼到外部網站，不送客戶、批號、病患等資料。
   // =====================================================================
   const XS = [
-    { id: "openfda", name: "openFDA（美國 FDA 召回＋MAUDE 不良事件）", short: "openFDA" },
-    { id: "pubmed", name: "PubMed（醫學、材料文獻）", short: "PubMed" },
-    { id: "patents", name: "PatentsView（美國專利，需免費金鑰）", short: "PatentsView" },
-    { id: "hc", name: "Health Canada（加拿大回收與安全警訊）", short: "Health Canada" }
+    { id: "openfda", name: "FDA API", tip: "openFDA：美國 FDA 召回＋MAUDE 不良事件（網頁直接查詢）", short: "openFDA" },
+    { id: "uspto", name: "USPTO", tip: "USPTO：美國專利全文（同類產品的設計、失效對策）；需在 claude.ai 連接「USPTO Patents」連接器", short: "USPTO" },
+    { id: "pubmed", name: "PubMed", tip: "PubMed：醫學、材料文獻", short: "PubMed" },
+    { id: "hc", name: "Health Canada", tip: "Health Canada：加拿大回收與安全警訊（網頁直接下載公開資料檔）", short: "Health Canada" }
   ];
-  const XS_KEY = "mdqs.xs.v1", PV_KEY = "mdqs.pv.key";
-  let pubmedServer = null;
+  const XS_KEY = "mdqs.xs.v1";
+  let pubmedServer = null, usptoServer = null;
   (async () => {
     // 在 claude.ai 開啟時，PubMed 走連接器（平台不允許網頁直接連外部網站時仍可用）
-    try { const ns = window.claude && window.claude.use ? await window.claude.use("mcp") : null; if (!ns) return; const r = await ns.listTools(); const s = (r.servers || []).find(x => /pubmed/i.test(x.server)); if (s) pubmedServer = s.server; } catch (_) {}
+    try { const ns = window.claude && window.claude.use ? await window.claude.use("mcp") : null; if (!ns) { xsUsptoState(); return; } const r = await ns.listTools(); const L = r.servers || []; const s = L.find(x => /pubmed/i.test(x.server)); if (s) pubmedServer = s.server;
+      const u = L.find(x => (x.tools || []).some(t => (t.name || t) === "patent_search")) || L.find(x => /uspto|patent/i.test(x.server)); if (u) usptoServer = u.server; } catch (_) {}
+    xsUsptoState();
   })();
+  // USPTO 走自架的 patent-mcp 連接器；沒連接時停用並說明
+  function xsUsptoState() { const c = document.querySelector('#xsBox [data-xs="uspto"]'); if (!c) return; const na = c.closest("label").querySelector(".xs-na"); c.disabled = !usptoServer; if (!usptoServer) c.checked = false; if (na) na.textContent = usptoServer ? "" : "（未連接）"; }
+  // 有官方圖示就用圖示，沒有就用縮寫文字標籤
+  function srcIco(id, name) { const u = SRC_ICO[id]; return u ? `<img class="src-ico" src="${u}" alt="" width="18" height="18">` : `<span class="src-ico src-txt" aria-hidden="true">${esc({ uspto: "US", nq: "N" }[id] || name.slice(0, 1))}</span>`; }
   function xsUI() {
     const wrap = $("extWrap"); if (!wrap || $("xsBox")) return;
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(XS_KEY) || "{}"); } catch (_) {}
-    let pv = ""; try { pv = localStorage.getItem(PV_KEY) || ""; } catch (_) {}
     wrap.insertAdjacentHTML("afterend", `<div class="xs-box" id="xsBox">
-      <div class="xs-head"><b>檢索外部資料庫</b></div>
-      <div class="xs-list" id="xsList">${XS.map(s => `<label class="fb-chk"><input type="checkbox" data-xs="${s.id}"${saved[s.id] ? " checked" : ""}> ${esc(s.name)}</label>`).join("")}</div>
-      <div class="xs-pv" id="xsPv"${saved.patents ? "" : " hidden"}><label for="xsPvKey" class="hint">PatentsView API 金鑰（到 USPTO 開發者網站免費申請；只存在這個瀏覽器）</label><input type="password" id="xsPvKey" autocomplete="off" value="${esc(pv)}" placeholder="貼上金鑰"></div>
-      <p class="hint xs-note">這些網站是否允許網頁直接查詢，依開啟方式而定；連不上時會說明原因，並附上可自行查詢的網址。</p>
+      <div class="xs-head"><b>資料來源</b><span class="hint">勾選後 AI 會一起查；滑鼠移到名稱上看說明</span></div>
+      <div class="xs-list src-row" id="xsList">${XS.map(s => `<label class="fb-chk src-chip" title="${esc(s.tip)}"><input type="checkbox" data-xs="${s.id}"${saved[s.id] && s.id !== "uspto" ? " checked" : ""}> ${srcIco(s.id, s.name)}<span>${esc(s.name)}<span class="hint xs-na"></span></span></label>`).join("")}</div>
+      <div id="xsKmSlot"></div>
     </div>`);
     // NyquistAI 併入同一個清單（第一項）；不在 claude.ai 或沒連接時停用並說明
     $("xsList").prepend(wrap); wrap.classList.remove("ext-chk");
-    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（目前開啟方式無法使用）"; }
-    else { $("extChk").disabled = true; $("extNa").textContent = "（尚未偵測到 NyquistAI 連接器）"; }
+    // 公司 KM 也併入同一列（最後一項）；上傳區只在勾選後顯示
+    const kl = $("kmChkLab"); if (kl) { $("xsList").appendChild(kl); const ki = kl.querySelector("input"); if (ki && !kl.querySelector(".src-ico")) ki.insertAdjacentHTML("afterend", " " + srcIco("km", "KM")); }
+    { const ni = wrap.querySelector("input"); if (ni && !wrap.querySelector(".src-ico")) ni.insertAdjacentHTML("afterend", " " + srcIco("nq", "NyquistAI")); }
+    const kb = $("kmBox"), kp = document.querySelector(".keep-box"); if (kb) $("xsKmSlot").appendChild(kb); if (kp) $("xsKmSlot").appendChild(kp);
+    xsUsptoState();
+    if (!(window.claude && window.claude.use)) { $("extChk").disabled = true; $("extChk").checked = false; $("extNa").textContent = "（無法使用）"; $("extWrap").title += "。目前開啟方式無法使用（要在 claude.ai 裡開啟）"; }
+    else { $("extChk").disabled = true; $("extNa").textContent = "（未連接）"; }
     $("xsBox").addEventListener("change", e => {
       const c = e.target.closest("[data-xs]");
-      if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} $("xsPv").hidden = !o.patents; }
-      if (e.target.id === "xsPvKey") { try { const v = e.target.value.trim(); v ? localStorage.setItem(PV_KEY, v) : localStorage.removeItem(PV_KEY); } catch (_) {} }
+      if (c) { const o = {}; $("xsBox").querySelectorAll("[data-xs]").forEach(x => { o[x.dataset.xs] = x.checked; }); try { localStorage.setItem(XS_KEY, JSON.stringify(o)); } catch (_) {} }
     });
   }
   xsUI();
@@ -8054,16 +8086,17 @@ else root.runValidation = runValidation;
     const items = arts.filter(a => a.pmid).map(a => ({ ref: "PMID " + a.pmid, kind: "文獻", date: a.year || "", title: clip(a.title, 160), text: `${a.journal || ""}；摘要：${clip(a.abs, 400) || "（無摘要）"}`, url: "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/", doi: a.doi ? "https://doi.org/" + a.doi : "" }));
     return { items, sum: `依 PubMed 檢索，查詢式：${q}`, manual };
   }
-  // ---- PatentsView ----
-  async function xsPatents(plan) {
+  // ---- USPTO（自架 patent-mcp 連接器的 patent_search；回傳欄位依 ppubs 檢索結果，未經實際連線驗證*）----
+  async function xsUSPTO(plan) {
     const terms = xsTerms(plan.queries[0] || ""), manual = [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(terms.join(" "))]];
-    const key = ($("xsPvKey") && $("xsPvKey").value.trim()) || "";
-    if (!key) { const er = new Error("沒有填 PatentsView 金鑰，略過"); er.code = "nokey"; er.manual = manual; throw er; }
+    if (!usptoServer || !mcpNs) { const er = new Error("尚未連接 USPTO Patents 連接器"); er.manual = manual; throw er; }
     if (!terms.length) return { items: [], sum: "沒有可用的關鍵字", manual };
-    const body = { q: { _or: [{ patent_abstract: { _text_all: terms.join(" ") } }, { patent_title: { _text_all: terms.join(" ") } }] }, f: ["patent_id", "patent_title", "patent_date", "patent_abstract"], s: [{ patent_date: "desc" }], o: { size: 6 } };
-    const j = await getJSON("https://search.patentsview.org/api/v1/patent/", { method: "POST", headers: { "Content-Type": "application/json", "X-Api-Key": key }, body: JSON.stringify(body) });
-    const items = ((j && j.patents) || []).map(p => ({ ref: "US " + p.patent_id, kind: "專利", date: p.patent_date || "", title: clip(p.patent_title, 160), text: "摘要：" + clip(p.patent_abstract, 380), url: "https://patents.google.com/patent/US" + p.patent_id }));
-    return { items, sum: `PatentsView 符合 ${(j && j.total_hits) || items.length} 筆（列出最新幾筆）`, manual };
+    const query = terms.join(" AND ");
+    const res = await mcpNs.callTool(usptoServer, "patent_search", { query, kind: "both", limit: 6 });
+    const p = res && res.payload; if (!p || typeof p !== "object") throw new Error("USPTO 回應格式無法解讀");
+    const pick = (o, re) => { const k = Object.keys(o).find(k => re.test(k) && typeof o[k] === "string"); return k ? o[k] : ""; };
+    const items = (p.results || []).map(h => { const g = String(h.guid || ""), no = g.replace(/^US-?/, "").replace(/-/g, ""); return { ref: "US " + (g.replace(/^US-/, "").split("-")[0] || pick(h, /DocumentNumber/i)), kind: h.type === "US-PGPUB" ? "公開申請案" : "專利", date: String(h.datePublished || "").slice(0, 10), title: clip(h.inventionTitle || pick(h, /title/i), 160), text: "摘要：" + (clip(pick(h, /abstract/i).replace(/<[^>]+>/g, ""), 380) || "（檢索結果未附摘要）"), url: no ? "https://patents.google.com/patent/US" + no : "" }; });
+    return { items, sum: `USPTO 全文檢索「${query}」符合 ${p.total ?? items.length} 筆（含核准專利與公開申請案，列出最新幾筆）`, manual };
   }
   // ---- Health Canada（整份公開資料檔，在瀏覽器內篩選）----
   let hcCache = null;
@@ -8083,10 +8116,10 @@ else root.runValidation = runValidation;
   const XS_MANUAL = {
     openfda: () => [["FDA 召回資料庫", "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm"], ["MAUDE 查詢", "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/search.cfm"]],
     pubmed: plan => [["PubMed 查詢", "https://pubmed.ncbi.nlm.nih.gov/?term=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
-    patents: plan => [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
+    uspto: plan => [["Google Patents 查詢", "https://patents.google.com/?q=" + encodeURIComponent(xsTerms(plan.queries[0] || "").join(" "))]],
     hc: () => [["Health Canada 回收與安全警訊", "https://recalls-rappels.canada.ca/en"]]
   };
-  const XS_RUN = { openfda: xsOpenFDA, pubmed: xsPubMed, patents: xsPatents, hc: xsHC };
+  const XS_RUN = { openfda: xsOpenFDA, uspto: xsUSPTO, pubmed: xsPubMed, hc: xsHC };
   async function xsSearch(plan, ids) {
     return Promise.all(ids.map(async id => {
       const S = XS.find(s => s.id === id);
@@ -8129,6 +8162,70 @@ else root.runValidation = runValidation;
     for (const k of S) if (k.length >= 4 && ref.includes(k)) return true;
     return false;
   }
+  // =====================================================================
+  // 公司 KM 內建示範資料（全部為虛構，僅供試用「公司 KM」檢索功能；代號均為示範用）
+  // =====================================================================
+  const KM_DEMO = [
+    { name: "【示範】DEMO-CAPA-01 Luer 接頭應力開裂調查摘要.md", text: `# DEMO-CAPA-01 Luer 接頭應力開裂調查摘要（虛構示範資料）
+> 本文件為示範用虛構內容，不代表任何真實產品或事件。
+
+## 問題描述
+示範產品 DEMO-LC（PC 材質 Luer 接頭）在院端使用含酒精消毒劑擦拭後，鎖接時出現接頭開裂客訴。
+
+## 根本原因（調查結論）
+- 材料：供應商更換 PC 粒料等級，耐化學應力開裂（ESC）能力下降；變更未依品質協議事前通知。
+- 製程：射出成型後未退火，殘留應力偏高；開裂位置集中在澆口附近。
+- 使用：酒精類消毒劑會加速 PC 的應力開裂（同類產品常見失效模式）。
+
+## 驗證方式（當時採用）
+- 新舊粒料各抽樣，酒精擦拭後做鎖接扭力試驗，比較開裂比例（次數資料、卡方或 Fisher）。
+- 退火時間與開裂扭力做回歸，找出退火條件。
+- 對策後以 I-MR 管制圖監控開裂扭力。
+
+## 矯正與預防措施
+- 品質協議增訂「材料等級變更須事前核准」。
+- 進料檢驗增加材料等級與耐化學性確認。
+- IFU 增加消毒劑使用注意事項。
+
+## 經驗教訓
+- 客訴批次集中在某個時間點之後，先查同期間的材料、供應商、製程變更紀錄。
+` },
+    { name: "【示範】DEMO-QP-STAT-01 統計技術與抽樣規定.md", text: `# DEMO-QP-STAT-01 統計技術與抽樣規定（虛構示範資料）
+> 本文件為示範用虛構內容，實際規定請依貴公司程序書。
+
+## 1. 適用範圍
+設計驗證、製程確效、進料與出貨檢驗所使用的統計方法與樣本數。
+
+## 2. 樣本數原則
+- 計量型設計驗證：依風險等級選信心度／可靠度，並以允差區間或 t 檢定宣稱，樣本數理由須寫入計畫書。
+- 通過／不通過試驗：以成功試驗（0 失效）樣本數規劃，例如高風險項目採 95% 信心、99% 可靠度。
+- 進料與出貨抽樣：依 ISO 2859-1，一般檢驗水準 II，AQL 依缺點等級（嚴重／主要／次要）訂定。
+
+## 3. 量測系統
+- 關鍵特性量具須先完成 Gage R&R；%GRR 判定準則依 AIAG MSA 手冊。
+- 目視檢驗須完成屬性一致性分析（Kappa）。
+
+## 4. 製程監控
+- 關鍵製程參數以管制圖監控，判異規則採 Nelson 規則。
+- 製程能力 Cpk 目標值依特性風險訂定。
+
+## 5. 紀錄
+統計分析須保留原始數據、軟體版本與分析報告，並由第二人覆核。
+` },
+    { name: "【示範】DEMO-LL-03 材料與供應商變更經驗.md", text: `# DEMO-LL-03 材料與供應商變更經驗（虛構示範資料）
+> 本文件為示範用虛構內容。
+
+## 常見失效與教訓
+- 粒料等級或添加劑變更：外觀與尺寸可能都合格，但耐化學性、耐滅菌性改變；變更審查要包含相容性與老化評估。
+- 滅菌方式改變（EO ↔ Gamma）：部分高分子會黃變、脆化；轉換前要做材料相容性與加速老化。
+- 黏著劑或 UV 膠變更：固化條件不同，拉脫強度可能下降；要重新做接合強度驗證。
+- 轉廠或換設備：先做 IQ／OQ／PQ，再用同等性檢定（TOST）證明關鍵特性沒有變差。
+
+## 供應商管理
+- 品質協議要明定哪些變更須事前通知與核准。
+- 收到 COA 不等於材料沒有變；關鍵材料要定期稽核或抽驗。
+` }
+  ];
 
   // =====================================================================
   // 公司 KM／個人知識資料：上傳 .md，問 AI 時先檢索最相關的段落一起送出（只在這個瀏覽器處理）
@@ -8184,6 +8281,18 @@ else root.runValidation = runValidation;
       "使用方式：與問題相關時優先參考，引用時在句尾標註來源編號（例如［KM-2］）；KM 是內部經驗或規定，和一般知識或法規不一致時要明確說明差異；不要把 KM 沒寫的內容說成 KM 寫的；不相關的摘錄直接忽略。",
       ...hits.map((c, i) => `［KM-${i + 1}］${c.file}${c.head ? " › " + c.head : ""}\n${c.text.length > 900 ? c.text.slice(0, 900) + "…" : c.text}`)].join("\n\n");
   }
+  // 勾選「公司 KM」時：沒有自己的檔案就用內建示範資料；上傳區只在勾選時顯示
+  let kmDemo = false;
+  function kmUseDemo(on) {
+    if (on && !kmFiles.length) { kmFiles = KM_DEMO.map(f => ({ name: f.name, text: f.text })); kmDemo = true; kmBuild(); kmResetSent(); }
+    if (!on && kmDemo) { kmFiles = []; kmDemo = false; kmBuild(); kmResetSent(); }
+  }
+  function kmShow() {
+    const on = $("kmChk").checked, kb = $("kmBox"), kp = document.querySelector(".keep-box");
+    if (kb) kb.hidden = !on; if (kp) kp.hidden = !on || kmDemo;
+    const dl = $("kmDemoLine"); if (dl) { dl.hidden = !on; dl.textContent = on ? (kmDemo ? `目前使用：內建示範 KM（${kmFiles.length} 份，全部為虛構資料，僅供試用）。要用自己的資料，按「改用自己的 .md 檔」。` : "") : ""; }
+    const pk = $("kmPick"); if (pk) pk.textContent = kmDemo ? "改用自己的 .md 檔" : "選擇 .md 檔";
+  }
   function kmActive() { return $("kmChk").checked && kmChunks.length > 0; }
   // 給 ask() 用：回傳要加入的區塊與這次參考的段落（同一段對話已送過的段落不重送）
   function kmForAsk(key, question) {
@@ -8201,16 +8310,19 @@ else root.runValidation = runValidation;
     $("kmList").innerHTML = kmFiles.map((f, i) => `<li class="fb-att"><span class="fb-att-kind">MD</span><span class="fb-att-name" title="${esc(f.name)}">${esc(f.name)}</span><span class="fb-att-info">${Math.max(1, Math.round(f.text.length / 1000))} 千字・${kmChunks.filter(c => c.file === f.name).length} 段</span><button type="button" class="fb-del" data-kmx="${i}" aria-label="移除 ${esc(f.name)}">×</button></li>`).join("");
     $("kmInfo").textContent = n ? `已載入 ${n} 個檔案、${kmChunks.length} 段。問 AI 時會自動找出最相關的段落一起送出，並標註來源。` : "";
     if (!n) $("kmChk").checked = false;
+    if (kmDemo && $("kmInfo")) $("kmInfo").textContent = "";
+    kmShow();
   }
   function kmPersist() {
     try {
-      if (!$("kmKeep").checked) { localStorage.removeItem(KM_STORE); return; }
+      if (!$("kmKeep").checked || kmDemo) { if (!kmDemo) localStorage.removeItem(KM_STORE); return; }
       const v = JSON.stringify(kmFiles.map(f => ({ name: f.name, text: f.text })));
       if (v.length > KM_MAX_STORE) { localStorage.removeItem(KM_STORE); $("kmInfo").textContent += " 檔案太大，無法保留到下次（這次仍可使用）。"; return; }
       localStorage.setItem(KM_STORE, v);
     } catch (_) {}
   }
   async function kmAdd(files) {
+    if (kmDemo && [...files].some(f => /\.(md|markdown|txt)$/i.test(f.name))) { kmFiles = []; kmDemo = false; }   // 上傳自己的檔案就換掉示範資料
     for (const f of files) {
       if (!/\.(md|markdown|txt)$/i.test(f.name)) { $("kmInfo").textContent = `「${f.name}」不是 .md 檔，已略過。`; continue; }
       if (f.size > 3000000) { $("kmInfo").textContent = `「${f.name}」超過 3 MB，已略過。`; continue; }
@@ -8225,6 +8337,7 @@ else root.runValidation = runValidation;
   $("kmBox").addEventListener("dragleave", () => $("kmBox").classList.remove("over"));
   $("kmBox").addEventListener("drop", e => { e.preventDefault(); $("kmBox").classList.remove("over"); kmAdd([...(e.dataTransfer.files || [])]); });
   $("kmList").addEventListener("click", e => { const b = e.target.closest("[data-kmx]"); if (!b) return; kmFiles.splice(+b.dataset.kmx, 1); kmBuild(); kmResetSent(); kmRender(); kmPersist(); });
+  $("kmChk").addEventListener("change", () => { kmUseDemo($("kmChk").checked); kmRender(); });
   $("kmKeep").addEventListener("change", () => { try { localStorage.setItem(KM_KEEP, $("kmKeep").checked ? "1" : "0"); } catch (_) {} kmPersist(); });
   (() => {
     try {

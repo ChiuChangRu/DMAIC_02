@@ -1179,3 +1179,16 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
 #viewToolbox #guideSheet { margin: 0 0 16px; }
 .tb-all { margin: 6px 0 8px; font-size: 17px; }
 .home-rec { margin: 8px 0 0; }
+/* 資料來源：精簡成一列勾選 */
+.xs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.xs-list.src-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.src-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); cursor: pointer; font-weight: 600; font-size: 14px; margin: 0; }
+.src-chip:has(input:checked) { border-color: var(--copper); background: color-mix(in srgb, var(--copper) 12%, var(--surface)); }
+.src-chip:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.src-chip .hint { font-weight: 400; font-size: 12px; margin-left: 2px; }
+.xs-nq.src-chip { grid-column: auto; }
+#xsKmSlot .km-box, #xsKmSlot .keep-box { margin-top: 8px; }
+#kmDemoLine { margin: 6px 0 0; }
+.src-ico { width: 18px; height: 18px; flex: 0 0 18px; object-fit: contain; border-radius: 3px; }
+.src-txt { display: inline-grid; place-items: center; font-size: 10px; font-weight: 800; color: #fff; background: #4a5a6a; letter-spacing: -.02em; }
+.src-chip:has(input:disabled) .src-ico { filter: grayscale(1); }

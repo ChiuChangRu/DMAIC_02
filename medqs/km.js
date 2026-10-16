@@ -53,6 +53,18 @@
       "使用方式：與問題相關時優先參考，引用時在句尾標註來源編號（例如［KM-2］）；KM 是內部經驗或規定，和一般知識或法規不一致時要明確說明差異；不要把 KM 沒寫的內容說成 KM 寫的；不相關的摘錄直接忽略。",
       ...hits.map((c, i) => `［KM-${i + 1}］${c.file}${c.head ? " › " + c.head : ""}\n${c.text.length > 900 ? c.text.slice(0, 900) + "…" : c.text}`)].join("\n\n");
   }
+  // 勾選「公司 KM」時：沒有自己的檔案就用內建示範資料；上傳區只在勾選時顯示
+  let kmDemo = false;
+  function kmUseDemo(on) {
+    if (on && !kmFiles.length) { kmFiles = KM_DEMO.map(f => ({ name: f.name, text: f.text })); kmDemo = true; kmBuild(); kmResetSent(); }
+    if (!on && kmDemo) { kmFiles = []; kmDemo = false; kmBuild(); kmResetSent(); }
+  }
+  function kmShow() {
+    const on = $("kmChk").checked, kb = $("kmBox"), kp = document.querySelector(".keep-box");
+    if (kb) kb.hidden = !on; if (kp) kp.hidden = !on || kmDemo;
+    const dl = $("kmDemoLine"); if (dl) { dl.hidden = !on; dl.textContent = on ? (kmDemo ? `目前使用：內建示範 KM（${kmFiles.length} 份，全部為虛構資料，僅供試用）。要用自己的資料，按「改用自己的 .md 檔」。` : "") : ""; }
+    const pk = $("kmPick"); if (pk) pk.textContent = kmDemo ? "改用自己的 .md 檔" : "選擇 .md 檔";
+  }
   function kmActive() { return $("kmChk").checked && kmChunks.length > 0; }
   // 給 ask() 用：回傳要加入的區塊與這次參考的段落（同一段對話已送過的段落不重送）
   function kmForAsk(key, question) {
@@ -70,16 +82,19 @@
     $("kmList").innerHTML = kmFiles.map((f, i) => `<li class="fb-att"><span class="fb-att-kind">MD</span><span class="fb-att-name" title="${esc(f.name)}">${esc(f.name)}</span><span class="fb-att-info">${Math.max(1, Math.round(f.text.length / 1000))} 千字・${kmChunks.filter(c => c.file === f.name).length} 段</span><button type="button" class="fb-del" data-kmx="${i}" aria-label="移除 ${esc(f.name)}">×</button></li>`).join("");
     $("kmInfo").textContent = n ? `已載入 ${n} 個檔案、${kmChunks.length} 段。問 AI 時會自動找出最相關的段落一起送出，並標註來源。` : "";
     if (!n) $("kmChk").checked = false;
+    if (kmDemo && $("kmInfo")) $("kmInfo").textContent = "";
+    kmShow();
   }
   function kmPersist() {
     try {
-      if (!$("kmKeep").checked) { localStorage.removeItem(KM_STORE); return; }
+      if (!$("kmKeep").checked || kmDemo) { if (!kmDemo) localStorage.removeItem(KM_STORE); return; }
       const v = JSON.stringify(kmFiles.map(f => ({ name: f.name, text: f.text })));
       if (v.length > KM_MAX_STORE) { localStorage.removeItem(KM_STORE); $("kmInfo").textContent += " 檔案太大，無法保留到下次（這次仍可使用）。"; return; }
       localStorage.setItem(KM_STORE, v);
     } catch (_) {}
   }
   async function kmAdd(files) {
+    if (kmDemo && [...files].some(f => /\.(md|markdown|txt)$/i.test(f.name))) { kmFiles = []; kmDemo = false; }   // 上傳自己的檔案就換掉示範資料
     for (const f of files) {
       if (!/\.(md|markdown|txt)$/i.test(f.name)) { $("kmInfo").textContent = `「${f.name}」不是 .md 檔，已略過。`; continue; }
       if (f.size > 3000000) { $("kmInfo").textContent = `「${f.name}」超過 3 MB，已略過。`; continue; }
@@ -94,6 +109,7 @@
   $("kmBox").addEventListener("dragleave", () => $("kmBox").classList.remove("over"));
   $("kmBox").addEventListener("drop", e => { e.preventDefault(); $("kmBox").classList.remove("over"); kmAdd([...(e.dataTransfer.files || [])]); });
   $("kmList").addEventListener("click", e => { const b = e.target.closest("[data-kmx]"); if (!b) return; kmFiles.splice(+b.dataset.kmx, 1); kmBuild(); kmResetSent(); kmRender(); kmPersist(); });
+  $("kmChk").addEventListener("change", () => { kmUseDemo($("kmChk").checked); kmRender(); });
   $("kmKeep").addEventListener("change", () => { try { localStorage.setItem(KM_KEEP, $("kmKeep").checked ? "1" : "0"); } catch (_) {} kmPersist(); });
   (() => {
     try {
