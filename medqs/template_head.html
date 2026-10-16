@@ -1134,3 +1134,11 @@ nav.toolnav .nv-hid { display: none; }
 .vr-ownwarn { margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; background: var(--warn-soft); color: var(--warn-ink); font-weight: 700; font-size: 13px; }
 .vf-own { font-weight: 800; color: var(--warn-ink); } .vf-own.ok { color: var(--good); }
 @media (max-width: 720px) { nav.toolnav { flex-wrap: wrap; overflow: visible; } nav.toolnav .nv-arr, nav.toolnav .nv-sp { display: none; } nav.toolnav button { padding: 6px 8px 8px; font-size: 14px; } }
+/* 導覽三區：工具箱（單獨使用工具）｜解決問題流程｜設定 */
+nav.toolnav { gap: 10px; }
+nav.toolnav .nv-grp { display: inline-flex; align-items: flex-end; gap: 2px; padding: 4px 6px 0; border-radius: 12px 12px 0 0; background: rgba(255,255,255,.05); }
+nav.toolnav .nv-flow { background: rgba(216,153,95,.10); }
+nav.toolnav .nv-grp:has([aria-selected="true"]) { background: rgba(255,255,255,.13); }
+nav.toolnav .nv-flow:has([aria-selected="true"]) { background: rgba(216,153,95,.22); }
+nav.toolnav .nv-side { background: transparent; border-radius: 0; }
+@media (max-width: 720px) { nav.toolnav { gap: 6px; } nav.toolnav .nv-tb { order: 1; } nav.toolnav .nv-set { order: 2; } nav.toolnav .nv-flow { order: 3; flex: 1 1 100%; flex-wrap: wrap; } }
