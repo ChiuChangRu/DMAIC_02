@@ -40,7 +40,7 @@
 
   <section id="viewToolbox" role="tabpanel" data-view="toolbox" hidden>
     <div class="tool-head"><h2 class="tool-title">🧰 工具箱</h2><span class="hint">不走流程，直接用任何一個工具；依「要回答的問題」分組</span></div>
-    <input type="search" class="tb-search" id="tbSearch" placeholder="🔍 用一句話找方法，例如：兩條線的拉力有沒有差／要測幾個才能宣稱 95/95" aria-label="搜尋方法">
+    <input autocomplete="off" type="search" class="tb-search" id="tbSearch" placeholder="🔍 用一句話找方法，例如：兩條線的拉力有沒有差／要測幾個才能宣稱 95/95" aria-label="搜尋方法">
     <div class="tb-grid" id="tbGrid"></div>
     <p class="hint" id="tbNone" hidden>找不到符合的方法，請換個說法，或到「定義問題」問 AI。</p>
   </section>
@@ -51,23 +51,23 @@
         <h3>問 AI：描述你的問題</h3>
         <div class="home-ask">
           <label for="homeQ" class="group-label" id="homeQLab">描述你的問題（產品、發生情況、比例、規格越具體越好）</label>
-          <textarea id="homeQ" rows="3" placeholder="例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）"></textarea>
+          <textarea autocomplete="off" id="homeQ" rows="3" placeholder="例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）"></textarea>
           <div class="fb-drop" id="homeDrop">
             <div class="fb-drop-row"><b>附件</b><span class="hint">照片、PDF、Word（.docx）或文字檔，可拖曳到這裡</span><button class="btn small" type="button" id="homeAttPick">選擇檔案</button></div>
-            <input type="file" id="homeAttFile" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.csv,.md">
+            <input autocomplete="off" type="file" id="homeAttFile" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.csv,.md">
             <ul class="fb-att-list" id="homeAttList"></ul>
-            <label class="fb-chk"><input type="checkbox" id="homePdfImg"> PDF 有照片或圖表時，也把有文字的頁面轉成圖片送給 AI</label>
+            <label class="fb-chk"><input autocomplete="off" type="checkbox" id="homePdfImg"> PDF 有照片或圖表時，也把有文字的頁面轉成圖片送給 AI</label>
             <p class="hint" id="homeAttNote" hidden></p>
           </div>
           <div class="km-box" id="kmBox">
-            <label class="fb-chk"><input type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告）</label>
+            <label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmChk"> <b>檢索公司 KM／個人知識資料</b>：上傳 .md 檔（例如公司 KM 系統匯出、個人經驗整理、過往 CAPA 與調查報告）</label>
             <div class="fb-drop-row"><span></span><button class="btn small" type="button" id="kmPick">選擇 .md 檔</button></div>
-            <input type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
+            <input autocomplete="off" type="file" id="kmFile" multiple hidden accept=".md,.markdown,.txt,text/markdown,text/plain">
             <ul class="fb-att-list" id="kmList"></ul>
             <p class="hint" id="kmInfo"></p>
           </div>
-          <div class="keep-box"><label class="fb-chk"><input type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
-          <label class="fb-chk xs-nq" id="extWrap"><input type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
+          <div class="keep-box"><label class="fb-chk"><input autocomplete="off" type="checkbox" id="kmKeep"> <b>保留在這個瀏覽器</b>：上傳的 KM／知識 .md 檔下次開啟仍可使用；換問題時不會被清除</label></div>
+          <label class="fb-chk xs-nq" id="extWrap"><input autocomplete="off" type="checkbox" id="extChk"> <span>NyquistAI（FDA 召回＋不良事件；<b>限 Claude Pro 以上方案</b>，需在 claude.ai 開啟並連接 NyquistAI；用量約為平常的 2 倍）<span class="hint" id="extNa"></span></span></label>
           <div class="run-row home-go"><button class="btn primary" id="homeQBtn" type="button">AI 診斷分析</button></div>
           <div id="homeChoice" class="home-choice" hidden></div>
           <p class="hint" id="homeQHint"></p>
@@ -105,28 +105,27 @@
   <section id="viewFishbone" role="tabpanel" data-view="fishbone" hidden>
     <div class="tool-head"><h2 class="tool-title">魚骨圖</h2><span class="hint">整理問題的可能原因：由你決定哪些採用、哪些排除，可請 AI 補充</span><button class="btn small fb-clear" type="button" id="fbClearAll">清除重來（換新問題）</button></div>
     <div class="note info fb-banner" id="fbBanner" hidden></div>
-    <p class="hint fb-restore" id="fbRestoreLine" hidden></p>
     <div class="fb-stack">
       <section class="card fb-edit">
         <div class="step">
           <span class="qref">STEP 1</span>
           <h2 class="q">問題點</h2>
-          <textarea id="fbProblem" class="fb-problem" aria-label="問題點" placeholder="寫具體的現象，例如：BT-150 注射筒在組裝後 24 小時內，筒身螺牙處出現裂紋"></textarea>
+          <textarea autocomplete="off" id="fbProblem" class="fb-problem" aria-label="問題點" placeholder="寫具體的現象，例如：BT-150 注射筒在組裝後 24 小時內，筒身螺牙處出現裂紋"></textarea>
           <div class="fb-drop" id="fbDrop">
             <div class="fb-drop-row"><b>附件</b><span class="hint">照片、PDF、Word（.docx）或文字檔，可拖曳到這裡，或在問題點欄位直接貼上截圖</span><button class="btn small" type="button" id="fbAttPick">選擇檔案</button></div>
-            <input type="file" id="fbAttFile" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.csv,.md">
+            <input autocomplete="off" type="file" id="fbAttFile" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.csv,.md">
             <ul class="fb-att-list" id="fbAttList"></ul>
-            <label class="fb-chk"><input type="checkbox" id="fbPdfImg"> PDF 有照片或圖表時，也把有文字的頁面轉成圖片送給 AI（會用掉較多圖片額度）</label>
+            <label class="fb-chk"><input autocomplete="off" type="checkbox" id="fbPdfImg"> PDF 有照片或圖表時，也把有文字的頁面轉成圖片送給 AI（會用掉較多圖片額度）</label>
             <p class="hint" id="fbAttNote" hidden></p>
             <div class="run-row"><button class="btn copper small" type="button" id="fbAttAsk" disabled>請 AI 依附件整理問題點與原因</button><span class="hint">檔案只在你的瀏覽器讀取，內容會送到你自己的 Claude 帳號；不會存進草稿或匯出檔。</span></div>
           </div>
           <details class="ext-out" id="fbExtBox" hidden><summary id="fbExtSum"></summary><div id="fbExtBody"></div><p class="hint">這些案例會一起提供給魚骨圖的 AI 參考。</p></details>
           <details class="fb-more"><summary>補充資訊（選填，讓 AI 建議更準確）</summary>
             <div class="fields">
-              <div class="field"><label for="fb_prod">產品／批號</label><input id="fb_prod" type="text"></div>
-              <div class="field"><label for="fb_when">發生時間</label><input id="fb_when" type="text" placeholder="例如：2026 年 9 月起"></div>
-              <div class="field"><label for="fb_rate">不良率或件數</label><input id="fb_rate" type="text" placeholder="例如：3/500"></div>
-              <div class="field"><label for="fb_spec">不符合的規格</label><input id="fb_spec" type="text"></div>
+              <div class="field"><label for="fb_prod">產品／批號</label><input autocomplete="off" id="fb_prod" type="text"></div>
+              <div class="field"><label for="fb_when">發生時間</label><input autocomplete="off" id="fb_when" type="text" placeholder="例如：2026 年 9 月起"></div>
+              <div class="field"><label for="fb_rate">不良率或件數</label><input autocomplete="off" id="fb_rate" type="text" placeholder="例如：3/500"></div>
+              <div class="field"><label for="fb_spec">不符合的規格</label><input autocomplete="off" id="fb_spec" type="text"></div>
             </div>
           </details>
           <div class="run-row"><button class="btn small" type="button" id="fbCheckProblem">請 AI 檢查問題點</button></div>
@@ -169,11 +168,11 @@
           <span id="fbDl" class="fb-inline" hidden><button class="btn small" type="button" id="fbPng">下載圖片（PNG）</button><button class="btn small" type="button" id="fbSvgDl">下載 SVG</button><button class="btn small" type="button" id="fbCsv">下載 CSV</button><button class="btn small" type="button" id="fbExport">匯出檔案</button></span>
           <button class="btn small" type="button" id="fbImportBtn">匯入檔案</button>
           <button class="btn small" type="button" id="fbNewBtn">清除重來</button>
-          <input type="file" id="fbFile" accept=".json,application/json" hidden>
+          <input autocomplete="off" type="file" id="fbFile" accept=".json,application/json" hidden>
         </div>
         <p class="hint" id="fbNoDl">這個檢視無法下載檔案；可以用「複製表格」，或在 claude.ai 開啟本頁。</p>
         <p class="hint">草稿（含 AI 對話）自動存在這個瀏覽器；換電腦或清除瀏覽資料就會消失。要保留或傳給同事，請用「匯出檔案」，之後再「匯入檔案」接著編輯。</p>
-        <textarea id="fbCopyBox" class="fb-copybox" hidden aria-label="表格內容" readonly></textarea>
+        <textarea autocomplete="off" id="fbCopyBox" class="fb-copybox" hidden aria-label="表格內容" readonly></textarea>
         <div class="scroll-x"><table id="fbTable"></table></div>
       </section>
       <section class="card sheet pd-moved">
@@ -200,7 +199,7 @@
 
   <section id="viewAnalyze" role="tabpanel" data-view="hypothesis" hidden>
     <div class="tool-head"><h2 class="tool-title">假設檢定</h2><span class="hint" id="subHint">單組對目標值、兩組比較、3 組以上（含重複量測），自動選擇檢定方法</span></div>
-    <div class="tool-problem"><label for="hypProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
+    <div class="tool-problem"><label for="hypProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="hypProblem" rows="2" placeholder="例如：轉廠後拉伸強度是否改變；或 EO 殘留量能否宣稱低於限值"></textarea><span class="hint" id="hypProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="假設檢定功能">
       <button type="button" role="tab" data-sub="compare" aria-selected="true">比較檢定（量測數值）</button>
       <button type="button" role="tab" data-sub="count" aria-selected="false">次數資料（不良率、類別）</button>
@@ -218,8 +217,8 @@
             <button class="chip" type="button" data-example="3">範例：三組</button>
             <button class="chip" type="button" id="clearBtn">清除</button>
           </div>
-          <div class="pub-pick"><label for="pubHypSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubHypSel"></select><p class="hint" id="pubHypDesc"></p></div>
-          <textarea id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;A 組&#9;B 組&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
+          <div class="pub-pick"><label for="pubHypSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select autocomplete="off" id="pubHypSel"></select><p class="hint" id="pubHypDesc"></p></div>
+          <textarea autocomplete="off" id="pasteBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;A 組&#9;B 組&#10;52.3&#9;51.6&#10;51.8&#9;50.8"></textarea>
           <div class="detect" id="detect" aria-live="polite"></div>
         </div>
 
@@ -254,29 +253,29 @@
           <div class="fields">
             <div class="field">
               <label for="alphaSel">顯著水準 α</label>
-              <select id="alphaSel"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
+              <select autocomplete="off" id="alphaSel"><option value="0.01">0.01</option><option value="0.025">0.025</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select>
             </div>
             <div class="field">
               <label for="target">目標值</label>
-              <input id="target" type="number" step="any" placeholder="選填" inputmode="decimal">
+              <input autocomplete="off" id="target" type="number" step="any" placeholder="選填" inputmode="decimal">
               <small id="targetHelp">單組時必填</small>
             </div>
             <div class="field" id="deltaField">
               <label for="delta0">假設差值 δ₀（A − B）</label>
-              <input id="delta0" type="number" step="any" value="0" inputmode="decimal">
+              <input autocomplete="off" id="delta0" type="number" step="any" value="0" inputmode="decimal">
             </div>
             <div class="field" id="eqField" hidden>
               <label for="hypEqDelta">同等界限 Δ（±，必填）</label>
-              <input id="hypEqDelta" type="number" step="any" min="0" placeholder="例如 1.5" inputmode="decimal">
+              <input autocomplete="off" id="hypEqDelta" type="number" step="any" min="0" placeholder="例如 1.5" inputmode="decimal">
               <small>差多少以內算一樣；要在看數據前依臨床、功能需求或比對品規格決定</small>
             </div>
             <div class="field">
               <label for="lsl">規格下限 LSL</label>
-              <input id="lsl" type="number" step="any" placeholder="選填" inputmode="decimal">
+              <input autocomplete="off" id="lsl" type="number" step="any" placeholder="選填" inputmode="decimal">
             </div>
             <div class="field">
               <label for="usl">規格上限 USL</label>
-              <input id="usl" type="number" step="any" placeholder="選填" inputmode="decimal">
+              <input autocomplete="off" id="usl" type="number" step="any" placeholder="選填" inputmode="decimal">
             </div>
           </div>
           <p class="help">規格與目標值都可以不填。填寫後會畫在箱型圖上，並計算超規數、Ppk 與各組平均和目標值的差。</p>
@@ -318,12 +317,12 @@
         <div class="pair-grid">
           <div class="pair-box">
             <h4>兩組比較</h4>
-            <div class="pick"><label>A 組<select id="pairA"></select></label><label>B 組<select id="pairB"></select></label></div>
+            <div class="pick"><label>A 組<select autocomplete="off" id="pairA"></select></label><label>B 組<select autocomplete="off" id="pairB"></select></label></div>
             <div><button class="btn small primary" id="pairBtn" type="button">比較這兩組</button></div>
           </div>
           <div class="pair-box">
             <h4>單組對目標值</h4>
-            <label class="field"><span class="hint">組別</span><select id="oneSel"></select></label>
+            <label class="field"><span class="hint">組別</span><select autocomplete="off" id="oneSel"></select></label>
             <div><button class="btn small primary" id="oneBtn" type="button">與目標值比較</button> <span class="hint" id="oneHint"></span></div>
           </div>
         </div>
@@ -393,19 +392,19 @@
             <h2 class="q" id="ctStep2">填入件數</h2>
             <div id="ctOneForm">
               <div class="fields">
-                <div class="field"><label for="ctN">測了幾個</label><input id="ctN" type="number" min="1" step="1" inputmode="numeric" placeholder="例如 300"></div>
-                <div class="field"><label for="ctX">其中不良幾個</label><input id="ctX" type="number" min="0" step="1" inputmode="numeric" placeholder="例如 0"></div>
-                <div class="field"><label for="ctP0">目標不良率（%）</label><input id="ctP0" type="number" min="0" step="any" inputmode="decimal" placeholder="例如 1"><small>要宣稱「低於」這個值</small></div>
+                <div class="field"><label for="ctN">測了幾個</label><input autocomplete="off" id="ctN" type="number" min="1" step="1" inputmode="numeric" placeholder="例如 300"></div>
+                <div class="field"><label for="ctX">其中不良幾個</label><input autocomplete="off" id="ctX" type="number" min="0" step="1" inputmode="numeric" placeholder="例如 0"></div>
+                <div class="field"><label for="ctP0">目標不良率（%）</label><input autocomplete="off" id="ctP0" type="number" min="0" step="any" inputmode="decimal" placeholder="例如 1"><small>要宣稱「低於」這個值</small></div>
               </div>
             </div>
             <div id="ctTabForm" hidden>
               <p class="help">每一列是一組（供應商、產線、批次），每一欄是一種結果。名稱可以直接改；「＋」增加組別或結果類別。</p>
               <div class="scroll-x"><table class="ct-grid" id="ctGrid"></table></div>
               <div class="run-row" style="margin-top:6px"><button type="button" class="chip" id="ctAddRow">＋ 組別</button><button type="button" class="chip" id="ctAddCol">＋ 結果類別</button></div>
-              <textarea id="ctData" hidden aria-hidden="true"></textarea>
+              <textarea autocomplete="off" id="ctData" hidden aria-hidden="true"></textarea>
             </div>
             <div class="fields">
-              <div class="field"><label for="ctConf">信心水準</label><select id="ctConf"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
+              <div class="field"><label for="ctConf">信心水準</label><select autocomplete="off" id="ctConf"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
             </div>
             <div class="run-row">
               <button class="btn primary" id="ctRun" type="button">計算</button>
@@ -433,7 +432,7 @@
             <span class="qref">STEP 1</span>
             <h2 class="q">貼上一組數據</h2>
             <p class="help">例如拉伸強度、黏合強度、EO 殘留量的量測值。直接從 Excel 貼上一欄；有多欄時會用第一欄。</p>
-            <textarea id="tlBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;拉伸強度&#10;52.3&#10;51.8&#10;53.1"></textarea>
+            <textarea autocomplete="off" id="tlBox" spellcheck="false" aria-label="貼上資料" placeholder="例：&#10;拉伸強度&#10;52.3&#10;51.8&#10;53.1"></textarea>
             <div class="hint" id="tlDetect"></div>
           </div>
           <div class="step">
@@ -449,10 +448,10 @@
               </div>
             </div>
             <div class="fields">
-              <div class="field"><label for="tlP">涵蓋比例</label><select id="tlP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select></div>
-              <div class="field"><label for="tlG">信心水準</label><select id="tlG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
-              <div class="field"><label for="tlLsl">規格下限 LSL</label><input id="tlLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
-              <div class="field"><label for="tlUsl">規格上限 USL</label><input id="tlUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+              <div class="field"><label for="tlP">涵蓋比例</label><select autocomplete="off" id="tlP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select></div>
+              <div class="field"><label for="tlG">信心水準</label><select autocomplete="off" id="tlG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></div>
+              <div class="field"><label for="tlLsl">規格下限 LSL</label><input autocomplete="off" id="tlLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+              <div class="field"><label for="tlUsl">規格上限 USL</label><input autocomplete="off" id="tlUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
             </div>
             <div class="run-row">
               <button class="btn primary" id="tlRun" type="button">計算</button>
@@ -480,7 +479,7 @@
   <section id="viewSample" role="tabpanel" data-view="sample" hidden>
     <div class="tool-head"><h2 class="tool-title">樣本數規劃</h2><span class="hint" id="ssSubHint"></span></div>
     <section class="sv-card" id="svList" hidden></section>
-    <div class="tool-problem"><label for="sampleProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="sampleProblem" rows="2" placeholder="例如：轉廠到新廠區，要證明射出件內徑跟舊廠一樣，要測幾件"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
+    <div class="tool-problem"><label for="sampleProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="sampleProblem" rows="2" placeholder="例如：轉廠到新廠區，要證明射出件內徑跟舊廠一樣，要測幾件"></textarea><span class="hint" id="sampleProblemSrc"></span></div>
     <section class="card ss-qcard" id="ssQ">
       <h2 class="ss-qh"><span class="ss-step">1</span>你要回答什麼問題？</h2>
       <p class="help">先選問題，程式會用對應的統計方法計算「要測幾個」。不確定選哪一題，可以在上方用一句話描述情境，請 AI 建議。</p>
@@ -514,7 +513,7 @@
       <h2 class="ss-qh"><span class="ss-step">2</span>統計方法</h2>
       <p class="help" id="ssRecLine">選了上面的問題，建議的方法會加框標示；也可以直接點任何一張圖卡。</p>
       <div class="ss-tiles" id="ssTiles" role="tablist" aria-label="統計方法"></div>
-      <div class="pub-pick"><label for="pubSsSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select id="pubSsSel"></select><p class="hint" id="pubSsDesc"></p></div>
+      <div class="pub-pick"><label for="pubSsSel">公開範例（網路教科書／官方文件，可對照發表答案）</label><select autocomplete="off" id="pubSsSel"></select><p class="hint" id="pubSsDesc"></p></div>
     </section>
     <div class="ss-qbanner" id="ssQBanner" hidden></div>
     <div class="subtabs" role="tablist" aria-label="樣本數規劃功能（進階：直接選統計方法）" id="ssTabs" hidden>
@@ -560,11 +559,11 @@
               </div>
             </div>
             <div class="fields">
-              <div class="field"><label for="pwSd">標準差 σ</label><input id="pwSd" type="number" step="any" min="0" inputmode="decimal"><small id="pwSdHelp">來自前期試驗或歷史資料</small></div>
-              <div class="field" id="pwDeltaF"><label for="pwDelta">要偵測的差值 Δ</label><input id="pwDelta" type="number" step="any" inputmode="decimal"><small>實務上有意義的最小差異</small></div>
-              <div class="field" id="pwNF" hidden><label for="pwN" id="pwNLab">樣本數 n</label><input id="pwN" type="number" step="1" min="2" inputmode="numeric"></div>
-              <div class="field" id="pwTargetF"><label for="pwTarget">目標檢定力</label><select id="pwTarget"><option value="0.8">0.80</option><option value="0.9" selected>0.90</option><option value="0.95">0.95</option></select></div>
-              <div class="field"><label for="pwAlpha">顯著水準 α</label><select id="pwAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+              <div class="field"><label for="pwSd">標準差 σ</label><input autocomplete="off" id="pwSd" type="number" step="any" min="0" inputmode="decimal"><small id="pwSdHelp">來自前期試驗或歷史資料</small></div>
+              <div class="field" id="pwDeltaF"><label for="pwDelta">要偵測的差值 Δ</label><input autocomplete="off" id="pwDelta" type="number" step="any" inputmode="decimal"><small>實務上有意義的最小差異</small></div>
+              <div class="field" id="pwNF" hidden><label for="pwN" id="pwNLab">樣本數 n</label><input autocomplete="off" id="pwN" type="number" step="1" min="2" inputmode="numeric"></div>
+              <div class="field" id="pwTargetF"><label for="pwTarget">目標檢定力</label><select autocomplete="off" id="pwTarget"><option value="0.8">0.80</option><option value="0.9" selected>0.90</option><option value="0.95">0.95</option></select></div>
+              <div class="field"><label for="pwAlpha">顯著水準 α</label><select autocomplete="off" id="pwAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
             </div>
             <div class="run-row">
               <button class="btn primary" id="pwRun" type="button">計算</button>
@@ -612,12 +611,12 @@
               <p class="help rc-why" style="margin:0;color:var(--ink)">選一個，系統會幫你填好下面三個參數並算出結果。</p>
             </div>
             <div class="fields">
-              <div class="field"><label for="atC">信心水準</label><select id="atC"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
-              <div class="field" id="atRF"><label for="atR">要宣稱的可靠度</label><select id="atR"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>壞了越嚴重，選越高（看上方建議）</small></div>
-              <div class="field" id="atCF"><label for="atCc">允許失效數</label><select id="atCc"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select><small>建議 0；允許 1 個，要多測約一半以上</small></div>
-              <div class="field" id="atNF" hidden><label for="atN">樣本數 n</label><input id="atN" type="number" step="1" min="1" inputmode="numeric"></div>
-              <div class="field" id="atAcF" hidden><label for="atAc">允收數 Ac／實際失效數</label><input id="atAc" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
-              <div class="field" id="atAqlF" hidden><label for="atAql">AQL（%）</label><input id="atAql" type="number" step="any" min="0" placeholder="選填，例如 1.5" inputmode="decimal"></div>
+              <div class="field"><label for="atC">信心水準</label><select autocomplete="off" id="atC"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
+              <div class="field" id="atRF"><label for="atR">要宣稱的可靠度</label><select autocomplete="off" id="atR"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>壞了越嚴重，選越高（看上方建議）</small></div>
+              <div class="field" id="atCF"><label for="atCc">允許失效數</label><select autocomplete="off" id="atCc"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select><small>建議 0；允許 1 個，要多測約一半以上</small></div>
+              <div class="field" id="atNF" hidden><label for="atN">樣本數 n</label><input autocomplete="off" id="atN" type="number" step="1" min="1" inputmode="numeric"></div>
+              <div class="field" id="atAcF" hidden><label for="atAc">允收數 Ac／實際失效數</label><input autocomplete="off" id="atAc" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
+              <div class="field" id="atAqlF" hidden><label for="atAql">AQL（%）</label><input autocomplete="off" id="atAql" type="number" step="any" min="0" placeholder="選填，例如 1.5" inputmode="decimal"></div>
             </div>
             <p class="help" id="atIsoNote" hidden>使用 ISO 2859-1 的方案時，依批量、檢驗水準（例如 S-3）與 AQL 從抽樣表查出樣本數 n 與允收數 Ac 後填入。要從批量直接查方案、判定批次與追蹤轉換規則，請用「計數型 AQL」圖卡。ISO 2859-1:1999 已由 2026 版取代。</p>
             <div class="run-row">
@@ -657,12 +656,12 @@
           <div class="group-label" style="margin-top:10px">對立假設</div>
           <div class="chips" id="prAlt" role="group" aria-label="對立假設"></div>
           <div class="fields">
-            <div class="field"><label for="prP0" id="prP0Lab">目標不良率 p₀（%）</label><input id="prP0" type="number" step="any" min="0" max="100" value="5" inputmode="decimal"></div>
-            <div class="field"><label for="prP1" id="prP1Lab">預期實際不良率 p₁（%）</label><input id="prP1" type="number" step="any" min="0" max="100" value="1" inputmode="decimal"></div>
-            <div class="field" id="prRatioF" hidden><label for="prRatio">第 2 組／第 1 組樣本數比</label><input id="prRatio" type="number" step="any" min="0.1" value="1" inputmode="decimal"></div>
-            <div class="field" id="prNF" hidden><label for="prN" id="prNLab">樣本數 n</label><input id="prN" type="number" step="1" min="2" inputmode="numeric"></div>
-            <div class="field" id="prTF"><label for="prTarget">目標檢定力</label><select id="prTarget"><option value="0.8">0.80</option><option value="0.9" selected>0.90</option><option value="0.95">0.95</option></select></div>
-            <div class="field"><label for="prAlpha">顯著水準 α</label><select id="prAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+            <div class="field"><label for="prP0" id="prP0Lab">目標不良率 p₀（%）</label><input autocomplete="off" id="prP0" type="number" step="any" min="0" max="100" value="5" inputmode="decimal"></div>
+            <div class="field"><label for="prP1" id="prP1Lab">預期實際不良率 p₁（%）</label><input autocomplete="off" id="prP1" type="number" step="any" min="0" max="100" value="1" inputmode="decimal"></div>
+            <div class="field" id="prRatioF" hidden><label for="prRatio">第 2 組／第 1 組樣本數比</label><input autocomplete="off" id="prRatio" type="number" step="any" min="0.1" value="1" inputmode="decimal"></div>
+            <div class="field" id="prNF" hidden><label for="prN" id="prNLab">樣本數 n</label><input autocomplete="off" id="prN" type="number" step="1" min="2" inputmode="numeric"></div>
+            <div class="field" id="prTF"><label for="prTarget">目標檢定力</label><select autocomplete="off" id="prTarget"><option value="0.8">0.80</option><option value="0.9" selected>0.90</option><option value="0.95">0.95</option></select></div>
+            <div class="field"><label for="prAlpha">顯著水準 α</label><select autocomplete="off" id="prAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           </div>
           <div class="run-row"><button class="btn primary" id="prRun" type="button">計算</button><span class="hint" id="prHint"></span></div>
         </div></main>
@@ -691,14 +690,14 @@
             <p class="help rc-why" style="margin:0;color:var(--ink)">選一個，系統會幫你填好涵蓋比例與信心水準。</p>
           </div>
           <div class="fields">
-            <div class="field"><label for="tpP">涵蓋比例</label><select id="tpP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>至少多少比例的產品要在規格內；壞了越嚴重選越高</small></div>
-            <div class="field"><label for="tpG">信心水準</label><select id="tpG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
+            <div class="field"><label for="tpP">涵蓋比例</label><select autocomplete="off" id="tpP"><option value="0.9">90%</option><option value="0.95">95%</option><option value="0.99" selected>99%</option><option value="0.999">99.9%</option></select><small>至少多少比例的產品要在規格內；壞了越嚴重選越高</small></div>
+            <div class="field"><label for="tpG">信心水準</label><select autocomplete="off" id="tpG"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select><small>一般用 95%，不確定就不要改</small></div>
           </div>
           <div class="fields tp-norm">
-            <div class="field"><label for="tpMu">預期平均 μ</label><input id="tpMu" type="number" step="any" inputmode="decimal" placeholder="前期數據"><small>從前期試做、預試驗（先量 5～10 個）或類似產品的數據來</small></div>
-            <div class="field"><label for="tpSd">預期標準差 σ</label><input id="tpSd" type="number" step="any" min="0" inputmode="decimal" placeholder="前期數據"><small>同上；Excel 用 STDEV.S。寧可估大一點，比較保險*</small></div>
-            <div class="field tp-lsl"><label for="tpLsl">規格下限 LSL</label><input id="tpLsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的下限</small></div>
-            <div class="field tp-usl" hidden><label for="tpUsl">規格上限 USL</label><input id="tpUsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的上限</small></div>
+            <div class="field"><label for="tpMu">預期平均 μ</label><input autocomplete="off" id="tpMu" type="number" step="any" inputmode="decimal" placeholder="前期數據"><small>從前期試做、預試驗（先量 5～10 個）或類似產品的數據來</small></div>
+            <div class="field"><label for="tpSd">預期標準差 σ</label><input autocomplete="off" id="tpSd" type="number" step="any" min="0" inputmode="decimal" placeholder="前期數據"><small>同上；Excel 用 STDEV.S。寧可估大一點，比較保險*</small></div>
+            <div class="field tp-lsl"><label for="tpLsl">規格下限 LSL</label><input autocomplete="off" id="tpLsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的下限</small></div>
+            <div class="field tp-usl" hidden><label for="tpUsl">規格上限 USL</label><input autocomplete="off" id="tpUsl" type="number" step="any" inputmode="decimal"><small>圖面或產品規格書上的上限</small></div>
           </div>
           <div class="run-row"><button class="btn primary" id="tpRun" type="button">計算</button><button class="chip" type="button" id="tpEx">範例：黏合強度</button><span class="hint" id="tpHint"></span></div>
         </div></main>
@@ -712,16 +711,16 @@
           <span class="qref copper">設定</span><h2 class="q">DOE 要重複幾次</h2>
           <p class="help">2 水準因子設計：要偵測某個效應（高水準平均 − 低水準平均）時，需要重複幾次才有足夠的檢定力。</p>
           <div class="fields">
-            <div class="field"><label for="drDesign">設計</label><select id="drDesign"><option value="f2">全因子 2²（4 次）</option><option value="f3" selected>全因子 2³（8 次）</option><option value="f4">全因子 2⁴（16 次）</option><option value="f5">全因子 2⁵（32 次）</option><option value="r8">部分因子（8 次）</option><option value="r16">部分因子（16 次）</option><option value="pb">PB 篩選（12 次）</option><option value="custom">自訂</option></select></div>
-            <div class="field"><label for="drRuns">每次重複的實驗次數</label><input id="drRuns" type="number" step="1" min="4" value="8" inputmode="numeric"></div>
-            <div class="field"><label for="drTerms">模型項數（不含截距）</label><input id="drTerms" type="number" step="1" min="1" value="7" inputmode="numeric"><small id="drTermsHelp"></small></div>
-            <div class="field"><label for="drCp">中心點數</label><input id="drCp" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
+            <div class="field"><label for="drDesign">設計</label><select autocomplete="off" id="drDesign"><option value="f2">全因子 2²（4 次）</option><option value="f3" selected>全因子 2³（8 次）</option><option value="f4">全因子 2⁴（16 次）</option><option value="f5">全因子 2⁵（32 次）</option><option value="r8">部分因子（8 次）</option><option value="r16">部分因子（16 次）</option><option value="pb">PB 篩選（12 次）</option><option value="custom">自訂</option></select></div>
+            <div class="field"><label for="drRuns">每次重複的實驗次數</label><input autocomplete="off" id="drRuns" type="number" step="1" min="4" value="8" inputmode="numeric"></div>
+            <div class="field"><label for="drTerms">模型項數（不含截距）</label><input autocomplete="off" id="drTerms" type="number" step="1" min="1" value="7" inputmode="numeric"><small id="drTermsHelp"></small></div>
+            <div class="field"><label for="drCp">中心點數</label><input autocomplete="off" id="drCp" type="number" step="1" min="0" value="0" inputmode="numeric"></div>
           </div>
           <div class="fields">
-            <div class="field"><label for="drSd">標準差 σ</label><input id="drSd" type="number" step="any" min="0" inputmode="decimal"><small>重複量測的變異（前期數據）</small></div>
-            <div class="field"><label for="drDelta">要偵測的效應 Δ</label><input id="drDelta" type="number" step="any" min="0" inputmode="decimal"><small>實務上有意義的最小差異</small></div>
-            <div class="field"><label for="drTarget">目標檢定力</label><select id="drTarget"><option value="0.8" selected>0.80</option><option value="0.9">0.90</option><option value="0.95">0.95</option></select></div>
-            <div class="field"><label for="drAlpha">顯著水準 α</label><select id="drAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+            <div class="field"><label for="drSd">標準差 σ</label><input autocomplete="off" id="drSd" type="number" step="any" min="0" inputmode="decimal"><small>重複量測的變異（前期數據）</small></div>
+            <div class="field"><label for="drDelta">要偵測的效應 Δ</label><input autocomplete="off" id="drDelta" type="number" step="any" min="0" inputmode="decimal"><small>實務上有意義的最小差異</small></div>
+            <div class="field"><label for="drTarget">目標檢定力</label><select autocomplete="off" id="drTarget"><option value="0.8" selected>0.80</option><option value="0.9">0.90</option><option value="0.95">0.95</option></select></div>
+            <div class="field"><label for="drAlpha">顯著水準 α</label><select autocomplete="off" id="drAlpha"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           </div>
           <div class="run-row"><button class="btn primary" id="drRun" type="button">計算</button><span class="hint" id="drHint"></span></div>
         </div></main>
@@ -743,15 +742,15 @@
             <h2 class="q">計數型 AQL 抽樣（ISO 2859-1:2026）</h2>
             <p class="help">進料、製程、出貨的批次抽檢：依批量、檢驗水準與 AQL，查出要抽幾個（n）、幾個不良以內允收（Ac）。單次抽樣。</p>
             <div class="fields">
-              <div class="field"><label for="aqN">批量 N</label><input id="aqN" type="number" step="1" min="2" inputmode="numeric" placeholder="例如 5000"></div>
-              <div class="field"><label for="aqLv">檢驗水準</label><select id="aqLv"><option value="II" selected>一般 II（未指定時用這個）</option><option value="I">一般 I（鑑別力較低）</option><option value="III">一般 III（鑑別力較高）</option><option value="S-1">特殊 S-1</option><option value="S-2">特殊 S-2</option><option value="S-3">特殊 S-3</option><option value="S-4">特殊 S-4</option></select></div>
-              <div class="field"><label for="aqAql">AQL</label><select id="aqAql"></select></div>
-              <div class="field"><label for="aqSev">嚴格度</label><select id="aqSev"><option value="normal" selected>正常（開始時用這個）</option><option value="tightened">加嚴</option><option value="reduced">減量（需自行填入方案）</option></select></div>
-              <div class="field"><label for="aqD">這批抽到的不良數（選填）</label><input id="aqD" type="number" step="1" min="0" inputmode="numeric" placeholder="填了會判定允收／拒收"></div>
+              <div class="field"><label for="aqN">批量 N</label><input autocomplete="off" id="aqN" type="number" step="1" min="2" inputmode="numeric" placeholder="例如 5000"></div>
+              <div class="field"><label for="aqLv">檢驗水準</label><select autocomplete="off" id="aqLv"><option value="II" selected>一般 II（未指定時用這個）</option><option value="I">一般 I（鑑別力較低）</option><option value="III">一般 III（鑑別力較高）</option><option value="S-1">特殊 S-1</option><option value="S-2">特殊 S-2</option><option value="S-3">特殊 S-3</option><option value="S-4">特殊 S-4</option></select></div>
+              <div class="field"><label for="aqAql">AQL</label><select autocomplete="off" id="aqAql"></select></div>
+              <div class="field"><label for="aqSev">嚴格度</label><select autocomplete="off" id="aqSev"><option value="normal" selected>正常（開始時用這個）</option><option value="tightened">加嚴</option><option value="reduced">減量（需自行填入方案）</option></select></div>
+              <div class="field"><label for="aqD">這批抽到的不良數（選填）</label><input autocomplete="off" id="aqD" type="number" step="1" min="0" inputmode="numeric" placeholder="填了會判定允收／拒收"></div>
             </div>
             <div class="fields" id="aqRedF" hidden>
-              <div class="field"><label for="aqRn">減量方案 n</label><input id="aqRn" type="number" step="1" min="1" inputmode="numeric"></div>
-              <div class="field"><label for="aqRac">減量方案 Ac</label><input id="aqRac" type="number" step="1" min="0" inputmode="numeric"></div>
+              <div class="field"><label for="aqRn">減量方案 n</label><input autocomplete="off" id="aqRn" type="number" step="1" min="1" inputmode="numeric"></div>
+              <div class="field"><label for="aqRac">減量方案 Ac</label><input autocomplete="off" id="aqRac" type="number" step="1" min="0" inputmode="numeric"></div>
             </div>
             <p class="help" id="aqRedNote" hidden>減量檢驗請依公司持有的 ISO 2859-1:2026 表 4 查出 n 與 Ac 後填入（2026 版的減量表與 MIL-STD-105E 不同，本頁不內建）。</p>
             <div class="run-row">
@@ -761,8 +760,8 @@
             <details class="eq-adv" id="aqSchW">
               <summary>逐批記錄與轉換規則（正常 ⇄ 加嚴 ⇄ 減量、停止檢驗）</summary>
               <p class="help">ISO 2859-1 是給「連續多批」用的：依每批結果自動決定下一批該用正常、加嚴或減量。每列一批，填「批量 不良數」，例如 <code>5000 2</code>。</p>
-              <textarea id="aqLots" rows="6" spellcheck="false" placeholder="5000 1&#10;5000 0&#10;4800 6&#10;5000 2"></textarea>
-              <label class="fb-chk"><input type="checkbox" id="aqSteady" checked> 生產穩定（轉減量的條件之一，§9.3.3 b）</label>
+              <textarea autocomplete="off" id="aqLots" rows="6" spellcheck="false" placeholder="5000 1&#10;5000 0&#10;4800 6&#10;5000 2"></textarea>
+              <label class="fb-chk"><input autocomplete="off" type="checkbox" id="aqSteady" checked> 生產穩定（轉減量的條件之一，§9.3.3 b）</label>
               <div class="run-row"><button class="btn small" type="button" id="aqSchRun">依序判定</button><span class="hint" id="aqSchHint"></span></div>
               <div id="aqSchOut"></div>
             </details>
@@ -807,16 +806,16 @@
 
   <section id="viewReg" role="tabpanel" data-view="regression" hidden>
     <div class="tool-head"><h2 class="tool-title">相關與回歸</h2><span class="hint">用舊資料找關聯：相關係數、散佈圖、簡單線性迴歸</span></div>
-    <div class="tool-problem"><label for="regressionProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="regressionProblem" rows="2" placeholder="例如：歷年批次紀錄中，熱封溫度和熱封強度有沒有關係"></textarea><span class="hint" id="regressionProblemSrc"></span></div>
+    <div class="tool-problem"><label for="regressionProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="regressionProblem" rows="2" placeholder="例如：歷年批次紀錄中，熱封溫度和熱封強度有沒有關係"></textarea><span class="hint" id="regressionProblemSrc"></span></div>
     <div class="grid">
       <main class="card">
         <div class="step">
           <span class="qref">STEP 1</span>
           <h2 class="q">貼上或匯入資料</h2>
           <p class="help">每欄一個變數、每列一筆紀錄，第一列是欄名。可以從 Excel 直接複製貼上；文字欄（例如膜材批代號）可以用來分層。請用代號，不要放客戶、病患、批號等可識別資訊。</p>
-          <div class="run-row" style="margin-top:0"><button class="btn" type="button" id="regImpBtn">匯入檔案（Excel、CSV、Word、PDF、照片）</button><input type="file" id="regFile" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><button class="chip" type="button" id="regEx">範例：熱封批次紀錄</button><button class="btn ghost small" type="button" id="regClear">清除</button></div>
+          <div class="run-row" style="margin-top:0"><button class="btn" type="button" id="regImpBtn">匯入檔案（Excel、CSV、Word、PDF、照片）</button><input autocomplete="off" type="file" id="regFile" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><button class="chip" type="button" id="regEx">範例：熱封批次紀錄</button><button class="btn ghost small" type="button" id="regClear">清除</button></div>
           <div class="reg-imp" id="regImp" hidden></div>
-          <textarea id="regData" spellcheck="false" aria-label="相關與回歸數據" placeholder="熱封溫度 (°C)&#9;熱封時間 (s)&#9;熱封強度 (N/15mm)&#10;178.2&#9;2.5&#9;18.4&#10;…"></textarea>
+          <textarea autocomplete="off" id="regData" spellcheck="false" aria-label="相關與回歸數據" placeholder="熱封溫度 (°C)&#9;熱封時間 (s)&#9;熱封強度 (N/15mm)&#10;178.2&#9;2.5&#9;18.4&#10;…"></textarea>
           <p class="hint" id="regDetect"></p>
           <div id="regCols" hidden></div>
         </div>
@@ -824,14 +823,14 @@
           <span class="qref copper">STEP 2</span>
           <h2 class="q">設定</h2>
           <div class="fields">
-            <div class="field"><label for="regY">Y（結果，例如強度）</label><select id="regY"></select></div>
-            <div class="field"><label for="regX">X（可能的影響因素）</label><select id="regX"></select></div>
-            <div class="field"><label for="regGroup">分層（選填，文字欄）</label><select id="regGroup"><option value="">不分層</option></select></div>
-            <div class="field"><label for="regConf">信賴水準</label><select id="regConf"><option value="0.95">95%</option><option value="0.99">99%</option><option value="0.9">90%</option></select></div>
-            <div class="field"><label for="regLsl">Y 規格下限 LSL</label><input id="regLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
-            <div class="field"><label for="regUsl">Y 規格上限 USL</label><input id="regUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field"><label for="regY">Y（結果，例如強度）</label><select autocomplete="off" id="regY"></select></div>
+            <div class="field"><label for="regX">X（可能的影響因素）</label><select autocomplete="off" id="regX"></select></div>
+            <div class="field"><label for="regGroup">分層（選填，文字欄）</label><select autocomplete="off" id="regGroup"><option value="">不分層</option></select></div>
+            <div class="field"><label for="regConf">信賴水準</label><select autocomplete="off" id="regConf"><option value="0.95">95%</option><option value="0.99">99%</option><option value="0.9">90%</option></select></div>
+            <div class="field"><label for="regLsl">Y 規格下限 LSL</label><input autocomplete="off" id="regLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field"><label for="regUsl">Y 規格上限 USL</label><input autocomplete="off" id="regUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
           </div>
-          <div class="mp-opts"><label><input type="checkbox" id="regOrder" checked> 資料列是依時間（生產）順序排列（會檢查殘差有沒有時間趨勢）</label></div>
+          <div class="mp-opts"><label><input autocomplete="off" type="checkbox" id="regOrder" checked> 資料列是依時間（生產）順序排列（會檢查殘差有沒有時間趨勢）</label></div>
           <p class="hint" id="regSrc" hidden></p>
           <div class="run-row"><button class="btn primary" id="regRun" type="button">執行分析</button><button class="btn" type="button" id="regAi">請 AI 建議該看哪幾欄</button><span class="hint" id="regHint"></span></div>
         </div>
@@ -848,18 +847,18 @@
       <section class="card sheet" data-ask="殘差檢查"><h3>殘差檢查</h3><div id="regResid"></div><div class="scroll-x"><table id="regFlags" class="mini"></table></div></section>
       <section class="card sheet" id="regGroupSheet" data-ask="分層結果" hidden><h3>分層結果</h3><div class="scroll-x"><table id="regGroupTbl" class="mini"></table></div><p class="hint" id="regGroupNote"></p></section>
       <section class="card sheet" id="regSpecSheet" data-ask="規格反推" hidden><h3>規格反推</h3><div id="regSpec"></div></section>
-      <section class="card sheet" data-ask="預測"><h3>預測</h3><div class="fields"><div class="field"><label for="regPredX">X 值</label><input id="regPredX" type="number" step="any" inputmode="decimal" placeholder="輸入 X"></div></div><div id="regPredOut" class="hint"></div></section>
+      <section class="card sheet" data-ask="預測"><h3>預測</h3><div class="fields"><div class="field"><label for="regPredX">X 值</label><input autocomplete="off" id="regPredX" type="number" step="any" inputmode="decimal" placeholder="輸入 X"></div></div><div id="regPredOut" class="hint"></div></section>
     </div>
   </section>
 
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
     <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
-    <div class="tool-problem"><label for="spcProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
+    <div class="tool-problem"><label for="spcProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
     <details class="card mp-card" id="spcPlan" open>
       <summary><span class="qref copper">規劃</span> <b>資料規劃</b><span class="hint"> 先決定資料怎麼收、怎麼分組；收完把數值填回，再分析</span></summary>
       <div class="mp-body">
         <p class="help">流程：① 在上方「描述情境或問題」寫一句話，請 AI 建議資料結構（AI 只給規劃，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生依時間順序的記錄表 → ④ 現場依序填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊；分層欄位用代號。</p>
-        <div class="field" hidden><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
+        <div class="field" hidden><label for="spDesc">製程與特性（選填給 AI 看）</label><textarea autocomplete="off" id="spDesc" rows="2" placeholder="例如：無菌包裝封口拉力，連續生產，規格只有下限，想確認 Cpk 有沒有到 1.33；有 2 台封口機" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="spAi">請 AI 建議資料結構</button><span class="hint" id="spHint"></span></div>
         <div class="mp-why" id="spWhy" hidden></div>
         <div id="spMeta" class="mp-meta"></div>
@@ -877,17 +876,17 @@
           <div class="chips" id="spcKind" role="group" aria-label="資料型態"><button class="chip" type="button" data-v="var" aria-pressed="true">計量值（量測數值）</button><button class="chip" type="button" data-v="defective">不良品（不良數／抽樣數）</button><button class="chip" type="button" data-v="defect">缺點數</button></div>
           <p class="help" id="spcFormat"></p>
           <div class="chips" role="group" aria-label="範例"><button class="chip" type="button" data-ex="xbarr">範例：子組（X̄-R）</button><button class="chip" type="button" data-ex="imr">範例：個別值（I-MR）</button><button class="chip" type="button" data-ex="p">範例：不良率</button><button class="chip" type="button" data-ex="c">範例：缺點數</button></div>
-          <textarea id="spcData" spellcheck="false" aria-label="SPC 數據"></textarea>
+          <textarea autocomplete="off" id="spcData" spellcheck="false" aria-label="SPC 數據"></textarea>
           <p class="hint" id="spcDetect"></p>
         </div>
         <div class="step">
           <span class="qref copper">STEP 2</span>
           <h2 class="q">設定</h2>
           <div class="fields">
-            <div class="field"><label for="spcType">管制圖</label><select id="spcType"><option value="auto">自動選擇</option><option value="xbarr">X̄-R</option><option value="xbars">X̄-S</option><option value="imr">I-MR</option><option value="p">p（不良率）</option><option value="np">np（不良數）</option><option value="c">c（缺點數）</option><option value="u">u（單位缺點數）</option></select></div>
-            <div class="field spc-spec"><label for="spcLsl">規格下限 LSL</label><input id="spcLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
-            <div class="field spc-spec"><label for="spcTgt">目標值</label><input id="spcTgt" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
-            <div class="field spc-spec"><label for="spcUsl">規格上限 USL</label><input id="spcUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field"><label for="spcType">管制圖</label><select autocomplete="off" id="spcType"><option value="auto">自動選擇</option><option value="xbarr">X̄-R</option><option value="xbars">X̄-S</option><option value="imr">I-MR</option><option value="p">p（不良率）</option><option value="np">np（不良數）</option><option value="c">c（缺點數）</option><option value="u">u（單位缺點數）</option></select></div>
+            <div class="field spc-spec"><label for="spcLsl">規格下限 LSL</label><input autocomplete="off" id="spcLsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field spc-spec"><label for="spcTgt">目標值</label><input autocomplete="off" id="spcTgt" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field spc-spec"><label for="spcUsl">規格上限 USL</label><input autocomplete="off" id="spcUsl" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
           </div>
           <details class="fb-more"><summary>判異規則（Nelson 8 條，預設全開）</summary><div class="nelson-list" id="spcRules"></div></details>
           <div class="run-row"><button class="btn primary" id="spcRun" type="button">執行分析</button><span class="hint" id="spcHint"></span></div>
@@ -908,7 +907,7 @@
 
   <section id="viewMSA" role="tabpanel" data-view="msa" hidden>
     <div class="tool-head"><h2 class="tool-title">MSA 量測系統分析</h2><span class="hint" id="msaSubHint"></span></div>
-    <div class="tool-problem"><label for="msaProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="msaProblem" rows="2" placeholder="例如：拉力機量測導管拉伸強度的變異是否可接受"></textarea><span class="hint" id="msaProblemSrc"></span></div>
+    <div class="tool-problem"><label for="msaProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="msaProblem" rows="2" placeholder="例如：拉力機量測導管拉伸強度的變異是否可接受"></textarea><span class="hint" id="msaProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="MSA 功能" id="msaTabs">
       <button type="button" role="tab" data-tsub="grr" aria-selected="true">Gage R&amp;R</button>
       <button type="button" role="tab" data-tsub="bias" aria-selected="false">偏差</button>
@@ -920,7 +919,7 @@
       <summary><span class="qref copper">規劃</span> <b id="mpTitle">實驗規劃</b><span class="hint"> 先規劃要量多少、怎麼量；量完把數值填回，再分析</span></summary>
       <div class="mp-body">
         <p class="help">流程：① 在上方「描述情境或問題」寫一句話，請 AI 建議實驗設計（AI 只給設計，不產生數值）→ ② 程式檢查是否合理，你可以修改 → ③ 產生隨機順序的記錄表 → ④ 人員量測並填入數值 → ⑤ 帶入下方分析（統計全部由程式計算）。請不要輸入客戶、病患、批號等可識別資訊。</p>
-        <div class="field" hidden><label for="mpDesc">量測情境（選填給 AI 看）</label><textarea id="mpDesc" rows="2" placeholder="例如：用游標卡尺量導管外徑，規格 3.0±0.1 mm，品管有 3 位人員會使用這支卡尺" spellcheck="false"></textarea></div>
+        <div class="field" hidden><label for="mpDesc">量測情境（選填給 AI 看）</label><textarea autocomplete="off" id="mpDesc" rows="2" placeholder="例如：用游標卡尺量導管外徑，規格 3.0±0.1 mm，品管有 3 位人員會使用這支卡尺" spellcheck="false"></textarea></div>
         <div class="run-row"><button class="btn" type="button" id="mpAi">請 AI 建議實驗設計</button><span class="hint" id="mpHint"></span></div>
         <div class="mp-why" id="mpWhy" hidden></div>
         <div id="mpMeta" class="mp-meta"></div>
@@ -936,12 +935,12 @@
           <span class="qref">STEP 1</span><h2 class="q">Gage R&amp;R 數據</h2>
           <p class="help">每列：操作員, 零件, 第 1 次, 第 2 次, …（操作員與零件可以是代號或名稱）。建議至少 2～3 位操作員、10 件零件、每件量 2～3 次，零件要涵蓋製程範圍。</p>
           <div class="chips"><button class="chip" type="button" id="grrEx">載入範例</button></div>
-          <textarea id="grrData" spellcheck="false" aria-label="Gage R&R 數據"></textarea>
+          <textarea autocomplete="off" id="grrData" spellcheck="false" aria-label="Gage R&R 數據"></textarea>
           <div class="fields">
-            <div class="field"><label for="grrMethod">方法</label><select id="grrMethod"><option value="anova">ANOVA 法（建議）</option><option value="xbarr">平均全距法（AIAG）</option></select></div>
-            <div class="field"><label for="grrTol">規格公差（USL − LSL）</label><input id="grrTol" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
-            <div class="field"><label for="grrK">研究變異倍數</label><select id="grrK"><option value="6">6σ（AIAG 第 4 版）</option><option value="5.15">5.15σ（舊版）</option></select></div>
-            <div class="field"><label for="grrAlpha">交互作用併入誤差的門檻</label><select id="grrAlpha"><option value="0.05">p &gt; 0.05</option><option value="0.25">p &gt; 0.25</option><option value="-1">不併入</option></select></div>
+            <div class="field"><label for="grrMethod">方法</label><select autocomplete="off" id="grrMethod"><option value="anova">ANOVA 法（建議）</option><option value="xbarr">平均全距法（AIAG）</option></select></div>
+            <div class="field"><label for="grrTol">規格公差（USL − LSL）</label><input autocomplete="off" id="grrTol" type="number" step="any" placeholder="選填" inputmode="decimal"></div>
+            <div class="field"><label for="grrK">研究變異倍數</label><select autocomplete="off" id="grrK"><option value="6">6σ（AIAG 第 4 版）</option><option value="5.15">5.15σ（舊版）</option></select></div>
+            <div class="field"><label for="grrAlpha">交互作用併入誤差的門檻</label><select autocomplete="off" id="grrAlpha"><option value="0.05">p &gt; 0.05</option><option value="0.25">p &gt; 0.25</option><option value="-1">不併入</option></select></div>
           </div>
           <div class="run-row"><button class="btn primary" id="grrRun" type="button">執行分析</button><span class="hint" id="grrHint"></span></div>
         </div></main>
@@ -959,8 +958,8 @@
           <span class="qref">STEP 1</span><h2 class="q">偏差（Bias）</h2>
           <p class="help">用同一個標準件（已知參考值）重複量測，看量測平均值與參考值的差異。建議至少量 10～15 次。</p>
           <div class="chips"><button class="chip" type="button" id="biasEx">載入範例</button></div>
-          <div class="fields"><div class="field"><label for="biasRef">參考值</label><input id="biasRef" type="number" step="any" inputmode="decimal"></div><div class="field"><label for="biasTol">規格公差（選填）</label><input id="biasTol" type="number" step="any" inputmode="decimal"></div></div>
-          <textarea id="biasData" spellcheck="false" aria-label="偏差數據" placeholder="量測值，以空白、逗號或換行分隔"></textarea>
+          <div class="fields"><div class="field"><label for="biasRef">參考值</label><input autocomplete="off" id="biasRef" type="number" step="any" inputmode="decimal"></div><div class="field"><label for="biasTol">規格公差（選填）</label><input autocomplete="off" id="biasTol" type="number" step="any" inputmode="decimal"></div></div>
+          <textarea autocomplete="off" id="biasData" spellcheck="false" aria-label="偏差數據" placeholder="量測值，以空白、逗號或換行分隔"></textarea>
           <div class="run-row"><button class="btn primary" id="biasRun" type="button">執行分析</button><span class="hint" id="biasHint"></span></div>
         </div></main>
         <aside class="card preview" data-ask="偏差結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="biasTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="biasOut"><p class="help">填好參考值與量測值後按「執行分析」。</p></div></aside>
@@ -972,8 +971,8 @@
           <span class="qref">STEP 1</span><h2 class="q">線性（Linearity）</h2>
           <p class="help">每列：參考值, 量測值 1, 量測值 2, …。至少 5 個不同的參考值，涵蓋量測範圍，看偏差是否隨量測大小改變。</p>
           <div class="chips"><button class="chip" type="button" id="linEx">載入範例</button></div>
-          <textarea id="linData" spellcheck="false" aria-label="線性數據"></textarea>
-          <div class="fields"><div class="field"><label for="linTol">規格公差或製程變異（選填）</label><input id="linTol" type="number" step="any" inputmode="decimal"></div></div>
+          <textarea autocomplete="off" id="linData" spellcheck="false" aria-label="線性數據"></textarea>
+          <div class="fields"><div class="field"><label for="linTol">規格公差或製程變異（選填）</label><input autocomplete="off" id="linTol" type="number" step="any" inputmode="decimal"></div></div>
           <div class="run-row"><button class="btn primary" id="linRun" type="button">執行分析</button><span class="hint" id="linHint"></span></div>
         </div></main>
         <aside class="card preview" data-ask="線性結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="linTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="linOut"><p class="help">貼上數據並按「執行分析」。</p></div></aside>
@@ -986,8 +985,8 @@
           <span class="qref">STEP 1</span><h2 class="q">穩定性（Stability）</h2>
           <p class="help">同一個標準件，每隔一段時間量測 3～5 次；每列是一個時間點。用管制圖看量測系統是否隨時間漂移。</p>
           <div class="chips"><button class="chip" type="button" id="stabEx">載入範例</button></div>
-          <textarea id="stabData" spellcheck="false" aria-label="穩定性數據"></textarea>
-          <div class="fields"><div class="field"><label for="stabRef">標準件參考值（選填）</label><input id="stabRef" type="number" step="any" inputmode="decimal"></div></div>
+          <textarea autocomplete="off" id="stabData" spellcheck="false" aria-label="穩定性數據"></textarea>
+          <div class="fields"><div class="field"><label for="stabRef">標準件參考值（選填）</label><input autocomplete="off" id="stabRef" type="number" step="any" inputmode="decimal"></div></div>
           <div class="run-row"><button class="btn primary" id="stabRun" type="button">執行分析</button><span class="hint" id="stabHint"></span></div>
         </div></main>
         <aside class="card preview" data-ask="穩定性結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="stabTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="stabOut"><p class="help">貼上數據並按「執行分析」。</p></div></aside>
@@ -1000,8 +999,8 @@
           <span class="qref">STEP 1</span><h2 class="q">屬性一致性（目視、通過／不通過、等級）</h2>
           <p class="help">每列：樣本, 標準答案, 評估員 1 第 1 次, 評估員 1 第 2 次, 評估員 2 第 1 次, …。判定可以是文字（例如 OK／NG）或數字；沒有標準答案時把該欄留空。</p>
           <div class="chips"><button class="chip" type="button" id="attrEx">載入範例</button></div>
-          <div class="fields"><div class="field"><label for="attrA">評估員人數</label><input id="attrA" type="number" min="1" step="1" value="2" inputmode="numeric"></div><div class="field"><label for="attrT">每人重複判定次數</label><input id="attrT" type="number" min="1" step="1" value="2" inputmode="numeric"></div></div>
-          <textarea id="attrData" spellcheck="false" aria-label="計數型數據"></textarea>
+          <div class="fields"><div class="field"><label for="attrA">評估員人數</label><input autocomplete="off" id="attrA" type="number" min="1" step="1" value="2" inputmode="numeric"></div><div class="field"><label for="attrT">每人重複判定次數</label><input autocomplete="off" id="attrT" type="number" min="1" step="1" value="2" inputmode="numeric"></div></div>
+          <textarea autocomplete="off" id="attrData" spellcheck="false" aria-label="計數型數據"></textarea>
           <div class="run-row"><button class="btn primary" id="attrRun" type="button">執行分析</button><span class="hint" id="attrHint"></span></div>
         </div></main>
         <aside class="card preview" data-ask="一致性結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="attrTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="attrOut"><p class="help">貼上數據並按「執行分析」。</p></div></aside>
@@ -1012,7 +1011,7 @@
 
   <section id="viewDOE" role="tabpanel" data-view="doe" hidden>
     <div class="tool-head"><h2 class="tool-title">DOE 實驗設計</h2><span class="hint" id="doeSubHint"></span></div>
-    <div class="tool-problem"><label for="doeProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="doeProblem" rows="2" placeholder="例如：找出射出成型參數對 Luer 破裂力的影響"></textarea><span class="hint" id="doeProblemSrc"></span></div>
+    <div class="tool-problem"><label for="doeProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="doeProblem" rows="2" placeholder="例如：找出射出成型參數對 Luer 破裂力的影響"></textarea><span class="hint" id="doeProblemSrc"></span></div>
     <div class="subtabs" role="tablist" aria-label="DOE 功能" id="doeTabs">
       <button type="button" role="tab" data-tsub="fact" aria-selected="true">因子設計（製程參數）</button>
       <button type="button" role="tab" data-tsub="mix" aria-selected="false">混合設計（配方比例）</button>
@@ -1026,9 +1025,9 @@
             <div class="chips" id="doeKind" role="group" aria-label="設計類型"><button class="chip" type="button" data-v="full" aria-pressed="true">全因子 2ᵏ</button><button class="chip" type="button" data-v="frac" aria-pressed="false">部分因子 2ᵏ⁻ᵖ</button><button class="chip" type="button" data-v="pb" aria-pressed="false">PB 篩選</button></div>
             <p class="help" id="doeKindHelp"></p>
             <div class="fields">
-              <div class="field"><label for="doeK">因子數／設計</label><select id="doeK"></select></div>
-              <div class="field"><label for="doeRep">重複次數</label><select id="doeRep"><option value="1">1（不重複）</option><option value="2" selected>2</option><option value="3">3</option></select></div>
-              <div class="field"><label for="doeY">反應變數名稱</label><input id="doeY" type="text" value="拉伸強度 (N)"></div>
+              <div class="field"><label for="doeK">因子數／設計</label><select autocomplete="off" id="doeK"></select></div>
+              <div class="field"><label for="doeRep">重複次數</label><select autocomplete="off" id="doeRep"><option value="1">1（不重複）</option><option value="2" selected>2</option><option value="3">3</option></select></div>
+              <div class="field"><label for="doeY">反應變數名稱</label><input autocomplete="off" id="doeY" type="text" value="拉伸強度 (N)"></div>
             </div>
             <div id="doeFactors" class="doe-factors"></div>
             <div class="run-row"><button class="btn small" type="button" id="doeGen">產生實驗矩陣</button><button class="btn small" type="button" id="doeEx">載入範例</button><span class="hint" id="doeGenHint"></span></div>
@@ -1037,8 +1036,8 @@
             <span class="qref copper">STEP 2</span><h2 class="q">填入結果</h2>
             <p class="help">照「執行順序」做實驗（已隨機化，降低時間效應），把結果填進表格；也可以把 Excel 的結果欄（依標準順序）貼到下面。</p>
             <div class="scroll-x"><table id="doeMatrix" class="doe-matrix"></table></div>
-            <details class="fb-more"><summary>從 Excel 貼上結果（依標準順序，每列一次實驗，重複時每列多欄）</summary><textarea id="doePaste" rows="4" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" id="doePasteBtn">帶入表格</button></div></details>
-            <div class="fields"><div class="field"><label for="doeGoal">目標</label><select id="doeGoal"><option value="max">望大（越大越好）</option><option value="min">望小（越小越好）</option><option value="target">望目</option></select></div><div class="field" id="doeTgtF" hidden><label for="doeTgt">目標值</label><input id="doeTgt" type="number" step="any" inputmode="decimal"></div></div>
+            <details class="fb-more"><summary>從 Excel 貼上結果（依標準順序，每列一次實驗，重複時每列多欄）</summary><textarea autocomplete="off" id="doePaste" rows="4" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" id="doePasteBtn">帶入表格</button></div></details>
+            <div class="fields"><div class="field"><label for="doeGoal">目標</label><select autocomplete="off" id="doeGoal"><option value="max">望大（越大越好）</option><option value="min">望小（越小越好）</option><option value="target">望目</option></select></div><div class="field" id="doeTgtF" hidden><label for="doeTgt">目標值</label><input autocomplete="off" id="doeTgt" type="number" step="any" inputmode="decimal"></div></div>
             <div class="run-row"><button class="btn primary" id="doeRun" type="button">分析效應</button><span class="hint" id="doeHint"></span></div>
           </div>
         </main>
@@ -1059,10 +1058,10 @@
             <span class="qref">STEP 1</span><h2 class="q">設計</h2>
             <p class="help">各成分比例加總為 1（100%）。適合塗層、黏著劑、塑料配方的比例調整。</p>
             <div class="fields">
-              <div class="field"><label for="mixQ">成分數</label><select id="mixQ"><option value="3">3</option><option value="4">4</option></select></div>
-              <div class="field"><label for="mixDesign">設計</label><select id="mixDesign"><option value="lat2c">單形格子 {q,2} ＋ 中心與內部點（建議）</option><option value="lat2">單形格子 {q,2}</option><option value="lat3">單形格子 {q,3}</option><option value="cen">單形質心</option></select></div>
-              <div class="field"><label for="mixRep">重複次數</label><select id="mixRep"><option value="1">1</option><option value="2">2</option></select></div>
-              <div class="field"><label for="mixY">反應變數名稱</label><input id="mixY" type="text" value="接觸角 (°)"></div>
+              <div class="field"><label for="mixQ">成分數</label><select autocomplete="off" id="mixQ"><option value="3">3</option><option value="4">4</option></select></div>
+              <div class="field"><label for="mixDesign">設計</label><select autocomplete="off" id="mixDesign"><option value="lat2c">單形格子 {q,2} ＋ 中心與內部點（建議）</option><option value="lat2">單形格子 {q,2}</option><option value="lat3">單形格子 {q,3}</option><option value="cen">單形質心</option></select></div>
+              <div class="field"><label for="mixRep">重複次數</label><select autocomplete="off" id="mixRep"><option value="1">1</option><option value="2">2</option></select></div>
+              <div class="field"><label for="mixY">反應變數名稱</label><input autocomplete="off" id="mixY" type="text" value="接觸角 (°)"></div>
             </div>
             <div id="mixNames" class="doe-factors"></div>
             <div class="run-row"><button class="btn small" type="button" id="mixGen">產生實驗點</button><button class="btn small" type="button" id="mixEx">載入範例</button><span class="hint" id="mixGenHint"></span></div>
@@ -1071,9 +1070,9 @@
             <span class="qref copper">STEP 2</span><h2 class="q">填入結果並分析</h2>
             <div class="scroll-x"><table id="mixMatrix" class="doe-matrix"></table></div>
             <div class="fields">
-              <div class="field"><label for="mixModel">模型</label><select id="mixModel"><option value="auto">自動（資料足夠時用最高階）</option><option value="linear">線性</option><option value="quadratic">二次</option><option value="cubic">特殊三次</option></select></div>
-              <div class="field"><label for="mixGoal">目標</label><select id="mixGoal"><option value="max">望大</option><option value="min">望小</option><option value="target">望目</option></select></div>
-              <div class="field" id="mixTgtF" hidden><label for="mixTgt">目標值</label><input id="mixTgt" type="number" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="mixModel">模型</label><select autocomplete="off" id="mixModel"><option value="auto">自動（資料足夠時用最高階）</option><option value="linear">線性</option><option value="quadratic">二次</option><option value="cubic">特殊三次</option></select></div>
+              <div class="field"><label for="mixGoal">目標</label><select autocomplete="off" id="mixGoal"><option value="max">望大</option><option value="min">望小</option><option value="target">望目</option></select></div>
+              <div class="field" id="mixTgtF" hidden><label for="mixTgt">目標值</label><input autocomplete="off" id="mixTgt" type="number" step="any" inputmode="decimal"></div>
             </div>
             <div class="run-row"><button class="btn primary" id="mixRun" type="button">分析</button><span class="hint" id="mixHint"></span></div>
           </div>
@@ -1089,7 +1088,7 @@
 
   <section id="viewTaguchi" role="tabpanel" data-view="taguchi" hidden>
     <div class="tool-head"><h2 class="tool-title">田口方法（穩健設計）</h2><span class="hint">找出讓產品對原料、環境、操作等雜音不敏感的設定：直交表 + S/N 比 + 兩步驟最佳化</span></div>
-    <div class="tool-problem"><label for="taguchiProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea id="taguchiProblem" rows="2" placeholder="例如：UV 膠接合拉脫力在不同批零件與照度衰減下要穩定"></textarea><span class="hint" id="taguchiProblemSrc"></span></div>
+    <div class="tool-problem"><label for="taguchiProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="taguchiProblem" rows="2" placeholder="例如：UV 膠接合拉脫力在不同批零件與照度衰減下要穩定"></textarea><span class="hint" id="taguchiProblemSrc"></span></div>
     <div class="grid">
       <main class="card">
         <div class="step">
@@ -1097,34 +1096,34 @@
           <div class="chips" id="tgType" role="group" aria-label="品質特性"><button class="chip" type="button" data-v="larger" aria-pressed="true">望大</button><button class="chip" type="button" data-v="smaller" aria-pressed="false">望小</button><button class="chip" type="button" data-v="nominal" aria-pressed="false">望目</button><button class="chip" type="button" data-v="dynamic" aria-pressed="false">動態特性</button></div>
           <p class="help" id="tgTypeHelp"></p>
           <div class="fields">
-            <div class="field"><label for="tgY">反應變數名稱（含單位）</label><input id="tgY" type="text" value="拉脫力 (N)"></div>
-            <div class="field" id="tgNomF" hidden><label for="tgNom">望目 S/N 公式</label><select id="tgNom"><option value="nominal">10·log(ȳ²／s²)（平均可調整時）</option><option value="nominalVar">−10·log(s²)（只看變異）</option></select></div>
-            <div class="field" id="tgTargetF" hidden><label for="tgTarget" id="tgTargetLab">目標值</label><input id="tgTarget" type="number" step="any" inputmode="decimal" placeholder="選填"></div>
+            <div class="field"><label for="tgY">反應變數名稱（含單位）</label><input autocomplete="off" id="tgY" type="text" value="拉脫力 (N)"></div>
+            <div class="field" id="tgNomF" hidden><label for="tgNom">望目 S/N 公式</label><select autocomplete="off" id="tgNom"><option value="nominal">10·log(ȳ²／s²)（平均可調整時）</option><option value="nominalVar">−10·log(s²)（只看變異）</option></select></div>
+            <div class="field" id="tgTargetF" hidden><label for="tgTarget" id="tgTargetLab">目標值</label><input autocomplete="off" id="tgTarget" type="number" step="any" inputmode="decimal" placeholder="選填"></div>
           </div>
           <div class="fields" id="tgDynF" hidden>
-            <div class="field"><label for="tgSigName">訊號因子 M 名稱</label><input id="tgSigName" type="text" value="流量設定 (mL/s)"></div>
-            <div class="field"><label for="tgSignals">訊號水準（以逗號分隔，2～5 個）</label><input id="tgSignals" type="text" value="1, 3, 5"></div>
-            <div class="field"><label for="tgDynFormula">動態 S/N 公式</label><select id="tgDynFormula"><option value="std">10·log[(Sβ − Ve)／r ÷ Ve]（田口標準式）</option><option value="simple">10·log(β²／Ve)（不扣除 Ve）</option></select></div>
+            <div class="field"><label for="tgSigName">訊號因子 M 名稱</label><input autocomplete="off" id="tgSigName" type="text" value="流量設定 (mL/s)"></div>
+            <div class="field"><label for="tgSignals">訊號水準（以逗號分隔，2～5 個）</label><input autocomplete="off" id="tgSignals" type="text" value="1, 3, 5"></div>
+            <div class="field"><label for="tgDynFormula">動態 S/N 公式</label><select autocomplete="off" id="tgDynFormula"><option value="std">10·log[(Sβ − Ve)／r ÷ Ve]（田口標準式）</option><option value="simple">10·log(β²／Ve)（不扣除 Ve）</option></select></div>
           </div>
         </div>
         <div class="step">
           <span class="qref copper">STEP 2</span><h2 class="q">控制因子與雜音條件</h2>
           <div class="chips"><button class="chip" type="button" data-tgex="static">範例：UV 膠拉脫力（望大）</button><button class="chip" type="button" data-tgex="dynamic">範例：輸液幫浦流量（動態）</button><button class="chip" type="button" id="tgFromFb">從魚骨圖帶入</button></div>
           <div id="tgFbPick" class="tg-fbpick" hidden></div>
-          <div class="fields"><div class="field"><label for="tgK">控制因子數</label><select id="tgK"></select></div><div class="field"><label for="tgArr">直交表</label><select id="tgArr"></select></div></div>
+          <div class="fields"><div class="field"><label for="tgK">控制因子數</label><select autocomplete="off" id="tgK"></select></div><div class="field"><label for="tgArr">直交表</label><select autocomplete="off" id="tgArr"></select></div></div>
           <div id="tgFactors" class="doe-factors"></div>
           <details class="fb-more" id="tgInterBox"><summary>要估計的交互作用（只限 L4、L8、L16；田口方法通常不配置，選填）</summary><div id="tgInter" class="tg-inter"></div></details>
           <div class="group-label" style="margin-top:14px">雜音條件（簡易版：把雜音因子組合成極端條件，每組實驗在各條件下各量一次）</div>
-          <div class="fields"><div class="field"><label for="tgNoiseN">雜音條件數</label><select id="tgNoiseN"><option value="1">1（無雜音條件）</option><option value="2" selected>2（N1、N2）</option><option value="3">3</option><option value="4">4</option></select></div></div>
+          <div class="fields"><div class="field"><label for="tgNoiseN">雜音條件數</label><select autocomplete="off" id="tgNoiseN"><option value="1">1（無雜音條件）</option><option value="2" selected>2（N1、N2）</option><option value="3">3</option><option value="4">4</option></select></div></div>
           <div id="tgNoiseNames" class="tg-noise"></div>
-          <textarea id="tgNoiseDesc" rows="2" placeholder="雜音因子與組合方式，例如：N1＝舊批原料＋低溫 15°C＋零件公差下限；N2＝新批原料＋高溫 30°C＋公差上限"></textarea>
+          <textarea autocomplete="off" id="tgNoiseDesc" rows="2" placeholder="雜音因子與組合方式，例如：N1＝舊批原料＋低溫 15°C＋零件公差下限；N2＝新批原料＋高溫 30°C＋公差上限"></textarea>
           <div class="run-row"><button class="btn small" type="button" id="tgGen">產生直交表</button><span class="hint" id="tgGenHint"></span></div>
         </div>
         <div class="step">
           <span class="qref">STEP 3</span><h2 class="q">填入結果</h2>
           <p class="help" id="tgDataHelp">每組實驗依表中水準設定，在各雜音條件下量測並填入。</p>
           <div class="scroll-x"><table id="tgMatrix" class="doe-matrix"></table></div>
-          <details class="fb-more"><summary>從 Excel 貼上結果（每列一組實驗，欄位順序同上表）</summary><textarea id="tgPaste" rows="4" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" id="tgPasteBtn">帶入表格</button></div></details>
+          <details class="fb-more"><summary>從 Excel 貼上結果（每列一組實驗，欄位順序同上表）</summary><textarea autocomplete="off" id="tgPaste" rows="4" spellcheck="false"></textarea><div class="run-row"><button class="btn small" type="button" id="tgPasteBtn">帶入表格</button></div></details>
           <div class="run-row"><button class="btn primary" id="tgRun" type="button">分析</button><span class="hint" id="tgHint"></span></div>
         </div>
       </main>
@@ -1145,16 +1144,17 @@
     <div class="sheets" style="margin-top:0">
       <section class="card sheet" id="caseSheet">
         <h3>案件存取</h3>
-        <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
+        <div class="fields"><div class="field"><label for="demoSel">內建範例案件</label><select autocomplete="off" id="demoSel"><option value="">— 選擇範例 —</option></select></div></div>
         <p class="hint" id="demoDesc"></p>
         <div class="pk-ask" id="demoAsk" hidden></div>
-        <div class="fields"><div class="field"><label for="pubCaseSel">公開範例（選了直接跳到該工具分頁；只覆蓋該工具，不清除其他頁）</label><select id="pubCaseSel"></select></div></div>
+        <div class="fields"><div class="field"><label for="pubCaseSel">公開範例（選了直接跳到該工具分頁；只覆蓋該工具，不清除其他頁）</label><select autocomplete="off" id="pubCaseSel"></select></div></div>
         <p class="hint" id="pubCaseDesc"></p>
         <p id="caseCurLine"></p>
         <div class="fields"><div class="field"><label for="caseName">案件名稱</label><input type="text" id="caseName" autocomplete="off" placeholder="例如：客訴 C-001 封口拉力偏低（請用代號）"></div></div>
-        <div class="mp-opts"><label><input type="checkbox" id="caseChat"> 一起儲存 AI 對話紀錄（可能含敏感內容，預設不存）</label></div>
-        <div class="run-row"><button class="btn primary" type="button" id="caseSaveNew">另存新案件</button><button class="btn" type="button" id="caseSaveOver" hidden>覆蓋目前案件</button><button class="btn" type="button" id="caseExportNow">匯出目前內容（.json）</button><button class="btn" type="button" id="caseImportBtn">匯入案件檔</button><input type="file" id="caseFile" accept=".json,application/json" hidden><button class="btn ghost" type="button" id="caseNew">開新案件（清空全部）</button></div>
+        <div class="mp-opts"><label><input autocomplete="off" type="checkbox" id="caseChat"> 一起儲存 AI 對話紀錄（可能含敏感內容，預設不存）</label></div>
+        <div class="run-row"><button class="btn primary" type="button" id="caseSaveNew">另存新案件</button><button class="btn" type="button" id="caseSaveOver" hidden>覆蓋目前案件</button><button class="btn" type="button" id="caseExportNow">匯出目前內容（.json）</button><button class="btn" type="button" id="caseImportBtn">匯入案件檔</button><input autocomplete="off" type="file" id="caseFile" accept=".json,application/json" hidden><button class="btn ghost" type="button" id="caseNew">開新案件（清空全部）</button></div>
         <p class="hint" id="caseHint" aria-live="polite"></p>
+        <p class="hint fb-restore" id="fbRestoreLine" hidden></p>
         <h4 style="margin:14px 0 6px">這個瀏覽器的案件清單</h4>
         <div class="scroll-x" id="caseList"></div>
       </section>
@@ -1173,17 +1173,17 @@
           </div>
           <p class="hint" id="byokKeyState" style="margin:6px 0 0"></p>
           <div class="fields" style="margin-top:10px;align-items:start">
-            <div class="field"><label for="byokModelSel">模型名稱</label><select id="byokModelSel" name="byok-model-sel"></select></div>
+            <div class="field"><label for="byokModelSel">模型名稱</label><select autocomplete="off" id="byokModelSel" name="byok-model-sel"></select></div>
             <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" name="byok-endpoint" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
           </div>
           <div class="field" id="byokModelCustomWrap" hidden style="margin-top:10px"><label for="byokModel">自訂模型名稱</label><input type="text" id="byokModel" name="byok-model" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="例如 gpt-4.1，或公司提供的模型名稱"></div>
           <p class="hint" id="byokModelNote" style="margin:8px 0 0"></p>
-          <div class="field" id="byokThinkF" hidden style="margin-top:8px"><label for="byokThink">思考模式（Kimi K2.6）</label><select id="byokThink"><option value="off">關閉（較快、較省，建議）</option><option value="on">開啟（官方預設，較慢，推論較深*）</option></select></div>
-          <div class="field" id="byokEffortF" hidden style="margin-top:8px"><label for="byokEffort">思考深度（Kimi K3）</label><select id="byokEffort"><option value="low">low（較快、較省）</option><option value="high">high</option><option value="max">max（官方預設，最慢）</option></select></div>
+          <div class="field" id="byokThinkF" hidden style="margin-top:8px"><label for="byokThink">思考模式（Kimi K2.6）</label><select autocomplete="off" id="byokThink"><option value="off">關閉（較快、較省，建議）</option><option value="on">開啟（官方預設，較慢，推論較深*）</option></select></div>
+          <div class="field" id="byokEffortF" hidden style="margin-top:8px"><label for="byokEffort">思考深度（Kimi K3）</label><select autocomplete="off" id="byokEffort"><option value="low">low（較快、較省）</option><option value="high">high</option><option value="max">max（官方預設，最慢）</option></select></div>
           <div class="byok-opts">
-            <label><input type="checkbox" id="byokKeep"> 把 key 記在這個瀏覽器（共用電腦請不要勾；不勾則關閉網頁就清除）</label>
-            <label><input type="checkbox" id="byokImgs"> 送出附件圖片（模型需支援多模態）</label>
-            <label><input type="checkbox" id="byokS2t"> 把回答自動轉成繁體（適合 Kimi 等常混入簡體字的模型）</label>
+            <label><input autocomplete="off" type="checkbox" id="byokKeep"> 把 key 記在這個瀏覽器（共用電腦請不要勾；不勾則關閉網頁就清除）</label>
+            <label><input autocomplete="off" type="checkbox" id="byokImgs"> 送出附件圖片（模型需支援多模態）</label>
+            <label><input autocomplete="off" type="checkbox" id="byokS2t"> 把回答自動轉成繁體（適合 Kimi 等常混入簡體字的模型）</label>
           </div>
           <div class="run-row"><button class="btn copper" type="button" id="byokSave">儲存並啟用</button><button class="btn small" type="button" id="byokTest">測試連線</button><button class="btn small" type="button" id="byokClear">清除 key</button><span class="hint" id="byokHint"></span></div>
           <p class="hint">「AI 層級」設定在這個模式不適用，一律使用上面填的模型。送出前請先去識別化（客戶、病患、批號等資訊）。</p>
@@ -1197,7 +1197,7 @@
           <div class="as-row"><span class="group-label">格式</span><div class="chips" id="asFormat" role="group" aria-label="格式"><button class="chip" type="button" data-v="list">條列</button><button class="chip" type="button" data-v="para">段落</button><button class="chip" type="button" data-v="table">盡量用表格</button></div></div>
           <div class="as-row"><span class="group-label">用途</span><div class="chips" id="asUse" role="group" aria-label="用途"><button class="chip" type="button" data-v="general">一般說明</button><button class="chip" type="button" data-v="report">可直接貼進報告</button></div></div>
           <div class="as-row"><span class="group-label">AI 層級</span><div class="chips" id="asTier" role="group" aria-label="AI 層級"><button class="chip" type="button" data-v="quick">快速</button><button class="chip" type="button" data-v="default">標準</button><button class="chip" type="button" data-v="complex">深入思考</button></div></div>
-          <div class="as-row"><span class="group-label">其他要求</span><textarea id="asExtra" rows="2" placeholder="例如：引用 ISO 條號時附年份；結論先寫一句話"></textarea></div>
+          <div class="as-row"><span class="group-label">其他要求</span><textarea autocomplete="off" id="asExtra" rows="2" placeholder="例如：引用 ISO 條號時附年份；結論先寫一句話"></textarea></div>
         </div>
         <div class="run-row"><button class="btn small" type="button" id="asReset">回到公司預設</button><span class="hint">固定不變的三條：繁體中文、推論在句尾標 *、不編造數字與法規條文。</span></div>
       </section>
@@ -1208,8 +1208,8 @@
       <section class="card sheet">
         <h3>比較兩種視角</h3>
         <p class="help">用同一個問題，讓兩種視角各回答一次並排比較。會用掉兩次的用量。</p>
-        <div class="fields"><div class="field"><label for="cmpA">視角 A</label><select id="cmpA"></select></div><div class="field"><label for="cmpB">視角 B</label><select id="cmpB"></select></div></div>
-        <div class="field" style="margin-top:10px"><label for="cmpQ">範例問題（可修改）</label><textarea id="cmpQ" rows="4"></textarea></div>
+        <div class="fields"><div class="field"><label for="cmpA">視角 A</label><select autocomplete="off" id="cmpA"></select></div><div class="field"><label for="cmpB">視角 B</label><select autocomplete="off" id="cmpB"></select></div></div>
+        <div class="field" style="margin-top:10px"><label for="cmpQ">範例問題（可修改）</label><textarea autocomplete="off" id="cmpQ" rows="4"></textarea></div>
         <div class="run-row"><button class="btn copper" type="button" id="cmpRun">比較這兩種視角</button><span class="hint" id="cmpHint"></span></div>
         <div class="cmp-grid"><div class="cmp-col"><b id="cmpTitleA">A</b><div class="cmp-out" id="cmpOutA"></div></div><div class="cmp-col"><b id="cmpTitleB">B</b><div class="cmp-out" id="cmpOutB"></div></div></div>
       </section>
@@ -1292,7 +1292,7 @@
     <div class="ai-foot" id="askRow">
       <div class="ctx-chip" id="ctxChip" hidden><span id="ctxText"></span><button type="button" id="ctxClear" aria-label="取消針對">×</button></div>
       <div class="ask">
-        <textarea id="askBox" aria-label="追問 AI" placeholder="直接提問，或在結果中按「問 AI」、選取文字後提問"></textarea>
+        <textarea autocomplete="off" id="askBox" aria-label="追問 AI" placeholder="直接提問，或在結果中按「問 AI」、選取文字後提問"></textarea>
         <div class="btns">
           <button class="btn primary" id="sendBtn" type="button">送出</button>
           <button class="btn" id="stopBtn" type="button" hidden>停止</button>

@@ -55,7 +55,7 @@
     const box = $("flowBar"); if (!box) return;
     const d0 = flowDone(), redo = rdRedo(), d = {}; FLOW_STEPS.forEach(st => { d[st.k] = d0[st.k] && !redo[st.k]; });
     const nowI = FLOW_STEPS.findIndex(s => !d[s.k]), nDone = FLOW_STEPS.filter(s => d[s.k]).length;
-    const inFlow = FLOW_VIEWS.includes(currentView), mini = flowMin || !inFlow, cs = flowCase(), rs = flowResume();
+    const inFlow = FLOW_VIEWS.includes(currentView), mini = flowMin || !inFlow, cs = flowCase(), rs = currentView === "home" ? flowResume() : null;
     let nApx = 0; try { nApx = (fb.vplan || []).reduce((t, x) => t + (x.apx || []).length, 0); } catch (_) {}
     const sig = JSON.stringify([d, redo, mini, cs, rs && rs.id, currentView, RD.n, RD.list.length, flowHistOpen, nApx]);
     if (!force && sig === flowSig) return; flowSig = sig;

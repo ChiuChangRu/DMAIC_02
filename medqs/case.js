@@ -221,5 +221,7 @@
       const x = caseLoadList().find(y => y.id === p.id);
       if (x) setTimeout(() => { caseRestore(x.c); caseSetCur(x); caseRender(); caseNote(`已載入「${x.name}」（${caseNow()}）。分析結果已由程式重新計算。`); }, 0);
     }
+    if (!p) { try { caseSetCur(null); } catch (_) {} }
+    setTimeout(() => { try { fbRestoreLineRender(); } catch (_) {} }, 0);   // 上次未存的魚骨圖：只在「設定與案件」提供還原，不自動帶入   // 重新整理、重開網頁：從空白開始，不沿用上一次的案件（要用舊資料請自己載入）
     caseRender(); caseBadge();
   })();

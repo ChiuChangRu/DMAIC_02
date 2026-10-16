@@ -139,7 +139,7 @@
   }
   function fbRestoreBackup() {
     if (!fbBackup) return;
-    const doIt = () => { fb = fbRepair(JSON.parse(JSON.stringify(fbBackup.fb))); fbLoadChat(fbBackup.chat); popClose(); fbRenderEditor(); fbSaveNow(); $("fbRestoreLine").hidden = true; fbNote("已還原上次的魚骨圖。"); };
+    const doIt = () => { fb = fbRepair(JSON.parse(JSON.stringify(fbBackup.fb))); fbLoadChat(fbBackup.chat); popClose(); fbRenderEditor(); fbSaveNow(); $("fbRestoreLine").hidden = true; fbNote("已還原上次的魚骨圖。"); try { document.querySelector('.toolnav [data-route="fishbone"]').click(); } catch (_) {} };
     if (fbEmpty()) { doIt(); return; }
     fbAsk("還原會取代目前的魚骨圖與魚骨圖的 AI 對話，確定嗎？", [{ label: "還原", primary: true, fn: doIt }, { label: "取消" }]);
   }
