@@ -93,7 +93,7 @@
   ];
   function tbRender() {
     const g = $("tbGrid"); if (!g) return;
-    g.innerHTML = TB.map(([t, q, ms]) => `<section class="tb-g"><h3>${t}</h3><div class="hint">${q}</div>${ms.map(m => `<div class="tb-m" data-kw="${esc((m[0] + " " + m[1] + " " + m[4]).toLowerCase())}"><span><b>${esc(m[0])}</b><small>${esc(m[1])}</small></span><button type="button" class="btn small" data-tb="${m[2]}|${m[3]}">開啟</button></div>`).join("")}</section>`).join("");
+    let k = 0; g.innerHTML = TB.map(([t, q, ms]) => `<section class="tb-g"><h3>${t}</h3><div class="hint">${q}</div>${ms.map(m => `<div class="tb-m" data-mid="m${++k}" data-kw="${esc((m[0] + " " + m[1] + " " + m[4]).toLowerCase())}"><span><b>${esc(m[0])}</b><small>${esc(m[1])}</small></span><button type="button" class="btn small" data-tb="${m[2]}|${m[3]}">開啟</button></div>`).join("")}</section>`).join("");
   }
   function tbOpen(r, sub) {
     navCtx = "toolbox";
@@ -107,13 +107,63 @@
   (function tbInit() {
     if (!$("tbGrid")) return; tbRender();
     $("tbGrid").addEventListener("click", e => { const b = e.target.closest("[data-tb]"); if (!b) return; const [r, s] = b.dataset.tb.split("|"); tbOpen(r, s); });
-    $("tbSearch").addEventListener("input", () => {
-      const q = $("tbSearch").value.trim().toLowerCase(), ws = q.split(/\s+/).filter(Boolean); let n = 0;
-      document.querySelectorAll("#tbGrid .tb-m").forEach(m => { const ok = !q || ws.some(w => m.dataset.kw.includes(w)) || m.dataset.kw.split(/\s+/).some(k => k.length >= 2 && q.includes(k)); m.hidden = !ok; if (ok) n++; });
-      document.querySelectorAll("#tbGrid .tb-g").forEach(g => { g.hidden = ![...g.querySelectorAll(".tb-m")].some(m => !m.hidden); });
-      $("tbNone").hidden = n > 0;
-    });
+    $("tbLog").addEventListener("click", e => { const b = e.target.closest("[data-tb]"); if (!b) return; const [r, s] = b.dataset.tb.split("|"); tbOpen(r, s); });
+    $("tbAsk").addEventListener("click", tbAsk);
+    $("tbQ").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); tbAsk(); } });
+    $("tbClear").addEventListener("click", () => { TB_TURNS = []; $("tbLog").innerHTML = ""; $("tbClear").hidden = true; $("tbAiMsg").textContent = ""; tbMark([]); tbFilter(""); $("tbQ").value = ""; $("tbQ").focus(); });
   })();
+
+  // ---------------- 工具箱：AI 問答選工具 ----------------
+  // AI 只能從下面清單（工具箱裡真的有的方法）挑，每個方法給代號 m1、m2…
+  const TB_LIST = []; TB.forEach(([g, , ms]) => ms.forEach(m => TB_LIST.push({ id: "m" + (TB_LIST.length + 1), g, name: m[0], desc: m[1], r: m[2], s: m[3] })));
+  let TB_TURNS = [], tbBusy = false;
+  const TB_AI_TAG = "AI 建議，請自行判斷";
+  function tbMark(ids) {   // 在下方清單標出 AI 建議的方法
+    document.querySelectorAll("#tbGrid .tb-m").forEach(m => m.classList.remove("tb-hit"));
+    ids.forEach(id => { const t = TB_LIST.find(x => x.id === id); if (!t) return; const m = document.querySelector(`#tbGrid .tb-m[data-mid="${id}"]`); if (m) m.classList.add("tb-hit"); });
+  }
+  function tbFilter(q) {   // 沒有 AI 時的備用：關鍵字篩選
+    q = String(q || "").trim().toLowerCase(); const ws = q.split(/\s+/).filter(Boolean); let n = 0;
+    document.querySelectorAll("#tbGrid .tb-m").forEach(m => { const ok = !q || ws.some(w => m.dataset.kw.includes(w)) || m.dataset.kw.split(/\s+/).some(k => k.length >= 2 && q.includes(k)); m.hidden = !ok; if (ok) n++; });
+    document.querySelectorAll("#tbGrid .tb-g").forEach(g => { g.hidden = ![...g.querySelectorAll(".tb-m")].some(m => !m.hidden); });
+    $("tbNone").hidden = n > 0; return n;
+  }
+  function tbBubble(who, html) { const d = document.createElement("div"); d.className = "tb-msg tb-" + who; d.innerHTML = html; $("tbLog").appendChild(d); $("tbLog").scrollTop = $("tbLog").scrollHeight; $("tbClear").hidden = false; return d; }
+  function tbReplyHtml(j) {
+    const picks = (Array.isArray(j.picks) ? j.picks : []).map(p => ({ p, t: TB_LIST.find(x => x.id === String(p.id || "").trim()) })).filter(o => o.t).slice(0, 3);
+    let h = j.summary ? `<p>${esc(String(j.summary))}</p>` : "";
+    h += picks.map(({ p, t }, i) => `<div class="tb-pick"><div class="tb-pick-h"><b>${i + 1}. ${esc(t.name)}</b><small>${esc(t.g)}</small><button type="button" class="btn small" data-tb="${t.r}|${t.s}">開啟</button></div>`
+      + (p.why ? `<div><span class="tb-lb">為什麼</span>${esc(String(p.why))}</div>` : "")
+      + (p.prep ? `<div><span class="tb-lb">要準備</span>${esc(String(p.prep))}</div>` : "")
+      + (p.note ? `<div><span class="tb-lb">注意</span>${esc(String(p.note))}</div>` : "") + `</div>`).join("");
+    if (j.ask) h += `<p class="tb-ask">❓ ${esc(String(j.ask))}</p>`;
+    if (!h) h = "<p>AI 沒有給出可用的建議，請換個說法再問。</p>";
+    return { html: h + `<div class="tb-tag">（${TB_AI_TAG}）</div>`, ids: picks.map(o => o.t.id) };
+  }
+  async function tbAsk() {
+    const q = $("tbQ").value.trim(), msg = $("tbAiMsg"); if (!q || tbBusy) return;
+    if (typeof sample !== "function") {   // 沒有 AI：退回關鍵字篩選
+      const n = tbFilter(q);
+      msg.textContent = (typeof aiErr === "string" && aiErr ? aiErr : "目前無法使用 AI。") + "　已先用關鍵字篩選下方清單（" + n + " 個方法）。";
+      return;
+    }
+    tbFilter(""); tbBusy = true; $("tbAsk").disabled = true; msg.textContent = "";
+    tbBubble("u", esc(q)); $("tbQ").value = "";
+    const wait = tbBubble("a", "<p class=\"hint\">AI 思考中…</p>");
+    const sys = ["你是醫療器材品質與法規的統計顧問，幫使用者從下面「工具箱方法清單」挑出最適合回答他問題的方法。",
+      "規則：1. 用繁體中文，口語、簡短，讓非統計背景的人看得懂。2. 只能從清單挑，用代號（例如 m3）表示，最多 3 個，依適合程度排序；清單沒有合適的就不要硬挑，在 summary 說明。3. 不得編造量測數值或實驗結果。4. 引用標準、指引或業界常見做法時，若不確定條次或是否適用，在該句結尾標 *。5. 資訊不足以判斷時，在 ask 提出一個最關鍵的追問（例如資料是數值還是過／不過、幾組、是否同一批樣品量兩次）；資訊足夠時 ask 留空。可以同時給暫定建議與追問。6. 最後由使用者決定。7. 只回 JSON，不要其他文字。",
+      '格式：{"summary": "一句話判斷", "picks": [{"id": "m3", "why": "為什麼適合（1～2 句）", "prep": "要準備的資料", "note": "注意事項或前提（可空）"}], "ask": "追問（可空）"}',
+      "【工具箱方法清單】", ...TB_LIST.map(t => `${t.id}｜${t.g.replace(/^\S+\s/, "")}｜${t.name}：${t.desc}`)].join("\n");
+    const turns = TB_TURNS.length ? TB_TURNS.concat([{ role: "user", content: q }]) : [{ role: "user", content: sys + "\n\n【使用者的問題】" + q }];
+    try {
+      const res = await sample(turns, { cache: false, modelTier: "default" });
+      const txt = String((res && res.text) || ""), m = txt.match(/\{[\s\S]*\}/); let j = null; try { j = m ? JSON.parse(m[0]) : null; } catch (_) {}
+      if (!j) { wait.innerHTML = "<p>AI 沒有給出可用的建議，請換個說法再問。</p>"; return; }
+      const r = tbReplyHtml(j); wait.innerHTML = r.html; tbMark(r.ids);
+      TB_TURNS = turns.concat([{ role: "assistant", content: m[0] }]);
+    } catch (e) { wait.innerHTML = `<p>AI 呼叫失敗：${esc((e && e.message) || "請稍後再試")}</p>`; }
+    finally { tbBusy = false; $("tbAsk").disabled = false; $("tbQ").focus(); }
+  }
 
   // ---------------- 工具頁上方的麵包屑：從哪裡來、怎麼回去 ----------------
   const CRUMB_NAME = { sample: "樣本數規劃", hypothesis: "假設檢定", regression: "相關與回歸", msa: "MSA 量測系統分析", spc: "SPC 管制圖", doe: "DOE 實驗設計", taguchi: "田口方法", validation: "計算驗證" };

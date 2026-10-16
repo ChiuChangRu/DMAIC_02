@@ -40,9 +40,17 @@
 
   <section id="viewToolbox" role="tabpanel" data-view="toolbox" hidden>
     <div class="tool-head"><h2 class="tool-title">🧰 工具箱</h2><span class="hint">不走流程，直接用任何一個工具；依「要回答的問題」分組</span></div>
-    <input autocomplete="off" type="search" class="tb-search" id="tbSearch" placeholder="🔍 用一句話找方法，例如：兩條線的拉力有沒有差／要測幾個才能宣稱 95/95" aria-label="搜尋方法">
+    <div class="tb-ai" id="tbAi">
+      <div class="tb-ai-head"><b>🤖 問 AI：該用哪個工具？</b><button type="button" class="linkbtn" id="tbClear" hidden>重新問</button></div>
+      <div class="tb-log" id="tbLog" aria-live="polite"></div>
+      <div class="tb-ai-row">
+        <textarea autocomplete="off" id="tbQ" rows="2" placeholder="描述你要回答的問題，例如：兩條產線的拉力有沒有差／要測幾個才能宣稱 95/95（Enter 送出，Shift+Enter 換行）" aria-label="描述你要回答的問題"></textarea>
+        <button type="button" class="btn" id="tbAsk">請 AI 建議</button>
+      </div>
+      <div class="hint" id="tbAiMsg"></div>
+    </div>
     <div class="tb-grid" id="tbGrid"></div>
-    <p class="hint" id="tbNone" hidden>找不到符合的方法，請換個說法，或到「定義問題」問 AI。</p>
+    <p class="hint" id="tbNone" hidden>找不到符合的方法，請換個說法。</p>
   </section>
 
   <section id="viewHome" role="tabpanel" data-view="home">

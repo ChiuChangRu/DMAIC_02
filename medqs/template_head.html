@@ -1142,3 +1142,22 @@ nav.toolnav .nv-grp:has([aria-selected="true"]) { background: rgba(255,255,255,.
 nav.toolnav .nv-flow:has([aria-selected="true"]) { background: rgba(216,153,95,.22); }
 nav.toolnav .nv-side { background: transparent; border-radius: 0; }
 @media (max-width: 720px) { nav.toolnav { gap: 6px; } nav.toolnav .nv-tb { order: 1; } nav.toolnav .nv-set { order: 2; } nav.toolnav .nv-flow { order: 3; flex: 1 1 100%; flex-wrap: wrap; } }
+/* 工具箱 AI 問答 */
+.tb-ai { background: var(--surface); border: 1.5px solid var(--accent, #d8995f); border-radius: 14px; padding: 12px 14px; margin: 6px 0 14px; }
+.tb-ai-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tb-ai-row { display: flex; gap: 8px; align-items: stretch; }
+.tb-ai-row textarea { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg, transparent); color: var(--ink); resize: vertical; }
+.tb-log { display: flex; flex-direction: column; gap: 8px; max-height: 460px; overflow-y: auto; margin-bottom: 8px; }
+.tb-log:empty { display: none; }
+.tb-msg { padding: 8px 12px; border-radius: 10px; line-height: 1.6; }
+.tb-msg p { margin: 2px 0 6px; }
+.tb-u { align-self: flex-end; max-width: 85%; background: rgba(216,153,95,.16); white-space: pre-wrap; }
+.tb-a { align-self: stretch; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.tb-pick { border-top: 1px solid var(--line); padding: 6px 0; }
+.tb-pick-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tb-pick-h small { color: var(--muted); } .tb-pick-h .btn { margin-left: auto; }
+.tb-lb { display: inline-block; min-width: 3.5em; color: var(--muted); font-size: 12px; margin-right: 6px; }
+.tb-ask { color: var(--accent, #d8995f); font-weight: 600; }
+.tb-tag { color: var(--muted); font-size: 12px; text-align: right; }
+.tb-m.tb-hit { background: rgba(216,153,95,.18); border-radius: 8px; padding-left: 6px; padding-right: 6px; }
+@media (max-width: 720px) { .tb-ai-row { flex-direction: column; } }
