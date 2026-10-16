@@ -201,7 +201,7 @@
       return `<div class="pd-ed"${keep ? ` data-vrn="${x.id}"` : ""} contenteditable="plaintext-only" spellcheck="false" title="點一下可以修改">${esc(v.note)}</div>`;
     };
     return `<div class="pd-cap">各驗證項目的結論</div><table class="pd-tbl pd-vr"><thead><tr><th>驗證項目</th><th class="pd-tool">驗證策略</th><th style="width:100px">結論</th><th>依據</th><th style="width:58px">附錄</th></tr></thead><tbody>${L.map(x => { const v = vrNow(x); return `<tr><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td>${stCell(x, v)}</td><td>${noteCell(x, v)}</td><td>${apxNo[x.id] ? apxNo[x.id].map(n => "附錄 " + n).join("<br>") : "—"}</td></tr>`; }).join("")}</tbody></table>
-      <p class="pd-note">統計類項目的結論來自 ⑤ 檢定分析「驗證結束，並儲存到報告」（多份時以最後一份為準）；不用統計的項目在這裡選結論、寫依據。</p>`;
+      <p class="pd-note">統計類項目的結論來自 ⑤ 統計分析「驗證結束，並儲存到報告」（多份時以最後一份為準）；不用統計的項目在這裡選結論、寫依據。</p>`;
   }
   function vrApxHtml(mode) {
     const keep = mode === "screen"; let k = 0, out = "";
