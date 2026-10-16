@@ -946,6 +946,7 @@
           <span class="qref">STEP 1</span><h2 class="q">Gage R&amp;R 數據</h2>
           <p class="help">每列：操作員, 零件, 第 1 次, 第 2 次, …（操作員與零件可以是代號或名稱）。建議至少 2～3 位操作員、10 件零件、每件量 2～3 次，零件要涵蓋製程範圍。</p>
           <div class="chips"><button class="chip" type="button" id="grrEx">載入範例</button></div>
+          <div class="pub-pick"><label for="pubMsaSel">公開範例（文獻數據）</label><select autocomplete="off" id="pubMsaSel"></select><p class="hint" id="pubMsaDesc"></p></div>
           <textarea autocomplete="off" id="grrData" spellcheck="false" aria-label="Gage R&R 數據"></textarea>
           <div class="fields">
             <div class="field"><label for="grrMethod">方法</label><select autocomplete="off" id="grrMethod"><option value="anova">ANOVA 法（建議）</option><option value="xbarr">平均全距法（AIAG）</option></select></div>
@@ -1042,6 +1043,7 @@
             </div>
             <div id="doeFactors" class="doe-factors"></div>
             <div class="run-row"><button class="btn small" type="button" id="doeGen">產生實驗矩陣</button><button class="btn small" type="button" id="doeEx">載入範例</button><span class="hint" id="doeGenHint"></span></div>
+            <div class="pub-pick"><label for="pubDoeSel">公開範例（醫材文獻數據）</label><select autocomplete="off" id="pubDoeSel"></select><p class="hint" id="pubDoeDesc"></p></div>
           </div>
           <div class="step">
             <span class="qref copper">STEP 2</span><h2 class="q">填入結果</h2>

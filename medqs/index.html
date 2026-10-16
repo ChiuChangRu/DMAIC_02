@@ -2140,6 +2140,7 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
           <span class="qref">STEP 1</span><h2 class="q">Gage R&amp;R 數據</h2>
           <p class="help">每列：操作員, 零件, 第 1 次, 第 2 次, …（操作員與零件可以是代號或名稱）。建議至少 2～3 位操作員、10 件零件、每件量 2～3 次，零件要涵蓋製程範圍。</p>
           <div class="chips"><button class="chip" type="button" id="grrEx">載入範例</button></div>
+          <div class="pub-pick"><label for="pubMsaSel">公開範例（文獻數據）</label><select autocomplete="off" id="pubMsaSel"></select><p class="hint" id="pubMsaDesc"></p></div>
           <textarea autocomplete="off" id="grrData" spellcheck="false" aria-label="Gage R&R 數據"></textarea>
           <div class="fields">
             <div class="field"><label for="grrMethod">方法</label><select autocomplete="off" id="grrMethod"><option value="anova">ANOVA 法（建議）</option><option value="xbarr">平均全距法（AIAG）</option></select></div>
@@ -2236,6 +2237,7 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
             </div>
             <div id="doeFactors" class="doe-factors"></div>
             <div class="run-row"><button class="btn small" type="button" id="doeGen">產生實驗矩陣</button><button class="btn small" type="button" id="doeEx">載入範例</button><span class="hint" id="doeGenHint"></span></div>
+            <div class="pub-pick"><label for="pubDoeSel">公開範例（醫材文獻數據）</label><select autocomplete="off" id="pubDoeSel"></select><p class="hint" id="pubDoeDesc"></p></div>
           </div>
           <div class="step">
             <span class="qref copper">STEP 2</span><h2 class="q">填入結果</h2>
@@ -12736,7 +12738,7 @@ else root.runValidation = runValidation;
     caseRender(); caseBadge();
   })();
   // =====================================================================
-  // 公開範例庫（第 1 批：假設檢定＋樣本數規劃）
+  // 公開範例庫（第 1 批：假設檢定＋樣本數規劃；第 2 批：DOE、MSA 文獻數據）
   // 用網路上公開的教科書／官方文件範例驗算本站計算，並可一鍵載入到對應工具。
   // 數據只收錄：美國政府公開資料（NIST）、軟體官方文件的小型範例表、或文件中的少量數值，均標註出處。
   // 非醫材產業的範例照實標示原產業，不改寫成醫材情境。
@@ -12752,7 +12754,9 @@ else root.runValidation = runValidation;
     nistN: { t: "NIST/SEMATECH e-Handbook §7.2.2.2 Sample sizes required", u: "https://itl.nist.gov/div898/handbook/prc/section2/prc222.htm", lic: "美國政府公開資料" },
     mw: { t: "MathWorks Statistics Toolbox 文件：Selecting a Sample Size", u: "https://www.mathworks.com/help/stats/selecting-a-sample-size.html", lic: "MathWorks 官方文件；只引用條件與答案" },
     umn: { t: "Durfee & Iaizzo《Medical Device Innovation Handbook》Reliability considerations in medical device development", u: "https://pressbooks.umn.edu/mdih/chapter/reliability-considerations-in-medical-device-development", lic: "CC BY-NC 4.0；只引用表格數值" },
-    pd: { t: "Packaging Digest（2019-10-18，Nelson Labs：Mach & Gygi）How to determine a valid sample size for testing your medical device package", u: "https://www.packagingdigest.com/medical-packaging/how-to-determine-a-valid-sample-size-for-testing-your-medical-device-package", lic: "雜誌文章；只引用結論數字" }
+    pd: { t: "Packaging Digest（2019-10-18，Nelson Labs：Mach & Gygi）How to determine a valid sample size for testing your medical device package", u: "https://www.packagingdigest.com/medical-packaging/how-to-determine-a-valid-sample-size-for-testing-your-medical-device-package", lic: "雜誌文章；只引用結論數字" },
+    plosStent: { t: "Acharya G, Lee CH, Lee Y（2012）Optimization of Cardiovascular Stent against Restenosis: Factorial Design-Based Statistical Analysis of Polymer Coating Conditions. PLoS ONE 7(8): e43100（Table 2）", u: "https://doi.org/10.1371/journal.pone.0043100", lic: "PLOS ONE 開放取用（CC BY）；只收錄 Table 2 中 PLGA、PCL 的 8 筆數據並標註出處" },
+    ieom: { t: "Sennaroglu B, Yurtsever O（2018）Evaluating Measurement System by Gauge Repeatability and Reproducibility. IEOM Paris 2018 論文集（Table 5、7、8）", u: "https://www.ieomsociety.org/paris2018/papers/308.pdf", lic: "IEOM 公開論文 PDF；只收錄 Table 5 的 18 筆數據並標註出處" }
   };
   const f4 = v => isFinite(v) ? fmtSig(v, 6) : "—";
   const pubNear = (got, pub, tol) => isFinite(got) && Math.abs(got - pub) <= tol;
@@ -12809,7 +12813,23 @@ else root.runValidation = runValidation;
       at: { c: "0.9", r: "0.99", cc: "0" },
       note: "16 格中 14 格相同。書中「可靠度 99%」那一列的 114／149／228 其實等於可靠度 98% 的答案（ln0.10/ln0.98 = 113.97 → 114），同一列 99.9% 信心的 688 才符合 99%；判斷是來源表誤植。本站值 230／299／459 可用 n = ln(1−C)/ln(R) 手算核對。",
       checks: () => { const C = [0.90, 0.95, 0.99, 0.999], R = [0.999, 0.99, 0.95, 0.90], E = [[2302, 2995, 4603, 6905], [114, 149, 228, 688], [45, 59, 90, 135], [22, 29, 44, 66]], out = [];
-        R.forEach((r, i) => C.forEach((c, j) => out.push([`R ${r * 100}%／C ${c * 100}%`, E[i][j], HT.crSampleSize(c, r, 0), 0, i === 1 && j < 3 ? "來源誤植" : ""]))); return out; } }
+        R.forEach((r, i) => C.forEach((c, j) => out.push([`R ${r * 100}%／C ${c * 100}%`, E[i][j], HT.crSampleSize(c, r, 0), 0, i === 1 && j < 3 ? "來源誤植" : ""]))); return out; } },
+    // ---- 第 2 批：DOE、MSA（文獻數據） ----
+    { id: "d-stent", tool: "doe", med: "醫材（藥物塗層心血管支架）", title: "DOE 2³ 全因子：支架塗層高分子、濃度、藥量對累積釋放率的影響", src: "plosStent",
+      factors: [["高分子種類", "PLGA", "PCL"], ["高分子濃度 (%w/v)", "5", "17.5"], ["藥物濃度 (%w/w)", "0.4", "0.6"]], yName: "累積釋放率 (%)", goal: "min",
+      y: [89.61, 70.24, 34.88, 21.38, 71.88, 45.55, 30.16, 25.39],
+      note: "原論文是 3 種高分子（PLGA、PCL、PEG）× 2 個連續因子＋中心點，共 15 組；本站只支援 2 水準，取 PLGA、PCL 兩種高分子當第 3 個因子，做 2³、不重複（8 組，不含 PEG 與中心點）。這是本站對文獻數據的子集重新分析，結果不能和論文的 ANOVA 直接對照；「發表值」欄改放以 Python（NumPy／SciPy）獨立重算的效應與 Lenth 邊際誤差。8 組不重複的 Lenth 法鑑別力很低，本例沒有效應達到顯著，最大的是高分子濃度（效應約 −41.4）。",
+      checks: ex => { const d = QQ.makeDesign("full", { k: 3 }), r = QQ.doeAnalyze(d, ex.y.map(v => [v]), { alpha: 0.05, goal: "min" }), E = n => (r.effects.find(e => e.name === n) || {}).effect; return [
+        ["效應 A（高分子種類）", -15.9925, E("A"), 5e-5], ["效應 B（高分子濃度）", -41.3675, E("B"), 5e-5], ["效應 C（藥物濃度）", -10.7825, E("C"), 5e-5],
+        ["效應 AB", 6.8575, E("AB"), 5e-5], ["效應 AC", 0.4425, E("AC"), 5e-5], ["效應 BC", 10.4275, E("BC"), 5e-5], ["效應 ABC", 3.9225, E("ABC"), 5e-5],
+        ["總平均", 48.63625, r.grand, 5e-5], ["Lenth PSE", 12.9637, r.PSE, 5e-4], ["Lenth 邊際誤差 ME", 48.7972, r.ME, 5e-4]]; } },
+    { id: "m-ieom", tool: "grr", med: "製藥（藥錠主成分含量，非醫材）", title: "Gage R&R（ANOVA，交叉設計）：3 批 × 2 位人員 × 3 次，主成分含量 (mg)", src: "ieom",
+      ops: ["人員1", "人員2"], parts: ["批1", "批2", "批3"],
+      data: [[[495.968, 502.964, 496.623], [498.721, 496.118, 495.396], [491.055, 499.385, 484.665]], [[508.167, 491.563, 503.215], [491.108, 493.701, 498.041], [493.963, 499.997, 492.449]]], tol: 50,
+      note: "論文為人員訓練後的交叉設計（Table 5），規格 475～525 mg（公差 50）。論文保留零件×人員交互作用、負的變異數設為 0，因此載入時「交互作用併入誤差」設為「不併入」。論文的 P/T = 0.645 對應本站 %公差（6σ）64.5%。原產業為製藥，照實標示。",
+      checks: ex => { const r = QQ.grrAnova(ex.data, { k: 6, alphaRemove: 2, tol: ex.tol }), F = i => r.full.rows[i]; return [
+        ["零件 F", 3.685, F(0).F, 5e-4], ["零件 p", 0.213, F(0).p, 5e-4], ["人員 F", 0.439, F(1).F, 5e-4], ["人員 p", 0.576, F(1).p, 5e-4], ["零件×人員 F", 0.560, F(2).F, 5e-4], ["零件×人員 p", 0.585, F(2).p, 5e-4],
+        ["重複性變異數", 28.892, r.vc.rep, 5e-4], ["總變異數", 36.137, r.vc.total, 5e-4], ["重複性 %貢獻", 79.95, 100 * r.vc.rep / r.vc.total, 5e-3], ["零件 %貢獻", 20.05, 100 * r.vc.part / r.vc.total, 5e-3], ["P/T（6σ_GRR／公差）", 0.645, r.pctTolGRR / 100, 5e-4]]; } }
   ];
   // 單筆比對：回傳 [{lab, pub, got, ok, flag}]
   function pubRun(ex) {
@@ -12846,6 +12866,25 @@ else root.runValidation = runValidation;
       $("panel").scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
+    if (ex.tool === "doe") {
+      closePanel(); route("doe");
+      setChip("doeKind", "full"); doeKOptions("full"); $("doeK").value = String(ex.factors.length); $("doeRep").value = "1"; $("doeKindHelp").textContent = DOE_HELP.full;
+      ex.factors.forEach((f, i) => { doeF[i] = { name: f[0], lo: f[1], hi: f[2] }; });
+      $("doeY").value = ex.yName; doeFactorsUI();
+      const y = {}; ex.y.forEach((v, i) => { y[i + "_0"] = String(v); });
+      doeGenerate(y); $("doeGoal").value = ex.goal || "max"; $("doeTgtF").hidden = true; doeRun();
+      const pb = $("doeProblem"); if (pb) { pb.value = tag; pb.dataset.auto = tag; }
+      $("doeHint").textContent = "已載入公開範例（文獻數據），結果下方可對照。" + (ex.note ? " " + ex.note : "");
+      return;
+    }
+    if (ex.tool === "grr") {
+      closePanel(); route("msa"); const t = $("msaTabs") && $("msaTabs").querySelector('[data-tsub="grr"]'); if (t) t.click();
+      const L = ["操作員,零件,第1次,第2次,第3次"]; ex.data.forEach((o, i) => o.forEach((pv, j) => L.push([ex.ops[i], ex.parts[j]].concat(pv).join(","))));
+      $("grrData").value = L.join("\n"); $("grrTol").value = String(ex.tol); $("grrMethod").value = "anova"; $("grrK").value = "6"; $("grrAlpha").value = "-1";
+      const pb = $("msaProblem"); if (pb) { pb.value = tag; pb.dataset.auto = tag; }
+      grrRun(); $("grrHint").textContent = "已載入公開範例（文獻數據）。" + (ex.note ? " " + ex.note : "");
+      return;
+    }
     closePanel(); route("sample");
     const tab = $("ssTabs").querySelector(`[data-tsub="${ex.sub}"]`); if (tab) tab.click();
     const chip = (gid, v) => { const b = $(gid) && $(gid).querySelector(`[data-v="${v}"]`); if (b && b.getAttribute("aria-pressed") !== "true") b.click(); };
@@ -12859,7 +12898,7 @@ else root.runValidation = runValidation;
   function pubOptions(tool) {
     const list = PUB_EX.filter(x => (!tool || x.tool === tool) && pubLoadable(x));
     const grp = (t, lab) => { const xs = list.filter(x => x.tool === t); return xs.length ? `<optgroup label="${lab}">` + xs.map(x => `<option value="${x.id}">${esc(x.title)}｜${esc(x.med)}</option>`).join("") + `</optgroup>` : ""; };
-    return `<option value="">— 選擇公開範例 —</option>` + grp("hyp", "假設檢定") + grp("ss", "樣本數規劃");
+    return `<option value="">— 選擇公開範例 —</option>` + grp("hyp", "假設檢定") + grp("ss", "樣本數規劃") + grp("doe", "DOE 實驗設計") + grp("grr", "MSA Gage R&R");
   }
   const pubSrcLink = k => { const S = PUB_SRC[k]; return `<a class="link" href="${S.u}" target="_blank" rel="noopener">${esc(S.t)}</a>`; };
   function pubDescHTML(ex) {
@@ -12879,6 +12918,8 @@ else root.runValidation = runValidation;
   pubMountSelect("pubHypSel", "pubHypDesc", "hyp", ex => pubLoad(ex.id));
   pubMountSelect("pubSsSel", "pubSsDesc", "ss", ex => pubLoad(ex.id));
   pubMountSelect("pubCaseSel", "pubCaseDesc", "", ex => pubLoad(ex.id));
+  pubMountSelect("pubDoeSel", "pubDoeDesc", "doe", ex => pubLoad(ex.id));
+  pubMountSelect("pubMsaSel", "pubMsaDesc", "grr", ex => pubLoad(ex.id));
   // ---- 確效頁：公開範例對照表 ----
   function pubValRender() {
     const box = $("valPub"); if (!box) return;
@@ -12887,7 +12928,7 @@ else root.runValidation = runValidation;
       const rows = pubRun(ex), [cls, txt] = pubVerdict(rows), S = PUB_SRC[ex.src];
       if (cls === "ok") nOk++; else if (cls === "warn") nWarn++; else nNg++;
       const det = rows.map(r => `<tr><td>${esc(r.lab)}</td><td class="num">${f4(r.pub)}</td><td class="num">${f4(r.got)}</td><td>${r.ok ? '<span class="status ok">相符</span>' : r.flag ? `<span class="status warn">${esc(r.flag)}</span>` : '<span class="status ng">不符</span>'}</td></tr>`).join("");
-      return `<tr><td>${ex.tool === "hyp" ? "假設檢定" : "樣本數規劃"}</td><td><b>${esc(ex.title)}</b><br><span class="hint">${esc(ex.med)}</span></td><td><span class="status ${cls}">${txt}</span></td>
+      return `<tr><td>${{ hyp: "假設檢定", ss: "樣本數規劃", doe: "DOE", grr: "MSA" }[ex.tool] || ex.tool}</td><td><b>${esc(ex.title)}</b><br><span class="hint">${esc(ex.med)}</span></td><td><span class="status ${cls}">${txt}</span></td>
         <td>${pubSrcLink(ex.src)}${ex.src2 ? "<br>另見 " + pubSrcLink(ex.src2) : ""}<br><span class="hint">${esc(S.lic)}</span></td>
         <td>${pubLoadable(ex) ? `<button class="btn small" type="button" data-pubload="${ex.id}">載入</button>` : `<span class="hint">${esc(ex.noload)}</span>`}</td></tr>
         <tr class="pub-det"><td></td><td colspan="4"><details><summary>比對明細（${rows.length} 項）</summary>${ex.note ? `<p class="hint">${esc(ex.note)}</p>` : ""}<table class="mini"><tr><th>項目</th><th>發表值</th><th>本站</th><th>判定</th></tr>${det}</table></details></td></tr>`;
