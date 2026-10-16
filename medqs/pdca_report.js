@@ -158,14 +158,31 @@
     return 2 * hit / Math.max(1, a.length - 1 + b.length - 1);
   }
   const VP_SIM = 0.6;
+  // 魚骨圖標「◇ 待驗證」（且未排除）的原因，自動帶入驗證項目清單；使用者可以改、刪、自行新增
+  // fid＝對應的魚骨圖原因；fbt＝帶入時的原因文字（使用者沒改過原因時，魚骨圖改字會跟著更新）；刪掉的記在 fb.vpSkip，不再帶回
+  function vpSyncFb() {
+    if (!fb || !Array.isArray(fb.factors)) return 0;
+    const L = fb.vplan || (fb.vplan = []), skip = new Set(fb.vpSkip || []); let n = 0, ch = false;
+    fb.factors.filter(f => f.verify && f.st !== "excl" && String(f.text || "").trim()).forEach(f => {
+      const t = f.text.trim(), lk = L.find(y => y.fid === f.id);
+      if (lk) { if (lk.fbt && lk.cause === lk.fbt && t !== lk.fbt) { lk.cause = t; lk.fbt = t; ch = true; } return; }
+      if (skip.has(f.id)) return;
+      const sim = L.find(y => !y.fid && vpSim(y.cause, t) >= VP_SIM); if (sim) { sim.fid = f.id; ch = true; return; }
+      L.push({ id: fid(), on: true, fid: f.id, fbt: t, cause: t, method: "", data: "", tool: "" }); n++; ch = true;
+    });
+    if (ch) fbSave();
+    return n;
+  }
+  function vpSkipAdd(x) { if (x && x.fid) { fb.vpSkip = (fb.vpSkip || []).filter(v => v !== x.fid).concat(x.fid); } }
+  function vpFbOf(x) { return x.fid ? fb.factors.find(f => f.id === x.fid) : null; }
   function vpRender() {
     const box = $("fbVplan"); if (!box) return; const ae = document.activeElement; if (box.contains(ae) && (ae.classList.contains("vp-ed") || (ae.tagName === "INPUT" && ae.classList.contains("vp-tool")))) return;
-    const L = fb.vplan || (fb.vplan = []);
+    vpSyncFb(); const L = fb.vplan || (fb.vplan = []);
     const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
     const nOn = L.filter(x => x.on).length;
     const dupOf = L.map((x, i) => { for (let j = 0; j < i; j++) if (vpSim(L[j].cause, x.cause) >= VP_SIM) return j + 1; return 0; });
-    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
-      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "在 ② 魚骨圖 把原因標「◇ 待驗證」會自動帶入；也可以按「請 AI 建議驗證策略」或自行新增。"}</span></div>
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${(f => f ? `<div class="vp-src">🐟 魚骨圖帶入${f.verify ? "" : "（魚骨圖已取消 ◇）"}</div>` : "")(vpFbOf(x))}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
   const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
@@ -192,20 +209,23 @@
     box.addEventListener("paste", e => { const el = e.target.closest(".vp-ed"); if (!el) return; e.preventDefault(); try { document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } catch (_) {} });
     box.addEventListener("change", e => { const c = e.target.closest("[data-vpon]"); if (!c) return; const x = (fb.vplan || []).find(y => y.id === c.dataset.vpon); if (x) { x.on = c.checked; vpChanged(true); } });
     box.addEventListener("click", e => {
-      const d = e.target.closest("[data-vpdel]"); if (d) { fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.vpdel); vpChanged(true); return; }
+      const d = e.target.closest("[data-vpdel]"); if (d) { vpSkipAdd((fb.vplan || []).find(y => y.id === d.dataset.vpdel)); fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.vpdel); vpChanged(true); return; }
       if (e.target.closest("[data-vpnew]")) { (fb.vplan || (fb.vplan = [])).push({ id: fid(), on: true, cause: "", method: "", data: "", tool: "" }); vpChanged(true); const last = box.querySelector("tbody tr:last-child .vp-ed"); if (last) last.focus(); return; }
-      const cl = e.target.closest("[data-vpclean]"); if (cl) { if (!cl.dataset.armed) { cl.dataset.armed = "1"; cl.textContent = "確定刪除未勾選的？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.on); vpChanged(true); }
+      const cl = e.target.closest("[data-vpclean]"); if (cl) { if (!cl.dataset.armed) { cl.dataset.armed = "1"; cl.textContent = "確定刪除未勾選的？再按一次"; return; } (fb.vplan || []).filter(y => !y.on).forEach(vpSkipAdd); fb.vplan = (fb.vplan || []).filter(y => y.on); vpChanged(true); }
     });
     document.addEventListener("click", e => {   // AI 回答下的「列入清單」
       const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled) return;
       let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
       const L = fb.vplan || (fb.vplan = []), have = new Set(L.map(vpKey)); let n = 0;
-      let skip = 0;
-      items.forEach(x => { if (have.has(vpKey(x)) || L.some(y => vpSim(y.cause, x.cause) >= VP_SIM)) { skip++; return; } L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
-      b.disabled = true; b.textContent = n ? `已列入 ${n} 項${skip ? `（${skip} 項和清單中的原因相同或相似，略過）` : ""}` : "這些原因都已在清單中";
+      let skip = 0, fill = 0;
+      items.forEach(x => {
+        const y = L.find(y => vpKey(y) === vpKey(x) || vpSim(y.cause, x.cause) >= VP_SIM);
+        if (y) { let hit = false; ["method", "data", "tool"].forEach(k => { if (!String(y[k] || "").trim() && x[k]) { y[k] = x[k]; hit = true; } }); if (hit) fill++; else skip++; return; }   // 清單已有（例如魚骨圖帶入的）：只補空白欄位，不覆蓋使用者寫的
+        L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
+      b.disabled = true; b.textContent = n || fill ? [n ? `已列入 ${n} 項` : "", fill ? `已補上 ${fill} 項的空白欄位` : "", skip ? `${skip} 項已在清單中，略過` : ""].filter(Boolean).join("；") : "這些原因都已在清單中";
       vpChanged(true);
       try { closePanel(); $("aiDot").hidden = false; const bx = $("fbVplan"); if (bx) setTimeout(() => bx.scrollIntoView({ behavior: "smooth", block: "start" }), 50); } catch (_) {}   // 跟帶入魚骨圖一樣：AI 收成右下角按鈕
-      fbNote(n ? `已把 ${n} 個驗證項目列入 ③ 驗證計畫清單${skip ? `，略過 ${skip} 個相同或相似的原因` : ""}，請勾選要採用的。` : "這些原因都已在清單中（相同或相似），沒有新增。");
+      fbNote(n || fill ? `${n ? `已把 ${n} 個驗證項目列入 ③ 驗證計畫清單，請勾選要採用的` : ""}${n && fill ? "；" : ""}${fill ? `已替 ${fill} 個清單中的項目補上 AI 建議（只填空白欄位）` : ""}${skip ? `；略過 ${skip} 個已有內容的原因` : ""}。` : "這些原因都已在清單中且已有內容，沒有變更。");
     });
     vpRender();
   })();

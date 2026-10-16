@@ -1161,6 +1161,10 @@ nav.toolnav .nv-side { background: transparent; border-radius: 0; }
 .tb-tag { color: var(--muted); font-size: 12px; text-align: right; }
 .tb-m.tb-hit { background: rgba(216,153,95,.18); border-radius: 8px; padding-left: 6px; padding-right: 6px; }
 @media (max-width: 720px) { .tb-ai-row { flex-direction: column; } }
+.vp-src { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+/* 四步驟流程底色加強 */
+nav.toolnav .nv-flow { background: rgba(216,153,95,.26); box-shadow: inset 0 0 0 1.5px rgba(216,153,95,.45); }
+nav.toolnav .nv-flow:has([aria-selected="true"]) { background: rgba(216,153,95,.38); box-shadow: inset 0 0 0 1.5px rgba(216,153,95,.7); }
 </style>
 
 <div class="wrap">
@@ -1195,7 +1199,7 @@ nav.toolnav .nv-side { background: transparent; border-radius: 0; }
       <summary><b>編輯驗證項目</b><span class="hint">　新增、修改、勾選要驗證的原因；請 AI 建議驗證策略</span></summary>
       <div class="step">
           <details class="plan-fbv"><summary>魚骨圖標記「◇ 待驗證／★ 重要」的原因</summary><div id="fbVerify"></div></details>
-          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證策略</button><span class="hint">不用統計就能確認的，AI 會直接建議其他策略；問第二次只列清單中沒有的原因。</span></div>
+          <div class="run-row"><button class="btn copper" type="button" id="fbPlanAI">請 AI 建議驗證策略</button><span class="hint">替清單中還沒有驗證策略的項目建議（只填空白欄位）；不用統計就能確認的，AI 會直接建議其他策略。</span></div>
           <div id="fbVplan"></div>
       </div>
     </details>
@@ -6769,7 +6773,8 @@ else root.runValidation = runValidation;
     if (!o.detail || typeof o.detail !== "object") o.detail = d.detail;
     if (!o.ext || typeof o.ext !== "object") o.ext = null;
     if (o.pdca != null && typeof o.pdca !== "object") o.pdca = {};
-    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000), inp: x.ss.inp && typeof x.ss.inp === "object" ? { sub: String(x.ss.inp.sub || "").slice(0, 12), f: Object.fromEntries(Object.entries(x.ss.inp.f || {}).slice(0, 80).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 200)])), c: Object.fromEntries(Object.entries(x.ss.inp.c || {}).slice(0, 30).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 40)])) } : undefined } : undefined, vr: x.vr && typeof x.vr === "object" ? { st: String(x.vr.st || "").slice(0, 4), note: String(x.vr.note || "").slice(0, 1000) } : undefined, apx: Array.isArray(x.apx) ? x.apx.filter(a => a && typeof a === "object").map(a => ({ id: a.id || fid(), at: +a.at || Date.now(), tool: String(a.tool || "").slice(0, 200), st: String(a.st || "").slice(0, 4), note: String(a.note || "").slice(0, 1000), html: String(a.html || "").slice(0, 400000), plan: a.plan && typeof a.plan === "object" ? { q: String(a.plan.q || "").slice(0, 8), n: String(a.plan.n || "").slice(0, 120), meth: String(a.plan.meth || "").slice(0, 80), sum: String(a.plan.sum || "").slice(0, 300) } : null, act: String(a.act || "").slice(0, 120), dev: !!a.dev, devWhy: String(a.devWhy || "").slice(0, 300), meth: String(a.meth || "").slice(0, 80), key: String(a.key || "").slice(0, 120) })) : [], ana: x.ana && typeof x.ana === "object" && x.ana.snap && typeof x.ana.snap === "object" ? { at: +x.ana.at || 0, snap: x.ana.snap } : undefined })) : [];
+    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, fid: typeof x.fid === "string" ? x.fid.slice(0, 40) : "", fbt: typeof x.fbt === "string" ? x.fbt.slice(0, 300) : "", cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000), inp: x.ss.inp && typeof x.ss.inp === "object" ? { sub: String(x.ss.inp.sub || "").slice(0, 12), f: Object.fromEntries(Object.entries(x.ss.inp.f || {}).slice(0, 80).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 200)])), c: Object.fromEntries(Object.entries(x.ss.inp.c || {}).slice(0, 30).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 40)])) } : undefined } : undefined, vr: x.vr && typeof x.vr === "object" ? { st: String(x.vr.st || "").slice(0, 4), note: String(x.vr.note || "").slice(0, 1000) } : undefined, apx: Array.isArray(x.apx) ? x.apx.filter(a => a && typeof a === "object").map(a => ({ id: a.id || fid(), at: +a.at || Date.now(), tool: String(a.tool || "").slice(0, 200), st: String(a.st || "").slice(0, 4), note: String(a.note || "").slice(0, 1000), html: String(a.html || "").slice(0, 400000), plan: a.plan && typeof a.plan === "object" ? { q: String(a.plan.q || "").slice(0, 8), n: String(a.plan.n || "").slice(0, 120), meth: String(a.plan.meth || "").slice(0, 80), sum: String(a.plan.sum || "").slice(0, 300) } : null, act: String(a.act || "").slice(0, 120), dev: !!a.dev, devWhy: String(a.devWhy || "").slice(0, 300), meth: String(a.meth || "").slice(0, 80), key: String(a.key || "").slice(0, 120) })) : [], ana: x.ana && typeof x.ana === "object" && x.ana.snap && typeof x.ana.snap === "object" ? { at: +x.ana.at || 0, snap: x.ana.snap } : undefined })) : [];
+    o.vpSkip = Array.isArray(o.vpSkip) ? o.vpSkip.filter(v => typeof v === "string").slice(-200) : [];   // 使用者從驗證清單刪掉的魚骨圖原因，不再自動帶入
     o.factors = o.factors.filter(f => f && typeof f.text === "string").map(f => ({ id: f.id || fid(), ref: typeof f.ref === "string" ? f.ref : "", text: f.text, st: ST_LABEL[f.st] ? f.st : "cand", src: SRC_LABEL[f.src] ? f.src : "user", key: !!f.key, verify: !!f.verify, reason: f.reason || "", cat: f.cat && typeof f.cat === "object" ? f.cat : {},
       subs: (Array.isArray(f.subs) ? f.subs : []).filter(x => x && typeof x.text === "string").map(x => ({ id: x.id || fid(), text: x.text, st: ST_LABEL[x.st] ? x.st : "cand", src: SRC_LABEL[x.src] ? x.src : "user" })) }));
     return o;
@@ -6978,7 +6983,7 @@ else root.runValidation = runValidation;
     const carry = `<div class="run-row fb-carry"><span class="group-label">帶入統計工具的確認區：</span><button type="button" class="btn small" data-pkfb="doe">→ DOE</button><button type="button" class="btn small" data-pkfb="taguchi">→ 田口方法</button><button type="button" class="btn small" data-pkfb="spc">→ SPC 分層欄位</button></div><p class="hint">按 DOE、田口方法會到該工具頁，列出魚骨圖的原因讓你勾選要帶入哪些；帶入的是原因名稱，到確認區後可改成因子名稱（例如「封口溫度不足」→「封口溫度 (°C)」）；水準、數量等數字要自己填。${meas ? "" : ""}</p>${meas ? `<p class="note warn">有「量測」相關的原因：建議先做 <button type="button" class="linkbtn" data-go="msa">MSA</button>，確認量測系統可信，再用量測數據驗證其他原因*。</p>` : ""}`;
     $("fbVerify").innerHTML = (ver.length || keys.length)
       ? `<div class="scroll-x"><table><thead><tr><th>分類</th><th>原因</th><th>標記</th><th></th></tr></thead><tbody>${ver.map(f => row2(f, "◇ 待驗證" + (f.key ? "、★ 重要" : ""))).join("")}${keys.map(f => row2(f, "★ 重要（未標待驗證）")).join("")}</tbody></table></div>${carry}${tools}`
-      : `<p class="hint">（選填）在 STEP 2 的原因下方按「◇ 待驗證」，AI 建議驗證策略時會優先針對這些原因。</p>${tools}`;
+      : `<p class="hint">在 ② 魚骨圖 的原因按「◇ 待驗證」，就會自動帶入下方驗證項目清單。</p>${tools}`;
   }
   function fbToolsText() {
     const T = typeof TOOLS !== "undefined" ? TOOLS : [];
@@ -7094,7 +7099,7 @@ else root.runValidation = runValidation;
       if (o.st === "cand") fbNote(`「${o.text}」改為候選，移到「待決定」。`);
       else if (o.st === "excl" && pop.sub) fbNote(`子因子「${o.text}」已排除，保留在「已排除」。`);
     }
-    else if (b.dataset.p === "key" || b.dataset.p === "verify") { pop.f[b.dataset.p] = !pop.f[b.dataset.p]; b.setAttribute("aria-pressed", String(pop.f[b.dataset.p])); fbRenderEditor(); }
+    else if (b.dataset.p === "key" || b.dataset.p === "verify") { pop.f[b.dataset.p] = !pop.f[b.dataset.p]; if (b.dataset.p === "verify" && pop.f.verify && Array.isArray(fb.vpSkip)) fb.vpSkip = fb.vpSkip.filter(v => v !== pop.f.id); b.setAttribute("aria-pressed", String(pop.f[b.dataset.p])); fbRenderEditor(); }
     else if (b.dataset.p === "del") {
       if (!armDelete(b)) return;
       if (pop.sub) pop.f.subs = pop.f.subs.filter(x => x !== pop.sub); else fb.factors = fb.factors.filter(x => x !== pop.f);
@@ -7149,8 +7154,10 @@ else root.runValidation = runValidation;
   $("fbPlanAI").addEventListener("click", () => {   // 依目前有沒有「◇ 待驗證」決定要 AI 針對哪些原因，避免回答開頭出現「沒有待驗證」讓人誤會
     const nVer = fb.factors.filter(f => f.verify && f.st !== "excl").length, nUse = fb.factors.filter(f => f.st === "use").length;
     const target = nVer ? `標記「◇ 待驗證」的 ${nVer} 個原因` : nUse ? `已採用的 ${nUse} 個原因（使用者還沒標記待驗證；重要的優先，回答開頭不必說明這點）` : "目前的候選原因（還沒有採用的原因；請提醒使用者先在 STEP 2 採用）";
-    const have = (fb.vplan || []).map(x => x.cause.trim()).filter(Boolean);
-    fbAskAI(`請針對${target}逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、驗證策略（不用統計就能確認的直接寫策略；需要統計才寫本網站工具與模式）。同一個原因只列一次。${have.length ? `驗證項目清單已經有這些原因，不要重複列出，只列清單中沒有的：${have.slice(0, 30).join("；")}。` : ""}用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。`, { label: "驗證規劃", quote: "" });
+    try { vpSyncFb(); } catch (_) {}
+    const have = (fb.vplan || []).filter(x => x.tool.trim()).map(x => x.cause.trim()).filter(Boolean);
+    const todo = (fb.vplan || []).filter(x => x.on && !x.tool.trim()).map(x => x.cause.trim()).filter(Boolean);
+    fbAskAI(`請針對${todo.length ? `驗證項目清單中還沒有驗證策略的 ${todo.length} 個原因（${todo.slice(0, 30).join("；")}）${nVer ? "" : "，以及" + target}` : target}逐一建議：怎麼驗證（實驗或檢查方式）、要收集什麼資料、驗證策略（不用統計就能確認的直接寫策略；需要統計才寫本網站工具與模式）。同一個原因只列一次。${have.length ? `驗證項目清單已經有這些原因且已有驗證策略，不要重複列出：${have.slice(0, 30).join("；")}。` : ""}用條列，精簡，最後附上 verify 區塊。這次不需要 fishbone 區塊。`, { label: "驗證規劃", quote: "" });
   });
   $("fbCheckProblem").addEventListener("click", () => fbAskAI("請檢查目前的問題點描述是否具體、可量測：缺少哪些資訊（產品、發生時間、比例、規格）？需要的話，用 fishbone 區塊的 problem 欄位建議改寫（factors 可以是空陣列）。", { label: "問題點", quote: fb.problem.slice(0, 60) }));
   function fbAskAI(q, ctx, o) {
@@ -13152,14 +13159,31 @@ else root.runValidation = runValidation;
     return 2 * hit / Math.max(1, a.length - 1 + b.length - 1);
   }
   const VP_SIM = 0.6;
+  // 魚骨圖標「◇ 待驗證」（且未排除）的原因，自動帶入驗證項目清單；使用者可以改、刪、自行新增
+  // fid＝對應的魚骨圖原因；fbt＝帶入時的原因文字（使用者沒改過原因時，魚骨圖改字會跟著更新）；刪掉的記在 fb.vpSkip，不再帶回
+  function vpSyncFb() {
+    if (!fb || !Array.isArray(fb.factors)) return 0;
+    const L = fb.vplan || (fb.vplan = []), skip = new Set(fb.vpSkip || []); let n = 0, ch = false;
+    fb.factors.filter(f => f.verify && f.st !== "excl" && String(f.text || "").trim()).forEach(f => {
+      const t = f.text.trim(), lk = L.find(y => y.fid === f.id);
+      if (lk) { if (lk.fbt && lk.cause === lk.fbt && t !== lk.fbt) { lk.cause = t; lk.fbt = t; ch = true; } return; }
+      if (skip.has(f.id)) return;
+      const sim = L.find(y => !y.fid && vpSim(y.cause, t) >= VP_SIM); if (sim) { sim.fid = f.id; ch = true; return; }
+      L.push({ id: fid(), on: true, fid: f.id, fbt: t, cause: t, method: "", data: "", tool: "" }); n++; ch = true;
+    });
+    if (ch) fbSave();
+    return n;
+  }
+  function vpSkipAdd(x) { if (x && x.fid) { fb.vpSkip = (fb.vpSkip || []).filter(v => v !== x.fid).concat(x.fid); } }
+  function vpFbOf(x) { return x.fid ? fb.factors.find(f => f.id === x.fid) : null; }
   function vpRender() {
     const box = $("fbVplan"); if (!box) return; const ae = document.activeElement; if (box.contains(ae) && (ae.classList.contains("vp-ed") || (ae.tagName === "INPUT" && ae.classList.contains("vp-tool")))) return;
-    const L = fb.vplan || (fb.vplan = []);
+    vpSyncFb(); const L = fb.vplan || (fb.vplan = []);
     const ed = (x, k, ph) => `<div class="vp-ed" contenteditable="plaintext-only" spellcheck="false" data-id="${x.id}" data-f="${k}" data-ph="${ph}">${esc(x[k])}</div>`;
     const nOn = L.filter(x => x.on).length;
     const dupOf = L.map((x, i) => { for (let j = 0; j < i; j++) if (vpSim(L[j].cause, x.cause) >= VP_SIM) return j + 1; return 0; });
-    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "按上方「請 AI 建議驗證方式」後，在 AI 回答下按「列入清單」；也可以自行新增。"}</span></div>
-      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+    box.innerHTML = `<div class="vp-head"><b>驗證項目清單</b><span class="hint">${L.length ? `共 ${L.length} 項，已勾選 ${nOn} 項；勾選的會帶入 PDCA 報告第 4 段「採取對策」。` : "在 ② 魚骨圖 把原因標「◇ 待驗證」會自動帶入；也可以按「請 AI 建議驗證策略」或自行新增。"}</span></div>
+      ${L.length ? `<div class="scroll-x"><table class="vp-tbl"><thead><tr><th class="vp-c">採用</th><th>原因</th><th>驗證方式</th><th>收集資料</th><th>驗證策略</th><th class="vp-c"></th></tr></thead><tbody>${L.map(x => `<tr class="${x.on ? "on" : ""}"><td class="vp-c"><input type="checkbox" data-vpon="${x.id}"${x.on ? " checked" : ""} aria-label="採用：${esc(x.cause)}"></td><td>${ed(x, "cause", "原因")}${(f => f ? `<div class="vp-src">🐟 魚骨圖帶入${f.verify ? "" : "（魚骨圖已取消 ◇）"}</div>` : "")(vpFbOf(x))}${dupOf[L.indexOf(x)] ? `<div class="vp-dup">與第 ${dupOf[L.indexOf(x)]} 項相似，確認後可刪除或合併</div>` : ""}</td><td>${ed(x, "method", "驗證方式")}</td><td>${ed(x, "data", "收集資料")}</td><td>${vpToolCell(x)}</td><td class="vp-c"><button type="button" class="vp-del" data-vpdel="${x.id}" aria-label="刪除這一項">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
   const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
@@ -13186,20 +13210,23 @@ else root.runValidation = runValidation;
     box.addEventListener("paste", e => { const el = e.target.closest(".vp-ed"); if (!el) return; e.preventDefault(); try { document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } catch (_) {} });
     box.addEventListener("change", e => { const c = e.target.closest("[data-vpon]"); if (!c) return; const x = (fb.vplan || []).find(y => y.id === c.dataset.vpon); if (x) { x.on = c.checked; vpChanged(true); } });
     box.addEventListener("click", e => {
-      const d = e.target.closest("[data-vpdel]"); if (d) { fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.vpdel); vpChanged(true); return; }
+      const d = e.target.closest("[data-vpdel]"); if (d) { vpSkipAdd((fb.vplan || []).find(y => y.id === d.dataset.vpdel)); fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.vpdel); vpChanged(true); return; }
       if (e.target.closest("[data-vpnew]")) { (fb.vplan || (fb.vplan = [])).push({ id: fid(), on: true, cause: "", method: "", data: "", tool: "" }); vpChanged(true); const last = box.querySelector("tbody tr:last-child .vp-ed"); if (last) last.focus(); return; }
-      const cl = e.target.closest("[data-vpclean]"); if (cl) { if (!cl.dataset.armed) { cl.dataset.armed = "1"; cl.textContent = "確定刪除未勾選的？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.on); vpChanged(true); }
+      const cl = e.target.closest("[data-vpclean]"); if (cl) { if (!cl.dataset.armed) { cl.dataset.armed = "1"; cl.textContent = "確定刪除未勾選的？再按一次"; return; } (fb.vplan || []).filter(y => !y.on).forEach(vpSkipAdd); fb.vplan = (fb.vplan || []).filter(y => y.on); vpChanged(true); }
     });
     document.addEventListener("click", e => {   // AI 回答下的「列入清單」
       const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled) return;
       let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
       const L = fb.vplan || (fb.vplan = []), have = new Set(L.map(vpKey)); let n = 0;
-      let skip = 0;
-      items.forEach(x => { if (have.has(vpKey(x)) || L.some(y => vpSim(y.cause, x.cause) >= VP_SIM)) { skip++; return; } L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
-      b.disabled = true; b.textContent = n ? `已列入 ${n} 項${skip ? `（${skip} 項和清單中的原因相同或相似，略過）` : ""}` : "這些原因都已在清單中";
+      let skip = 0, fill = 0;
+      items.forEach(x => {
+        const y = L.find(y => vpKey(y) === vpKey(x) || vpSim(y.cause, x.cause) >= VP_SIM);
+        if (y) { let hit = false; ["method", "data", "tool"].forEach(k => { if (!String(y[k] || "").trim() && x[k]) { y[k] = x[k]; hit = true; } }); if (hit) fill++; else skip++; return; }   // 清單已有（例如魚骨圖帶入的）：只補空白欄位，不覆蓋使用者寫的
+        L.push({ id: fid(), on: false, cause: x.cause, method: x.method, data: x.data, tool: x.tool }); n++; });
+      b.disabled = true; b.textContent = n || fill ? [n ? `已列入 ${n} 項` : "", fill ? `已補上 ${fill} 項的空白欄位` : "", skip ? `${skip} 項已在清單中，略過` : ""].filter(Boolean).join("；") : "這些原因都已在清單中";
       vpChanged(true);
       try { closePanel(); $("aiDot").hidden = false; const bx = $("fbVplan"); if (bx) setTimeout(() => bx.scrollIntoView({ behavior: "smooth", block: "start" }), 50); } catch (_) {}   // 跟帶入魚骨圖一樣：AI 收成右下角按鈕
-      fbNote(n ? `已把 ${n} 個驗證項目列入 ③ 驗證計畫清單${skip ? `，略過 ${skip} 個相同或相似的原因` : ""}，請勾選要採用的。` : "這些原因都已在清單中（相同或相似），沒有新增。");
+      fbNote(n || fill ? `${n ? `已把 ${n} 個驗證項目列入 ③ 驗證計畫清單，請勾選要採用的` : ""}${n && fill ? "；" : ""}${fill ? `已替 ${fill} 個清單中的項目補上 AI 建議（只填空白欄位）` : ""}${skip ? `；略過 ${skip} 個已有內容的原因` : ""}。` : "這些原因都已在清單中且已有內容，沒有變更。");
     });
     vpRender();
   })();
@@ -13721,13 +13748,14 @@ else root.runValidation = runValidation;
   function hubRender() {
     const box = $("planHub"), sum = $("planSum"); if (!box) return;
     if (box.contains(document.activeElement) && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    try { vpSyncFb(); } catch (_) {}
     const L = vrItems(), all = fb.vplan || [];
     const st = L.filter(x => !vrNonStat(x)), ns = L.filter(vrNonStat);
     const done = x => vrNonStat(x) ? !!(x.vr && x.vr.st) : !!(x.apx || []).length;
     const nDone = L.filter(done).length, nDev = st.filter(x => { const A = x.apx || []; return A.length && A[A.length - 1].dev; }).length;
     sum.innerHTML = `<div class="card plan-sum"><div class="ps-row"><span><b>${L.length}</b>個項目</span><span><b>${st.length}</b>統計</span><span><b>${ns.length}</b>不用統計</span><span class="ok"><b>${nDone}</b>已完成</span>${nDev ? `<span class="warn"><b>${nDev}</b>少於規劃</span>` : ""}
       <span class="ps-act"><button type="button" class="btn small" data-hub="new">＋ 新增項目</button><button type="button" class="btn small copper" data-hub="ai">請 AI 建議驗證策略</button>${nDone && nDone === L.length ? `<button type="button" class="btn small primary" data-route-go="pdca">全部完成 → ④ PDCA 報告</button>` : ""}</span></div>
-      ${!L.length ? `<p class="hint" style="margin:8px 0 0">${all.length ? `清單有 ${all.length} 個項目，但還沒有勾選要驗證的。請在下方「編輯驗證項目」勾選。` : "還沒有驗證項目。按「請 AI 建議驗證策略」，或「＋ 新增項目」自己寫。原因請先在 ② 魚骨圖 整理好。"}</p>` : ""}</div>`;
+      ${!L.length ? `<p class="hint" style="margin:8px 0 0">${all.length ? `清單有 ${all.length} 個項目，但還沒有勾選要驗證的。請在下方「編輯驗證項目」勾選。` : "還沒有驗證項目。到 ② 魚骨圖 把要驗證的原因標「◇ 待驗證」，會自動帶到這裡；也可以按「＋ 新增項目」自己寫。"}</p>` : ""}</div>`;
     const ed = $("planEdit"); if (ed && !L.length) ed.open = true;
     box.innerHTML = L.map((x, i) => {
       const nsx = vrNonStat(x), s = x.ss || {}, A = x.apx || [], a = A[A.length - 1], pl = vrPlanOf(x);
@@ -13743,7 +13771,7 @@ else root.runValidation = runValidation;
         c3 = cell("③ 數據與分析", !!a, ssOk && !a, a ? `<div class="hc-v">${esc(a.key || a.meth || "已存")}</div><div class="hc-d">${esc(a.meth || "")}${a.act ? `｜實際 ${esc(a.act)}` : ""}</div>${a.dev ? `<div class="hc-d hc-dev">⚠ 少於規劃${a.devWhy ? "：" + esc(a.devWhy.slice(0, 40)) : ""}</div>` : ""}<div class="hc-b"><button type="button" class="linkbtn" data-vrres="${x.id}">📊 結果（附錄 ${vrApxNos(x).join("、")}）</button><button type="button" class="linkbtn" data-hub="go" data-id="${x.id}">再分析</button></div>` : `<div class="hc-v hc-todo">尚未分析</div><div class="hc-b"><button type="button" class="btn small primary" data-hub="go" data-id="${x.id}">開始分析 →</button></div>`, a && a.dev ? "dev" : "");
         c4 = cell("④ 結論", !!a, false, a ? `<div class="hc-v"><span class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</span></div><div class="hc-d">${esc((a.note || "").slice(0, 60))}</div>` : `<div class="hc-v hc-todo">—</div><div class="hc-d">分析後在結果下方按「驗證結束，並儲存到報告」</div>`);
       }
-      const fbTag = (() => { const f = fb.factors.find(f => f.text && x.cause && (x.cause.includes(f.text.slice(0, 6)) || f.text.includes(x.cause.slice(0, 6)))); return f ? `魚骨圖：${esc(fbCatName(f))}${f.key ? " ★" : ""}${f.verify ? " ◇" : ""}` : ""; })();
+      const fbTag = (() => { const f = (x.fid && fb.factors.find(f => f.id === x.fid)) || fb.factors.find(f => f.text && x.cause && (x.cause.includes(f.text.slice(0, 6)) || f.text.includes(x.cause.slice(0, 6)))); return f ? `魚骨圖：${esc(fbCatName(f))}${f.key ? " ★" : ""}${f.verify ? " ◇" : ""}` : ""; })();
       return `<div class="hub-item${done(x) ? " hub-done" : ""}"><div class="hub-h"><span class="hub-no">${i + 1}</span><span class="hub-t">${esc(x.cause || "（未命名）")}</span><span class="hint">${fbTag}</span><button type="button" class="linkbtn" data-hub="edit" data-id="${x.id}">修改項目</button></div>
         <div class="hub-pipe${nsx ? " ns" : ""}">${c1}${c2}${c3}${c4}</div></div>`;
     }).join("");

@@ -7,13 +7,14 @@
   function hubRender() {
     const box = $("planHub"), sum = $("planSum"); if (!box) return;
     if (box.contains(document.activeElement) && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    try { vpSyncFb(); } catch (_) {}
     const L = vrItems(), all = fb.vplan || [];
     const st = L.filter(x => !vrNonStat(x)), ns = L.filter(vrNonStat);
     const done = x => vrNonStat(x) ? !!(x.vr && x.vr.st) : !!(x.apx || []).length;
     const nDone = L.filter(done).length, nDev = st.filter(x => { const A = x.apx || []; return A.length && A[A.length - 1].dev; }).length;
     sum.innerHTML = `<div class="card plan-sum"><div class="ps-row"><span><b>${L.length}</b>個項目</span><span><b>${st.length}</b>統計</span><span><b>${ns.length}</b>不用統計</span><span class="ok"><b>${nDone}</b>已完成</span>${nDev ? `<span class="warn"><b>${nDev}</b>少於規劃</span>` : ""}
       <span class="ps-act"><button type="button" class="btn small" data-hub="new">＋ 新增項目</button><button type="button" class="btn small copper" data-hub="ai">請 AI 建議驗證策略</button>${nDone && nDone === L.length ? `<button type="button" class="btn small primary" data-route-go="pdca">全部完成 → ④ PDCA 報告</button>` : ""}</span></div>
-      ${!L.length ? `<p class="hint" style="margin:8px 0 0">${all.length ? `清單有 ${all.length} 個項目，但還沒有勾選要驗證的。請在下方「編輯驗證項目」勾選。` : "還沒有驗證項目。按「請 AI 建議驗證策略」，或「＋ 新增項目」自己寫。原因請先在 ② 魚骨圖 整理好。"}</p>` : ""}</div>`;
+      ${!L.length ? `<p class="hint" style="margin:8px 0 0">${all.length ? `清單有 ${all.length} 個項目，但還沒有勾選要驗證的。請在下方「編輯驗證項目」勾選。` : "還沒有驗證項目。到 ② 魚骨圖 把要驗證的原因標「◇ 待驗證」，會自動帶到這裡；也可以按「＋ 新增項目」自己寫。"}</p>` : ""}</div>`;
     const ed = $("planEdit"); if (ed && !L.length) ed.open = true;
     box.innerHTML = L.map((x, i) => {
       const nsx = vrNonStat(x), s = x.ss || {}, A = x.apx || [], a = A[A.length - 1], pl = vrPlanOf(x);
@@ -29,7 +30,7 @@
         c3 = cell("③ 數據與分析", !!a, ssOk && !a, a ? `<div class="hc-v">${esc(a.key || a.meth || "已存")}</div><div class="hc-d">${esc(a.meth || "")}${a.act ? `｜實際 ${esc(a.act)}` : ""}</div>${a.dev ? `<div class="hc-d hc-dev">⚠ 少於規劃${a.devWhy ? "：" + esc(a.devWhy.slice(0, 40)) : ""}</div>` : ""}<div class="hc-b"><button type="button" class="linkbtn" data-vrres="${x.id}">📊 結果（附錄 ${vrApxNos(x).join("、")}）</button><button type="button" class="linkbtn" data-hub="go" data-id="${x.id}">再分析</button></div>` : `<div class="hc-v hc-todo">尚未分析</div><div class="hc-b"><button type="button" class="btn small primary" data-hub="go" data-id="${x.id}">開始分析 →</button></div>`, a && a.dev ? "dev" : "");
         c4 = cell("④ 結論", !!a, false, a ? `<div class="hc-v"><span class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</span></div><div class="hc-d">${esc((a.note || "").slice(0, 60))}</div>` : `<div class="hc-v hc-todo">—</div><div class="hc-d">分析後在結果下方按「驗證結束，並儲存到報告」</div>`);
       }
-      const fbTag = (() => { const f = fb.factors.find(f => f.text && x.cause && (x.cause.includes(f.text.slice(0, 6)) || f.text.includes(x.cause.slice(0, 6)))); return f ? `魚骨圖：${esc(fbCatName(f))}${f.key ? " ★" : ""}${f.verify ? " ◇" : ""}` : ""; })();
+      const fbTag = (() => { const f = (x.fid && fb.factors.find(f => f.id === x.fid)) || fb.factors.find(f => f.text && x.cause && (x.cause.includes(f.text.slice(0, 6)) || f.text.includes(x.cause.slice(0, 6)))); return f ? `魚骨圖：${esc(fbCatName(f))}${f.key ? " ★" : ""}${f.verify ? " ◇" : ""}` : ""; })();
       return `<div class="hub-item${done(x) ? " hub-done" : ""}"><div class="hub-h"><span class="hub-no">${i + 1}</span><span class="hub-t">${esc(x.cause || "（未命名）")}</span><span class="hint">${fbTag}</span><button type="button" class="linkbtn" data-hub="edit" data-id="${x.id}">修改項目</button></div>
         <div class="hub-pipe${nsx ? " ns" : ""}">${c1}${c2}${c3}${c4}</div></div>`;
     }).join("");
