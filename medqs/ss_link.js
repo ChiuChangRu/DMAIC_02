@@ -93,7 +93,7 @@
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
         return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>
           <td><select data-svq="${x.id}" aria-label="要證明什麼">${SV_Q.map(o => `<option value="${o[0]}"${o[0] === q ? " selected" : ""}>${o[1]}</option>`).join("")}</select></td>
-          <td>${cell(x)}</td><td class="sv-bcell">${svOk(x) && !SV_MANUAL[s.q] && SSQ[s.q] ? `<button type="button" class="sv-btn sv-view${svViewing === x.id ? " on" : ""}" data-svview="${x.id}" title="在下方顯示這一項當時的計算方法與條件">🔍 查看計算</button>` : ""}<button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
+          <td>${cell(x)}</td><td class="sv-bcell">${(x.apx || []).length ? `<button type="button" class="sv-btn sv-res" data-vrres="${x.id}" title="到 PDCA 報告看這一項的分析結果（附錄）">📊 分析結果</button>` : ""}${svOk(x) && !SV_MANUAL[s.q] && SSQ[s.q] ? `<button type="button" class="sv-btn sv-view${svViewing === x.id ? " on" : ""}" data-svview="${x.id}" title="在下方顯示這一項當時的計算方法與條件">🔍 查看計算</button>` : ""}<button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
       }).join("")}</tbody></table></div>
       <p class="hint sv-viewnote" id="svViewNote"${svViewing ? "" : " hidden"}>${svViewing ? svViewMsg : ""}</p><p class="hint" style="margin:6px 0 0">已完成 ${nOk}／${L.length}。${nOk < L.length ? "全部完成後，流程列「④ 樣本數」才會打勾。" : "全部完成。"}</p>`;
     svBar();

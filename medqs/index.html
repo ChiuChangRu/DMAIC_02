@@ -806,7 +806,8 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 /* 存成驗證結果（分析工具結果下方） */
 .vr-slot { padding: 0 18px 16px; }
 .vr-open { font: inherit; font-size: 15px; font-weight: 800; border: 0; background: var(--good); color: #fff; border-radius: 10px; padding: 10px 16px; cursor: pointer; width: 100%; text-align: left; } .vr-open:hover { filter: brightness(1.08); } .vr-open .rd-undo { font: inherit; font-size: 12.5px; font-weight: 700; margin-left: 6px; border: 1.5px solid var(--bad); color: var(--bad); background: var(--surface); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
-.sv-meth { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-top: 2px; } .sv-bcell { white-space: nowrap; } .sv-bcell .sv-btn + .sv-btn { margin-left: 4px; } .sv-view.on { background: var(--act); color: var(--on-act); }
+.sv-res { border-color: var(--good) !important; color: var(--good) !important; }
+.sv-meth { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-top: 2px; } .sv-bcell { white-space: nowrap; } .sv-bcell .sv-btn { margin: 2px 0; } .sv-bcell .sv-btn + .sv-btn { margin-left: 4px; } .sv-view.on { background: var(--act); color: var(--on-act); }
 .sv-viewnote { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--act) 9%, var(--surface)); color: var(--ink); font-size: 13.5px; }
 .vr-plan { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 2px; } .vr-plan .vr-row > span { font-size: 13.5px; } .vr-devflag { font-weight: 800; font-size: 13px; } .vr-devrow input { border-color: var(--bad) !important; }
 .vf-bar { border: 2px solid color-mix(in srgb, var(--qic-a) 60%, var(--line)); background: color-mix(in srgb, var(--qic-a) 8%, var(--surface)); border-radius: 12px; padding: 8px 12px; margin: 8px 0 12px; font-size: 14px; }
@@ -13188,7 +13189,7 @@ else root.runValidation = runValidation;
         const s = x.ss || {}, q = s.q != null ? s.q : svGuessQ(x.tool), act = svCur === x.id;
         return `<tr class="${act ? "sv-act" : ""}"><td>${esc(x.cause || "（未命名）")}${x.tool ? `<div class="sv-why">策略：${esc(x.tool)}</div>` : ""}</td>
           <td><select data-svq="${x.id}" aria-label="要證明什麼">${SV_Q.map(o => `<option value="${o[0]}"${o[0] === q ? " selected" : ""}>${o[1]}</option>`).join("")}</select></td>
-          <td>${cell(x)}</td><td class="sv-bcell">${svOk(x) && !SV_MANUAL[s.q] && SSQ[s.q] ? `<button type="button" class="sv-btn sv-view${svViewing === x.id ? " on" : ""}" data-svview="${x.id}" title="在下方顯示這一項當時的計算方法與條件">🔍 查看計算</button>` : ""}<button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
+          <td>${cell(x)}</td><td class="sv-bcell">${(x.apx || []).length ? `<button type="button" class="sv-btn sv-res" data-vrres="${x.id}" title="到 PDCA 報告看這一項的分析結果（附錄）">📊 分析結果</button>` : ""}${svOk(x) && !SV_MANUAL[s.q] && SSQ[s.q] ? `<button type="button" class="sv-btn sv-view${svViewing === x.id ? " on" : ""}" data-svview="${x.id}" title="在下方顯示這一項當時的計算方法與條件">🔍 查看計算</button>` : ""}<button type="button" class="sv-btn${svOk(x) ? "" : " p"}" data-svgo="${x.id}"${q ? "" : " disabled"}>${act ? "規劃中…" : svOk(x) ? (SV_MANUAL[q] ? "修改" : "重算") : (SV_MANUAL[q] ? "填寫 →" : "規劃 →")}</button></td></tr>`;
       }).join("")}</tbody></table></div>
       <p class="hint sv-viewnote" id="svViewNote"${svViewing ? "" : " hidden"}>${svViewing ? svViewMsg : ""}</p><p class="hint" style="margin:6px 0 0">已完成 ${nOk}／${L.length}。${nOk < L.length ? "全部完成後，流程列「④ 樣本數」才會打勾。" : "全部完成。"}</p>`;
     svBar();
@@ -13471,6 +13472,13 @@ else root.runValidation = runValidation;
       const nx = e.target.closest("[data-vrnext]"); if (nx) { const x = vrItems().find(y => y.id === nx.dataset.vrnext); if (x) vrGo(x); }
     });
   })();
+  // 附錄編號（和報告附錄的順序一致）；跳到 PDCA 報告的那一份附錄
+  function vrApxNos(x) { let k = 0, out = []; vrItems().forEach(y => { if (vrNonStat(y)) return; (y.apx || []).forEach(() => { k++; if (y.id === x.id) out.push(k); }); }); return out; }
+  function vrGoApx(x) {
+    const ns = vrApxNos(x); if (!ns.length) return; const b = document.querySelector('.toolnav [data-route="pdca"]'); if (b) b.click();
+    setTimeout(() => { const t = $("pdapx-" + ns[ns.length - 1]); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }, 250);
+  }
+  document.addEventListener("click", e => { const r = e.target.closest("[data-vrres]"); if (!r) return; const x = vrItems().find(y => y.id === r.dataset.vrres); if (x) vrGoApx(x); });
   const VR_PROB = { hypothesis: "hypProblem", regression: "regressionProblem", spc: "spcProblem", msa: "msaProblem", doe: "doeProblem", taguchi: "taguchiProblem" };
   function vrSetProblem(x, r) { const pb = $(VR_PROB[r]); if (pb) { pb.value = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.dataset.auto = pb.value; } }
   // ---------------- 分析頁最上方：目前驗證中的因子 ----------------
@@ -13482,10 +13490,11 @@ else root.runValidation = runValidation;
       if (!bar) { const h = v.querySelector(".tool-head"); if (!h) return; bar = document.createElement("div"); bar.className = "vf-bar"; h.after(bar); }
       const L = vrStatItems(); if (!L.length) { bar.hidden = true; return; }
       const mine = x => vrRoute(x.tool)[0] === r, sorted = L.filter(mine).concat(L.filter(x => !mine(x)));
-      const x = L.find(y => y.id === vrFocus), pl = x ? vrPlanOf(x) : null, nA = x ? (x.apx || []).length : 0;
+      const cur = L.find(y => y.id === vrFocus && mine(y)) || L.filter(mine).find(y => !(y.apx || []).length) || L.find(mine) || L.find(y => y.id === vrFocus);
+      const x = cur, pl = x ? vrPlanOf(x) : null, nA = x ? (x.apx || []).length : 0;
       bar.hidden = false;
-      bar.innerHTML = `<div class="vf-row"><b>目前驗證</b><select data-vfsel="${r}" aria-label="目前驗證的因子"><option value="">— 選擇要驗證的因子 —</option>${sorted.map(y => `<option value="${y.id}"${y.id === vrFocus ? " selected" : ""}>${mine(y) ? "" : "（其他工具）"}${esc(y.cause || "（未命名）")}${(y.apx || []).length ? "　✓ 已存" : ""}</option>`).join("")}</select>
-        ${x ? `<span class="vf-st ${nA ? "ok" : ""}">${nA ? `已存 ${nA} 份` : "尚未存結果"}</span>` : `<span class="hint">選了之後，存結果時會自動帶這一項，並顯示它的樣本數規劃。</span>`}</div>
+      bar.innerHTML = `<div class="vf-row"><b>目前驗證</b><select data-vfsel="${r}" aria-label="目前驗證的因子"><option value="">— 選擇要驗證的因子 —</option>${sorted.map(y => `<option value="${y.id}"${x && y.id === x.id ? " selected" : ""}>${mine(y) ? "" : "（其他工具）"}${esc(y.cause || "（未命名）")}${(y.apx || []).length ? "　✓ 已存" : ""}</option>`).join("")}</select>
+        ${x ? `<span class="vf-st ${nA ? "ok" : ""}">${nA ? `已存 ${nA} 份` : "尚未存結果"}</span>${nA ? `<button type="button" class="linkbtn" data-vrres="${x.id}">📊 看已存的結果（附錄 ${vrApxNos(x).join("、")}）</button>` : ""}` : `<span class="hint">選了之後，存結果時會自動帶這一項，並顯示它的樣本數規劃。</span>`}</div>
         ${x ? `<div class="vf-row vf-sub"><span>策略：${esc(x.tool || "—")}${mine(x) ? "" : `　<b class="vf-warn">這一項的策略不是這個工具</b>`}</span><span>樣本數規劃：${pl ? `<b>${esc(pl.n)}</b>（${esc(pl.meth)}${pl.sum ? "：" + esc(pl.sum.slice(0, 80)) : ""}）` : `<span class="vf-warn">尚未規劃</span>`}</span>${pl && x.ss && x.ss.inp ? `<button type="button" class="linkbtn" data-vfgo="${x.id}">🔍 查看計算</button>` : ""}</div>` : ""}`;
     });
   }
