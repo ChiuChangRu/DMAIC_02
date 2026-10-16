@@ -50,6 +50,22 @@
       </div>
       <div class="hint" id="tbAiMsg"></div>
     </div>
+    <section class="card sheet guide" id="guideSheet">
+        <h3>從情境找工具：我想解決什麼問題</h3>
+        <div class="chips need-cats" id="guideCats" role="group" aria-label="我想解決什麼問題"></div>
+        <div class="tools-inline" aria-label="工具">
+          <div class="home-grid" id="toolCards" hidden></div>
+          <p class="help" id="recLine"></p>
+        </div>
+        <div id="amCommon" class="am-common" hidden>
+          <div class="guide-body">
+            <div class="guide-list" id="guideList" role="list"></div>
+            <div class="guide-card" id="guideCard" aria-live="polite"></div>
+          </div>
+        </div>
+        <button id="guideAsk" type="button" hidden></button>
+      </section>
+    <h3 class="tb-all">全部方法（依類別）</h3>
     <div class="tb-grid" id="tbGrid"></div>
     <p class="hint" id="tbNone" hidden>找不到符合的方法，請換個說法。</p>
   </section>
@@ -88,21 +104,6 @@
         <h3>AI 要用什麼角度回答？</h3>
         <p class="help"><span class="pill ns" id="homePerspNote"></span></p>
         <div class="chips" id="homePersp" role="group" aria-label="AI 回答視角"></div>
-      </section>
-      <section class="card sheet guide" id="guideSheet">
-        <h3>或從情境開始：我想解決什麼問題</h3>
-        <div class="chips need-cats" id="guideCats" role="group" aria-label="我想解決什麼問題"></div>
-        <div class="tools-inline" aria-label="工具">
-          <div class="home-grid" id="toolCards"></div>
-          <p class="help" id="recLine"></p>
-        </div>
-        <div id="amCommon" class="am-common" hidden>
-          <div class="guide-body">
-            <div class="guide-list" id="guideList" role="list"></div>
-            <div class="guide-card" id="guideCard" aria-live="polite"></div>
-          </div>
-        </div>
-        <button id="guideAsk" type="button" hidden></button>
       </section>
     </div>
   </section>
@@ -2645,13 +2646,13 @@
   let guideCat = null, guideSel = null;
   const AI_CAT = "AI 對話（找原因、不確定用哪個工具）";
   function renderGuide() {
-    if (!guideCat) { let c = null; try { c = localStorage.getItem("mdqs.needcat"); } catch (_) {} guideCat = c && (c === AI_CAT || GUIDE.some(g => g.cat === c)) ? c : AI_CAT; }
+    if (!guideCat) { let c = null; try { c = localStorage.getItem("mdqs.needcat"); } catch (_) {} guideCat = c && GUIDE.some(g => g.cat === c) ? c : GUIDE[0].cat; }   // 情境區已移到工具箱，預設顯示第一類
     $("guideCats").innerHTML = GUIDE.map(c => c.cat).concat([AI_CAT]).map(c => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === guideCat}">${esc(c)}</button>`).join("");
     const isAI = guideCat === AI_CAT;
     $("amCommon").hidden = isAI;
-    $("homeQLab").textContent = isAI ? "描述你遇到的問題（產品、發生情況、比例、規格越具體越好；例如要找原因、或不確定該用哪個工具）" : "補充你的狀況（選填）";
-    $("homeQ").placeholder = isAI ? "例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）" : "例如：產品／零件、批量、目前的不良率或量測數據、規格、已經做過的試驗";
-    if (isAI) { guideSel = null; return; }
+    $("homeQLab").textContent = true ? "描述你遇到的問題（產品、發生情況、比例、規格越具體越好；例如要找原因、或不確定該用哪個工具）" : "補充你的狀況（選填）";
+    $("homeQ").placeholder = true ? "例如：引流導管 PC Luer 接頭組裝後破裂，3/500，要怎麼找原因？（可直接貼上截圖）" : "例如：產品／零件、批量、目前的不良率或量測數據、規格、已經做過的試驗";
+    if (isAI) { guideSel = null; setTimeout(() => { const q = $("tbQ"); if (q) { q.scrollIntoView({ behavior: "smooth", block: "center" }); q.focus(); } }, 0); return; }   // 工具箱裡的「AI 對話」：改用上方的 AI 問答框
     const cat = GUIDE.find(c => c.cat === guideCat);
     if (!guideSel || !cat.items.includes(guideSel)) guideSel = cat.items[0];
     $("guideList").innerHTML = cat.items.map((it, i) => `<button type="button" role="listitem" class="guide-q" data-i="${i}" aria-current="${it === guideSel}">${esc(it.q)}</button>`).join("");
@@ -2663,10 +2664,11 @@
       ${it.alt ? `<dt>目前可先</dt><dd>${esc(it.alt)}</dd>` : ""}
       <dt>參考依據</dt><dd><ul>${it.refs.map(k => { const r = REFS[k]; return `<li>${r.u ? `<a class="link" href="${r.u}" target="_blank" rel="noopener">${esc(r.t)}</a>` : esc(r.t)}</li>`; }).join("")}</ul></dd></dl>
       <div class="run-row"><button class="btn small" type="button" id="guideGo">${ready ? "直接前往" + esc(tool.name) : "查看" + esc(tool ? tool.name : "")}</button></div>
-      <p class="hint">要 AI 依你的實際狀況建議，在下方補充後按「AI 診斷分析」，會連同這個情境一起送出。參考依據僅供查找方向，條文與版次請以官方公告為準。</p>`;
+      <p class="hint">要 AI 依你的實際狀況建議，用上方「問 AI：該用哪個工具？」。參考依據僅供查找方向，條文與版次請以官方公告為準。</p>`;
   }
   // 選了情境時，送給 AI 的情境說明
   function guideContextForAsk() {
+    return "";   // 情境區已移到工具箱，不再附帶到 ① 定義問題 的 AI 提問
     if (guideCat === AI_CAT || !guideSel) return "";
     const it = guideSel;
     return `【使用者選擇的情境】${guideCat}：${it.q}\n網站對這類問題的建議：${it.tool}${it.mode ? " · " + it.mode : ""}；準備資料：${it.data}${it.refs && it.refs.length ? "；參考依據：" + it.refs.map(r => REFS[r].t).join("、") : ""}\n請把這類問題的一般做法，套用到使用者補充的實際狀況上；沒有補充時，先詢問最關鍵的 1～3 項資訊。`;
@@ -2883,6 +2885,7 @@
     return out;
   }
   function setRecommend(ids, label) {
+    try { tbTilesMark(ids || []); } catch (_) {}
     const cards = [...$("toolCards").querySelectorAll("[data-go]")];
     if (!ids || !ids.length) { cards.forEach(c => { c.classList.remove("rec", "dim"); const o = c.querySelector(".tile-order"); if (o) o.remove(); }); $("recLine").textContent = ""; return; }
     cards.forEach(c => {
