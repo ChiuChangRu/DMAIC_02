@@ -95,7 +95,7 @@
     </ul><p class="hint">${nMod ? `報告上有 ${nMod} 處手動填寫或勾選（黃底）。` : "報告上還沒有手動填寫的內容。"}可識別資料（人名、單位、醫院）請自行判斷是否填在這裡，或下載後再填。</p>`;
   }
   let pdStT = 0; function pdStatusSoon() { clearTimeout(pdStT); pdStT = setTimeout(() => { try { pdcaStatus(); flowRender(); } catch (_) {} }, 300); }   // 報告上填寫、勾選後更新上方狀態
-  function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
+  function pdcaRender() { try { pdcaStatus(); } catch (_) {} try { svRender(); } catch (_) {} try { vfRender(); } catch (_) {} const w = $("pdcaWrap"); if (!w) return; if (w.contains(document.activeElement) && document.activeElement.classList.contains("pd-ed")) return; w.innerHTML = pdcaHtml("screen"); pdModHint(); }
   function pdcaCss() {   // 從頁面樣式表取出 .pd- 開頭的規則，給下載檔使用
     let out = "";
     for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (_) { continue; } for (const r of rules) if (r.cssText && /\.pd-/.test(r.cssText) && !/@media print/.test(r.cssText)) out += r.cssText + "\n"; }

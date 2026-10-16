@@ -13,6 +13,50 @@
     if (vrNonStat(x)) { const v = x.vr || {}; return { st: v.st || "", note: v.note || "", n: 0 }; }
     const L = x.apx || []; const a = L[L.length - 1]; return a ? { st: a.st, note: a.note, n: L.length } : { st: "", note: "", n: 0 };
   }
+  // ---------------- 樣本數：規劃 vs 實際 ----------------
+  const vrLines = id => (($(id) || {}).value || "").trim().split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const vrNumRow = l => l.split(/[,\t;]+|\s{2,}/).filter(c => c !== "" && isFinite(+c)).length;
+  function vrActual(id, body) {
+    const txt = body.innerText || "", mk = (t, per, tot, first) => ({ txt: t, per, tot, first });
+    try {
+      if (id === "previewBody") { const ns = [...txt.matchAll(/n = (\d+)/g)].map(m => +m[1]); if (ns.length) { const tot = ns.reduce((a, b) => a + b, 0); return mk(ns.every(v => v === ns[0]) ? (ns.length > 1 ? `每組 ${ns[0]}（${ns.length} 組，共 ${tot}）` : `n = ${ns[0]}`) : `各組 ${ns.join("／")}（共 ${tot}）`, Math.min(...ns), tot, Math.min(...ns)); } }
+      if (id === "ctOut") { const ns = CT.M.map(r => r.reduce((a, v) => a + (+v || 0), 0)); const tot = ns.reduce((a, b) => a + b, 0); return mk(ns.every(v => v === ns[0]) ? `每組 ${ns[0]}（${ns.length} 組，共 ${tot}）` : `各組 ${ns.join("／")}（共 ${tot}）`, Math.min(...ns), tot, Math.min(...ns)); }
+      if (id === "grrOut") { const L = vrLines("grrData").slice(1).map(l => l.split(/[,\t]+/)); if (L.length) { const ops = new Set(L.map(r => r[0])).size, parts = new Set(L.map(r => r[1])).size, tr = Math.max(1, (L[0] || []).length - 2), tot = L.length * tr; return mk(`${parts} 件 × ${ops} 人 × ${tr} 次（共 ${tot} 筆）`, parts, tot, parts); } }
+      if (id === "attrOut") { const n = vrLines("attrData").length - 1, A = +$("attrA").value || 0, T = +$("attrT").value || 0; if (n > 0) return mk(`${n} 件 × ${A} 人 × ${T} 次`, n, n * A * T, n); }
+      if (id === "spcOut") { const L = vrLines("spcData").filter(l => vrNumRow(l) > 0); if (L.length) { const m = vrNumRow(L[0]), tot = L.reduce((a, l) => a + vrNumRow(l), 0); return mk(m > 1 ? `${L.length} 組 × 每組 ${m}（共 ${tot}）` : `${L.length} 點`, L.length, tot, L.length); } }
+      if (id === "doeOut" && doe && doe.design) { const runs = doe.design.matrix.length, r = doe.r || 1, tot = runs * r; return mk(`${runs} 組 × 重複 ${r} 次（共 ${tot} 次實驗）`, r, tot, r); }
+    } catch (_) {}
+    const m = txt.match(/(?:^|\n)\s*n\s*\n\s*(\d+)/); if (m) return mk(`n = ${m[1]}`, +m[1], +m[1], +m[1]);
+    return null;
+  }
+  function vrPlanNum(t) { t = String(t || ""); let m;
+    if (/每組/.test(t) && (m = t.match(/每組\s*n?\s*=?\s*(\d+)/))) return { k: "per", v: +m[1] };
+    if ((m = t.match(/共\s*(\d+)/))) return { k: "tot", v: +m[1] };
+    if ((m = t.match(/n\s*=\s*(\d+)/))) return { k: "first", v: +m[1] };
+    if ((m = t.match(/(\d+)/))) return { k: "first", v: +m[1] }; return null; }
+  function vrParseAct(t) { t = String(t || ""); const per = (t.match(/每組\s*(\d+)/) || [])[1], tot = (t.match(/共\s*(\d+)/) || [])[1], first = (t.match(/(\d+)/) || [])[1]; return { txt: t, per: +(per || first || NaN), tot: +(tot || first || NaN), first: +(first || NaN) }; }
+  const vrDev = (plan, act) => { const p = vrPlanNum(plan); if (!p || !act) return false; const a = act[p.k]; return isFinite(a) && a < p.v; };
+  const vrPlanOf = x => { const s = x.ss || {}; if (!s.q || s.q === "none") return null; const lab = s.q === "rule" ? "依標準或公司程序規定" : ((typeof SV_Q !== "undefined" && SV_Q.find(o => o[0] === s.q)) || ["", ""])[1]; return { q: s.q, n: s.n || "", meth: lab, sum: s.sum || (s.why || "").split("\n")[0] }; };
+  const VR_METH = /(Welch t 檢定|Student t 檢定|配對 t 檢定|單一樣本 t 檢定|Mann-Whitney U 檢定|Wilcoxon[^，；。）]*|Kruskal-Wallis[^，；。）]*|Welch ANOVA|單因子 ANOVA|Pearson 卡方|卡方檢定|Fisher 精確檢定|TOST[^，；。]*|無母數允差區間|常態允差區間)/;
+  function vrMeth(id, body, tool) {
+    const t = body.innerText || "", m = t.match(VR_METH); if (m) return m[1];
+    if (id === "grrOut") return "Gage R&R" + ((t.match(/ANOVA 法|平均全距法/) || [""])[0] ? "（" + (t.match(/ANOVA 法|平均全距法/) || [""])[0] + "）" : "");
+    if (id === "attrOut") return "屬性一致性（Kappa）"; if (id === "regOut") return "簡單線性回歸";
+    if (id === "spcOut") { const c = t.match(/(I-MR|X̄-R|X̄-S|np|p|c|u)\s*管制圖/); return (c ? c[1] + " " : "") + "管制圖（判異規則）"; }
+    if (id === "doeOut") return (String(tool || "").replace(/^DOE(－[^：]*)?：?/, "") || "DOE") ; if (id === "tlOut") return /無母數/.test(t) ? "無母數允差區間" : "常態允差區間";
+    return tool || "";
+  }
+  function vrKey(id, note, body) {
+    const t = (note || "") + "\n" + (body ? body.innerText : ""); let m;
+    if (id === "grrOut" && (m = t.match(/%GRR\s*=\s*[\d.]+%/))) return m[0] + ((m = t.match(/ndc\s*=\s*\d+/)) ? "、" + m[0] : "");
+    if (id === "attrOut" && (m = t.match(/κ\s*=\s*-?[\d.]+/))) return m[0];
+    if (id === "tlOut" && (m = t.match(/[≥≤]\s*-?[\d.]+/))) return "允差界限 " + m[0];
+    if (id === "spcOut") return (/超出|觸發/.test(note || "") && !/沒有點超出/.test(note || "") ? "有失控點" : "在管制內") + ((m = t.match(/Cpk\s*=?\s*([\d.]+)/)) ? "、Cpk = " + m[1] : "");
+    if (id === "doeOut" && (m = t.match(/\d+ 個顯著效應/))) return m[0];
+    if ((m = t.match(/斜率 p\s*[<=]\s*[\d.]+/))) return m[0];
+    if ((m = t.match(/p\s*[<=]\s*[\d.]+/))) return m[0];
+    return String(note || "").slice(0, 40);
+  }
   // ---------------- 分析工具結果下方：存成驗證結果 ----------------
   const vrHas = body => !!body.querySelector(".verdict, svg, .kv, .bignum, table");
   function vrAuto(body) {
@@ -26,12 +70,21 @@
     if (!open) { const d = L.filter(x => (x.apx || []).length).length; return `<button type="button" class="vr-open" data-vropen="${id}">✓ 驗證結束，並儲存到報告${L.length ? `　<span class="vr-prog">統計驗證已完成 ${d}／${L.length}</span>` : ""}</button>`; }
     if (!L.length) return `<div class="vr-pick"><b>✓ 驗證結束，並儲存到報告</b><p class="hint" style="margin:4px 0 0">還沒有需要統計的驗證項目。請先在魚骨圖 STEP 3 勾選驗證項目（驗證策略不是「不用統計」的）。</p><div class="vr-row vr-end"><button type="button" class="sv-btn" data-vrclose="${id}">關閉</button></div></div>`;
     const body = $(id), auto = body ? vrAuto(body) : "", tool = VR_OUTS[id] || "";
-    const guess = L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
+    const guess = L.find(x => x.id === vrFocus) || L.find(x => tool && (x.tool || "").includes(tool.split("－")[0]) && !(x.apx || []).length) || L.find(x => tool && (x.tool || "").includes(tool.split("－")[0])) || L.find(x => !(x.apx || []).length) || L[0];
+    const act = body ? vrActual(id, body) : null;
     return `<div class="vr-pick" data-vrbox="${id}"><b>✓ 驗證結束，並儲存到報告</b><span class="hint">　這份結果畫面會附在 PDCA 報告後面（附錄）</span>
       <div class="vr-row"><label>驗證項目</label><select data-vrit="1">${L.map(x => `<option value="${x.id}"${x === guess ? " selected" : ""}>${esc(x.cause || "（未命名）")}${x.tool ? "（" + esc(x.tool) + "）" : ""}${(x.apx || []).length ? `　已存 ${(x.apx || []).length} 份` : ""}</option>`).join("")}</select></div>
       <div class="vr-row"><label>結論 <span class="vr-req">必選</span></label>${Object.entries(VR_ST).map(([k, t]) => `<button type="button" class="vr-chip" data-vrst="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
       <div class="vr-row vr-col"><label>依據（系統依結果產生，可修改）</label><input type="text" data-vrnote="1" value="${esc(auto)}"></div>
+      <div class="vr-plan" data-vrplan="1">${vrPlanBox(guess, act ? act.txt : "")}</div>
       <div class="vr-row vr-end"><span class="hint" data-vrhint="1"></span><button type="button" class="sv-btn" data-vrclose="${id}">取消</button><button type="button" class="sv-btn vr-save" data-vrsave="${id}">✓ 驗證結束，儲存到報告</button></div></div>`;
+  }
+  // 樣本數規劃 vs 實際數量（存入時記錄；少於規劃要寫偏離理由）
+  function vrPlanBox(x, actTxt) {
+    const pl = x ? vrPlanOf(x) : null, dev = pl ? vrDev(pl.n, vrParseAct(actTxt)) : false;
+    return `<div class="vr-row"><label>樣本數規劃</label><span>${pl ? `<b>${esc(pl.n)}</b>　<span class="hint">${esc(pl.meth)}${pl.sum ? "：" + esc(pl.sum) : ""}</span>` : `<span class="hint">這一項還沒有樣本數規劃（請到 ④ 樣本數規劃）</span>`}</span></div>
+      <div class="vr-row"><label>實際數量</label><input type="text" data-vract="1" value="${esc(actTxt || "")}" placeholder="例如：每組 16" style="max-width:340px"><span class="vr-devflag">${pl && actTxt ? (dev ? "⚠ 少於規劃" : "✓ 符合規劃") : ""}</span></div>
+      ${dev ? `<div class="vr-row vr-col vr-devrow"><label>偏離理由（必填）</label><input type="text" data-vrdev="1" placeholder="例如：試產量不足，只取得 12 件；檢定力約 xx%，結論需保守解讀"></div>` : ""}`;
   }
   function vrSlot(id, open) {
     const body = $(id); if (!body) return;
@@ -70,15 +123,23 @@
     if (!st) { hint.textContent = "⚠ 還沒存：請先選結論（原因成立／不成立／待定）"; const r = box.querySelector("[data-vrst]").parentElement; r.classList.add("vr-need"); r.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     if (!note) { hint.textContent = "請寫依據。"; return; }
     const x = vrItems().find(y => y.id === it); if (!x) return;
+    const actTxt = (box.querySelector("[data-vract]") || {}).value || "", pl = vrPlanOf(x), dev = pl ? vrDev(pl.n, vrParseAct(actTxt)) : false, devWhy = ((box.querySelector("[data-vrdev]") || {}).value || "").trim();
+    if (dev && !devWhy) { hint.textContent = "⚠ 實際數量少於規劃：請寫偏離理由。"; const d = box.querySelector("[data-vrdev]"); if (d) d.focus(); return; }
     const title = (body.closest(".preview") && body.closest(".preview").querySelector(".preview-head b")) ? body.closest(".preview").querySelector(".preview-head b").textContent.trim() : "";
-    (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: (VR_OUTS[id] || "") + (title && title !== "尚未分析" && !(VR_OUTS[id] || "").includes(title) ? "：" + title : ""), st: st.vrst, note, html: vrSnap(body) });
-    fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {}
+    const toolStr = (VR_OUTS[id] || "") + (title && title !== "尚未分析" && !(VR_OUTS[id] || "").includes(title) ? "：" + title : "");
+    (x.apx || (x.apx = [])).push({ id: fid(), at: Date.now(), tool: toolStr, st: st.vrst, note, html: vrSnap(body), plan: pl, act: actTxt.trim(), dev, devWhy, meth: vrMeth(id, body, toolStr), key: vrKey(id, note, body) });
+    fbSave(); try { pdcaRender(); } catch (_) {} try { flowRender(); } catch (_) {} try { vfRender(); } catch (_) {}
     const s = body.nextElementSibling; if (s) { s.dataset.open = ""; s.innerHTML = `<div class="vr-done">✓ 已存入「${esc(x.cause)}」的驗證結果（${VR_ST[st.vrst]}），會附在 PDCA 報告附錄。　<button type="button" class="linkbtn" data-route-go="pdca">看 PDCA 報告</button>　<button type="button" class="linkbtn" data-vropen="${id}">再存一份</button></div>${vrNextHtml()}`; }
     const left = vrStatItems().filter(y => !(y.apx || []).length);
     if (left.length) { setTimeout(() => vrGo(left[0], x.cause), 600); return; }   // 自動到下一個未驗證的統計因子
     setTimeout(() => { const b = document.querySelector('.toolnav [data-route="pdca"]'); if (b) b.click(); window.scrollTo({ top: 0, behavior: "smooth" }); }, 600);
     try { fbNote(`已儲存「${x.cause}」到報告。統計驗證都完成了，請在 PDCA 報告第 5 段填寫不用統計項目的結論。`); } catch (_) {}
   }
+  document.addEventListener("change", e => {
+    const it = e.target.closest(".vr-pick [data-vrit]"); if (it) { const box = it.closest(".vr-pick"), x = vrItems().find(y => y.id === it.value), pb = box.querySelector("[data-vrplan]"), a = box.querySelector("[data-vract]"); if (pb) pb.innerHTML = vrPlanBox(x, a ? a.value : ""); return; }
+    const ac = e.target.closest(".vr-pick [data-vract]"); if (ac) { const box = ac.closest(".vr-pick"), x = vrItems().find(y => y.id === box.querySelector("[data-vrit]").value), pb = box.querySelector("[data-vrplan]"), dv = (box.querySelector("[data-vrdev]") || {}).value || ""; if (pb) { pb.innerHTML = vrPlanBox(x, ac.value); const d = pb.querySelector("[data-vrdev]"); if (d) d.value = dv; } }
+    const fs = e.target.closest("[data-vfsel]"); if (fs) { vrFocus = fs.value; const x = vrItems().find(y => y.id === vrFocus); if (x) vrSetProblem(x, fs.dataset.vfsel); vfRender(); }
+  });
   (function vrInit() {
     Object.keys(VR_OUTS).forEach(id => { const b = $(id); if (!b) return; new MutationObserver(() => vrSlot(id)).observe(b, { childList: true, subtree: false }); vrSlot(id); });
     document.addEventListener("click", e => {
@@ -86,15 +147,34 @@
       const c = e.target.closest("[data-vrclose]"); if (c) { const s = $(c.dataset.vrclose).nextElementSibling; if (s) s.dataset.open = ""; vrSlot(c.dataset.vrclose); return; }
       const st = e.target.closest(".vr-pick [data-vrst]"); if (st) { st.parentElement.classList.remove("vr-need"); st.parentElement.querySelectorAll("[data-vrst]").forEach(b => b.setAttribute("aria-pressed", String(b === st))); const h = st.closest(".vr-pick").querySelector("[data-vrhint]"); if (h) h.textContent = ""; return; }
       const sv = e.target.closest("[data-vrsave]"); if (sv) { vrSave(sv.dataset.vrsave); return; }
+      const fg = e.target.closest("[data-vfgo]"); if (fg) { const x = vrItems().find(y => y.id === fg.dataset.vfgo); if (x) { const b = document.querySelector('.toolnav [data-route="sample"]'); if (b) b.click(); setTimeout(() => { try { svView(x); } catch (_) {} }, 120); } return; }
       const nx = e.target.closest("[data-vrnext]"); if (nx) { const x = vrItems().find(y => y.id === nx.dataset.vrnext); if (x) vrGo(x); }
     });
   })();
+  const VR_PROB = { hypothesis: "hypProblem", regression: "regressionProblem", spc: "spcProblem", msa: "msaProblem", doe: "doeProblem", taguchi: "taguchiProblem" };
+  function vrSetProblem(x, r) { const pb = $(VR_PROB[r]); if (pb) { pb.value = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.dataset.auto = pb.value; } }
+  // ---------------- 分析頁最上方：目前驗證中的因子 ----------------
+  let vrFocus = "";
+  const VF_VIEWS = { hypothesis: "viewAnalyze", regression: "viewReg", spc: "viewSPC", msa: "viewMSA", doe: "viewDOE", taguchi: "viewTaguchi" };
+  function vfRender() {
+    Object.entries(VF_VIEWS).forEach(([r, vid]) => {
+      const v = $(vid); if (!v) return; let bar = v.querySelector(".vf-bar");
+      if (!bar) { const h = v.querySelector(".tool-head"); if (!h) return; bar = document.createElement("div"); bar.className = "vf-bar"; h.after(bar); }
+      const L = vrStatItems(); if (!L.length) { bar.hidden = true; return; }
+      const mine = x => vrRoute(x.tool)[0] === r, sorted = L.filter(mine).concat(L.filter(x => !mine(x)));
+      const x = L.find(y => y.id === vrFocus), pl = x ? vrPlanOf(x) : null, nA = x ? (x.apx || []).length : 0;
+      bar.hidden = false;
+      bar.innerHTML = `<div class="vf-row"><b>目前驗證</b><select data-vfsel="${r}" aria-label="目前驗證的因子"><option value="">— 選擇要驗證的因子 —</option>${sorted.map(y => `<option value="${y.id}"${y.id === vrFocus ? " selected" : ""}>${mine(y) ? "" : "（其他工具）"}${esc(y.cause || "（未命名）")}${(y.apx || []).length ? "　✓ 已存" : ""}</option>`).join("")}</select>
+        ${x ? `<span class="vf-st ${nA ? "ok" : ""}">${nA ? `已存 ${nA} 份` : "尚未存結果"}</span>` : `<span class="hint">選了之後，存結果時會自動帶這一項，並顯示它的樣本數規劃。</span>`}</div>
+        ${x ? `<div class="vf-row vf-sub"><span>策略：${esc(x.tool || "—")}${mine(x) ? "" : `　<b class="vf-warn">這一項的策略不是這個工具</b>`}</span><span>樣本數規劃：${pl ? `<b>${esc(pl.n)}</b>（${esc(pl.meth)}${pl.sum ? "：" + esc(pl.sum.slice(0, 80)) : ""}）` : `<span class="vf-warn">尚未規劃</span>`}</span>${pl && x.ss && x.ss.inp ? `<button type="button" class="linkbtn" data-vfgo="${x.id}">🔍 查看計算</button>` : ""}</div>` : ""}`;
+    });
+  }
+  setTimeout(() => { try { vfRender(); Object.values(VF_VIEWS).forEach(vid => { const v = $(vid); if (v) new MutationObserver(() => { if (!v.hidden) vfRender(); }).observe(v, { attributes: true, attributeFilter: ["hidden"] }); }); } catch (_) {} }, 0);
   function vrGo(x, done) {   // 到這一個驗證項目的分析頁（存入後自動呼叫）
     { const [r, sub] = vrRoute(x.tool);
         if (r === "hypothesis" && sub === "compare" && currentView === "hypothesis") { try { $("clearBtn").click(); } catch (_) {} }   // 同一頁換下一項：清掉上一項的數據（已存在附錄）
         try { gotoTool(r, sub); } catch (_) { const b = document.querySelector(`.toolnav [data-route="${r}"]`); if (b) b.click(); }
-        const pb = $({ hypothesis: "hypProblem", regression: "regressionProblem", spc: "spcProblem", msa: "msaProblem", doe: "doeProblem", taguchi: "taguchiProblem" }[r]);
-        if (pb) { pb.value = `驗證項目：${x.cause}${x.method ? "。驗證方式：" + x.method : ""}`; pb.dataset.auto = pb.value; }
+        vrFocus = x.id; vrSetProblem(x, r); vfRender();
         try { fbNote(`${done ? `已儲存「${done}」到報告。` : ""}現在驗證「${x.cause}」：貼上這一項的數據後分析，再按結果下方的「驗證結束，並儲存到報告」。`); } catch (_) {}
         setTimeout(() => { const v = document.querySelector(`[data-view="${r}"]`), t = v && v.querySelector(".tool-problem"); (t || v || document.body).scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
   }
@@ -117,15 +197,35 @@
   }
   function vrApxHtml(mode) {
     const keep = mode === "screen"; let k = 0, out = "";
-    vrItems().forEach(x => { if (vrNonStat(x)) return; (x.apx || []).forEach(a => { k++;
-      out += `<section class="pd-apx1"><h4>附錄 ${k}　${esc(x.cause)}</h4><div class="pd-note">${esc(a.tool || "")}｜存入 ${new Date(a.at).toISOString().slice(0, 10)}｜結論：<b class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</b>｜依據：${esc(a.note || "")}${keep ? `　<button type="button" class="pd-mini pd-noprint" data-vrdel="${x.id}|${a.id}">刪除這份</button>` : ""}</div><div class="pd-apxb">${a.html}</div></section>`; }); });
-    return out ? `<div class="pd-apx"><h3 class="pd-apxh">附錄　統計驗證報告</h3>${out}</div>` : "";
+    const num = {};
+    vrItems().forEach(x => { if (vrNonStat(x)) return; (x.apx || []).forEach(a => { k++; (num[x.id] = num[x.id] || []).push(k);
+      const pl = a.plan || vrPlanOf(x), dev = a.plan ? a.dev : false;
+      const planLine = `<div class="pd-apxplan"><b>樣本數規劃：</b>${pl ? `${esc(pl.meth)}${pl.sum ? "（" + esc(pl.sum) + "）" : ""} → ${esc(pl.n)}` : "未規劃"}；<b>實際：</b>${a.act ? esc(a.act) : "（舊版未記錄）"}${a.act && pl ? (dev ? `，<b class="pd-vr-ng">少於規劃</b>；偏離理由：${esc(a.devWhy || "")}` : "，符合規劃") : ""}</div>`;
+      out += `<section class="pd-apx1" id="pdapx-${k}"><h4>附錄 ${k}　${esc(x.cause)}</h4><div class="pd-note">${esc(a.tool || "")}｜存入 ${new Date(a.at).toISOString().slice(0, 10)}｜結論：<b class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</b>｜依據：${esc(a.note || "")}${keep ? `　<button type="button" class="pd-mini pd-noprint" data-vrdel="${x.id}|${a.id}">刪除這份</button>` : ""}</div>${planLine}<div class="pd-apxb">${a.html}</div></section>`; }); });
+    const L = vrItems(); if (!L.some(x => !vrNonStat(x))) return "";
+    let nOk = 0, nDev = 0, nNo = 0, ix = 0;
+    const cut = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n) + "…" : t; };
+    const plCell = pl => pl ? esc(cut(pl.sum || pl.meth, 70)) : "未規劃";
+    const rows = L.map(x => {
+      if (vrNonStat(x)) { const v = x.vr || {}; return `<tr><td>—</td><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td class="pd-sm-pl">不需統計${x.ss && x.ss.why ? "：" + esc(cut(x.ss.why.split("\n")[0], 40)) : ""}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${v.st ? `<span class="pd-vr-${v.st}">${VR_ST[v.st]}</span>` : "未填"}</td><td>—</td></tr>`; }
+      const A = x.apx || [], a = A[A.length - 1], pl = (a && a.plan) || vrPlanOf(x);
+      ix++;
+      if (!a) { nNo++; return `<tr><td>${ix}</td><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td class="pd-sm-pl">${plCell(pl)}</td><td>${pl ? esc(pl.n) : "—"}</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="pd-vr-none">尚未驗證</span></td><td>—</td></tr>`; }
+      const cmp = !a.act ? "（未記錄）" : !pl ? "—" : a.dev ? `⚠ 少於規劃${a.devWhy ? "：" + esc(a.devWhy) : ""}` : "✓ 符合";
+      if (a.act && pl) { if (a.dev) nDev++; else nOk++; }
+      const refs = (num[x.id] || []).map(n => mode === "screen" ? `<a href="#pdapx-${n}" data-apxgo="${n}">附錄 ${n}</a>` : `<a href="#pdapx-${n}">附錄 ${n}</a>`).join("<br>");
+      return `<tr class="${a.dev ? "pd-sm-dev" : ""}"><td>${ix}</td><td>${esc(x.cause)}</td><td>${esc(x.tool || "")}</td><td class="pd-sm-pl">${plCell(pl)}</td><td>${pl ? esc(pl.n) : "—"}</td><td>${esc(a.act || "—")}</td><td>${cmp}</td><td>${esc(a.meth || a.tool || "")}</td><td>${esc(a.key || "")}</td><td><span class="pd-vr-${a.st}">${VR_ST[a.st] || ""}</span></td><td>${refs}</td></tr>`;
+    }).join("");
+    const sum = `<section class="pd-sm" id="pdapx-0"><h4>附錄 0　統計驗證總表</h4><table class="pd-tbl pd-smt"><colgroup><col style="width:3%"><col style="width:13%"><col style="width:10%"><col style="width:19%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:6%"></colgroup><thead><tr><th>#</th><th>驗證項目</th><th>驗證策略</th><th>樣本數規劃（方法與條件）</th><th>規劃數量</th><th>實際數量</th><th>規劃 vs 實際</th><th>統計方法</th><th>主要結果</th><th>結論</th><th>報告</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="pd-note">統計驗證 ${L.filter(x => !vrNonStat(x)).length} 項：符合規劃 ${nOk} 項、少於規劃 ${nDev} 項${nNo ? `、尚未驗證 ${nNo} 項` : ""}。多份結果時以最後一份為準；點「附錄 N」看完整結果，樣本數計算見報告第 4 段。</p></section>`;
+    return `<div class="pd-apx"><h3 class="pd-apxh">附錄　統計驗證報告</h3>${sum}${out}</div>`;
   }
   (function vrPdInit() {
     const w = $("pdcaWrap"); if (!w) return;
     w.addEventListener("change", e => { const s = e.target.closest("[data-vrx]"); if (!s) return; const x = vrItems().find(y => y.id === s.dataset.vrx); if (!x) return; x.vr = Object.assign({}, x.vr, { st: s.value }); fbSave(); try { pdcaStatus(); flowRender(); } catch (_) {} });
     w.addEventListener("input", e => { const d = e.target.closest("[data-vrn]"); if (!d) return; const x = vrItems().find(y => y.id === d.dataset.vrn); if (!x) return; x.vr = Object.assign({}, x.vr, { note: d.innerText.replace(/\n+$/, "") }); fbSave(); });
-    w.addEventListener("click", e => { const d = e.target.closest("[data-vrdel]"); if (!d) return;
+    w.addEventListener("click", e => { const g = e.target.closest("[data-apxgo]"); if (g) { e.preventDefault(); const t = $("pdapx-" + g.dataset.apxgo); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+      const d = e.target.closest("[data-vrdel]"); if (!d) return;
       if (!d.dataset.armed) { d.dataset.armed = "1"; d.textContent = "確定刪除？再按一次"; setTimeout(() => { if (d.isConnected) { delete d.dataset.armed; d.textContent = "刪除這份"; } }, 5000); return; }
       const [xi, ai] = d.dataset.vrdel.split("|"), x = (fb.vplan || []).find(y => y.id === xi); if (!x) return; x.apx = (x.apx || []).filter(a => a.id !== ai); fbSave(); pdcaRender(); try { flowRender(); } catch (_) {} });
   })();
