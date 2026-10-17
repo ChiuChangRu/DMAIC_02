@@ -119,6 +119,7 @@
       if (v === "fishbone") {
         const pop = $("fbPop");
         if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "要驗證？按這裡"]; }
+        { const m = exMissing()[0]; if (m) { const el = m[1] ? document.querySelector(`[data-hfsr2="${m[1].id}"]`) : document.querySelector(`li.st-excl[data-f="${m[0].id}"]:not([data-s]) .fb-reason`); if (el) return [6, el, "寫排除理由（會寫進報告）"]; } }
         if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
         if (ver.length) return fbDoneOk() ? [6, document.querySelector('[data-view="fishbone"] [data-route-go="plan"]') || nav("plan"), "下一步：③ 驗證計畫"] : [6, $("fbDoneBtn"), "改好了？按這裡結束"];
@@ -587,4 +588,81 @@
     const paint = () => { const ok = fbDoneOk(); B.classList.toggle("fb-done-on", ok); B.textContent = ok ? "✓ 已確認完成" : "✓ 魚骨圖修改完成"; H.textContent = ok ? "再修改魚骨圖時，需要重新按一次" : ""; };
     B.addEventListener("click", () => { fb.fbDoneSig = fbSig(); fbSave(); paint(); });
     setInterval(paint, 600); paint();
+  })();
+  // =====================================================================
+  // 排除一定要寫理由（可追溯）；刪除不用寫理由（資料直接移除，也不會出現在報告）
+  // 原因的理由存 f.reason；子因子的理由存 fb.sxr[子因子 id]（子因子原本沒有理由欄位）
+  // 排除的原因與理由寫進 PDCA 報告第 2 段
+  // =====================================================================
+  function exWhy(f, s) { return String(s ? ((fb.sxr || {})[s.id] || "") : (f.reason || "")).trim(); }
+  function exMissing() { const L = []; (fb.factors || []).forEach(f => { if (f.st === "excl" && !exWhy(f)) L.push([f, null]); else if (f.st !== "excl") (f.subs || []).forEach(s => { if (s.st === "excl" && !exWhy(f, s)) L.push([f, s]); }); }); return L; }
+  (function exclReason() {
+    const findF = id => (fb.factors || []).find(f => f.id === id);
+    const setWhy = (f, s, t) => { if (s) { fb.sxr = fb.sxr || {}; fb.sxr[s.id] = t; } else f.reason = t; };
+    // ---- 待決定清單：按「排除」先寫理由 ----
+    document.addEventListener("click", e => {
+      const b = e.target.closest('button[data-act="fst"][data-st="excl"], button[data-act="sst"][data-st="excl"]'); if (!b || b.dataset.hfok) return;
+      const li = b.closest("[data-f]"), f = li && findF(li.dataset.f); if (!f) return;
+      const sid = li.dataset.s, s = sid ? (f.subs || []).find(x => x.id === sid) : null;
+      if (exWhy(f, s)) return;   // 已有理由：照常排除
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (li.querySelector(".fb-exr")) { li.querySelector(".fb-exr input").focus(); return; }
+      (li.querySelector(".fb-tools") || li).insertAdjacentHTML("afterend", `<div class="fb-exr"><input type="text" placeholder="排除理由（必填），例如：已確認模溫紀錄正常" aria-label="排除理由"><button type="button" class="btn small" data-exok="1">確定排除</button><button type="button" class="fb-tlink" data-exno="1">取消</button><span class="fb-exw" hidden>請寫排除理由</span></div>`);
+      const box = li.querySelector(".fb-exr"), inp = box.querySelector("input"); inp.focus();
+      const ok = () => { const t = inp.value.trim(); if (!t) { box.querySelector(".fb-exw").hidden = false; inp.focus(); return; } setWhy(f, s, t); b.dataset.hfok = "1"; b.click(); delete b.dataset.hfok; fbSave(); };
+      box.querySelector("[data-exok]").addEventListener("click", ok);
+      box.querySelector("[data-exno]").addEventListener("click", () => box.remove());
+      inp.addEventListener("keydown", k => { if (k.key === "Enter") { k.preventDefault(); ok(); } if (k.key === "Escape") box.remove(); });
+    }, true);
+    // ---- 圖上小視窗：記住點的是哪個子因子 ----
+    let popSid = "", popFid = "";
+    document.addEventListener("click", e => { const t = e.target.closest("#fbSvgWrap [data-f]"); if (t && !t.closest("#fbPop")) { popFid = t.getAttribute("data-f") || ""; popSid = t.getAttribute("data-s") || ""; } }, true);
+    const popState = () => {
+      const pop = $("fbPop"); if (!pop || pop.hidden) return null;
+      const ex = pop.querySelector('[data-pst="excl"][aria-pressed="true"]'); if (!ex) return null;
+      const f = findF(popFid); if (!f) return null; const s = popSid ? (f.subs || []).find(x => x.id === popSid) : null;
+      return { pop, f, s };
+    };
+    // 子因子小視窗選「排除」時補一個理由欄
+    setInterval(() => {
+      const st = popState(); const old = $("fbPop") && $("fbPop").querySelector(".fb-pop-sxr");
+      if (!st || !st.s) { if (old) old.remove(); return; }
+      if (old) return;
+      const row = st.pop.querySelector(".fb-pop-row"); if (!row) return;
+      row.insertAdjacentHTML("afterend", `<div class="fb-pop-sxr"><label class="fb-pop-lab">排除理由（必填）</label><input type="text" data-hfsr="1" value="${esc(exWhy(st.f, st.s))}" placeholder="例如：已確認模溫紀錄正常"></div>`);
+      st.pop.querySelector("[data-hfsr]").addEventListener("input", ev => { fb.sxr = fb.sxr || {}; fb.sxr[st.s.id] = ev.target.value; fbSave(); });
+    }, 300);
+    // 小視窗按「完成」：排除但沒寫理由就不關
+    document.addEventListener("click", e => {
+      const d = e.target.closest('#fbPop [data-p="done"]'); if (!d) return; const st = popState(); if (!st || exWhy(st.f, st.s)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      const i = st.pop.querySelector('[data-p="reason"], [data-hfsr]'); if (i) i.focus();
+      try { fbNote("排除需要寫理由（會寫進報告）；不需要的原因請改用「刪除」。"); } catch (_) {}
+    }, true);
+    // ---- 已排除清單：提示文字改「必填」；子因子補理由欄 ----
+    const deco = () => {
+      document.querySelectorAll('.fb-reason[data-act="reason"]').forEach(i => { if (/建議填寫/.test(i.placeholder)) i.placeholder = i.placeholder.replace("建議填寫", "必填"); });
+      document.querySelectorAll(".fb-pop-reason .fb-pop-lab").forEach(l => { if (/建議填寫/.test(l.textContent)) l.textContent = "排除理由（必填）"; });
+      document.querySelectorAll("li.st-excl[data-s]").forEach(li => {
+        if (li.querySelector("[data-hfsr2]")) return; const f = findF(li.dataset.f), s = f && (f.subs || []).find(x => x.id === li.dataset.s); if (!s) return;
+        const w = exWhy(f, s);
+        (li.querySelector(".fb-f-main") || li).insertAdjacentHTML("afterend", `<input type="text" class="fb-reason${w ? "" : " empty"}" data-hfsr2="${s.id}" value="${esc(w)}" placeholder="排除理由（必填）" aria-label="子因子排除理由">`);
+      });
+    };
+    setInterval(deco, 500);
+    document.addEventListener("input", e => { const i = e.target.closest("[data-hfsr2]"); if (!i) return; fb.sxr = fb.sxr || {}; fb.sxr[i.dataset.hfsr2] = i.value; i.classList.toggle("empty", !i.value.trim()); fbSave(); });
+    // ---- PDCA 報告第 2 段：列出排除的原因與理由（刪除的不列） ----
+    const orig = pdcaHtml;
+    pdcaHtml = function (mode) {
+      const h = orig(mode); const rows = [];
+      (fb.factors || []).forEach(f => {
+        if (f.st === "excl") rows.push([fbCatName(f) || "—", esc(f.text), "原因", exWhy(f)]);
+        else (f.subs || []).forEach(s => { if (s.st === "excl") rows.push([fbCatName(f) || "—", esc(s.text) + `<span style="color:#6B6B6B">（屬於：${esc(f.text)}）</span>`, "子因子", exWhy(f, s)]); });
+      });
+      if (!rows.length) return h;
+      const t = document.createElement("template"); t.innerHTML = h;
+      const note = [...t.content.querySelectorAll(".pd-note")].find(p => /候選與排除理由/.test(p.textContent)); if (!note) return h;
+      note.insertAdjacentHTML("afterend", `<div class="pd-excl"><div class="pd-cap" style="font-weight:700;margin:8px 0 4px">已排除的原因與理由（共 ${rows.length} 項）</div><table class="pd-tbl"><thead><tr><th>分類</th><th>排除的原因</th><th>層級</th><th>排除理由</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3] ? esc(r[3]) : '<span style="color:#B3261E;font-weight:800">未填理由</span>'}</td></tr>`).join("")}</tbody></table></div>`);
+      const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML;
+    };
   })();
