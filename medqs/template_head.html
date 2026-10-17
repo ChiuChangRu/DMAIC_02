@@ -1221,3 +1221,21 @@ header.top { padding: 14px 22px 0; margin-bottom: 14px; }
 header.top h1 { font-size: 30px; margin: 2px 0 8px; }
 header.top .eyebrow { margin: 0; }
 .caseq.on-fb label, .caseq.on-fb input { display: none; } .caseq.on-fb { justify-content: flex-end; border: 0; background: transparent; padding: 0; margin-top: -8px; }
+/* 👉 導引手勢 */
+.glove { position: fixed; z-index: 9000; display: flex; align-items: center; gap: 4px; pointer-events: none; animation: glBob 1s ease-in-out infinite; }
+.glove .gl-h { font-size: 30px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.glove .gl-t { order: -1; font-size: 13px; font-weight: 700; color: #fff; background: #B87333; padding: 3px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.glove.flip { flex-direction: row-reverse; } .glove.flip .gl-h { transform: scaleX(-1); } .glove.flip .gl-t { order: 1; }
+@keyframes glBob { 0%,100% { translate: 0 0; } 50% { translate: 6px 0; } }
+.glove.flip { animation-name: glBobR; } @keyframes glBobR { 0%,100% { translate: 0 0; } 50% { translate: -6px 0; } }
+.glove-edge { position: fixed; z-index: 9000; left: 50%; bottom: 18px; translate: -50% 0; font: inherit; font-weight: 700; font-size: 14px; color: #fff; background: #B87333; border: 0; border-radius: 999px; padding: 8px 16px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.3); animation: glEdge 1.2s ease-in-out infinite; }
+.glove-edge.up { bottom: auto; top: 18px; }
+@keyframes glEdge { 0%,100% { translate: -50% 0; } 50% { translate: -50% 4px; } }
+#glTgl[aria-pressed="true"] { background: color-mix(in srgb, var(--copper) 14%, var(--surface)); }
+@media (prefers-reduced-motion: reduce) { .glove, .glove-edge { animation: none; } }
+/* 手勢改成「字在上、手在下」，少遮住旁邊的欄位 */
+.glove { flex-direction: column; align-items: flex-end; gap: 2px; }
+.glove .gl-t { order: 0; font-size: 12px; padding: 2px 7px; }
+.glove .gl-h { font-size: 26px; }
+.glove.flip { flex-direction: column; align-items: flex-start; } .glove.flip .gl-t { order: 0; }
+.glove .gl-t, .glove.flip .gl-t { order: -1; }

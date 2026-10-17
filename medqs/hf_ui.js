@@ -53,3 +53,66 @@
     setHelp(on);
     $("helpTgl").addEventListener("click", () => setHelp(document.body.classList.contains("help-off")));
   })();
+  // =====================================================================
+  // 👉 導引手勢（第 1～6 步：定義問題 → 魚骨圖 → 標 ◇ → 驗證計畫）
+  // 同一時間只指一個「下一步」；按下去就移到下一步；不擋任何操作；可用「👉 導引」關掉
+  // =====================================================================
+  (function glInit() {
+    const KEY = "mdqs.guide.on";
+    const bar = $("caseQBar"); if (!bar) return;
+    $("helpTgl").insertAdjacentHTML("beforebegin", `<button type="button" class="btn small" id="glTgl" aria-pressed="true" title="顯示／隱藏下一步導引">👉 導引</button>`);
+    document.body.insertAdjacentHTML("beforeend", `<div id="glove" class="glove" hidden aria-hidden="true"><span class="gl-h">👉</span><span class="gl-t"></span></div><button type="button" id="gloveEdge" class="glove-edge" hidden></button>`);
+    const G = $("glove"), E = $("gloveEdge");
+    let on = true; try { on = localStorage.getItem(KEY) !== "0"; } catch (_) {}
+    const setOn = v => { on = v; $("glTgl").setAttribute("aria-pressed", String(v)); try { localStorage.setItem(KEY, v ? "1" : "0"); } catch (_) {} tick(); };
+    $("glTgl").addEventListener("click", () => setOn(!on));
+    const vis = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
+    const view = () => { const s = [...document.querySelectorAll("section[data-view]")].find(x => !x.hidden); return s ? s.dataset.view : ""; };
+    const nav = r => document.querySelector(`.toolnav [data-route="${r}"]`);
+    // 依目前狀態決定下一步：[步驟, 目標元素, 短字]
+    function next() {
+      const v = view(), F = (typeof fb !== "undefined" && fb && fb.factors) || [];
+      const cand = F.filter(f => f.st === "cand"), use = F.filter(f => f.st === "use"), ver = F.filter(f => f.verify && f.st !== "excl");
+      if (v === "home") {
+        if (F.length) return ver.length ? [6, nav("plan"), "下一步"] : [3, nav("fishbone"), "到魚骨圖"];
+        if (document.querySelector("#msgs .sug-peek")) return [2, nav("fishbone"), "到魚骨圖"];
+        if (!$("homeQ").value.trim()) return [1, $("homeQ"), "寫下問題"];
+        return [1, $("homeQBtn"), "按這裡"];
+      }
+      if (v === "fishbone") {
+        const pop = $("fbPop");
+        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [5, vb, "標待驗證"]; }
+        if (cand.length) { const b = document.querySelector('.fb-f.st-cand [data-act="fst"][data-st="use"]'); return [3, b, "採用或排除"]; }
+        if (use.length && !ver.length) { const t = document.querySelector("#fbSvgWrap [data-f]"); return [4, t, "點原因"]; }
+        if (ver.length) return [6, nav("plan"), "下一步"];
+        if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題"];
+        return null;
+      }
+      return null;   // 第 7～8 步之後再做
+    }
+    function place(step, el, txt) {
+      G.dataset.step = step; G.querySelector(".gl-t").textContent = txt;
+      const r = el.getBoundingClientRect(), H = innerHeight;
+      if (r.bottom < 60 || r.top > H - 40) {   // 不在畫面內：邊緣提示
+        G.hidden = true; E.hidden = false; E.textContent = r.top > H - 40 ? "👇 下一步在下面" : "👆 下一步在上面"; E.classList.toggle("up", r.bottom < 60);
+        E.onclick = () => el.scrollIntoView({ behavior: "smooth", block: "center" }); return;
+      }
+      E.hidden = true; G.hidden = false;
+      const gw = G.offsetWidth, gh = G.offsetHeight;
+      let x = r.left - gw + 4, y = r.top + r.height / 2 - (gh - 15);   // 手指尖對準目標左緣中間
+      if (x < 4) { x = r.right + 6; G.classList.add("flip"); } else G.classList.remove("flip");
+      G.style.left = x + "px"; G.style.top = Math.max(4, y) + "px";
+    }
+    let lastV = "";
+    function tick() {
+      const v = view();
+      // 進入魚骨圖且有待決定：直接捲到「待決定」
+      if (v !== lastV) { lastV = v; if (v === "fishbone" && on) setTimeout(() => { const c = document.querySelector(".fb-f.st-cand"); if (c) { try { closePanel(); } catch (_) {} c.closest("section") ? c.closest("section").scrollIntoView({ behavior: "smooth", block: "start" }) : c.scrollIntoView({ behavior: "smooth", block: "center" }); } }, 250); }
+      const n = on ? next() : null;
+      if (!n || !vis(n[1])) { G.hidden = true; E.hidden = true; return; }
+      place(n[0], n[1], n[2]);
+    }
+    setInterval(tick, 400); addEventListener("scroll", tick, { passive: true }); addEventListener("resize", tick);
+    document.addEventListener("click", () => setTimeout(tick, 80), true);
+    setOn(on);
+  })();
