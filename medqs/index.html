@@ -1288,6 +1288,9 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
 #planSum [data-hub="new"], #fbVplan [data-vpnew] { display: none !important; }
 .hub-nofb { margin-left: 10px; color: var(--bad, #B3261E) !important; }
 .hub-ai { margin-right: 10px; font-weight: 700; }
+#planSum [data-hub="ai"] { display: none !important; }
+.fb-done-row { margin: 10px 16px 14px; align-items: center; }
+#fbDoneBtn.fb-done-on { background: var(--good-soft, #1B3022); color: var(--good, #8BD5A0); border: 1.5px solid var(--good, #8BD5A0); }
 </style>
 
 <div class="wrap">
@@ -14452,7 +14455,7 @@ else root.runValidation = runValidation;
       const v = view(), F = (typeof fb !== "undefined" && fb && fb.factors) || [];
       const cand = F.filter(f => f.st === "cand"), use = F.filter(f => f.st === "use"), ver = F.filter(f => f.verify && f.st !== "excl");
       if (v === "home") {
-        if (F.length) return ver.length ? [6, nav("plan"), "下一步"] : [6, nav("fishbone"), "到魚骨圖"];
+        if (F.length) return ver.length && fbDoneOk() ? [6, nav("plan"), "下一步"] : [6, nav("fishbone"), "到魚骨圖"];
         if (homeTurns()) {
           let b = false; try { b = busy; } catch (_) {}
           if (b) return null;   // AI 回覆中
@@ -14470,14 +14473,14 @@ else root.runValidation = runValidation;
         if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "要驗證？按這裡"]; }
         if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
-        if (ver.length) return [6, nav("plan"), "下一步"];
+        if (ver.length) return fbDoneOk() ? [6, document.querySelector('[data-view="fishbone"] [data-route-go="plan"]') || nav("plan"), "下一步：③ 驗證計畫"] : [6, $("fbDoneBtn"), "改好了？按這裡結束"];
         if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "第一步：寫本案問題（一句話）", { w5: true }];
         return null;
       }
       // ---- ③ 驗證計畫：建議策略 → 勾選 → 選策略 → 每一項（樣本數 → 分析 → 存報告；不用統計的填結論）→ ④ 報告 ----
       if (v === "plan") {
         const L = (fb && fb.vplan) || [], on = L.filter(x => x.on);
-        if (!L.length) return [7, document.querySelector('#planSum [data-hub="ai"]') || $("fbPlanAI"), "請 AI 建議策略"];
+        if (!L.length) { if ($("planEdit")) $("planEdit").open = true; return [7, $("fbPlanAI"), "請 AI 建議策略"]; }
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
@@ -14748,6 +14751,8 @@ else root.runValidation = runValidation;
   // 報告完整性：每個勾選的驗證項目要「已驗證」或「不驗證＋寫原因」（例如臨時撤案）
   // 有未處理的項目 → 報告標「草稿」、結案核准不能勾；未驗證的照實寫「尚未驗證」或「未驗證：原因」
   // =====================================================================
+  function fbSig() { try { return JSON.stringify([(fb.factors || []).map(f => [f.id, f.text, f.st, f.cat, !!f.verify, !!f.key, (f.subs || []).map(x => x.text + x.st)]), ($("fbProblem") || {}).value || ""]); } catch (_) { return ""; } }
+  function fbDoneOk() { try { return !!fb.fbDoneSig && fb.fbDoneSig === fbSig(); } catch (_) { return false; } }
   const nvOk = x => !!(x && x.nv && String(x.nv.why || "").trim());
   const vDone = x => vrNonStat(x) ? !!(x.vr && x.vr.st) : !!(x.apx || []).length;
   const vTodo = () => ((fb && fb.vplan) || []).filter(x => x.on && !vDone(x) && !nvOk(x));
@@ -14904,6 +14909,32 @@ else root.runValidation = runValidation;
     hubPlan = function (x) { oPlan(x); let ok = false; try { ok = svOk(x); } catch (_) {} if (!ok && x.ss && x.ss.q && x.ss.q !== "bypass") auto(x, "sample", "[data-svai]"); };
     const oGo = vrGo;
     vrGo = function (x, done) { oGo(x, done); if ((x.apx || []).length) return; let r = ""; try { r = vrRoute(x.tool)[0]; } catch (_) {} if (AIBTN[r]) auto(x, r, "#" + AIBTN[r]); };
+  })();
+  // =====================================================================
+  // 試作新增的欄位（不驗證原因 nv、略過前的樣本數 ssPrev、已自動問過 AI 的頁 aiAuto）
+  // 驗證項目在載入時會被重建（只留固定欄位），所以另存在 fb.hfx，載入後補回
+  // =====================================================================
+  (function hfxPersist() {
+    const K = ["nv", "ssPrev", "aiAuto"]; let lastFb = null;
+    const hydrate = () => { const M = fb.hfx || {}; (fb.vplan || []).forEach(x => K.forEach(k => { if (x[k] === undefined && M[k] && M[k][x.id] !== undefined) x[k] = M[k][x.id]; })); };
+    const dehydrate = () => { const M = {}; K.forEach(k => { M[k] = {}; (fb.vplan || []).forEach(x => { if (x[k] !== undefined && x[k] !== null) M[k][x.id] = x[k]; }); }); fb.hfx = M; };
+    const tick = () => { try { if (!fb) return; if (fb !== lastFb) { lastFb = fb; hydrate(); try { pdcaRender(); } catch (_) {} } dehydrate(); } catch (_) {} };
+    const o = fbSaveNow; fbSaveNow = function () { tick(); return o.apply(this, arguments); };
+    setInterval(tick, 300); tick();
+  })();
+  // ③ 「請 AI 建議驗證策略」只留下方一顆（上方摘要列的隱藏）
+  // =====================================================================
+  // 魚骨圖「修改完成」按鈕：確認改好後按下 → 手勢才指向下一步（③ 驗證計畫）
+  // 之後若再改魚骨圖（原因、分類、◇、問題點），自動回到「尚未確認」
+  // =====================================================================
+  (function fbDone() {
+    const wrap = $("fbSvgWrap"); if (!wrap) return;
+    const anchor = wrap.parentNode.querySelector(".fb-legend") || wrap;
+    anchor.insertAdjacentHTML("afterend", `<div class="run-row fb-done-row"><button type="button" class="btn primary" id="fbDoneBtn">✓ 魚骨圖修改完成</button><span class="hint" id="fbDoneHint"></span></div>`);
+    const B = $("fbDoneBtn"), H = $("fbDoneHint");
+    const paint = () => { const ok = fbDoneOk(); B.classList.toggle("fb-done-on", ok); B.textContent = ok ? "✓ 已確認完成" : "✓ 魚骨圖修改完成"; H.textContent = ok ? "再修改魚骨圖時，需要重新按一次" : ""; };
+    B.addEventListener("click", () => { fb.fbDoneSig = fbSig(); fbSave(); paint(); });
+    setInterval(paint, 600); paint();
   })();
 
   // ---------- problem guide ----------
