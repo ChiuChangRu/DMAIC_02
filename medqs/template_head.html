@@ -1278,3 +1278,9 @@ a.ref-link:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
 @keyframes awSpin { to { transform: rotate(360deg); } }
 body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .aw-spin { animation: none; } }
+/* 不驗證（寫原因） */
+.hub-nv { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 14px 10px; font-size: 13px; border-top: 1px dashed var(--line); }
+.hub-nv label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.hub-nv input[type=text] { flex: 1 1 280px; min-width: 0; font: inherit; padding: 4px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.hub-nvw { color: var(--warn-ink); font-weight: 700; font-size: 12px; }
+.hub-item.hub-nvd .hub-pipe { opacity: .45; }

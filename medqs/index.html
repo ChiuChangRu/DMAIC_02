@@ -1278,6 +1278,12 @@ a.ref-link:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
 @keyframes awSpin { to { transform: rotate(360deg); } }
 body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .aw-spin { animation: none; } }
+/* 不驗證（寫原因） */
+.hub-nv { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 14px 10px; font-size: 13px; border-top: 1px dashed var(--line); }
+.hub-nv label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.hub-nv input[type=text] { flex: 1 1 280px; min-width: 0; font: inherit; padding: 4px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.hub-nvw { color: var(--warn-ink); font-weight: 700; font-size: 12px; }
+.hub-item.hub-nvd .hub-pipe { opacity: .45; }
 </style>
 
 <div class="wrap">
@@ -14461,9 +14467,10 @@ else root.runValidation = runValidation;
         const L = (fb && fb.vplan) || [], on = L.filter(x => x.on);
         if (!L.length) return [7, document.querySelector('#planSum [data-hub="ai"]') || $("fbPlanAI"), "請 AI 建議策略"];
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
-        const noTool = on.find(x => !String(x.tool || "").trim());
+        const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
         for (const x of on) {
+          if (x.nv) { if (String(x.nv.why || "").trim()) continue; return [8, document.querySelector(`[data-nvwhy="${x.id}"]`), "寫不驗證的原因"]; }
           if (vrNonStat(x)) { if (!(x.vr && x.vr.st)) return [8, document.querySelector(`[data-hubvr="${x.id}"]`), "填結論（照實）"]; continue; }
           if (!svOk(x)) return [8, document.querySelector(`#planHub [data-hub="plan"][data-id="${x.id}"]`), /^DOE|田口|實驗設計/.test(x.tool || "") ? "規劃樣本數（或勾略過）" : "規劃樣本數"];
           if (!(x.apx || []).length) return [8, document.querySelector(`#planHub [data-hub="go"][data-id="${x.id}"]`), "開始分析"];
@@ -14472,7 +14479,7 @@ else root.runValidation = runValidation;
       }
       if (v === "pdca") {
         const on = ((fb && fb.vplan) || []).filter(x => x.on);
-        const todo = on.filter(x => vrNonStat(x) ? !(x.vr && x.vr.st) : !(x.apx || []).length);
+        const todo = on.filter(x => !(x.nv && String(x.nv.why || "").trim()) && (vrNonStat(x) ? !(x.vr && x.vr.st) : !(x.apx || []).length));
         return todo.length ? [9, nav("plan"), `還有 ${todo.length} 項未完成`] : null;
       }
       // ---- 從驗證計畫進到工具頁：樣本數帶回／分析後存到報告 ----
@@ -14724,6 +14731,61 @@ else root.runValidation = runValidation;
       fbSave(); try { svRender(); pdcaRender(); } catch (_) {}
       navCtx = "plan"; vrGo(x);
     }, true);
+  })();
+  // =====================================================================
+  // 報告完整性：每個勾選的驗證項目要「已驗證」或「不驗證＋寫原因」（例如臨時撤案）
+  // 有未處理的項目 → 報告標「草稿」、結案核准不能勾；未驗證的照實寫「尚未驗證」或「未驗證：原因」
+  // =====================================================================
+  const nvOk = x => !!(x && x.nv && String(x.nv.why || "").trim());
+  const vDone = x => vrNonStat(x) ? !!(x.vr && x.vr.st) : !!(x.apx || []).length;
+  const vTodo = () => ((fb && fb.vplan) || []).filter(x => x.on && !vDone(x) && !nvOk(x));
+  (function nvInit() {
+    const hub = $("planHub"); if (!hub) return;
+    const item = id => (fb.vplan || []).find(y => y.id === id);
+    function deco() {
+      hub.querySelectorAll(".hub-item").forEach(it => {
+        const eb = it.querySelector('[data-hub="edit"]'), x = eb && item(eb.dataset.id); if (!x || vDone(x) || it.querySelector(".hub-nv")) return;
+        const on = !!x.nv;
+        it.insertAdjacentHTML("beforeend", `<div class="hub-nv"><label><input type="checkbox" data-nvon="${x.id}"${on ? " checked" : ""}> 本項不驗證</label>${on ? `<input type="text" data-nvwhy="${x.id}" value="${esc((x.nv || {}).why || "")}" placeholder="原因（必填），例如：客戶撤案、改由其他 CAPA 處理">${nvOk(x) ? "" : `<span class="hub-nvw">寫了原因才算完成</span>`}` : ""}</div>`);
+        if (nvOk(x)) it.classList.add("hub-nvd");
+      });
+    }
+    new MutationObserver(deco).observe(hub, { childList: true }); deco();
+    const save = () => { fbSave(); try { pdcaRender(); flowRender(); } catch (_) {} };
+    hub.addEventListener("change", e => {
+      const c = e.target.closest("[data-nvon]"); if (!c) return; const x = item(c.dataset.nvon); if (!x) return; c.blur();
+      if (c.checked) x.nv = { why: (x.nv && x.nv.why) || "" }; else delete x.nv;
+      save(); if (c.checked) setTimeout(() => { const i = hub.querySelector(`[data-nvwhy="${x.id}"]`); if (i) i.focus(); }, 50);
+    });
+    hub.addEventListener("input", e => { const i = e.target.closest("[data-nvwhy]"); if (!i) return; const x = item(i.dataset.nvwhy); if (x) { x.nv = { why: i.value }; fbSave(); } });
+    hub.addEventListener("focusout", e => { if (e.target.closest("[data-nvwhy]")) setTimeout(save, 0); });
+    // ---- 報告：草稿標示、結案核准鎖定、未驗證照實寫 ----
+    const orig = pdcaHtml;
+    pdcaHtml = function (mode) {
+      let h = orig(mode);
+      const on = ((fb && fb.vplan) || []).filter(x => x.on); if (!on.length) return h;
+      const todo = vTodo(), nv = on.filter(x => !vDone(x) && nvOk(x));
+      const t = document.createElement("template"); t.innerHTML = h; const R = t.content;
+      const red = "color:#B3261E;font-weight:800", grey = "color:#6B6B6B;font-weight:700";
+      // 結論欄：依原因文字找列
+      R.querySelectorAll("table").forEach(tb => {
+        const ths = [...tb.querySelectorAll("thead th, tr:first-child th")], ci = ths.findIndex(th => th.textContent.trim() === "結論"); if (ci < 0) return;
+        tb.querySelectorAll("tbody tr").forEach(tr => {
+          const tds = [...tr.children]; if (tds.length !== ths.length) return;
+          const x = on.find(y => tds.some(td => td.textContent.trim() === String(y.cause || "").trim())); if (!x || vDone(x)) return;
+          tds[ci].innerHTML = nvOk(x) ? `<span class="pd-vr-nv" style="${grey}">未驗證：${esc(x.nv.why.trim())}</span>` : `<span class="pd-vr-none" style="${red}">尚未驗證</span>`;
+        });
+      });
+      // 草稿標示
+      const head = R.querySelector(".pd-head");
+      if (head && todo.length) head.insertAdjacentHTML("afterend", `<div class="pd-draft" style="margin:10px 0;padding:10px 14px;border:2px solid #B3261E;border-radius:8px;background:#FDECEA;color:#7A1A12;font-weight:700">草稿：尚有 ${todo.length} 個驗證項目尚未驗證（${todo.map(x => esc(x.cause)).join("、")}），報告不完整，不能結案。<br><span style="font-weight:500">請完成驗證，或在 ③ 驗證計畫勾「本項不驗證」並寫原因。</span></div>`);
+      else if (head && nv.length) head.insertAdjacentHTML("afterend", `<div class="pd-nvnote" style="margin:10px 0;padding:8px 14px;border:1px solid #B9B0A0;border-radius:8px;color:#4A4A4A">${nv.length} 個驗證項目未驗證，已寫原因：${nv.map(x => esc(x.cause) + "（" + esc(x.nv.why.trim()) + "）").join("；")}</div>`);
+      // 結案核准：有未處理項目時鎖定
+      if (todo.length) R.querySelectorAll(".pd-box").forEach(b => { const li = b.closest("li"); if (!li || !/PDCA 結案核准/.test(li.textContent)) return; const s = document.createElement("span"); s.className = "pd-box"; s.style.opacity = ".35"; b.replaceWith(s); li.insertAdjacentHTML("beforeend", `<span style="${red};font-size:12px">（尚有 ${todo.length} 項未驗證，不能結案）</span>`); });
+      const d = document.createElement("div"); d.appendChild(R); return d.innerHTML;
+    };
+    // 已勾的結案核准，若後來又有未處理項目，取消勾選
+    setInterval(() => { try { const P = pdState(); if (P.c["ap.ok"] && vTodo().length) { delete P.c["ap.ok"]; fbSave(); } } catch (_) {} }, 1500);
   })();
 
   // ---------- problem guide ----------
