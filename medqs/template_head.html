@@ -1192,3 +1192,95 @@ nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); mar
 .src-ico { width: 18px; height: 18px; flex: 0 0 18px; object-fit: contain; border-radius: 3px; }
 .src-txt { display: inline-grid; place-items: center; font-size: 10px; font-weight: 800; color: #fff; background: #4a5a6a; letter-spacing: -.02em; }
 .src-chip:has(input:disabled) .src-ico { filter: grayscale(1); }
+/* ===== 人因改善 第一優先 ===== */
+.caseq { display: flex; align-items: center; gap: 8px; margin: -6px 0 12px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.caseq label { font-weight: 700; white-space: nowrap; font-size: 14px; }
+.caseq input { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); }
+#helpTgl[aria-pressed="true"] { background: color-mix(in srgb, var(--copper) 14%, var(--surface)); }
+.tool-aux { margin: 0 0 10px; }
+.tool-aux > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 4px 0; list-style: none; }
+.tool-aux > summary::before { content: "▸ "; } .tool-aux[open] > summary::before { content: "▾ "; }
+.tool-aux .aux-t { font-weight: 700; margin-right: 8px; color: var(--ink); }
+.tool-aux .tool-problem { margin-top: 4px; }
+.run-sticky { position: sticky; bottom: 0; z-index: 5; background: var(--surface); padding: 8px 0; box-shadow: 0 -6px 10px -8px rgba(0,0,0,.25); }
+/* 說明文字預設收合 */
+body.help-off p.help:not(:has(button, a, input, select)),
+body.help-off .tool-head > .hint,
+body.help-off .fb-drop .hint,
+body.help-off .fb-legend,
+body.help-off .step > .help,
+body.help-off .tool-problem > label,
+body.help-off summary > .hint,
+body.help-off .run-row > span.hint:empty ~ x,
+body.help-off .sub-hint, body.help-off [id$="SubHint"], body.help-off #subHint,
+body.help-off li.hint { display: none !important; }
+@media (max-width: 720px) { .caseq { flex-wrap: wrap; } .caseq input { flex-basis: 100%; order: 3; } }
+body.help-off .run-row > span.hint:not([id]) { display: none !important; }
+/* 頁首精簡：讓工具頁的資料輸入更靠上 */
+header.top { padding: 14px 22px 0; margin-bottom: 14px; }
+header.top h1 { font-size: 30px; margin: 2px 0 8px; }
+header.top .eyebrow { margin: 0; }
+.caseq.on-fb label, .caseq.on-fb input { display: none; } .caseq.on-fb { justify-content: flex-end; border: 0; background: transparent; padding: 0; margin-top: -8px; }
+/* 👉 導引手勢 */
+.glove { position: fixed; z-index: 9000; display: flex; align-items: center; gap: 4px; pointer-events: none; animation: glBob 1s ease-in-out infinite; }
+.glove .gl-h { font-size: 30px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.glove .gl-t { order: -1; font-size: 13px; font-weight: 700; color: #fff; background: #B87333; padding: 3px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.glove.flip { flex-direction: row-reverse; } .glove.flip .gl-h { transform: scaleX(-1); } .glove.flip .gl-t { order: 1; }
+@keyframes glBob { 0%,100% { translate: 0 0; } 50% { translate: 6px 0; } }
+.glove.flip { animation-name: glBobR; } @keyframes glBobR { 0%,100% { translate: 0 0; } 50% { translate: -6px 0; } }
+.glove-edge { position: fixed; z-index: 9000; left: 50%; bottom: 18px; translate: -50% 0; font: inherit; font-weight: 700; font-size: 14px; color: #fff; background: #B87333; border: 0; border-radius: 999px; padding: 8px 16px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.3); animation: glEdge 1.2s ease-in-out infinite; }
+.glove-edge.up { bottom: auto; top: 18px; }
+@keyframes glEdge { 0%,100% { translate: -50% 0; } 50% { translate: -50% 4px; } }
+#glTgl[aria-pressed="true"] { background: color-mix(in srgb, var(--copper) 14%, var(--surface)); }
+@media (prefers-reduced-motion: reduce) { .glove, .glove-edge { animation: none; } }
+/* 手勢改成「字在上、手在下」，少遮住旁邊的欄位 */
+.glove { flex-direction: column; align-items: flex-end; gap: 2px; }
+.glove .gl-t { order: 0; font-size: 12px; padding: 2px 7px; }
+.glove .gl-h { font-size: 26px; }
+.glove.flip { flex-direction: column; align-items: flex-start; } .glove.flip .gl-t { order: 0; }
+.glove .gl-t, .glove.flip .gl-t { order: -1; }
+/* 導引：略過鈕、5W 建議、角度區搬進問題卡 */
+.glove .gl-skip { pointer-events: auto; font: inherit; font-size: 11px; font-weight: 700; color: #B87333; background: #fff; border: 1px solid #B87333; border-radius: 999px; padding: 1px 7px; cursor: pointer; order: -1; }
+.gl5w { position: fixed; z-index: 8999; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 8px; background: color-mix(in srgb, #B87333 12%, var(--surface)); border: 1px dashed #B87333; }
+.gl5w .w-lab { font-size: 11px; color: var(--muted); margin-right: 2px; }
+.gl5w button { font: inherit; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid #B87333; background: var(--surface); color: #B87333; cursor: pointer; }
+.persp-in { box-shadow: none; border: 1px solid var(--line); margin: 10px 0 0; padding: 10px 12px; }
+.persp-in h3 { font-size: 15px; margin: 0 0 6px; }
+/* 只讓手跳動，字與「略過」固定，方便點 */
+.glove, .glove.flip { animation: none; }
+.glove .gl-h { animation: glBob 1s ease-in-out infinite; }
+.glove.flip .gl-h { animation-name: glBobR; }
+@media (prefers-reduced-motion: reduce) { .glove .gl-h { animation: none; } }
+/* 5W 建議列（固定在問題框上方） */
+.w5row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 4px; }
+.w5row .w-lab { font-size: 12px; font-weight: 800; color: #B87333; margin-right: 2px; }
+.w5row button { font: inherit; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid #B87333; background: transparent; color: #B87333; cursor: pointer; }
+.w5row button:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
+.w5row .w-hint { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.ai-foot .w5row { padding: 0 2px; }
+a.ref-link { color: #B87333; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+a.ref-link:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
+/* ③ 驗證計畫：策略在卡片內選；下方清單不再顯示策略欄 */
+.hub-tool { width: 100%; max-width: 100%; font: inherit; font-weight: 700; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
+.hub-tool option, .hub-tool optgroup { background: var(--surface); color: var(--ink); }
+.hub-tool optgroup { font-weight: 800; }
+.hub-tool option { font-weight: 500; }
+.hub-tool-in { width: 100%; font: inherit; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
+#fbVplan .vp-tbl th:nth-child(5), #fbVplan .vp-tbl td:nth-child(5) { display: none; }
+.hub-byp { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; cursor: pointer; }
+.hub-bypw { font-size: 12px; color: var(--warn-ink, #8a4b00); font-weight: 700; margin-top: 2px; }
+/* AI 思考中遮罩：在 AI 視窗（z 41）與按鈕（z 40）之下 */
+.ai-wait { position: fixed; inset: 0; z-index: 39; background: rgba(20,24,28,.38); display: flex; justify-content: center; align-items: flex-start; padding-top: 18vh; cursor: wait; }
+.ai-wait[hidden] { display: none; }
+.aw-box { display: flex; align-items: center; gap: 14px; background: var(--surface, #fff); color: var(--ink, #222); border: 2px solid #B87333; border-radius: 14px; padding: 16px 20px; box-shadow: 0 18px 48px rgba(0,0,0,.3); max-width: calc(100vw - 32px); cursor: default; }
+.aw-sub { font-size: 13px; color: var(--muted, #666); margin-top: 2px; }
+.aw-spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid color-mix(in srgb, #B87333 25%, transparent); border-top-color: #B87333; animation: awSpin .9s linear infinite; flex: none; }
+@keyframes awSpin { to { transform: rotate(360deg); } }
+body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .aw-spin { animation: none; } }
+/* 不驗證（寫原因） */
+.hub-nv { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 14px 10px; font-size: 13px; border-top: 1px dashed var(--line); }
+.hub-nv label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.hub-nv input[type=text] { flex: 1 1 280px; min-width: 0; font: inherit; padding: 4px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.hub-nvw { color: var(--warn-ink); font-weight: 700; font-size: 12px; }
+.hub-item.hub-nvd .hub-pipe { opacity: .45; }
