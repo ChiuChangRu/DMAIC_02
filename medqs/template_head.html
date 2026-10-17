@@ -1300,6 +1300,8 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
 .hub-lv { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 4px 14px 8px; font-size: 13px; }
 .hub-lv select { font: inherit; padding: 3px 6px; border: 1.5px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
 .hub-lv select option { background: var(--surface); color: var(--ink); }
-/* 閉環魚骨圖 */
-.fb-loop { background: #fff; border-radius: 8px; padding: 8px; }
-.pd-loop { margin: 6px 0 12px; break-inside: avoid; }
+/* 閉環魚骨圖：對策層次顏色 */
+:root { --lv1: #2E7D5B; --lv2: #A35F25; --lv3: #3B6EA8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --lv1: #7FD3A6; --lv2: #F0B07A; --lv3: #8DB8F0; } }
+:root[data-theme="dark"] { --lv1: #7FD3A6; --lv2: #F0B07A; --lv3: #8DB8F0; }
+.pd-sheet, .pd-sheet * { --lv1: #2E7D5B; --lv2: #A35F25; --lv3: #3B6EA8; }

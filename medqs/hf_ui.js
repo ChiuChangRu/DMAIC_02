@@ -710,86 +710,91 @@
     };
   })();
   // =====================================================================
-  // 閉環魚骨圖（CEDAC 式）：骨頭一側是原因，另一側是對策卡（對策層次＋驗證策略），已排除的原因附排除理由
-  // A：② 魚骨圖分頁「檢視」多一個「閉環」；B：PDCA 報告第 5 段放同一張圖
-  // 資料都來自 ② 魚骨圖與 ③ 驗證計畫，不用另外輸入
+  // 閉環魚骨圖（CEDAC 式）：魚骨圖本身就是閉環——斜骨頭的一側是原因，另一側是對策（對策層次＋驗證策略）
+  // 已排除的原因也畫上去（刪除線），對側寫排除理由；◇ 尚無對策的標紅字。對策不加框，只用顏色區分層次。
+  // 取代原本的魚骨圖（② 魚骨圖分頁、PDCA 報告、匯出圖都用這一張）；點原因、分類、問題點照常可以編輯
   // =====================================================================
-  function loopSvg(big) {
-    const LVC = { "1": "#2E7D5B", "2": "#A35F25", "3": "#3B6EA8" };
-    const P = big ? { f: 18, wc: 7, kf: 16, wk: 9, hw: 150, hf: 18, hc: 7 } : { f: 13, wc: 12, kf: 12, wk: 15, hw: 180, hf: 14, hc: 9 };
-    const LH = Math.round(P.f * 1.3), KH = Math.round(P.kf * 1.25);
-    const CX = P.wc * P.f + 14, BX = CX + 10, KX = BX + 12, KW = P.wk * P.kf + 22, CW = KX + KW + 22;
-    const cats = (() => { try { return fbCats().slice(); } catch (_) { return []; } })();
-    const F = (fb.factors || []).filter(f => f.st === "use" || f.st === "excl");
-    if (F.some(f => !cats.find(c => c.id === f.cat[fb.set]))) cats.push({ id: "__none", name: "未分類" });
-    const catOf = f => cats.find(c => c.id === f.cat[fb.set]) ? f.cat[fb.set] : "__none";
-    const wrap = (t, n, m) => { const s = String(t || ""), L = []; for (let i = 0; i < s.length && L.length < m; i += n) L.push(s.slice(i, i + n)); if (s.length > n * m) L[m - 1] = L[m - 1].slice(0, n - 1) + "…"; return L.length ? L : [""]; };
-    const rowsOf = c => F.filter(f => catOf(f) === c.id).map(f => {
-      const items = f.st === "excl" ? [] : (fb.vplan || []).filter(x => x.on && x.fid === f.id);
-      const cards = f.st === "excl" ? [{ ex: true, l1: "已排除", l2: wrap("理由：" + (String(f.reason || "").trim() || "未填"), P.wk, 3) }]
-        : items.length ? items.map(x => ({ lv: x.lv, l1: x.lv ? LV[x.lv] : "未選層次", l2: wrap(x.tool || "未選策略", P.wk, 3), nv: x.nv && String(x.nv.why || "").trim() }))
-        : f.verify ? [{ none: true, l1: "尚無對策", l2: [] }] : [];
-      const tl = wrap(f.text, P.wc, 4);
-      const ch = k => KH + 6 + k.l2.length * KH;
-      const h = Math.max(tl.length * LH, cards.reduce((a, k) => a + ch(k) + 5, 0)) + 12;
-      return { f, tl, cards, h, ch };
-    });
-    const n = cats.length, up = cats.slice(0, Math.ceil(n / 2)), dn = cats.slice(Math.ceil(n / 2)), cols = Math.max(up.length, dn.length, 1);
-    const B = c => { const r = rowsOf(c); return { c, r, h: 40 + r.reduce((a, x) => a + x.h, 0) + 6 }; };
-    const U = up.map(B), D = dn.map(B);
-    const topH = Math.max(90, ...U.map(b => b.h)), botH = Math.max(90, ...D.map(b => b.h));
-    const spine = 20 + topH + 18, W = cols * CW + P.hw + 60, H = spine + 18 + botH + 24;
-    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" ${big ? 'width="100%"' : `width="${W}"`} style="${big ? "" : `min-width:${W}px;`}font-family:inherit;display:block" role="img" aria-label="閉環魚骨圖">`;
-    s += `<rect x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
-    const sx = cols * CW + 20;
-    s += `<line x1="10" y1="${spine}" x2="${sx}" y2="${spine}" stroke="#2A2F35" stroke-width="2.5"/><polygon points="${sx},${spine - 7} ${sx + 14},${spine} ${sx},${spine + 7}" fill="#2A2F35"/>`;
-    const pl = wrap(($("fbProblem") && $("fbProblem").value) || fb.problem || "（問題點）", P.hc, 5), hl = Math.round(P.hf * 1.3), hh = 22 + pl.length * hl;
-    s += `<rect x="${sx + 18}" y="${spine - hh / 2}" width="${P.hw}" height="${hh}" rx="8" fill="#FBEFE4" stroke="#B87333" stroke-width="1.5"/>` + pl.map((t, i) => `<text x="${sx + 18 + P.hw / 2}" y="${spine - hh / 2 + 11 + hl * 0.8 + i * hl}" text-anchor="middle" font-size="${P.hf}" font-weight="700" fill="#2A2F35">${esc(t)}</text>`).join("");
-    const block = (b, i, top) => {
-      const x0 = 10 + i * CW; let o = ""; const lh = Math.round(P.f * 1.7), lw = Math.max(90, b.c.name.length * P.f + 28);
-      const labY = top ? 16 : H - 16 - lh;
-      o += `<rect x="${x0 + BX - lw / 2}" y="${labY}" width="${lw}" height="${lh}" rx="${lh / 2}" fill="#E7F0EE" stroke="#4E7F78"/><text x="${x0 + BX}" y="${labY + lh * 0.68}" text-anchor="middle" font-size="${P.f}" font-weight="700" fill="#24433F">${esc(b.c.name)}</text>`;
-      o += `<line x1="${x0 + BX}" y1="${top ? labY + lh : spine}" x2="${x0 + BX}" y2="${top ? spine : labY}" stroke="#6E9B95" stroke-width="2"/>`;
-      let y = top ? labY + lh + 10 : spine + 14;
-      b.r.forEach(r => {
-        const ex = r.f.st === "excl", col = ex ? "#8A8A8A" : "#2A2F35";
-        r.tl.forEach((t, k) => { o += `<text x="${x0 + CX}" y="${y + P.f + k * LH}" text-anchor="end" font-size="${P.f}" fill="${col}"${ex ? ' text-decoration="line-through"' : ""}>${k === 0 && r.f.verify && !ex ? "◇ " : ""}${esc(t)}</text>`; });
-        o += `<line x1="${x0 + CX + 3}" y1="${y + P.f * 0.7}" x2="${x0 + BX}" y2="${y + P.f * 0.7}" stroke="#6E9B95" stroke-width="1"/>`;
-        let cy = y;
-        r.cards.forEach(k => {
-          const ch = r.ch(k), bc = k.ex ? "#9A9A9A" : k.none ? "#B3261E" : LVC[k.lv] || "#7A7A7A";
-          o += `<line x1="${x0 + BX}" y1="${cy + KH * 0.7}" x2="${x0 + KX}" y2="${cy + KH * 0.7}" stroke="${bc}" stroke-width="1"/>`;
-          o += `<rect x="${x0 + KX}" y="${cy}" width="${KW}" height="${ch}" rx="5" fill="${k.ex ? "#F2F2F2" : "#FFFFFF"}" stroke="${bc}" stroke-width="1.3"${k.none ? ' stroke-dasharray="4 3"' : ""}/><rect x="${x0 + KX}" y="${cy}" width="5" height="${ch}" rx="2" fill="${bc}"/>`;
-          o += `<text x="${x0 + KX + 11}" y="${cy + KH}" font-size="${P.kf}" font-weight="700" fill="${bc}">${esc(k.l1)}${k.nv ? "（不驗證）" : ""}</text>`;
-          k.l2.forEach((t, j) => { o += `<text x="${x0 + KX + 11}" y="${cy + KH * 2 + 2 + j * KH}" font-size="${P.kf}" fill="${k.ex ? "#6B6B6B" : "#2A2F35"}">${esc(t)}</text>`; });
-          cy += ch + 5;
+  const LOOP_LEGEND = `<p class="hint loop-leg" style="font-size:12px;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝對策：<b style="color:var(--lv1,#2E7D5B)">① 根因調查</b>、<b style="color:var(--lv2,#A35F25)">② 製程／放行卡控</b>、<b style="color:var(--lv3,#3B6EA8)">③ 臨床控管（IFU）</b>；灰字＝排除理由；<b style="color:var(--bad,#B3261E)">紅字＝◇ 尚無對策</b>。</p>`;
+  fbDiagram = function (edit) {
+    const at = (k, v) => edit ? ` data-${k}="${v}" class="fb-hit"` : "";
+    const cats = fbCats(); if (!cats.length) return "";
+    const LVC = { "1": "var(--lv1,#2E7D5B)", "2": "var(--lv2,#A35F25)", "3": "var(--lv3,#3B6EA8)" };
+    const P = edit ? { fs: 15, ss: 13.5, ks: 13, kb: 13.5, cw: 12.5, sw: 13, kw: 12, TW: 200, KW: 215, RH: 22 } : { fs: 19, ss: 17, ks: 16.5, kb: 17, cw: 7.5, sw: 8, kw: 8.5, TW: 150, KW: 160, RH: 27 };
+    const cm = (f, s) => { const L = []; if (f.st === "excl") { wrapText("排除理由：" + (String(f.reason || "").trim() || "未填"), P.kw).forEach(t => L.push({ t, c: "var(--muted)" })); return L; }
+      const it = (fb.vplan || []).filter(x => x.on && x.fid === f.id);
+      if (!it.length) { if (f.verify) L.push({ t: "尚無對策", c: "var(--bad,#B3261E)", b: 1 }); return L; }
+      it.forEach(x => { const lab = (x.lv ? LV[x.lv] : "未選層次") + (x.nv && String(x.nv.why || "").trim() ? "（不驗證）" : ""); L.push({ t: lab, c: LVC[x.lv] || "var(--muted)", b: 1 }); wrapText(x.tool || "未選策略", P.kw).forEach(t => L.push({ t, c: "var(--ink)" })); });
+      return L; };
+    const items = cats.map(c => fb.factors.filter(f => f.cat[fb.set] === c.id && (f.st === "use" || f.st === "excl")).map(f => ({ f,
+      lines: wrapText((f.key ? "★ " : "") + (f.verify && f.st !== "excl" ? "◇ " : "") + f.text, P.cw),
+      subs: f.st === "excl" ? [] : f.subs.filter(s => s.st === "use").map(s => wrapText(s.text, P.sw)), sobj: f.subs.filter(s => s.st === "use"),
+      cm: cm(f) })));
+    const RH = P.RH, GAP = 12, TW = P.TW, KW = P.KW, n = cats.length;
+    const hIt = it => Math.max(it.lines.length + it.subs.reduce((b, s) => b + s.length, 0), it.cm.length) * RH;
+    const hItems = list => list.reduce((a, it) => a + hIt(it), 0) + Math.max(0, list.length - 1) * GAP;
+    const top = [], bot = []; cats.forEach((c, i) => (i % 2 ? bot : top).push(i));
+    const hOf = idx => Math.max(110, ...idx.map(i => hItems(items[i]) + 64));
+    const Ht = hOf(top), Hb = bot.length ? hOf(bot) : 60, Hm = Math.max(Ht, Hb);
+    const K = Math.min(0.42, 100 / Hm);
+    const cols = Math.ceil(n / 2), colW = TW + 30 + Hm * K + KW, L = 16;
+    const spineY = 54 + Ht, bx = c => L + TW + 14 + c * colW;
+    const headX = bx(cols - 1) + Hm * K + KW + 20;
+    const pLines = wrapText(fb.problem.trim() || "（尚未填寫問題點）", 9.5).slice(0, 10);
+    const headH = Math.max(72, pLines.length * 27 + 30), headW = 240;
+    const W = headX + headW + 16, Hh = Math.max(spineY + Hb + 52, spineY + headH / 2 + 16);
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" style="max-width:${W}px" role="img" aria-label="閉環魚骨圖：${esc(fb.problem)}" font-family="inherit">`;
+    s += `<rect width="100%" height="100%" fill="var(--surface)"/>`;
+    s += `<line x1="${L}" y1="${spineY}" x2="${headX}" y2="${spineY}" stroke="var(--ink)" stroke-width="3"/>`;
+    s += `<path d="M${headX - 14} ${spineY - 8} L${headX} ${spineY} L${headX - 14} ${spineY + 8} Z" fill="var(--ink)"/>`;
+    s += `<g${at("head", 1)}><rect x="${headX}" y="${spineY - headH / 2}" width="${headW}" height="${headH}" rx="10" fill="var(--copper-soft)" stroke="var(--copper)" stroke-width="2"/>`;
+    pLines.forEach((t, i) => { s += `<text x="${headX + headW / 2}" y="${spineY - (pLines.length - 1) * 13.5 + i * 27 + 7}" text-anchor="middle" font-size="19" font-weight="700" fill="var(--ink)">${esc(t)}</text>`; });
+    s += "</g>";
+    const bone = (i, isTop) => {
+      const c = cats[i], col = Math.floor(i / 2), H = isTop ? Ht : Hb, x0 = bx(col);
+      const yEnd = isTop ? spineY - H : spineY + H, xAt = y => x0 + (isTop ? y - yEnd : yEnd - y) * K;
+      s += `<line x1="${x0}" y1="${yEnd}" x2="${xAt(spineY)}" y2="${spineY}" stroke="var(--teal)" stroke-width="2.5"/>`;
+      const lab = c.name, lw = Math.max(80, [...lab].reduce((a, ch) => a + (/[⺀-￿]/.test(ch) ? 19 : 11), 0) + 34), ly = isTop ? yEnd - 40 : yEnd + 4;
+      s += `<g${at("cat", c.id)}><rect x="${x0 - lw / 2}" y="${ly}" width="${lw}" height="36" rx="18" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="2"/><text x="${x0}" y="${ly + 25}" text-anchor="middle" font-size="18" font-weight="700" fill="var(--ink)">${esc(lab)}</text></g>`;
+      let y = isTop ? yEnd + 36 : spineY + 32;
+      for (const it of items[i]) {
+        const y0 = y, ex = it.f.st === "excl";
+        it.lines.forEach((t, j) => {
+          const xb = xAt(y);
+          if (j === 0) s += `<line x1="${xb - 9}" y1="${y - 5}" x2="${xb}" y2="${y - 5}" stroke="var(--teal)" stroke-width="1.5"/>`;
+          s += `<text${at("f", it.f.id)} x="${xb - 12}" y="${y}" text-anchor="end" font-size="${P.fs}" ${ex ? 'fill="var(--muted)" text-decoration="line-through"' : it.f.key ? 'font-weight="700" fill="var(--copper-text)"' : 'fill="var(--ink)"'}>${esc(t)}<title>${esc(it.f.text)}${ex ? "（已排除）" : ""}</title></text>`;
+          y += RH;
         });
-        y += r.h;
-      });
-      return o;
+        it.subs.forEach((sl, si) => sl.forEach((t, j) => {
+          const xb = xAt(y);
+          s += `<text${at("f", it.f.id)}${edit ? ` data-s="${it.sobj[si].id}"` : ""} x="${xb - 24}" y="${y}" text-anchor="end" font-size="${P.ss}" fill="var(--muted)">${j === 0 ? "· " : ""}${esc(t)}</text>`;
+          y += RH;
+        }));
+        // 對側：對策（不加框）
+        let yc = y0;
+        it.cm.forEach((m, j) => {
+          const xb = xAt(yc);
+          if (j === 0) s += `<line x1="${xb}" y1="${yc - 5}" x2="${xb + 9}" y2="${yc - 5}" stroke="${m.c}" stroke-width="1.5"/>`;
+          s += `<text x="${xb + 12}" y="${yc}" font-size="${m.b ? P.kb : P.ks}" ${m.b ? 'font-weight="700"' : ""} fill="${m.c}">${esc(m.t)}</text>`;
+          yc += RH;
+        });
+        y = Math.max(y, yc) + GAP;
+      }
     };
-    U.forEach((b, i) => { s += block(b, i, true); }); D.forEach((b, i) => { s += block(b, i, false); });
-    return s + `</svg>`;
-  }
-  const LOOP_LEGEND = `<div class="loop-leg" style="font-size:12px;color:#4A4A4A;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝對策卡：<b style="color:#2E7D5B">① 根因調查</b>、<b style="color:#A35F25">② 製程／放行卡控</b>、<b style="color:#3B6EA8">③ 臨床控管（IFU）</b>；灰卡＝排除理由；紅色虛線＝◇ 尚無對策。</div>`;
-  (function loopView() {
-    const g = $("fbView"), wrap = $("fbSvgWrap"), svg = $("fbSvg"); if (!g || !wrap || !svg) return;
-    g.insertAdjacentHTML("beforeend", `<button class="chip" type="button" data-hfv="loop" aria-pressed="false" title="原因與對策畫在一起（閉環）">閉環</button>`);
-    svg.insertAdjacentHTML("afterend", `<div class="fb-loop scroll-x" id="fbLoop" hidden></div>`);
-    const btn = g.querySelector("[data-hfv]"), box = $("fbLoop"); let on = false, last = "";
-    const set = v => { on = v; btn.setAttribute("aria-pressed", String(v)); box.hidden = !v; svg.hidden = v; if (v) { g.querySelectorAll("button[data-v]").forEach(x => x.setAttribute("aria-pressed", "false")); try { popClose(); } catch (_) {} draw(true); } };
-    const draw = force => { if (!on) return; let k = ""; try { k = JSON.stringify([fb.factors, fb.vplan, fb.set, ($("fbProblem") || {}).value]); } catch (_) {} if (!force && k === last) return; last = k; box.innerHTML = LOOP_LEGEND + loopSvg(); };
-    btn.addEventListener("click", () => set(true));
-    g.addEventListener("click", e => { if (e.target.closest("button[data-v]") && on) { on = false; btn.setAttribute("aria-pressed", "false"); box.hidden = true; svg.hidden = false; } });
-    setInterval(() => draw(false), 800);
-  })();
-  (function loopReport() {
+    top.forEach(i => bone(i, true)); bot.forEach(i => bone(i, false));
+    return s + "</svg>";
+  };
+  try { fbRenderOut(); } catch (_) {}
+  (function loopLegend() {
+    const lg = document.querySelector(".fb-legend"); if (lg) lg.insertAdjacentHTML("beforebegin", LOOP_LEGEND);
+    // 對策改了（③ 驗證計畫）也要重畫魚骨圖
+    let last = "", act = 0; ["pointerdown", "keydown", "input"].forEach(t => document.addEventListener(t, () => { act = Date.now(); }, true));
+    setInterval(() => { try { if (Date.now() - act < 1500) return; const k = JSON.stringify((fb.vplan || []).map(x => [x.fid, x.on, x.lv, x.tool, x.nv])); const v = document.querySelector('[data-view="fishbone"]'), pop = $("fbPop"); if (!v || v.hidden) { last = ""; return; } if (pop && !pop.hidden) return; if (!last) { last = k; fbRenderOut(); return; } if (k !== last) { last = k; fbRenderOut(); } } catch (_) {} }, 800);
+    // 報告第 2 段的魚骨圖下方加圖例
     const orig = pdcaHtml;
     pdcaHtml = function (mode) {
-      const h = orig(mode); if (!(fb.factors || []).some(f => f.st === "use" || f.st === "excl")) return h;
-      const t = document.createElement("template"); t.innerHTML = h;
-      const cap = [...t.content.querySelectorAll(".pd-cap")].find(c => c.textContent.trim() === "各驗證項目的結論"); if (!cap) return h;
-      cap.insertAdjacentHTML("beforebegin", `<div class="pd-loop"><div class="pd-cap">閉環魚骨圖（原因 ↔ 對策）</div>${LOOP_LEGEND}<div style="overflow-x:auto">${loopSvg(true)}</div></div>`);
+      const h = orig(mode); const t = document.createElement("template"); t.innerHTML = h;
+      const note = [...t.content.querySelectorAll(".pd-note")].find(p => /候選與排除理由/.test(p.textContent)); if (!note) return h;
+      note.insertAdjacentHTML("beforebegin", LOOP_LEGEND);
       const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML;
     };
   })();
