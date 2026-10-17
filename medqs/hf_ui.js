@@ -100,9 +100,9 @@
       }
       if (v === "fishbone") {
         const pop = $("fbPop");
-        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, pop.querySelector("input,textarea") || vb, "要驗證？可標◇"]; }
+        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "要驗證？按這裡"]; }
         if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
-        if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因"];
+        if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
         if (ver.length) return [6, nav("plan"), "下一步"];
         if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題", { w5: true }];
         return null;
@@ -431,4 +431,33 @@
     };
     // 已勾的結案核准，若後來又有未處理項目，取消勾選
     setInterval(() => { try { const P = pdState(); if (P.c["ap.ok"] && vTodo().length) { delete P.c["ap.ok"]; fbSave(); } } catch (_) {} }, 1500);
+  })();
+  // =====================================================================
+  // ③ 驗證項目只來自 ② 魚骨圖（標 ◇ 的原因）：不再手動新增，AI 也不新增原因，只補空白欄位
+  // 要加或改原因 → 回 ② 魚骨圖；③ 已填的策略、樣本數、結果都跟著原因保留
+  // =====================================================================
+  (function fbOnly() {
+    const sum = $("planSum"), hub = $("planHub"); if (!sum || !hub) return;
+    const item = id => (fb.vplan || []).find(y => y.id === id);
+    const sh = document.querySelector("#planEdit > summary .hint"); if (sh) sh.textContent = "　勾選要驗證的原因；原因要新增或修改請回 ② 魚骨圖";
+    const decoSum = () => { sum.querySelectorAll(".hint").forEach(h => { if (/新增項目/.test(h.textContent)) h.textContent = h.textContent.replace(/；也可以按「＋ 新增項目」自己寫/, ""); }); const a = sum.querySelector(".ps-act"); if (a && !a.querySelector("[data-gofb]")) a.insertAdjacentHTML("afterbegin", `<button type="button" class="btn small" data-gofb="1" title="原因在魚骨圖新增或修改；這裡已填的內容會保留">← 回 ② 魚骨圖改原因</button>`); };
+    const decoHub = () => hub.querySelectorAll(".hub-item").forEach(it => {
+      const eb = it.querySelector('[data-hub="edit"]'), x = eb && item(eb.dataset.id); if (!x || x.fid || it.querySelector("[data-nofbdel]")) return;
+      eb.insertAdjacentHTML("afterend", `<button type="button" class="linkbtn hub-nofb" data-nofbdel="${x.id}" title="這一項不是從魚骨圖帶入的">刪除（非魚骨圖原因）</button>`);
+    });
+    new MutationObserver(decoSum).observe(sum, { childList: true }); decoSum();
+    new MutationObserver(decoHub).observe(hub, { childList: true }); decoHub();
+    document.addEventListener("click", e => {
+      if (e.target.closest("[data-gofb]")) { route("fishbone"); return; }
+      const d = e.target.closest("[data-nofbdel]");
+      if (d) { if (!d.dataset.armed) { d.dataset.armed = "1"; d.textContent = "確定刪除？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.nofbdel); try { vpChanged(true); } catch (_) {} return; }
+      // AI 建議的驗證項目：只補清單中已有（魚骨圖帶入）的原因，新的原因不列入
+      const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled || b.dataset.fbonly) return;
+      let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
+      const L = fb.vplan || [], ok = items.filter(x => L.some(y => vpKey(y) === vpKey(x) || vpSim(y.cause, x.cause) >= VP_SIM)), drop = items.length - ok.length;
+      b.dataset.fbonly = "1";
+      if (!ok.length) { e.stopImmediatePropagation(); b.disabled = true; b.textContent = "AI 建議的原因都不在驗證清單，未列入"; fbNote(`AI 建議的 ${drop} 個原因不在驗證清單（魚骨圖沒有或未標 ◇），未列入。要加入請回 ② 魚骨圖新增或標 ◇。`); return; }
+      b.dataset.vpadd = JSON.stringify(ok);
+      if (drop) setTimeout(() => fbNote(`另有 ${drop} 個 AI 建議的原因不在驗證清單（魚骨圖沒有或未標 ◇），未列入；要加入請回 ② 魚骨圖新增或標 ◇。`), 30);
+    }, true);
   })();
