@@ -87,6 +87,16 @@
       if (!bz && cq && vis(cq) && !cq.value.trim()) return [1, cq, "第一步：寫本案問題（一句話）"];
       const r = next0(); if (!r) return r;
       if (r[1] === $("homeQ")) return [r[0], r[1], "下一步：描述問題，問 AI", r[3]];
+      // 目標是上方分頁、但這一頁就有同功能的按鈕（例如「前往 ③ 驗證計畫 →」）：指頁面上的按鈕，避免「下一步在上面」與按鈕重複
+      const rt = r[1] && r[1].closest && r[1].closest(".toolnav") && r[1].dataset.route;
+      if (rt) {
+        const sec = [...document.querySelectorAll("section[data-view]")].find(x => !x.hidden);
+        const alts = sec ? [...sec.querySelectorAll(`[data-route-go="${rt}"]`)].filter(vis) : [];
+        if (alts.length) {
+          const mid = innerHeight / 2, d = el => { const b = el.getBoundingClientRect(); return b.bottom < 0 ? -b.bottom + 1e4 : b.top > innerHeight ? b.top - innerHeight + 1e4 : Math.abs((b.top + b.bottom) / 2 - mid); };
+          alts.sort((a, b) => d(a) - d(b)); return [r[0], alts[0], r[2], r[3]];
+        }
+      }
       return r;
     }
     function next0() {
@@ -347,7 +357,10 @@
     document.body.insertAdjacentHTML("beforeend", `<div id="aiWait" class="ai-wait" hidden role="alertdialog" aria-live="polite" aria-label="AI 思考中"><div class="aw-box"><span class="aw-spin" aria-hidden="true"></span><div><b>AI 思考中，請稍候…</b><div class="aw-sub">完成前請先不要操作頁面　<span class="aw-t"></span></div></div><button type="button" class="btn small aw-stop" hidden>停止</button></div></div>`);
     const W = $("aiWait"), T = W.querySelector(".aw-t"), S = W.querySelector(".aw-stop");
     let t0 = 0;
-    const isBusy = () => { try { return AIS.busy > 0; } catch (_) { return false; } };
+    // AI 呼叫中、聊天回答中，或「AI 診斷分析」／工具箱問答在跑（含外部資料庫檢索、附件讀取，這段不是 AI 呼叫）
+    const flowBusy = () => { const hb = $("homeQBtn"), tb = $("tbAsk"); return !!(hb && hb.disabled && /正在/.test(($("homeQHint") || {}).textContent || "")) || !!(tb && tb.disabled); };
+    const isBusy = () => { let a = false; try { a = AIS.busy > 0 || busy; } catch (_) {} return a || flowBusy(); };
+    const phase = () => { const h = $("homeQHint"), hb = $("homeQBtn"); return hb && hb.disabled && h && /正在/.test(h.textContent) ? h.textContent.trim() : ""; };
     const canStop = () => { try { return !!(busy && ctl); } catch (_) { return false; } };
     setInterval(() => {
       if (isBusy()) {
@@ -356,6 +369,7 @@
         if (Date.now() - t0 < 500) return;   // 很快就回來的不閃
         if (W.hidden) { W.hidden = false; document.body.classList.add("ai-waiting"); if (document.activeElement && !document.activeElement.closest("#aiPanel")) document.activeElement.blur(); }
         T.textContent = s + " 秒"; S.hidden = !canStop();
+        const ph = phase(), bt = W.querySelector(".aw-box b"); if (bt) bt.textContent = ph || "AI 思考中，請稍候…";
       } else if (t0) { t0 = 0; W.hidden = true; document.body.classList.remove("ai-waiting"); }
     }, 250);
     S.addEventListener("click", () => { try { if (busy && ctl) ctl.abort(); } catch (_) {} });
