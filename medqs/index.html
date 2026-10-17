@@ -1258,6 +1258,8 @@ header.top .eyebrow { margin: 0; }
 .w5row button:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
 .w5row .w-hint { font-size: 11px; color: var(--muted); margin-left: 4px; }
 .ai-foot .w5row { padding: 0 2px; }
+a.ref-link { color: #B87333; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+a.ref-link:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
 </style>
 
 <div class="wrap">
@@ -14536,6 +14538,47 @@ else root.runValidation = runValidation;
     }
     setInterval(addBtn, 600);
     $("msgs").addEventListener("click", e => { if (!e.target.closest("[data-fbgo]")) return; closePanel(); route("fishbone"); });
+  })();
+  // =====================================================================
+  // AI 回答中提到的外部案例編號（FDA 召回、MAUDE、PMID、美國專利、Health Canada）自動變成連結，點了直接開原始紀錄
+  // 只連結「這次檢索結果裡真的有」的編號；KM 引用［KM-n］點了展開下方「已參考 KM」
+  // =====================================================================
+  (function refLinks() {
+    const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    function refMap() {
+      const M = new Map();
+      const add = (k, url, title) => { k = String(k || "").trim(); if (k.length >= 5 && url && !M.has(k)) M.set(k, { url, title: title || "" }); };
+      let exts = []; try { exts = [homeExt, typeof fb !== "undefined" && fb ? fb.ext : null]; } catch (_) {}
+      exts.forEach(e => { if (!e) return;
+        (e.recalls || []).forEach(r => add(r.no, r.url, r.title || r.reason));
+        if (e.maude) (e.maude.samples || []).forEach(s => add(s.no, s.url, s.title));
+        (e.more || []).forEach(m => (m.items || []).forEach(it => { add(it.ref, it.url, it.title); add(String(it.ref).replace(/^\S+\s+/, ""), it.url, it.title); }));
+      });
+      return M;
+    }
+    function linkIn(root, M, re) {
+      const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest("a,button,textarea,input,script,style,.ref-link") ? NodeFilter.FILTER_REJECT : (re.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+      const nodes = []; let n; while ((n = w.nextNode())) nodes.push(n);
+      nodes.forEach(t => {
+        const frag = document.createDocumentFragment(); let s = t.nodeValue, last = 0; re.lastIndex = 0; let m;
+        while ((m = re.exec(s))) {
+          frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+          const k = m[0];
+          if (/^KM-\d+$/.test(k)) { const a = document.createElement("a"); a.href = "#"; a.className = "ref-link km"; a.dataset.km = "1"; a.textContent = k; frag.appendChild(a); }
+          else { const v = M.get(k); const a = document.createElement("a"); a.href = v.url; a.target = "_blank"; a.rel = "noopener"; a.className = "ref-link"; a.title = (v.title || "開啟原始紀錄").slice(0, 120); a.textContent = k + " ↗"; frag.appendChild(a); }
+          last = m.index + k.length;
+        }
+        frag.appendChild(document.createTextNode(s.slice(last))); t.parentNode.replaceChild(frag, t);
+      });
+    }
+    function run() {
+      const M = refMap(), keys = [...M.keys()].sort((a, b) => b.length - a.length).map(reEsc);
+      const re = new RegExp((keys.length ? keys.join("|") + "|" : "") + "KM-\\d+", "g"), reT = new RegExp(re.source);
+      re.test = s => { reT.lastIndex = 0; return reT.test(s); };
+      [$("msgs"), document.querySelector('[data-view="fishbone"] .fb-stack')].forEach(r => { if (r) linkIn(r, M, re); });
+    }
+    setInterval(run, 1200);
+    document.addEventListener("click", e => { const a = e.target.closest("a.ref-link.km"); if (!a) return; e.preventDefault(); const d = $("kmOut"); if (d && !d.hidden) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } });
   })();
 
   // ---------- problem guide ----------
