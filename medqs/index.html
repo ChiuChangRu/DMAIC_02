@@ -14419,7 +14419,7 @@ else root.runValidation = runValidation;
           let b = false; try { b = busy; } catch (_) {}
           if (b) return null;   // AI 回覆中
           if (!panelOpen()) return [5, $("aiFab"), "看 AI 回覆"];
-          if ($("msgs").querySelector(".sug-peek")) return [6, nav("fishbone"), "到魚骨圖"];
+          if ($("msgs").querySelector(".sug-peek")) { const gb = [...$("msgs").querySelectorAll("[data-fbgo]")].pop(); return gb ? [6, gb, "帶入魚骨圖"] : [6, nav("fishbone"), "到魚骨圖"]; }
           return [5, $("askBox"), "回答 AI 的問題", { w5: true }];
         }
         if (!$("homeQ").value.trim()) return [1, $("homeQ"), "寫下問題", { w5: true }];
@@ -14429,8 +14429,8 @@ else root.runValidation = runValidation;
       }
       if (v === "fishbone") {
         const pop = $("fbPop");
-        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "標待驗證"]; }
-        if (cand.length) return [6, document.querySelector('.fb-f.st-cand [data-act="fst"][data-st="use"]'), "採用或排除"];
+        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, pop.querySelector("input,textarea") || vb, "要驗證？可標◇"]; }
+        if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因"];
         if (ver.length) return [6, nav("plan"), "下一步"];
         if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題", { w5: true }];
@@ -14499,6 +14499,43 @@ else root.runValidation = runValidation;
       t.value = (t.value && !/\n$/.test(t.value) ? t.value + "\n" : t.value) + b.dataset.w5;
       t.dispatchEvent(new Event("input", { bubbles: true })); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
     });
+  })();
+  // =====================================================================
+  // 定義問題 → 魚骨圖：在 AI 回答裡按「帶入魚骨圖逐一確認」（不必點上方分頁）
+  // 帶入時不再跳確認框或勾選框：所有 AI 建議的原因（多次回答合併、去重）直接放進「待決定」，由使用者逐一採用或排除
+  // =====================================================================
+  (function carryDirect() {
+    const kOf = t => String(t || "").replace(/[*＊\s]/g, "");
+    carryToFishbone = function (sug, homeLog) {   // 取代原本的「多次回答勾選」與「另開／加入」確認框
+      const rounds = homeRounds(homeLog), seenK = new Set(), factors = [];
+      rounds.map(r => r.sug).concat([sug || { factors: [] }]).forEach(s => (s.factors || []).forEach(f => { const k = kOf(f.text); if (k && !seenK.has(k)) { seenK.add(k); factors.push(f); } }));
+      const last = rounds.length ? rounds[rounds.length - 1].sug : {};
+      const S = Object.assign({}, sug || {}, { factors, problem: (sug && sug.problem) || last.problem || "" });
+      const lastQ = ([...homeLog].reverse().find(m => m.role === "user") || {}).text || "";
+      const empty = fbEmpty();
+      if (!fb.problem.trim()) fb.problem = (S.problem || lastQ).slice(0, 200);
+      if (homeExt) fb.ext = homeExt;
+      const r = fbApplySug(S, false); fbRenderEditor();
+      fbNote("已帶入 AI 建議的原因到「待決定」，請逐一確認採用或排除。" + (S.factors.length ? sugMsg(r, false) : ""));
+      if (empty) resetChat();
+      if (homeAtt.items.length && !fbAtt.items.length) { fbAtt.items = homeAtt.items.map(a => Object.assign({}, a, { sent: false })); fbAtt.render(); }
+      chatPrefix = homeTranscript(homeLog);
+      appendLog([{ role: "note", text: "以下延續自定義問題的對話" }, ...homeLog.map(m => Object.assign({}, m, { carried: true })), { role: "note", text: "定義問題對話到此。" }]);
+      updateChatControls(); fbSaveNow(); closePanel(); $("aiDot").hidden = false;
+    };
+    // AI 回答（有原因建議）下方加按鈕
+    function addBtn() {
+      let k = ""; try { k = chatKey; } catch (_) {}
+      if (k !== "home") return;
+      const peeks = [...$("msgs").querySelectorAll(".sug-peek")];
+      peeks.forEach(d => { const sm = d.querySelector("summary"); if (sm && /由你勾選帶入/.test(sm.textContent)) sm.textContent = sm.textContent.replace(/（前往魚骨圖時[^）]*）/, "（帶入魚骨圖後逐一確認）"); });
+      const p = peeks[peeks.length - 1];
+      if (!p || p.parentNode.querySelector(".fb-go")) return;
+      p.insertAdjacentHTML("afterend", `<div class="run-row fb-go"><button type="button" class="btn small primary" data-fbgo="1">帶入魚骨圖，逐一確認 →</button></div>`);
+      const g = p.parentNode.querySelector(".fb-go"); if (g && !$("aiPanel").hidden) g.scrollIntoView({ block: "nearest" });
+    }
+    setInterval(addBtn, 600);
+    $("msgs").addEventListener("click", e => { if (!e.target.closest("[data-fbgo]")) return; closePanel(); route("fishbone"); });
   })();
 
   // ---------- problem guide ----------
