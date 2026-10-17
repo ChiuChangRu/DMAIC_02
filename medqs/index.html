@@ -1296,6 +1296,10 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
 .fb-exr input { flex: 1 1 260px; min-width: 0; font: inherit; padding: 5px 8px; border: 1.5px solid var(--copper, #B87333); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .fb-exw { color: var(--bad, #B3261E); font-weight: 700; font-size: 12px; }
 .fb-pop-sxr input { width: 100%; font: inherit; padding: 4px 8px; border: 1.5px solid var(--copper, #B87333); border-radius: 8px; background: var(--surface); color: var(--ink); }
+/* 對策層次 */
+.hub-lv { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 4px 14px 8px; font-size: 13px; }
+.hub-lv select { font: inherit; padding: 3px 6px; border: 1.5px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
+.hub-lv select option { background: var(--surface); color: var(--ink); }
 </style>
 
 <div class="wrap">
@@ -14500,6 +14504,8 @@ else root.runValidation = runValidation;
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
+        const noLv = on.find(x => !x.lv && !(x.nv && String(x.nv.why || "").trim()));
+        if (noLv) { const el = document.querySelector(`#planHub [data-hublv="${noLv.id}"]`); if (el) return [7, el, "選對策層次"]; }
         for (const x of on) {
           if (x.nv) { if (String(x.nv.why || "").trim()) continue; return [8, document.querySelector(`[data-nvwhy="${x.id}"]`), "寫不驗證的原因"]; }
           if (vrNonStat(x)) { if (!(x.vr && x.vr.st)) return [8, document.querySelector(`[data-hubvr="${x.id}"]`), "填結論（照實）"]; continue; }
@@ -14878,8 +14884,9 @@ else root.runValidation = runValidation;
         pr ? `本案問題：${pr}` : "", `原因：${x.cause}`, subs ? `子因子：${subs}` : "", f ? `魚骨圖分類：${fbCatName(f)}` : "",
         x.method ? `目前寫的驗證方式：${x.method}` : "", x.tool ? `目前選的策略：${x.tool}（可以建議改）` : "",
         `規則：先判斷要不要統計。不用統計就足以確認的，用「不用統計－」開頭的策略；需要數據比較、推論、或要證明比例／可靠度時，才用統計工具。不要給任何數值（標準差、不良率、樣本數、規格都不要寫），數值由使用者依自己的資料填。`,
-        `回答最多 4 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）。推論標 *。`,
-        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料"}`, "```",
+        `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。`,
+        `回答最多 5 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）④ 對策層次（理由一行）。推論標 *。`,
+        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料","lv":"對策層次 1、2 或 3"}`, "```",
         `策略清單：${VP_TOOLS.join("、")}`,
         `樣本數代碼：${SVQS().map(o => o[0] + "＝" + o[1]).join("；")}`].filter(Boolean).join("\n");
       fbAskAI(q, undefined, { label: `問 AI：${x.cause.slice(0, 20)}`, quote: "", display: `「${x.cause}」要怎麼驗證？要不要統計、用哪個工具、樣本數要證明什麼？` });
@@ -14889,11 +14896,12 @@ else root.runValidation = runValidation;
     const clean = j => {
       const tool = String(j.tool || "").trim(); if (!VP_TOOLS.includes(tool)) return null;
       let svq = String(j.svq || "").trim(); if (isNS(tool)) svq = "none"; else if (!SVQS().some(o => o[0] === svq) || svq === "none") svq = "";
-      return { id: String(j.id || ""), tool, svq, method: String(j.method || "").trim().slice(0, 300), data: String(j.data || "").trim().slice(0, 300) };
+      const lv = ["1", "2", "3"].includes(String(j.lv || "").trim()) ? String(j.lv).trim() : "";
+      return { id: String(j.id || ""), tool, svq, lv, method: String(j.method || "").trim().slice(0, 300), data: String(j.data || "").trim().slice(0, 300) };
     };
     const html = j => {
       const x = item(j.id), done = x && x.tool === j.tool, ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
-      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
+      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
     };
     const ob = aiBody;
     aiBody = function (text, final, key) {
@@ -14905,7 +14913,7 @@ else root.runValidation = runValidation;
       const b = e.target.closest("[data-vitem]"); if (!b || b.disabled) return;
       let j; try { j = JSON.parse(b.dataset.vitem); } catch (_) { return; }
       const x = item(j.id); if (!x) return;
-      x.tool = j.tool; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
+      x.tool = j.tool; if (j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
       let svOK = false; try { svOK = svOk(x); } catch (_) {}
       if (!isNS(j.tool) && j.svq && !svOK) x.ss = { q: j.svq, n: "", sum: "", why: "" };
       try { vpChanged(true); } catch (_) {}
@@ -14935,7 +14943,7 @@ else root.runValidation = runValidation;
   // 驗證項目在載入時會被重建（只留固定欄位），所以另存在 fb.hfx，載入後補回
   // =====================================================================
   (function hfxPersist() {
-    const K = ["nv", "ssPrev", "aiAuto"]; let lastFb = null;
+    const K = ["nv", "ssPrev", "aiAuto", "lv"]; let lastFb = null;
     const hydrate = () => { const M = fb.hfx || {}; (fb.vplan || []).forEach(x => K.forEach(k => { if (x[k] === undefined && M[k] && M[k][x.id] !== undefined) x[k] = M[k][x.id]; })); };
     const dehydrate = () => { const M = {}; K.forEach(k => { M[k] = {}; (fb.vplan || []).forEach(x => { if (x[k] !== undefined && x[k] !== null) M[k][x.id] = x[k]; }); }); fb.hfx = M; };
     const tick = () => { try { if (!fb) return; if (fb !== lastFb) { lastFb = fb; hydrate(); try { pdcaRender(); } catch (_) {} } dehydrate(); } catch (_) {} };
@@ -14961,6 +14969,7 @@ else root.runValidation = runValidation;
   // 原因的理由存 f.reason；子因子的理由存 fb.sxr[子因子 id]（子因子原本沒有理由欄位）
   // 排除的原因與理由寫進 PDCA 報告第 2 段
   // =====================================================================
+  var LV = { "1": "① 根因調查", "2": "② 製程／放行卡控", "3": "③ 臨床控管（IFU）" };
   function exWhy(f, s) { return String(s ? ((fb.sxr || {})[s.id] || "") : (f.reason || "")).trim(); }
   function exMissing() { const L = []; (fb.factors || []).forEach(f => { if (f.st === "excl" && !exWhy(f)) L.push([f, null]); else if (f.st !== "excl") (f.subs || []).forEach(s => { if (s.st === "excl" && !exWhy(f, s)) L.push([f, s]); }); }); return L; }
   (function exclReason() {
@@ -15030,6 +15039,44 @@ else root.runValidation = runValidation;
       const t = document.createElement("template"); t.innerHTML = h;
       const note = [...t.content.querySelectorAll(".pd-note")].find(p => /候選與排除理由/.test(p.textContent)); if (!note) return h;
       note.insertAdjacentHTML("afterend", `<div class="pd-excl"><div class="pd-cap" style="font-weight:700;margin:8px 0 4px">已排除的原因與理由（共 ${rows.length} 項）</div><table class="pd-tbl"><thead><tr><th>分類</th><th>排除的原因</th><th>層級</th><th>排除理由</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3] ? esc(r[3]) : '<span style="color:#B3261E;font-weight:800">未填理由</span>'}</td></tr>`).join("")}</tbody></table></div>`);
+      const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML;
+    };
+  })();
+  // =====================================================================
+  // 對策層次（每一項單選）：① 根因調查 ② 製程卡控或放行卡控（含抽樣計畫變更）③ 臨床控管（IFU）
+  // 要多層控制：「＋ 同原因再加一項」複製同一個原因，另選層次
+  // AI 可建議（問 AI 這一項），人可修改；報告第 4 段對策表加「層次」欄
+  // =====================================================================
+  (function levelInit() {
+    const hub = $("planHub"); if (!hub) return;
+    const item = id => (fb.vplan || []).find(y => y.id === id);
+    const DEF = t => /修改 IFU|標示/.test(t || "") ? "3" : /100% 全檢/.test(t || "") ? "2" : "";
+    const deco = () => hub.querySelectorAll(".hub-item").forEach(it => {
+      const eb = it.querySelector('[data-hub="edit"]'), x = eb && item(eb.dataset.id); if (!x || it.querySelector("[data-hublv]")) return;
+      if (!x.lv && DEF(x.tool)) { x.lv = DEF(x.tool); fbSave(); }
+      const h = it.querySelector(".hub-h"); if (!h) return;
+      h.insertAdjacentHTML("afterend", `<div class="hub-lv"><label>對策層次 <select data-hublv="${x.id}"><option value="">請選擇</option>${["1", "2", "3"].map(k => `<option value="${k}"${x.lv === k ? " selected" : ""}>${LV[k]}</option>`).join("")}</select></label><button type="button" class="linkbtn" data-hubdup="${x.id}" title="同一個原因再加一項，選不同的對策層次">＋ 同原因再加一項</button>${x.fid && (fb.vplan || []).findIndex(y => y.fid === x.fid) !== (fb.vplan || []).indexOf(x) ? `<button type="button" class="linkbtn hub-nofb" data-hubdupdel="${x.id}">刪除這一項</button>` : ""}</div>`);
+    });
+    new MutationObserver(deco).observe(hub, { childList: true }); deco();
+    hub.addEventListener("change", e => { const s = e.target.closest("[data-hublv]"); if (!s) return; const x = item(s.dataset.hublv); if (!x) return; s.blur(); x.lv = s.value; fbSave(); try { pdcaRender(); } catch (_) {} });
+    hub.addEventListener("click", e => {
+      const dd = e.target.closest("[data-hubdupdel]"); if (dd) { if (!dd.dataset.armed) { dd.dataset.armed = "1"; dd.textContent = "確定刪除？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.id !== dd.dataset.hubdupdel); try { vpChanged(true); } catch (_) {} return; }
+      const b = e.target.closest("[data-hubdup]"); if (!b) return; const x = item(b.dataset.hubdup); if (!x) return;
+      const L = fb.vplan, i = L.indexOf(x), y = { id: fid(), on: true, fid: x.fid || "", fbt: x.fbt || "", cause: x.cause, method: "", data: "", tool: "" };
+      L.splice(i + 1, 0, y); try { vpChanged(true); } catch (_) {}
+      setTimeout(() => { const s = hub.querySelector(`[data-hublv="${y.id}"]`), it = s && s.closest(".hub-item"); if (it) { it.scrollIntoView({ behavior: "smooth", block: "center" }); it.classList.add("vp-flash"); setTimeout(() => it.classList.remove("vp-flash"), 1600); } }, 80);
+      try { fbNote(`已為「${x.cause}」再加一項，請選這一項的驗證策略和對策層次。`); } catch (_) {}
+    });
+    // ---- 報告第 4 段：對策表加「層次」欄 ----
+    const orig = pdcaHtml;
+    pdcaHtml = function (mode) {
+      const h = orig(mode), vp = (fb.vplan || []).filter(x => x.on); if (!vp.length) return h;
+      const t = document.createElement("template"); t.innerHTML = h;
+      const tb = t.content.querySelector("table.pd-act"); if (!tb) return h;
+      const th = tb.querySelector("thead th.pd-tool"); if (th) th.insertAdjacentHTML("afterend", `<th class="pd-lv">對策層次</th>`);
+      [...tb.querySelectorAll("tbody tr")].forEach((tr, i) => { const c = tr.children[1]; if (!c) return; const x = vp[i]; c.insertAdjacentHTML("afterend", `<td class="pd-lv">${x ? (x.lv ? esc(LV[x.lv]) : '<span style="color:#B3261E">未選</span>') : ""}</td>`); });
+      const n = k => vp.filter(x => x.lv === k).length;
+      if (mode === "screen" || !mode) { const note = tb.nextElementSibling; const msg = `<p class="pd-note pd-noprint">對策層次：① 根因調查 ${n("1")} 項、② 製程／放行卡控 ${n("2")} 項、③ 臨床控管（IFU）${n("3")} 項${vp.some(x => !x.lv) ? `、未選 ${vp.filter(x => !x.lv).length} 項` : ""}。${!n("1") ? "目前沒有 ① 根因調查的對策，請自行判斷是否足夠。" : ""}</p>`; tb.insertAdjacentHTML("afterend", msg); }
       const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML;
     };
   })();
