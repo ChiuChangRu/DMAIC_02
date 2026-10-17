@@ -14438,7 +14438,47 @@ else root.runValidation = runValidation;
         if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題", { w5: true }];
         return null;
       }
-      return null;   // 第 7～8 步之後再做
+      // ---- ③ 驗證計畫：建議策略 → 勾選 → 選策略 → 每一項（樣本數 → 分析 → 存報告；不用統計的填結論）→ ④ 報告 ----
+      if (v === "plan") {
+        const L = (fb && fb.vplan) || [], on = L.filter(x => x.on);
+        if (!L.length) return [7, document.querySelector('#planSum [data-hub="ai"]') || $("fbPlanAI"), "請 AI 建議策略"];
+        if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
+        const noTool = on.find(x => !String(x.tool || "").trim());
+        if (noTool) { if ($("planEdit")) $("planEdit").open = true; return [7, document.querySelector(`#fbVplan .vp-tool[data-id="${noTool.id}"]`), "選驗證策略"]; }
+        for (const x of on) {
+          if (vrNonStat(x)) { if (!(x.vr && x.vr.st)) return [8, document.querySelector(`[data-hubvr="${x.id}"]`), "填結論（照實）"]; continue; }
+          if (!svOk(x)) return [8, document.querySelector(`#planHub [data-hub="plan"][data-id="${x.id}"]`), "規劃樣本數"];
+          if (!(x.apx || []).length) return [8, document.querySelector(`#planHub [data-hub="go"][data-id="${x.id}"]`), "開始分析"];
+        }
+        return [9, nav("pdca"), "看報告"];
+      }
+      if (v === "pdca") {
+        const on = ((fb && fb.vplan) || []).filter(x => x.on);
+        const todo = on.filter(x => vrNonStat(x) ? !(x.vr && x.vr.st) : !(x.apx || []).length);
+        return todo.length ? [9, nav("plan"), `還有 ${todo.length} 項未完成`] : null;
+      }
+      // ---- 從驗證計畫進到工具頁：樣本數帶回／分析後存到報告 ----
+      let ctx = ""; try { ctx = navCtx; } catch (_) {}
+      if (ctx === "plan") {
+        if (v === "sample") {
+          const sv = document.querySelector("[data-svsave]"); if (vis(sv)) return [8, sv, "帶回驗證計畫"];
+          let cur = ""; try { cur = svCur; } catch (_) {}
+          const sel = cur ? document.querySelector(`#svList [data-svq="${cur}"]`) : [...document.querySelectorAll("#svList [data-svq]")].find(x => !x.value);
+          if (sel && !sel.value) return [8, sel, "選要證明什麼"];
+          const run = [...document.querySelectorAll('[data-view="sample"] .btn.primary')].find(b => vis(b) && !b.closest("#svList,#svBar"));
+          return run ? [8, run, "填條件後計算"] : null;
+        }
+        if (["hypothesis", "regression", "msa", "spc", "doe", "taguchi"].includes(v)) {
+          const box = [...document.querySelectorAll("[data-vrbox]")].find(b => vis(b));
+          if (box) { const st = box.querySelector("[data-vrst][aria-pressed='true']"), dv = box.querySelector("[data-vrdev]");
+            if (!st) return [8, box.querySelector("[data-vrst]").parentElement, "選結論（照實）"];
+            if (dv && vis(dv) && !dv.value.trim()) return [8, dv, "寫少於規劃的理由"];
+            return [8, box.querySelector("[data-vrsave]"), "存到報告"]; }
+          const op = [...document.querySelectorAll("[data-vropen]")].find(vis); if (op) return [8, op, "看完結果，存到報告"];
+          const run = [...document.querySelectorAll(".run-sticky .btn.primary")].find(vis); if (run) return [8, run, "填資料後按這裡"];
+        }
+      }
+      return null;
     }
     function place(n) {
       const [step, el, txt, o] = n; const opt = o || {};
