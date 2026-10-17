@@ -54,65 +54,101 @@
     $("helpTgl").addEventListener("click", () => setHelp(document.body.classList.contains("help-off")));
   })();
   // =====================================================================
-  // 👉 導引手勢（第 1～6 步：定義問題 → 魚骨圖 → 標 ◇ → 驗證計畫）
-  // 同一時間只指一個「下一步」；按下去就移到下一步；不擋任何操作；可用「👉 導引」關掉
+  // 👉 導引手勢（第 1～6 步）
+  // 定義問題：① 寫下問題（5W 建議）→ ② 回答角度 → ③ 引用資料 → ④ AI 診斷分析 → ⑤ AI 回覆（回答 AI 或列原因）→ ⑥ 魚骨圖
+  // 魚骨圖：待決定採用／排除 → 點原因 → 標 ◇ → ③ 驗證計畫
+  // 同一時間只指一個；②③ 問過 AI 就不再指，也可「略過」；使用者照自己的順序做也不擋
   // =====================================================================
   (function glInit() {
     const KEY = "mdqs.guide.on";
     const bar = $("caseQBar"); if (!bar) return;
+    // 「AI 要用什麼角度回答？」搬到問題框與資料來源之間（順序＝導引順序）
+    const ps = document.querySelector(".persp-sheet"), xs = $("xsBox");
+    if (ps && xs) { ps.classList.add("persp-in"); xs.parentNode.insertBefore(ps, xs); }
     $("helpTgl").insertAdjacentHTML("beforebegin", `<button type="button" class="btn small" id="glTgl" aria-pressed="true" title="顯示／隱藏下一步導引">👉 導引</button>`);
-    document.body.insertAdjacentHTML("beforeend", `<div id="glove" class="glove" hidden aria-hidden="true"><span class="gl-h">👉</span><span class="gl-t"></span></div><button type="button" id="gloveEdge" class="glove-edge" hidden></button>`);
-    const G = $("glove"), E = $("gloveEdge");
+    document.body.insertAdjacentHTML("beforeend", `<div id="glove" class="glove" hidden><span class="gl-t"></span><button type="button" class="gl-skip" hidden>略過 ▸</button><span class="gl-h" aria-hidden="true">👉</span></div><div id="gl5w" class="gl5w" hidden></div><button type="button" id="gloveEdge" class="glove-edge" hidden></button>`);
+    const G = $("glove"), E = $("gloveEdge"), W = $("gl5w");
+    const W5 = [["What", "不良現象："], ["When", "發生時間／批號："], ["Where", "工站／使用端："], ["Who", "發現者："], ["How many", "數量／比例："]];
+    W.innerHTML = `<span class="w-lab">5W 建議（不知道可略）</span>` + W5.map(([k, t]) => `<button type="button" data-w="${t}">${k}</button>`).join("");
     let on = true; try { on = localStorage.getItem(KEY) !== "0"; } catch (_) {}
+    const seen = { persp: false, src: false };
     const setOn = v => { on = v; $("glTgl").setAttribute("aria-pressed", String(v)); try { localStorage.setItem(KEY, v ? "1" : "0"); } catch (_) {} tick(); };
     $("glTgl").addEventListener("click", () => setOn(!on));
     const vis = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
     const view = () => { const s = [...document.querySelectorAll("section[data-view]")].find(x => !x.hidden); return s ? s.dataset.view : ""; };
     const nav = r => document.querySelector(`.toolnav [data-route="${r}"]`);
-    // 依目前狀態決定下一步：[步驟, 目標元素, 短字]
+    const homeTurns = () => { try { return chatKey === "home" ? turns.length : ((chats.home && chats.home.turns) || []).length; } catch (_) { return 0; } };
+    const panelOpen = () => !$("aiPanel").hidden;
+    let w5Target = null;
+    // 依目前狀態決定下一步：[步驟, 目標, 短字, 選項{skip, w5}]
     function next() {
       const v = view(), F = (typeof fb !== "undefined" && fb && fb.factors) || [];
       const cand = F.filter(f => f.st === "cand"), use = F.filter(f => f.st === "use"), ver = F.filter(f => f.verify && f.st !== "excl");
       if (v === "home") {
-        if (F.length) return ver.length ? [6, nav("plan"), "下一步"] : [3, nav("fishbone"), "到魚骨圖"];
-        if (document.querySelector("#msgs .sug-peek")) return [2, nav("fishbone"), "到魚骨圖"];
-        if (!$("homeQ").value.trim()) return [1, $("homeQ"), "寫下問題"];
-        return [1, $("homeQBtn"), "按這裡"];
+        if (F.length) return ver.length ? [6, nav("plan"), "下一步"] : [6, nav("fishbone"), "到魚骨圖"];
+        if (homeTurns()) {
+          let b = false; try { b = busy; } catch (_) {}
+          if (b) return null;   // AI 回覆中
+          if (!panelOpen()) return [5, $("aiFab"), "看 AI 回覆"];
+          if ($("msgs").querySelector(".sug-peek")) return [6, nav("fishbone"), "到魚骨圖"];
+          return [5, $("askBox"), "回答 AI 的問題", { w5: true }];
+        }
+        if (!$("homeQ").value.trim()) return [1, $("homeQ"), "寫下問題", { w5: true }];
+        if (!seen.persp) return [2, $("homePersp"), "選回答角度", { skip: "persp" }];
+        if (!seen.src) return [3, $("xsList"), "要引用資料？", { skip: "src" }];
+        return [4, $("homeQBtn"), "按這裡"];
       }
       if (v === "fishbone") {
         const pop = $("fbPop");
-        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [5, vb, "標待驗證"]; }
-        if (cand.length) { const b = document.querySelector('.fb-f.st-cand [data-act="fst"][data-st="use"]'); return [3, b, "採用或排除"]; }
-        if (use.length && !ver.length) { const t = document.querySelector("#fbSvgWrap [data-f]"); return [4, t, "點原因"]; }
+        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "標待驗證"]; }
+        if (cand.length) return [6, document.querySelector('.fb-f.st-cand [data-act="fst"][data-st="use"]'), "採用或排除"];
+        if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因"];
         if (ver.length) return [6, nav("plan"), "下一步"];
-        if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題"];
+        if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題", { w5: true }];
         return null;
       }
       return null;   // 第 7～8 步之後再做
     }
-    function place(step, el, txt) {
+    function place(n) {
+      const [step, el, txt, o] = n; const opt = o || {};
       G.dataset.step = step; G.querySelector(".gl-t").textContent = txt;
+      const sk = G.querySelector(".gl-skip"); sk.hidden = !opt.skip; sk.dataset.k = opt.skip || "";
       const r = el.getBoundingClientRect(), H = innerHeight;
       if (r.bottom < 60 || r.top > H - 40) {   // 不在畫面內：邊緣提示
-        G.hidden = true; E.hidden = false; E.textContent = r.top > H - 40 ? "👇 下一步在下面" : "👆 下一步在上面"; E.classList.toggle("up", r.bottom < 60);
+        G.hidden = true; W.hidden = true; E.hidden = false; E.textContent = r.top > H - 40 ? "👇 下一步在下面" : "👆 下一步在上面"; E.classList.toggle("up", r.bottom < 60);
         E.onclick = () => el.scrollIntoView({ behavior: "smooth", block: "center" }); return;
       }
       E.hidden = true; G.hidden = false;
       const gw = G.offsetWidth, gh = G.offsetHeight;
-      let x = r.left - gw + 4, y = r.top + r.height / 2 - (gh - 15);   // 手指尖對準目標左緣中間
+      let x = r.left - gw + 4, y = r.top + Math.min(r.height / 2, 40) - (gh - 15);
       if (x < 4) { x = r.right + 6; G.classList.add("flip"); } else G.classList.remove("flip");
       G.style.left = x + "px"; G.style.top = Math.max(4, y) + "px";
+      // 5W 建議：貼在目標上緣
+      w5Target = opt.w5 ? el : null; W.hidden = !opt.w5;
+      if (opt.w5) { W.style.left = Math.max(4, r.left) + "px"; W.style.top = Math.max(4, r.top - W.offsetHeight - 4) + "px"; W.style.maxWidth = Math.max(240, r.width) + "px"; }
     }
+    W.addEventListener("click", e => { const b = e.target.closest("[data-w]"); if (!b || !w5Target) return; const t = w5Target; t.value = (t.value && !/\n$/.test(t.value) ? t.value + "\n" : t.value) + b.dataset.w; t.dispatchEvent(new Event("input", { bubbles: true })); t.focus(); t.setSelectionRange(t.value.length, t.value.length); });
+    G.querySelector(".gl-skip").addEventListener("click", e => { const k = e.currentTarget.dataset.k; if (k) seen[k] = true; tick(); });
+    // 使用者自己選了角度／資料來源，就當作看過
+    document.addEventListener("click", e => { if (e.target.closest("#homePersp")) seen.persp = true; if (e.target.closest("#xsBox")) { seen.persp = true; seen.src = true; } if (e.target.closest("#homeQBtn")) { seen.persp = seen.src = true; } setTimeout(tick, 80); }, true);
+    // AI 回答中有整理好的問題點 → 帶入「本案問題」（空白或先前也是自動帶入時才覆寫）
+    setInterval(() => {
+      const cq = $("caseQ"); if (!cq || document.activeElement === cq) return;
+      let log = []; try { log = chatKey === "home" ? chatLog : ((chats.home && chats.home.log) || []); } catch (_) {}
+      for (let i = log.length - 1; i >= 0; i--) { const m = log[i]; if (!m || m.role === "user" || typeof m.text !== "string") continue;
+        const sp = fbSplit(m.text, true), pr = sp && sp.sug && sp.sug.problem; if (!pr) continue;
+        if ((!cq.value.trim() || cq.dataset.auto === "1") && cq.value !== pr) { cq.value = pr; cq.dataset.auto = "1"; /* 只填上方欄位；不先寫進魚骨圖，避免進魚骨圖時被當成「已有內容」而多跳確認框（帶入時魚骨圖會用同一個問題點） */ }
+        break; }
+    }, 1500);
+    $("caseQ").addEventListener("input", e => { if (e.isTrusted) $("caseQ").dataset.auto = ""; });
     let lastV = "";
     function tick() {
       const v = view();
-      // 進入魚骨圖且有待決定：直接捲到「待決定」
-      if (v !== lastV) { lastV = v; if (v === "fishbone" && on) setTimeout(() => { const c = document.querySelector(".fb-f.st-cand"); if (c) { try { closePanel(); } catch (_) {} c.closest("section") ? c.closest("section").scrollIntoView({ behavior: "smooth", block: "start" }) : c.scrollIntoView({ behavior: "smooth", block: "center" }); } }, 250); }
+      if (v !== lastV) { lastV = v; if (v === "fishbone" && on) setTimeout(() => { const c = document.querySelector(".fb-f.st-cand"); if (c) { try { closePanel(); } catch (_) {} (c.closest("section") || c).scrollIntoView({ behavior: "smooth", block: "start" }); } }, 250); }
       const n = on ? next() : null;
-      if (!n || !vis(n[1])) { G.hidden = true; E.hidden = true; return; }
-      place(n[0], n[1], n[2]);
+      if (!n || !vis(n[1])) { G.hidden = true; E.hidden = true; W.hidden = true; return; }
+      place(n);
     }
     setInterval(tick, 400); addEventListener("scroll", tick, { passive: true }); addEventListener("resize", tick);
-    document.addEventListener("click", () => setTimeout(tick, 80), true);
     setOn(on);
   })();

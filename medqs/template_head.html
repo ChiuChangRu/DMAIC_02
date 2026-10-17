@@ -1239,3 +1239,15 @@ header.top .eyebrow { margin: 0; }
 .glove .gl-h { font-size: 26px; }
 .glove.flip { flex-direction: column; align-items: flex-start; } .glove.flip .gl-t { order: 0; }
 .glove .gl-t, .glove.flip .gl-t { order: -1; }
+/* 導引：略過鈕、5W 建議、角度區搬進問題卡 */
+.glove .gl-skip { pointer-events: auto; font: inherit; font-size: 11px; font-weight: 700; color: #B87333; background: #fff; border: 1px solid #B87333; border-radius: 999px; padding: 1px 7px; cursor: pointer; order: -1; }
+.gl5w { position: fixed; z-index: 8999; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 8px; background: color-mix(in srgb, #B87333 12%, var(--surface)); border: 1px dashed #B87333; }
+.gl5w .w-lab { font-size: 11px; color: var(--muted); margin-right: 2px; }
+.gl5w button { font: inherit; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid #B87333; background: var(--surface); color: #B87333; cursor: pointer; }
+.persp-in { box-shadow: none; border: 1px solid var(--line); margin: 10px 0 0; padding: 10px 12px; }
+.persp-in h3 { font-size: 15px; margin: 0 0 6px; }
+/* 只讓手跳動，字與「略過」固定，方便點 */
+.glove, .glove.flip { animation: none; }
+.glove .gl-h { animation: glBob 1s ease-in-out infinite; }
+.glove.flip .gl-h { animation-name: glBobR; }
+@media (prefers-reduced-motion: reduce) { .glove .gl-h { animation: none; } }
