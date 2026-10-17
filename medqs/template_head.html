@@ -1261,8 +1261,20 @@ header.top .eyebrow { margin: 0; }
 a.ref-link { color: #B87333; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 a.ref-link:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
 /* ③ 驗證計畫：策略在卡片內選；下方清單不再顯示策略欄 */
-.hub-tool { width: 100%; max-width: 100%; font: inherit; font-weight: 700; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; background: var(--card, #fff); color: inherit; }
-.hub-tool-in { width: 100%; font: inherit; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; }
+.hub-tool { width: 100%; max-width: 100%; font: inherit; font-weight: 700; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
+.hub-tool option, .hub-tool optgroup { background: var(--surface); color: var(--ink); }
+.hub-tool optgroup { font-weight: 800; }
+.hub-tool option { font-weight: 500; }
+.hub-tool-in { width: 100%; font: inherit; padding: 4px 6px; border: 1px solid #B87333; border-radius: 6px; background: var(--surface); color: var(--ink); }
 #fbVplan .vp-tbl th:nth-child(5), #fbVplan .vp-tbl td:nth-child(5) { display: none; }
 .hub-byp { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; cursor: pointer; }
 .hub-bypw { font-size: 12px; color: var(--warn-ink, #8a4b00); font-weight: 700; margin-top: 2px; }
+/* AI 思考中遮罩：在 AI 視窗（z 41）與按鈕（z 40）之下 */
+.ai-wait { position: fixed; inset: 0; z-index: 39; background: rgba(20,24,28,.38); display: flex; justify-content: center; align-items: flex-start; padding-top: 18vh; cursor: wait; }
+.ai-wait[hidden] { display: none; }
+.aw-box { display: flex; align-items: center; gap: 14px; background: var(--surface, #fff); color: var(--ink, #222); border: 2px solid #B87333; border-radius: 14px; padding: 16px 20px; box-shadow: 0 18px 48px rgba(0,0,0,.3); max-width: calc(100vw - 32px); cursor: default; }
+.aw-sub { font-size: 13px; color: var(--muted, #666); margin-top: 2px; }
+.aw-spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid color-mix(in srgb, #B87333 25%, transparent); border-top-color: #B87333; animation: awSpin .9s linear infinite; flex: none; }
+@keyframes awSpin { to { transform: rotate(360deg); } }
+body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .aw-spin { animation: none; } }

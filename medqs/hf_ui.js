@@ -296,7 +296,7 @@
   (function hubInline() {
     const hub = $("planHub"); if (!hub) return;
     const BYP = "bypass", BYP_WHY = "略過樣本數計算（使用者勾選）：僅供測試，結果不可作為設計驗證或確效的依據。";
-    try { if (!SV_Q.some(o => o[0] === BYP)) SV_Q.push([BYP, "略過樣本數計算（僅測試）"]); SV_MANUAL[BYP] = 1; } catch (_) {}
+    try { if (!SV_Q.some(o => o[0] === BYP)) SV_Q.push([BYP, "略過樣本數，直接進入分析（僅測試）"]); SV_MANUAL[BYP] = 1; } catch (_) {}
     const isDoe = x => /^DOE|田口|實驗設計/.test(String(x.tool || ""));
     const item = id => (fb.vplan || []).find(y => y.id === id);
     const done = () => { try { vpChanged(true); } catch (_) { try { fbSave(); pdcaRender(); } catch (__) {} } };
@@ -329,5 +329,50 @@
         if (b.checked) { if ((x.ss || {}).q !== BYP) x.ssPrev = x.ss || null; x.ss = { q: BYP, n: "未計算（略過）", sum: "⚠ 略過樣本數計算，僅供測試", why: BYP_WHY }; }
         else { x.ss = x.ssPrev || undefined; delete x.ssPrev; if (!x.ss) delete x.ss; }
         done(); }
+    }, true);
+  })();
+  // =====================================================================
+  // AI 思考中：蓋一層半透明遮罩＋提示框，請使用者先不要操作（AI 視窗本身不擋，可看回覆）
+  // =====================================================================
+  (function aiWait() {
+    document.body.insertAdjacentHTML("beforeend", `<div id="aiWait" class="ai-wait" hidden role="alertdialog" aria-live="polite" aria-label="AI 思考中"><div class="aw-box"><span class="aw-spin" aria-hidden="true"></span><div><b>AI 思考中，請稍候…</b><div class="aw-sub">完成前請先不要操作頁面　<span class="aw-t"></span></div></div><button type="button" class="btn small aw-stop" hidden>停止</button></div></div>`);
+    const W = $("aiWait"), T = W.querySelector(".aw-t"), S = W.querySelector(".aw-stop");
+    let t0 = 0;
+    const isBusy = () => { try { return AIS.busy > 0; } catch (_) { return false; } };
+    const canStop = () => { try { return !!(busy && ctl); } catch (_) { return false; } };
+    setInterval(() => {
+      if (isBusy()) {
+        if (!t0) t0 = Date.now();
+        const s = Math.floor((Date.now() - t0) / 1000);
+        if (Date.now() - t0 < 500) return;   // 很快就回來的不閃
+        if (W.hidden) { W.hidden = false; document.body.classList.add("ai-waiting"); if (document.activeElement && !document.activeElement.closest("#aiPanel")) document.activeElement.blur(); }
+        T.textContent = s + " 秒"; S.hidden = !canStop();
+      } else if (t0) { t0 = 0; W.hidden = true; document.body.classList.remove("ai-waiting"); }
+    }, 250);
+    S.addEventListener("click", () => { try { if (busy && ctl) ctl.abort(); } catch (_) {} });
+    // 遮罩擋住鍵盤操作頁面（AI 視窗內除外）
+    document.addEventListener("keydown", e => { if (!W.hidden && !e.target.closest("#aiPanel, #aiWait")) { e.preventDefault(); e.stopPropagation(); } }, true);
+  })();
+  // =====================================================================
+  // 樣本數頁：DOE／田口項目可選「略過樣本數，直接進入分析（僅測試）」→ 存好後直接到分析頁
+  // 其他工具的項目不列這個選項
+  // =====================================================================
+  (function svBypass() {
+    const box = $("svList"); if (!box) return;
+    const BYP = "bypass", isDoe = x => /^DOE|田口|實驗設計/.test(String(x.tool || ""));
+    const trim = () => box.querySelectorAll("select[data-svq]").forEach(s => {
+      const x = (fb.vplan || []).find(y => y.id === s.dataset.svq), o = s.querySelector(`option[value="${BYP}"]`);
+      if (o && x && !isDoe(x) && s.value !== BYP) o.remove();
+    });
+    new MutationObserver(trim).observe(box, { childList: true, subtree: true }); trim();
+    box.addEventListener("change", e => {
+      const s = e.target.closest("select[data-svq]"); if (!s || s.value !== BYP) return;
+      const x = (fb.vplan || []).find(y => y.id === s.dataset.svq); if (!x) return;
+      e.stopImmediatePropagation(); s.blur();
+      if ((x.ss || {}).q !== BYP) x.ssPrev = x.ss || null;
+      x.ss = { q: BYP, n: "未計算（略過）", sum: "⚠ 略過樣本數計算，僅供測試", why: "略過樣本數計算（使用者勾選）：僅供測試，結果不可作為設計驗證或確效的依據。" };
+      try { if (svCur === x.id) svCur = ""; } catch (_) {}
+      fbSave(); try { svRender(); pdcaRender(); } catch (_) {}
+      navCtx = "plan"; vrGo(x);
     }, true);
   })();
