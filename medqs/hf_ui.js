@@ -124,8 +124,8 @@
       if (x < 4) { x = r.right + 6; G.classList.add("flip"); } else G.classList.remove("flip");
       G.style.left = x + "px"; G.style.top = Math.max(4, y) + "px";
       // 5W 建議：貼在目標上緣
-      w5Target = opt.w5 ? el : null; W.hidden = !opt.w5;
-      if (opt.w5) { W.style.left = Math.max(4, r.left) + "px"; W.style.top = Math.max(4, r.top - W.offsetHeight - 4) + "px"; W.style.maxWidth = Math.max(240, r.width) + "px"; }
+      w5Target = null; W.hidden = true;   /* 5W 改成固定在問題框旁（見下方 w5Inline） */
+      if (false) { W.style.left = Math.max(4, r.left) + "px"; W.style.top = Math.max(4, r.top - W.offsetHeight - 4) + "px"; W.style.maxWidth = Math.max(240, r.width) + "px"; }
     }
     W.addEventListener("click", e => { const b = e.target.closest("[data-w]"); if (!b || !w5Target) return; const t = w5Target; t.value = (t.value && !/\n$/.test(t.value) ? t.value + "\n" : t.value) + b.dataset.w; t.dispatchEvent(new Event("input", { bubbles: true })); t.focus(); t.setSelectionRange(t.value.length, t.value.length); });
     G.querySelector(".gl-skip").addEventListener("click", e => { const k = e.currentTarget.dataset.k; if (k) seen[k] = true; tick(); });
@@ -151,4 +151,23 @@
     }
     setInterval(tick, 400); addEventListener("scroll", tick, { passive: true }); addEventListener("resize", tick);
     setOn(on);
+  })();
+
+  // =====================================================================
+  // 5W 建議：固定放在問題描述框（定義問題、魚骨圖問題點）與 AI 對話框輸入欄上方
+  // 只是建議：點一下插入開頭字，不檢查、不擋送出
+  // =====================================================================
+  (function w5Inline() {
+    const W5 = [["What", "不良現象："], ["When", "發生時間／批號："], ["Where", "工站／使用端："], ["Who", "發現者："], ["How many", "數量／比例："]];
+    const row = () => `<div class="w5row"><span class="w-lab">5W</span>${W5.map(([k, t]) => `<button type="button" data-w5="${t}" title="插入「${t}」">${k}</button>`).join("")}<span class="w-hint">建議，不知道可略</span></div>`;
+    const add = (ta, before) => { if (!ta || ta.dataset.w5) return; ta.dataset.w5 = "1"; (before || ta).insertAdjacentHTML("beforebegin", row()); const r = (before || ta).previousElementSibling; r.dataset.for = ta.id; };
+    add($("homeQ")); add($("fbProblem")); add($("askBox"), $("askBox") && $("askBox").closest(".ask"));
+    // AI 對話框的 5W 只在「定義問題」「魚骨圖」顯示（工具頁的對話是解讀結果，用不到）
+    setInterval(() => { const r = document.querySelector('.w5row[data-for="askBox"]'); if (!r) return; let k = ""; try { k = chatKey; } catch (_) {} r.hidden = !(k === "home" || k === "fishbone"); }, 500);
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-w5]"); if (!b) return;
+      const t = $(b.closest(".w5row").dataset.for); if (!t) return;
+      t.value = (t.value && !/\n$/.test(t.value) ? t.value + "\n" : t.value) + b.dataset.w5;
+      t.dispatchEvent(new Event("input", { bubbles: true })); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+    });
   })();

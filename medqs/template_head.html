@@ -1251,3 +1251,10 @@ header.top .eyebrow { margin: 0; }
 .glove .gl-h { animation: glBob 1s ease-in-out infinite; }
 .glove.flip .gl-h { animation-name: glBobR; }
 @media (prefers-reduced-motion: reduce) { .glove .gl-h { animation: none; } }
+/* 5W 建議列（固定在問題框上方） */
+.w5row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 4px; }
+.w5row .w-lab { font-size: 12px; font-weight: 800; color: #B87333; margin-right: 2px; }
+.w5row button { font: inherit; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid #B87333; background: transparent; color: #B87333; cursor: pointer; }
+.w5row button:hover { background: color-mix(in srgb, #B87333 14%, transparent); }
+.w5row .w-hint { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.ai-foot .w5row { padding: 0 2px; }
