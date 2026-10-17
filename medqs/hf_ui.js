@@ -113,10 +113,10 @@
         if (!L.length) return [7, document.querySelector('#planSum [data-hub="ai"]') || $("fbPlanAI"), "請 AI 建議策略"];
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim());
-        if (noTool) { if ($("planEdit")) $("planEdit").open = true; return [7, document.querySelector(`#fbVplan .vp-tool[data-id="${noTool.id}"]`), "選驗證策略"]; }
+        if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
         for (const x of on) {
           if (vrNonStat(x)) { if (!(x.vr && x.vr.st)) return [8, document.querySelector(`[data-hubvr="${x.id}"]`), "填結論（照實）"]; continue; }
-          if (!svOk(x)) return [8, document.querySelector(`#planHub [data-hub="plan"][data-id="${x.id}"]`), "規劃樣本數"];
+          if (!svOk(x)) return [8, document.querySelector(`#planHub [data-hub="plan"][data-id="${x.id}"]`), /^DOE|田口|實驗設計/.test(x.tool || "") ? "規劃樣本數（或勾略過）" : "規劃樣本數"];
           if (!(x.apx || []).length) return [8, document.querySelector(`#planHub [data-hub="go"][data-id="${x.id}"]`), "開始分析"];
         }
         return [9, nav("pdca"), "看報告"];
@@ -288,4 +288,46 @@
     }
     setInterval(run, 1200);
     document.addEventListener("click", e => { const a = e.target.closest("a.ref-link.km"); if (!a) return; e.preventDefault(); const d = $("kmOut"); if (d && !d.hidden) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); } });
+  })();
+  // =====================================================================
+  // ③ 驗證計畫：驗證策略直接在每張卡片的 ① 格選（下方清單只留勾選、新增、刪除）
+  // DOE／田口：② 樣本數可勾「略過樣本數計算（僅測試）」，附警語
+  // =====================================================================
+  (function hubInline() {
+    const hub = $("planHub"); if (!hub) return;
+    const BYP = "bypass", BYP_WHY = "略過樣本數計算（使用者勾選）：僅供測試，結果不可作為設計驗證或確效的依據。";
+    try { if (!SV_Q.some(o => o[0] === BYP)) SV_Q.push([BYP, "略過樣本數計算（僅測試）"]); SV_MANUAL[BYP] = 1; } catch (_) {}
+    const isDoe = x => /^DOE|田口|實驗設計/.test(String(x.tool || ""));
+    const item = id => (fb.vplan || []).find(y => y.id === id);
+    const done = () => { try { vpChanged(true); } catch (_) { try { fbSave(); pdcaRender(); } catch (__) {} } };
+    function deco() {
+      hub.querySelectorAll(".hub-item").forEach(it => {
+        const eb = it.querySelector('[data-hub="edit"]'), x = eb && item(eb.dataset.id); if (!x) return;
+        const c = it.querySelectorAll(".hc");
+        const v1 = c[0] && c[0].querySelector(".hc-v");
+        if (v1 && !v1.querySelector(".hub-tool")) {
+          let h = ""; try { h = vpToolCell(x); } catch (_) {}
+          if (h) v1.innerHTML = h.replace(/class="vp-tool"/, 'class="vp-tool hub-tool"');
+        }
+        if (isDoe(x) && c[1] && !vrNonStat(x) && !c[1].querySelector("[data-hubbyp]")) {
+          const on = (x.ss || {}).q === BYP;
+          c[1].insertAdjacentHTML("beforeend", `<label class="hub-byp"><input type="checkbox" data-hubbyp="${x.id}"${on ? " checked" : ""}> 略過樣本數計算</label>${on ? `<div class="hub-bypw">⚠ 僅供測試：沒有統計依據，結果不能當驗證或確效的依據</div>` : ""}`);
+        }
+      });
+    }
+    new MutationObserver(deco).observe(hub, { childList: true });
+    deco();
+    hub.addEventListener("change", e => {
+      const s = e.target.closest("select.hub-tool");
+      if (s) { const x = item(s.dataset.id); if (!x) return; s.blur();
+        if (s.value === "__custom") { const i = document.createElement("input"); i.className = "hub-tool-in"; i.value = (x.tool && !VP_TOOLS.includes(x.tool)) ? x.tool : ""; i.placeholder = "輸入驗證策略，按 Enter 完成"; s.replaceWith(i); i.focus();
+          const fin = () => { x.tool = i.value.trim(); i.blur(); done(); };
+          i.addEventListener("keydown", k => { if (k.key === "Enter") { k.preventDefault(); fin(); } }); i.addEventListener("blur", () => { if (i.isConnected) fin(); }, { once: true }); return; }
+        x.tool = s.value; done(); return; }
+      const b = e.target.closest("[data-hubbyp]");
+      if (b) { const x = item(b.dataset.hubbyp); if (!x) return; b.blur();
+        if (b.checked) { if ((x.ss || {}).q !== BYP) x.ssPrev = x.ss || null; x.ss = { q: BYP, n: "未計算（略過）", sum: "⚠ 略過樣本數計算，僅供測試", why: BYP_WHY }; }
+        else { x.ss = x.ssPrev || undefined; delete x.ssPrev; if (!x.ss) delete x.ss; }
+        done(); }
+    }, true);
   })();
