@@ -14440,7 +14440,15 @@ else root.runValidation = runValidation;
     const panelOpen = () => !$("aiPanel").hidden;
     let w5Target = null;
     // 依目前狀態決定下一步：[步驟, 目標, 短字, 選項{skip, w5}]
+    // 全站同一個順序：第一步先寫「本案問題」（一句話題目），之後才是各頁的「下一步」
     function next() {
+      const cq = $("caseQ"); let bz = false; try { bz = busy; } catch (_) {}
+      if (!bz && cq && vis(cq) && !cq.value.trim()) return [1, cq, "第一步：寫本案問題（一句話）"];
+      const r = next0(); if (!r) return r;
+      if (r[1] === $("homeQ")) return [r[0], r[1], "下一步：描述問題，問 AI", r[3]];
+      return r;
+    }
+    function next0() {
       const v = view(), F = (typeof fb !== "undefined" && fb && fb.factors) || [];
       const cand = F.filter(f => f.st === "cand"), use = F.filter(f => f.st === "use"), ver = F.filter(f => f.verify && f.st !== "excl");
       if (v === "home") {
@@ -14463,7 +14471,7 @@ else root.runValidation = runValidation;
         if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
         if (ver.length) return [6, nav("plan"), "下一步"];
-        if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "寫下問題", { w5: true }];
+        if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "第一步：寫本案問題（一句話）", { w5: true }];
         return null;
       }
       // ---- ③ 驗證計畫：建議策略 → 勾選 → 選策略 → 每一項（樣本數 → 分析 → 存報告；不用統計的填結論）→ ④ 報告 ----
