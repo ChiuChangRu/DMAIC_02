@@ -461,3 +461,80 @@
       if (drop) setTimeout(() => fbNote(`另有 ${drop} 個 AI 建議的原因不在驗證清單（魚骨圖沒有或未標 ◇），未列入；要加入請回 ② 魚骨圖新增或標 ◇。`), 30);
     }, true);
   })();
+  // =====================================================================
+  // 🤖 問 AI 這一項：AI 只針對一個驗證項目建議「要不要統計、用哪個工具、樣本數要證明什麼」
+  // 回答下方「採用」才寫入卡片（不自動覆蓋）；之後按「規劃 →／開始分析 →」進工具頁時，
+  // 自動按該頁的 AI 建議（每一項每一頁只自動一次；已有結果就不再按）。AI 不給任何數值。
+  // =====================================================================
+  (function itemAI() {
+    const hub = $("planHub"); if (!hub) return;
+    const item = id => (fb.vplan || []).find(y => y.id === id);
+    const SVQS = () => { try { return SV_Q.filter(o => o[0] && o[0] !== "bypass"); } catch (_) { return []; } };
+    const isNS = t => /^不用統計/.test(String(t || ""));
+    // ---- 卡片按鈕 ----
+    const deco = () => hub.querySelectorAll(".hub-item").forEach(it => {
+      const eb = it.querySelector('[data-hub="edit"]'), x = eb && item(eb.dataset.id); if (!x || it.querySelector("[data-hubai]") || vDone(x)) return;
+      eb.insertAdjacentHTML("beforebegin", `<button type="button" class="linkbtn hub-ai" data-hubai="${x.id}">🤖 問 AI 這一項</button>`);
+    });
+    new MutationObserver(deco).observe(hub, { childList: true }); deco();
+    hub.addEventListener("click", e => {
+      const b = e.target.closest("[data-hubai]"); if (!b) return; const x = item(b.dataset.hubai); if (!x) return;
+      const f = x.fid && fb.factors.find(y => y.id === x.fid);
+      const subs = f && (f.subs || []).length ? f.subs.join("；") : "";
+      const pr = ($("fbProblem") && $("fbProblem").value.trim()) || "";
+      const q = [`請只針對下面這一個驗證項目，建議驗證策略。`,
+        pr ? `本案問題：${pr}` : "", `原因：${x.cause}`, subs ? `子因子：${subs}` : "", f ? `魚骨圖分類：${fbCatName(f)}` : "",
+        x.method ? `目前寫的驗證方式：${x.method}` : "", x.tool ? `目前選的策略：${x.tool}（可以建議改）` : "",
+        `規則：先判斷要不要統計。不用統計就足以確認的，用「不用統計－」開頭的策略；需要數據比較、推論、或要證明比例／可靠度時，才用統計工具。不要給任何數值（標準差、不良率、樣本數、規格都不要寫），數值由使用者依自己的資料填。`,
+        `回答最多 4 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）。推論標 *。`,
+        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料"}`, "```",
+        `策略清單：${VP_TOOLS.join("、")}`,
+        `樣本數代碼：${SVQS().map(o => o[0] + "＝" + o[1]).join("；")}`].filter(Boolean).join("\n");
+      fbAskAI(q, undefined, { label: `問 AI：${x.cause.slice(0, 20)}`, quote: "", display: `「${x.cause}」要怎麼驗證？要不要統計、用哪個工具、樣本數要證明什麼？` });
+    });
+    // ---- 回答下方的「採用」按鈕 ----
+    const parse = text => { const m = String(text).match(/```vitem\s*([\s\S]*?)```/); if (!m) return null; try { const o = JSON.parse(m[1]); return o && typeof o === "object" ? o : null; } catch (_) { return null; } };
+    const clean = j => {
+      const tool = String(j.tool || "").trim(); if (!VP_TOOLS.includes(tool)) return null;
+      let svq = String(j.svq || "").trim(); if (isNS(tool)) svq = "none"; else if (!SVQS().some(o => o[0] === svq) || svq === "none") svq = "";
+      return { id: String(j.id || ""), tool, svq, method: String(j.method || "").trim().slice(0, 300), data: String(j.data || "").trim().slice(0, 300) };
+    };
+    const html = j => {
+      const x = item(j.id), done = x && x.tool === j.tool, ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
+      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
+    };
+    const ob = aiBody;
+    aiBody = function (text, final, key) {
+      const j = final ? parse(text) : null, c = j ? clean(j) : null;
+      const h = ob(String(text).replace(/```vitem[\s\S]*?(```|$)/g, "").trim(), final, key);
+      return c ? h + html(c) : h;
+    };
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-vitem]"); if (!b || b.disabled) return;
+      let j; try { j = JSON.parse(b.dataset.vitem); } catch (_) { return; }
+      const x = item(j.id); if (!x) return;
+      x.tool = j.tool; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
+      let svOK = false; try { svOK = svOk(x); } catch (_) {}
+      if (!isNS(j.tool) && j.svq && !svOK) x.ss = { q: j.svq, n: "", sum: "", why: "" };
+      try { vpChanged(true); } catch (_) {}
+      b.disabled = true; b.textContent = "已採用";
+      try { closePanel(); } catch (_) {}
+      setTimeout(() => { const c = hub.querySelector(`[data-hubai="${x.id}"], [data-hub="edit"][data-id="${x.id}"]`), it = c && c.closest(".hub-item"); if (it) { it.scrollIntoView({ behavior: "smooth", block: "center" }); it.classList.add("vp-flash"); setTimeout(() => it.classList.remove("vp-flash"), 1600); } }, 80);
+      try { fbNote(`已採用 AI 建議：「${x.cause}」→ ${x.tool}。可以再改。`); } catch (_) {}
+    });
+    // ---- 進工具頁時自動按該頁的 AI 建議（每項每頁一次） ----
+    const AIBTN = { hypothesis: "pkhAi", doe: "pkdAi", taguchi: "pktAi", msa: "mpAi", spc: "spAi", regression: "regAi" };
+    const auto = (x, page, sel) => {
+      x.aiAuto = x.aiAuto || {}; if (x.aiAuto[page]) return; let n = 0;
+      const t = setInterval(() => {
+        const b = typeof sel === "function" ? sel() : document.querySelector(sel);
+        let bz = false; try { bz = busy || AIS.busy > 0; } catch (_) {}
+        if (b && !b.disabled && b.getClientRects().length && !bz) { clearInterval(t); x.aiAuto[page] = 1; fbSave(); b.click(); }
+        else if (++n > 20) clearInterval(t);
+      }, 200);
+    };
+    const oPlan = hubPlan;
+    hubPlan = function (x) { oPlan(x); let ok = false; try { ok = svOk(x); } catch (_) {} if (!ok && x.ss && x.ss.q && x.ss.q !== "bypass") auto(x, "sample", "[data-svai]"); };
+    const oGo = vrGo;
+    vrGo = function (x, done) { oGo(x, done); if ((x.apx || []).length) return; let r = ""; try { r = vrRoute(x.tool)[0]; } catch (_) {} if (AIBTN[r]) auto(x, r, "#" + AIBTN[r]); };
+  })();
