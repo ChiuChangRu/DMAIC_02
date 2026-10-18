@@ -1187,6 +1187,16 @@ nav.toolnav .nv-lab small { font-size: 11px; letter-spacing: .08em; color: rgba(
 nav.toolnav .nv-lab b { font-size: 13px; color: #f0c08f; }
 nav.toolnav .nv-flow .nv-lab { border-right: 1px solid rgba(216,153,95,.45); margin-right: 4px; }
 @media (max-width: 720px) { nav.toolnav .nv-flow .nv-lab { flex: 1 1 100%; flex-direction: row; gap: 6px; align-items: baseline; border-right: 0; padding-top: 4px; } }
+/* 導覽列三大類：① 設定與案件 → ② 方法一 工具箱 → ③ 方法二 PDCA；各組不同底色與外框、組間留空；「方法一／方法二」同一行、字放大 */
+nav.toolnav { gap: 12px; align-items: flex-end; }
+nav.toolnav .nv-lab { flex-direction: row; align-items: baseline; gap: 6px; padding: 0 10px 6px 6px; }
+nav.toolnav .nv-lab small { font-size: 14px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.85); }
+nav.toolnav .nv-lab b { font-size: 15px; }
+nav.toolnav .nv-set { background: rgba(169,188,208,.16); box-shadow: inset 0 0 0 1.5px rgba(169,188,208,.45); }
+nav.toolnav .nv-set:has([aria-selected="true"]) { background: rgba(169,188,208,.30); box-shadow: inset 0 0 0 1.5px rgba(169,188,208,.8); }
+nav.toolnav .nv-tb { background: rgba(79,127,122,.22); box-shadow: inset 0 0 0 1.5px rgba(125,176,170,.5); }
+nav.toolnav .nv-tb:has([aria-selected="true"]) { background: rgba(79,127,122,.40); box-shadow: inset 0 0 0 1.5px rgba(125,176,170,.85); }
+@media (max-width: 720px) { nav.toolnav .nv-set { order: 1; } nav.toolnav .nv-tb { order: 2; } nav.toolnav .nv-flow { order: 3; } }
 /* 工具箱：工具便利貼 */
 .home-grid.tb-tiles { grid-template-columns: repeat(8, minmax(0, 120px)); gap: 16px; margin: 4px 0 16px; }
 @media (max-width: 1100px) { .home-grid.tb-tiles { grid-template-columns: repeat(4, minmax(0, 120px)); } }
