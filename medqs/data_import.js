@@ -209,7 +209,8 @@
     const T = S.table, H = T[0], body = T.slice(1), m = S.meta, notes = [];
     const fin = v => typeof v === "number" && isFinite(v);
     const roles = H.map((h, j) => spcColRole(h, body.map(r => r[j])));
-    if (m && m.cols && typeof m.cols === "object") H.forEach((h, j) => { const r = m.cols[h]; if (["value", "order", "id", "other"].includes(r) && roles[j] !== "text") roles[j] = r; });
+    // AI 只能把量測值降級（改判為時間／編號／其他），不能把程式認定的時間、序號或文字欄升級為量測值
+    if (m && m.cols && typeof m.cols === "object") H.forEach((h, j) => { const r = m.cols[h]; if (["order", "id", "other"].includes(r) && roles[j] === "value") roles[j] = r; });
     const kind = m && ["var", "defective", "defect"].includes(m.kind) ? m.kind : "";
     let sp = null, src = "";
     if (m) {
@@ -260,4 +261,27 @@
     if (P.auto) $("spcRun").click();
     return more;
   }
+  // ---- SPC 資料框檢查（貼上或匯入都適用）：等距遞增的欄看起來是時間或序號，放進來會被當成子組的量測值 ----
+  function spcSeqCols() {
+    const p = parseNumRows($("spcData").value); if (p.error || p.rows.length < 5) return [];
+    const k = p.rows[0].length; if (k < 2 || p.rows.some(r => r.length !== k)) return [];
+    const out = [];
+    for (let j = 0; j < k; j++) { const v = p.rows.map(r => r[j]), d = v[1] - v[0]; if (d > 0 && v.every((x, i) => !i || Math.abs(x - v[i - 1] - d) <= 1e-9 * Math.max(1, Math.abs(x)))) out.push({ j, name: p.header && p.header[j] ? p.header[j] : `第 ${j + 1} 欄`, head: v.slice(0, 3) }); }
+    return out;
+  }
+  $("spcDetect").insertAdjacentHTML("afterend", `<p class="hint" id="spcSeqWarn" hidden></p>`);
+  function spcSeqCheck() {
+    const w = $("spcSeqWarn"), c = spcSeqCols();
+    w.hidden = !c.length; if (!c.length) { w.innerHTML = ""; return; }
+    w.innerHTML = c.map(x => `<span class="status ng">「${esc(x.name)}」是等距遞增（${x.head.join(", ")}…），看起來是時間或序號，不是量測值；留著會被當成子組的一部分，管制圖會算錯。</span> <button class="btn small" type="button" data-seqdel="${x.j}">移除這一欄</button>`).join("<br>");
+  }
+  $("spcSeqWarn").addEventListener("click", e => {
+    const b = e.target.closest("[data-seqdel]"); if (!b) return;
+    const j = +b.dataset.seqdel, D = $("spcData");
+    D.value = D.value.split(/\r?\n/).map(l => { const t = splitLine(l, true); if (!t.length) return l; t.splice(j, 1); return t.join("\t"); }).join("\n");
+    D.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  $("spcData").addEventListener("input", spcSeqCheck);
+  document.querySelectorAll("#viewSPC [data-ex], #spcKind button").forEach(b => b.addEventListener("click", () => setTimeout(spcSeqCheck, 0)));
+  $("spcRun").addEventListener("click", spcSeqCheck, true);
   mkImporter({ key: "spcImp", data: "spcData", pickCols: true, numOnly: true, clearOn: "#viewSPC [data-ex]", metaPrompt: SPC_META_PROMPT, roleLabel: SPC_ROLE, plan: spcPlan, planHtml: spcPlanHtml, planCheck: spcPlanCheck, onFill: spcOnFill });
