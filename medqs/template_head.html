@@ -733,6 +733,8 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .reg-imp-tbl { max-height: 520px; overflow: auto; }
 .reg-imp-head td { font-weight: 700; background: var(--code-bg); }
 .reg-chk { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; color: var(--bad); }
+.reg-imp-tbl td[contenteditable]:focus { outline: 2px solid var(--teal); outline-offset: -2px; background: var(--teal-soft); }
+.imp-pick td { background: var(--code-bg); text-align: center; }
 .reg-corr td.num { text-align: center; min-width: 64px; }
 .reg-corr .reg-cell { cursor: pointer; } .reg-corr .reg-cell:hover, .reg-corr .reg-cell:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
 .reg-corr .reg-sig { font-weight: 700; } .reg-corr .reg-self { color: var(--muted); text-align: center; }
