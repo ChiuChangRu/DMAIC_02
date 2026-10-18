@@ -744,6 +744,9 @@ textarea.imp-over { outline: 2px dashed var(--teal); outline-offset: 2px; backgr
 .ai-onb h2 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0 0 8px; }
 .ai-onb p { margin: 0 0 8px; }
 .ai-onb p a { color: var(--teal); font-weight: 700; }
+.nv-lab-go { cursor: pointer; border-radius: 6px; }
+.nv-lab-go:hover b, .nv-lab-go:focus-visible b { text-decoration: underline; }
+.nv-lab-go:focus-visible { outline: 2px solid #D8995F; outline-offset: 2px; }
 .ai-onb .chk { margin-top: 10px; }
 .imp-plan .fields { margin-top: 0; }
 .reg-corr td.num { text-align: center; min-width: 64px; }
@@ -15518,6 +15521,16 @@ else root.runValidation = runValidation;
     };
   })();
   // =====================================================================
+  // 「方法二 PDCA 改善流程」標籤可點：直接進 ① 定義問題
+  // =====================================================================
+  (function flowLabel() {
+    const lab = document.querySelector(".nv-flow .nv-lab"); if (!lab) return;
+    lab.removeAttribute("aria-hidden"); lab.setAttribute("role", "button"); lab.tabIndex = 0; lab.title = "進入 ① 定義問題"; lab.classList.add("nv-lab-go");
+    const go = () => route("home");
+    lab.addEventListener("click", go);
+    lab.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  })();
+  // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
   // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 API 申請連結（Moonshot），或直接到設定頁貼 key。
   // claude.ai 中不顯示（那裡只能用模式 (1)，不能貼 key）。「不再提醒」存在 localStorage。
@@ -15549,7 +15562,14 @@ else root.runValidation = runValidation;
     $("byokProv").addEventListener("change", () => { agSt().prov = true; });
     $("byokKeep").addEventListener("change", () => { agSt().keep = true; });
     $("byokSave").addEventListener("click", () => { agSt().saved = true; });
-    aiReadyP.then(() => setTimeout(() => { if (!inClaudeView() && aiMode === "none" && !off()) show(); }, 400));
+    // 開頁偵測 AI：有 AI → 維持「方法二 ① 定義問題」；沒有 AI → 跳到「⚙ 設定與案件」（網址有指定頁面、或使用者已切到別頁時不跳）
+    const startHash = (location.hash || "").replace("#", "");
+    aiReadyP.then(() => setTimeout(() => {
+      if (inClaudeView() || aiMode !== "none" || off()) return;
+      const home = document.querySelector('section[data-view="home"]');
+      if ((!startHash || startHash === "home") && home && !home.hidden) route("aisettings");
+      show();
+    }, 400));
   })();
   // ---- 手勢導引：尚未連接 AI 時，先指「⚙ 設定與案件」，再逐一指設定步驟（hf_ui.js 的 next() 會先呼叫這裡）----
   // 依設定頁的實際狀態判斷做到哪一步；每一步可「略過」（只在這次開頁有效）；勾「不再提醒」後不指引

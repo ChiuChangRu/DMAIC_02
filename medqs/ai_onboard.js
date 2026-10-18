@@ -30,7 +30,14 @@
     $("byokProv").addEventListener("change", () => { agSt().prov = true; });
     $("byokKeep").addEventListener("change", () => { agSt().keep = true; });
     $("byokSave").addEventListener("click", () => { agSt().saved = true; });
-    aiReadyP.then(() => setTimeout(() => { if (!inClaudeView() && aiMode === "none" && !off()) show(); }, 400));
+    // 開頁偵測 AI：有 AI → 維持「方法二 ① 定義問題」；沒有 AI → 跳到「⚙ 設定與案件」（網址有指定頁面、或使用者已切到別頁時不跳）
+    const startHash = (location.hash || "").replace("#", "");
+    aiReadyP.then(() => setTimeout(() => {
+      if (inClaudeView() || aiMode !== "none" || off()) return;
+      const home = document.querySelector('section[data-view="home"]');
+      if ((!startHash || startHash === "home") && home && !home.hidden) route("aisettings");
+      show();
+    }, 400));
   })();
   // ---- 手勢導引：尚未連接 AI 時，先指「⚙ 設定與案件」，再逐一指設定步驟（hf_ui.js 的 next() 會先呼叫這裡）----
   // 依設定頁的實際狀態判斷做到哪一步；每一步可「略過」（只在這次開頁有效）；勾「不再提醒」後不指引

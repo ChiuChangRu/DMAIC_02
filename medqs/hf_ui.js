@@ -818,3 +818,13 @@
       const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML;
     };
   })();
+  // =====================================================================
+  // 「方法二 PDCA 改善流程」標籤可點：直接進 ① 定義問題
+  // =====================================================================
+  (function flowLabel() {
+    const lab = document.querySelector(".nv-flow .nv-lab"); if (!lab) return;
+    lab.removeAttribute("aria-hidden"); lab.setAttribute("role", "button"); lab.tabIndex = 0; lab.title = "進入 ① 定義問題"; lab.classList.add("nv-lab-go");
+    const go = () => route("home");
+    lab.addEventListener("click", go);
+    lab.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  })();
