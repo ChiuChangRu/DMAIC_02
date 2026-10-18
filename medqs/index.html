@@ -14782,6 +14782,8 @@ else root.runValidation = runValidation;
     // 依目前狀態決定下一步：[步驟, 目標, 短字, 選項{skip, w5}]
     // 全站同一個順序：第一步先寫「本案問題」（一句話題目），之後才是各頁的「下一步」
     function next() {
+      // 尚未連接 AI（claude.ai 以外）：先一步一步指引設定 API（見 ai_onboard.js 的 apiGuide）
+      { const g = typeof apiGuide === "function" ? apiGuide(view(), seen) : null; if (g === false) return null; if (g) return g; }
       const cq = $("caseQ"); let bz = false; try { bz = busy; } catch (_) {}
       if (!bz && cq && vis(cq) && !cq.value.trim()) return [1, cq, "第一步：寫本案問題（一句話）"];
       // 畫面上有待回答的提示框（例如「另開／加入」）：先回答它
@@ -15537,15 +15539,43 @@ else root.runValidation = runValidation;
       $("aiOnbLater").addEventListener("click", close);
       d.addEventListener("cancel", e => { e.preventDefault(); close(); });
       $("aiOnbSet").addEventListener("click", () => {
-        close();
+        close(); agSt().prov = true;
         if (!byokKeyMem) { byokCfg.provider = "kimi"; byokCfg.base = ""; byokCfg.model = ""; byokCfg.s2t = true; }
         route("aisettings"); byokRender();
         setTimeout(() => { const k = $("byokKey"); if (k) { k.scrollIntoView({ behavior: "smooth", block: "center" }); k.focus(); } }, 50);
       });
       try { d.showModal(); } catch (_) { d.setAttribute("open", ""); }
     }
+    $("byokProv").addEventListener("change", () => { agSt().prov = true; });
+    $("byokKeep").addEventListener("change", () => { agSt().keep = true; });
+    $("byokSave").addEventListener("click", () => { agSt().saved = true; });
     aiReadyP.then(() => setTimeout(() => { if (!inClaudeView() && aiMode === "none" && !off()) show(); }, 400));
   })();
+  // ---- 手勢導引：尚未連接 AI 時，先指「⚙ 設定與案件」，再逐一指設定步驟（hf_ui.js 的 next() 會先呼叫這裡）----
+  // 依設定頁的實際狀態判斷做到哪一步；每一步可「略過」（只在這次開頁有效）；勾「不再提醒」後不指引
+  // 回傳 false＝先不顯示手勢（提醒視窗開著）；null＝交給原本的導引
+  // 狀態放在函式宣告裡（會提前宣告）；手勢在初始化時就會呼叫 apiGuide，用 const 會遇到 TDZ
+  function agSt() { return agSt.s || (agSt.s = { prov: false, keep: false, saved: false }); }
+  function apiGuide(v, seen) {
+    const AG = agSt();
+    if (typeof aiMode === "undefined" || inClaudeView() || seen.api) return null;
+    if ($("aiOnb")) return false;
+    try { if (localStorage.getItem("mdqs.aiOnboard.off") === "1") return null; } catch (_) {}
+    const hint = ($("byokHint") && $("byokHint").textContent) || "";
+    const testing = AG.saved && !/^連線成功/.test(hint);
+    if (aiMode !== "none" && !testing) return null;
+    if (v !== "aisettings") { AG.scrolled = false; return [0, document.querySelector('[data-route="aisettings"]'), "先設定 AI：到這裡貼 API key", { skip: "api" }]; }
+    if (!AG.scrolled) { AG.scrolled = true; const f = $("byokProv"); if (f) f.scrollIntoView({ behavior: "smooth", block: "center" }); }   // 進設定頁時直接捲到 AI 連線方式
+    if (aiMode === "none") {
+      if (!AG.prov && !seen.apiProv) return [0, $("byokProv"), "① 選 AI 提供者（例如 Kimi）", { skip: "apiProv" }];
+      if (!byokKeyMem && !$("byokKey").value.trim()) return [0, $("byokKey"), "② 貼上 API key"];
+      if (!AG.keep && !byokCfg.keep && !seen.apiKeep) return [0, $("byokKeep"), "③ 自己的電腦可勾：記住 key", { skip: "apiKeep" }];
+      return [0, $("byokSave"), "④ 按「儲存並啟用」"];
+    }
+    if (/^連線失敗/.test(hint)) return $("byokKey").value.trim() ? [0, $("byokSave"), "按「儲存並啟用」後再測"] : [0, $("byokKey"), "連不上：重貼 key，或確認 API 網址"];
+    if (/^測試中/.test(hint)) return null;
+    return [0, $("byokTest"), "⑤ 測試連線"];
+  }
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;

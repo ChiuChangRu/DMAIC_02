@@ -83,6 +83,8 @@
     // 依目前狀態決定下一步：[步驟, 目標, 短字, 選項{skip, w5}]
     // 全站同一個順序：第一步先寫「本案問題」（一句話題目），之後才是各頁的「下一步」
     function next() {
+      // 尚未連接 AI（claude.ai 以外）：先一步一步指引設定 API（見 ai_onboard.js 的 apiGuide）
+      { const g = typeof apiGuide === "function" ? apiGuide(view(), seen) : null; if (g === false) return null; if (g) return g; }
       const cq = $("caseQ"); let bz = false; try { bz = busy; } catch (_) {}
       if (!bz && cq && vis(cq) && !cq.value.trim()) return [1, cq, "第一步：寫本案問題（一句話）"];
       // 畫面上有待回答的提示框（例如「另開／加入」）：先回答它
