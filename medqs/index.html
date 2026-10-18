@@ -14461,6 +14461,15 @@ else root.runValidation = runValidation;
     function next() {
       const cq = $("caseQ"); let bz = false; try { bz = busy; } catch (_) {}
       if (!bz && cq && vis(cq) && !cq.value.trim()) return [1, cq, "第一步：寫本案問題（一句話）"];
+      // 畫面上有待回答的提示框（例如「另開／加入」）：先回答它
+      const bn = $("fbBanner"); if (bn && !bn.hidden && vis(bn)) return [0, bn.querySelector("button") || bn, "先回答這個問題"];
+      // AI 視窗裡有可以帶入的建議：指出按鈕，但用中性的字（要不要帶入由人決定）
+      if (panelOpen() && !bz) {
+        const M = $("msgs"), lm = [...M.querySelectorAll(".msg")].pop(), last = el => lm && lm.classList.contains("ai") ? [...lm.querySelectorAll(el)].filter(x => !x.disabled && vis(x)).pop() : null;
+        const va = last("[data-vpadd]"); if (va) return [7, va, "要列入驗證計畫請按這裡"];
+        const vi = last("[data-vitem]"); if (vi) return [7, vi, "看完建議，要採用再按"];
+        const sg = last('[data-sug][data-mode="cand"]'); if (sg) return [6, sg, "要加入請按這裡（先當候選，之後逐一確認）"];
+      }
       const r = next0(); if (!r) return r;
       if (r[1] === $("homeQ")) return [r[0], r[1], "下一步：描述問題，問 AI", r[3]];
       // 目標是上方分頁、但這一頁就有同功能的按鈕（例如「前往 ③ 驗證計畫 →」）：指頁面上的按鈕，避免「下一步在上面」與按鈕重複
@@ -14500,12 +14509,13 @@ else root.runValidation = runValidation;
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
         if (ver.length) return fbDoneOk() ? [6, document.querySelector('[data-view="fishbone"] [data-route-go="plan"]') || nav("plan"), "下一步：③ 驗證計畫"] : [6, $("fbDoneBtn"), "改好了？按這裡結束"];
         if (!F.length && !$("fbProblem").value.trim()) return [1, $("fbProblem"), "第一步：寫本案問題（一句話）", { w5: true }];
+        if (!F.length) return panelOpen() ? [5, $("askBox"), "請 AI 列出可能原因"] : [5, $("aiFab"), "問 AI 列出可能原因"];
         return null;
       }
       // ---- ③ 驗證計畫：建議策略 → 勾選 → 選策略 → 每一項（樣本數 → 分析 → 存報告；不用統計的填結論）→ ④ 報告 ----
       if (v === "plan") {
         const L = (fb && fb.vplan) || [], on = L.filter(x => x.on);
-        if (!L.length) { if ($("planEdit")) $("planEdit").open = true; return [7, $("fbPlanAI"), "請 AI 建議策略"]; }
+        if (!L.length) { const g = document.querySelector("#planSum [data-gofb]"); return g ? [7, g, "先回魚骨圖，把要驗證的原因標 ◇"] : [7, nav("fishbone"), "先回魚骨圖標 ◇"]; }
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
@@ -14522,8 +14532,9 @@ else root.runValidation = runValidation;
       if (v === "pdca") {
         const on = ((fb && fb.vplan) || []).filter(x => x.on);
         const todo = on.filter(x => !(x.nv && String(x.nv.why || "").trim()) && (vrNonStat(x) ? !(x.vr && x.vr.st) : !(x.apx || []).length));
-        return todo.length ? [9, nav("plan"), `還有 ${todo.length} 項未完成`] : null;
+        return todo.length ? [9, nav("plan"), `還有 ${todo.length} 項未完成`] : [9, $("pdcaPrint"), "完成：列印／存成 PDF"];
       }
+      if (v === "toolbox") { const q = $("tbQ"); if (q && !q.value.trim() && !($("tbLog") && $("tbLog").textContent.trim())) return [1, q, "寫下要解決的問題，問 AI 該用哪個工具"]; if (q && q.value.trim()) return [2, $("tbAsk"), "按這裡問 AI"]; return null; }
       // ---- 從驗證計畫進到工具頁：樣本數帶回／分析後存到報告 ----
       let ctx = ""; try { ctx = navCtx; } catch (_) {}
       if (ctx === "plan") {
@@ -14854,14 +14865,21 @@ else root.runValidation = runValidation;
       if (e.target.closest("[data-gofb]")) { route("fishbone"); return; }
       const d = e.target.closest("[data-nofbdel]");
       if (d) { if (!d.dataset.armed) { d.dataset.armed = "1"; d.textContent = "確定刪除？再按一次"; return; } fb.vplan = (fb.vplan || []).filter(y => y.id !== d.dataset.nofbdel); try { vpChanged(true); } catch (_) {} return; }
-      // AI 建議的驗證項目：只補清單中已有（魚骨圖帶入）的原因，新的原因不列入
+      // AI 建議的驗證項目：清單裡已有的補空白欄位；魚骨圖上已有（未標 ◇）的原因，按「列入」時一併標 ◇ 帶入；魚骨圖沒有的不列入
       const b = e.target.closest("[data-vpadd]"); if (!b || b.disabled || b.dataset.fbonly) return;
       let items; try { items = JSON.parse(b.dataset.vpadd); } catch (_) { return; }
-      const L = fb.vplan || [], ok = items.filter(x => L.some(y => vpKey(y) === vpKey(x) || vpSim(y.cause, x.cause) >= VP_SIM)), drop = items.length - ok.length;
+      const nz = t => String(t || "").replace(/[*＊\s]/g, "");
+      const inList = x => (fb.vplan || []).some(y => vpKey(y) === vpKey(x) || vpSim(y.cause, x.cause) >= VP_SIM);
+      let marked = 0;
+      items.forEach(x => { if (inList(x)) return; const f = (fb.factors || []).find(f => f.st !== "excl" && (nz(f.text) === nz(x.cause) || vpSim(f.text, x.cause) >= VP_SIM));
+        if (f) { if (f.st === "cand") f.st = "use"; f.verify = true; if (Array.isArray(fb.vpSkip)) fb.vpSkip = fb.vpSkip.filter(v => v !== f.id); marked++; } });
+      if (marked) { try { vpSyncFb(); fbRenderEditor(); } catch (_) {} }
+      const ok = items.filter(inList), drop = items.length - ok.length;
       b.dataset.fbonly = "1";
-      if (!ok.length) { e.stopImmediatePropagation(); b.disabled = true; b.textContent = "AI 建議的原因都不在驗證清單，未列入"; fbNote(`AI 建議的 ${drop} 個原因不在驗證清單（魚骨圖沒有或未標 ◇），未列入。要加入請回 ② 魚骨圖新增或標 ◇。`); return; }
+      const tail = drop ? `另有 ${drop} 個原因魚骨圖上沒有，未列入；要加入請回 ② 魚骨圖新增後標 ◇。` : "";
+      if (!ok.length) { e.stopImmediatePropagation(); b.disabled = true; b.textContent = "AI 建議的原因魚骨圖上都沒有，未列入"; b.insertAdjacentHTML("afterend", ` <button type="button" class="btn small" data-gofb="1">← 回 ② 魚骨圖新增原因</button>`); fbNote(tail); return; }
       b.dataset.vpadd = JSON.stringify(ok);
-      if (drop) setTimeout(() => fbNote(`另有 ${drop} 個 AI 建議的原因不在驗證清單（魚骨圖沒有或未標 ◇），未列入；要加入請回 ② 魚骨圖新增或標 ◇。`), 30);
+      setTimeout(() => fbNote([marked ? `已把魚骨圖上的 ${marked} 個原因標 ◇ 並列入 ③ 驗證計畫。` : "", tail].filter(Boolean).join("")), 30);
     }, true);
   })();
   // =====================================================================
