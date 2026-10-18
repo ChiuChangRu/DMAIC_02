@@ -167,7 +167,7 @@
     if (inC) return;
     $("byokProv").value = byokCfg.provider;
     const P = BYOK_PROV[byokCfg.provider];
-    $("byokBase").placeholder = P.base; if (document.activeElement !== $("byokBase")) $("byokBase").value = byokCfg.base;
+    $("byokBase").placeholder = P.base; if (document.activeElement !== $("byokBase")) $("byokBase").value = byokCfg.base || P.base;   // 直接顯示預設網址，使用者看得到、需要時再改
     const ms = BYOK_MODELS[byokCfg.provider] || [], pr = byokPreset(), cur = byokModel();
     const sel = $("byokModelSel");
     sel.innerHTML = (cur || byokCustomMode ? "" : '<option value="">請選擇模型…</option>') +

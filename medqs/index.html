@@ -743,7 +743,7 @@ textarea.imp-over { outline: 2px dashed var(--teal); outline-offset: 2px; backgr
 .ai-onb::backdrop { background: rgba(0,0,0,.45); }
 .ai-onb h2 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0 0 8px; }
 .ai-onb p { margin: 0 0 8px; }
-.ai-onb a.btn { text-decoration: none; display: inline-block; }
+.ai-onb p a { color: var(--teal); font-weight: 700; }
 .ai-onb .chk { margin-top: 10px; }
 .imp-plan .fields { margin-top: 0; }
 .reg-corr td.num { text-align: center; min-width: 64px; }
@@ -2507,7 +2507,7 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
           <p class="hint" id="byokKeyState" style="margin:6px 0 0"></p>
           <div class="fields" style="margin-top:10px;align-items:start">
             <div class="field"><label for="byokModelSel">模型名稱</label><select autocomplete="off" id="byokModelSel" name="byok-model-sel"></select></div>
-            <div class="field"><label for="byokBase">API 網址（留空使用預設）</label><input type="text" id="byokBase" name="byok-endpoint" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
+            <div class="field"><label for="byokBase">API 網址（已填入預設，通常不用改）</label><input type="text" id="byokBase" name="byok-endpoint" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false"></div>
           </div>
           <div class="field" id="byokModelCustomWrap" hidden style="margin-top:10px"><label for="byokModel">自訂模型名稱</label><input type="text" id="byokModel" name="byok-model" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="例如 gpt-4.1，或公司提供的模型名稱"></div>
           <p class="hint" id="byokModelNote" style="margin:8px 0 0"></p>
@@ -8644,7 +8644,7 @@ else root.runValidation = runValidation;
     if (inC) return;
     $("byokProv").value = byokCfg.provider;
     const P = BYOK_PROV[byokCfg.provider];
-    $("byokBase").placeholder = P.base; if (document.activeElement !== $("byokBase")) $("byokBase").value = byokCfg.base;
+    $("byokBase").placeholder = P.base; if (document.activeElement !== $("byokBase")) $("byokBase").value = byokCfg.base || P.base;   // 直接顯示預設網址，使用者看得到、需要時再改
     const ms = BYOK_MODELS[byokCfg.provider] || [], pr = byokPreset(), cur = byokModel();
     const sel = $("byokModelSel");
     sel.innerHTML = (cur || byokCustomMode ? "" : '<option value="">請選擇模型…</option>') +
@@ -15517,7 +15517,7 @@ else root.runValidation = runValidation;
   })();
   // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
-  // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 Kimi API 申請連結，或直接到設定頁貼 key。
+  // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 API 申請連結（Moonshot），或直接到設定頁貼 key。
   // claude.ai 中不顯示（那裡只能用模式 (1)，不能貼 key）。「不再提醒」存在 localStorage。
   // =====================================================================
   (function aiOnboard() {
@@ -15527,9 +15527,9 @@ else root.runValidation = runValidation;
       if ($("aiOnb")) return;
       document.body.insertAdjacentHTML("beforeend", `<dialog id="aiOnb" class="ai-onb" aria-labelledby="aiOnbT">
         <h2 id="aiOnbT">尚未連接 AI</h2>
-        <p>統計計算不需要 AI，可以直接使用。照片轉錄、AI 建議與說明需要 API key。</p>
-        <p>可以先申請 <b>Kimi API（免信用卡）</b>，取得 key 後到「⚙ 設定與案件」貼上即可。</p>
-        <div class="run-row"><a class="btn primary" id="aiOnbGo" href="${KIMI}" target="_blank" rel="noopener">前往申請 Kimi API ↗</a><button class="btn" type="button" id="aiOnbSet">已有 key，去設定</button><button class="btn ghost" type="button" id="aiOnbLater">稍後再說</button></div>
+        <p>請申請 API，例如 <a id="aiOnbGo" href="${KIMI}" target="_blank" rel="noopener">Moonshot</a>（免信用卡）。</p>
+        <p class="hint">取得 key 後到「⚙ 設定與案件」貼上。統計計算不需要 AI，可以直接使用。</p>
+        <div class="run-row"><button class="btn primary" type="button" id="aiOnbSet" autofocus>已有 key，去設定</button><button class="btn ghost" type="button" id="aiOnbLater">關閉</button></div>
         <label class="chk"><input type="checkbox" id="aiOnbOff"> 不再提醒</label>
       </dialog>`);
       const d = $("aiOnb");

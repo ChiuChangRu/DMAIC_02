@@ -1,6 +1,6 @@
   // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
-  // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 Kimi API 申請連結，或直接到設定頁貼 key。
+  // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 API 申請連結（Moonshot），或直接到設定頁貼 key。
   // claude.ai 中不顯示（那裡只能用模式 (1)，不能貼 key）。「不再提醒」存在 localStorage。
   // =====================================================================
   (function aiOnboard() {
@@ -10,9 +10,9 @@
       if ($("aiOnb")) return;
       document.body.insertAdjacentHTML("beforeend", `<dialog id="aiOnb" class="ai-onb" aria-labelledby="aiOnbT">
         <h2 id="aiOnbT">尚未連接 AI</h2>
-        <p>統計計算不需要 AI，可以直接使用。照片轉錄、AI 建議與說明需要 API key。</p>
-        <p>可以先申請 <b>Kimi API（免信用卡）</b>，取得 key 後到「⚙ 設定與案件」貼上即可。</p>
-        <div class="run-row"><a class="btn primary" id="aiOnbGo" href="${KIMI}" target="_blank" rel="noopener">前往申請 Kimi API ↗</a><button class="btn" type="button" id="aiOnbSet">已有 key，去設定</button><button class="btn ghost" type="button" id="aiOnbLater">稍後再說</button></div>
+        <p>請申請 API，例如 <a id="aiOnbGo" href="${KIMI}" target="_blank" rel="noopener">Moonshot</a>（免信用卡）。</p>
+        <p class="hint">取得 key 後到「⚙ 設定與案件」貼上。統計計算不需要 AI，可以直接使用。</p>
+        <div class="run-row"><button class="btn primary" type="button" id="aiOnbSet" autofocus>已有 key，去設定</button><button class="btn ghost" type="button" id="aiOnbLater">關閉</button></div>
         <label class="chk"><input type="checkbox" id="aiOnbOff"> 不再提醒</label>
       </dialog>`);
       const d = $("aiOnb");
