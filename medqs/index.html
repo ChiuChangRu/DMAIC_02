@@ -738,6 +738,7 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .imp-plan { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--code-bg); display: grid; gap: 6px; }
 .imp-plan p { margin: 0; }
 .imp-pick small { display: block; font-size: 11.5px; white-space: nowrap; }
+textarea.imp-over { outline: 2px dashed var(--teal); outline-offset: 2px; background: var(--teal-soft); }
 .imp-plan .fields { margin-top: 0; }
 .reg-corr td.num { text-align: center; min-width: 64px; }
 .reg-corr .reg-cell { cursor: pointer; } .reg-corr .reg-cell:hover, .reg-corr .reg-cell:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
@@ -12633,8 +12634,15 @@ else root.runValidation = runValidation;
     const S = { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [], meta: null, plan: null };
     const reset = () => Object.assign(S, { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [], meta: null, plan: null });
     const el = s => $(K + s);
-    D.insertAdjacentHTML("beforebegin", `<div class="run-row" style="margin-top:0"><button class="btn" type="button" id="${K}Btn">匯入檔案（Excel、CSV、Word、PDF、照片）</button><input autocomplete="off" type="file" id="${K}File" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><span class="hint" id="${K}Src"></span></div><div class="reg-imp" id="${K}" hidden></div>`);
+    D.insertAdjacentHTML("beforebegin", `<div class="run-row" style="margin-top:0"><button class="btn" type="button" id="${K}Btn">匯入／拖入檔案（Excel、CSV、Word、PDF、照片）</button><input autocomplete="off" type="file" id="${K}File" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><span class="hint" id="${K}Src"></span></div><div class="reg-imp" id="${K}" hidden></div>`);
     el("Btn").addEventListener("click", () => el("File").click());
+    // 拖曳檔案：拖到按鈕列或資料框都可以；拖的是文字時維持瀏覽器原本行為
+    const hasFile = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
+    [el("Btn").parentNode, D].forEach(z => {
+      z.addEventListener("dragover", e => { if (!hasFile(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; D.classList.add("imp-over"); });
+      z.addEventListener("dragleave", () => D.classList.remove("imp-over"));
+      z.addEventListener("drop", e => { if (!hasFile(e)) return; e.preventDefault(); D.classList.remove("imp-over"); const f = e.dataTransfer.files[0]; if (f) open(f); });
+    });
     el("File").addEventListener("change", () => { const f = el("File").files[0]; el("File").value = ""; if (f) open(f); });
     const msg = (m, bad) => { const e = el("Msg"); if (e) e.innerHTML = bad ? `<span class="status ng">${esc(m)}</span>` : esc(m); };
     function close() { el("").hidden = true; el("").innerHTML = ""; reset(); }
@@ -12854,7 +12862,7 @@ else root.runValidation = runValidation;
       else { const lim = L !== null ? L : U, med = vals.slice().sort((a, b) => a - b)[vals.length >> 1]; if (lim && med) { const k = Math.abs(med / lim); ok = k <= 10 && k >= 0.1; } }
       if (!ok) { notes.push(`讀到的規格（${L ?? "—"}～${U ?? "—"}）和數據範圍差太多，可能單位不同或讀錯，未帶入，請自行確認。`); sp = null; }
     }
-    return { use: roles.map(r => r === "value"), roles, kind, lsl: sp ? String(sp.lsl) : "", usl: sp ? String(sp.usl) : "", tgt: sp ? String(sp.tgt) : "", src: sp ? src : "", notes, auto: true };
+    return { use: roles.map(r => r === "value"), roles, kind, lsl: sp ? String(sp.lsl) : "", usl: sp ? String(sp.usl) : "", tgt: sp ? String(sp.tgt) : "", src: sp ? src : "", notes };
   }
   function spcPlanHtml(P) {
     const kinds = [["", "維持目前選擇"], ["var", "計量值"], ["defective", "不良品"], ["defect", "缺點數"]];
@@ -12862,7 +12870,7 @@ else root.runValidation = runValidation;
     return `<div class="imp-plan"><p><b>自動判讀</b> <span class="hint">填入時一併套用，可修改</span></p><div class="fields"><div class="field"><label>資料型態</label><select data-plan="kind">${kinds.map(([v, t]) => `<option value="${v}"${P.kind === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>${inp("lsl", "規格下限 LSL")}${inp("tgt", "目標值")}${inp("usl", "規格上限 USL")}</div>`
       + `<p class="hint">規格來源：${P.src ? esc(P.src) : "沒有找到規格（可自行填寫）"}</p>`
       + (P.notes.length ? P.notes.map(n => `<p class="hint"><span class="status ng">${esc(n)}</span></p>`).join("") : "")
-      + `<label class="chk"><input type="checkbox" data-plan="auto"${P.auto ? " checked" : ""}> 填入後自動執行分析</label></div>`;
+      + `</div>`;
   }
   function spcPlanCheck(P) {
     const f = k => (P[k] === "" ? null : impIsNum(P[k]) ? +P[k] : NaN);
@@ -12879,7 +12887,6 @@ else root.runValidation = runValidation;
       [["spcLsl", P.lsl], ["spcUsl", P.usl], ["spcTgt", P.tgt]].forEach(([id, v]) => { $(id).value = v; $(id).dispatchEvent(new Event("input", { bubbles: true })); });
       more = `規格：${P.src || "使用者填寫"}（LSL ${P.lsl || "—"}、USL ${P.usl || "—"}）。`;
     }
-    if (P.auto) $("spcRun").click();
     return more;
   }
   // ---- SPC 資料框檢查（貼上或匯入都適用）：等距遞增的欄看起來是時間或序號，放進來會被當成子組的量測值 ----
@@ -12903,6 +12910,23 @@ else root.runValidation = runValidation;
     D.dispatchEvent(new Event("input", { bubbles: true }));
   });
   $("spcData").addEventListener("input", spcSeqCheck);
+  // ---- 自動執行分析（管制圖維持「自動選擇」由程式判斷）----
+  // 貼上、拖入、匯入、範例、移除欄、切換資料型態、離開資料框或規格欄時執行；逐字打字時不執行。
+  // 資料有錯或有時間／序號欄警告時不執行，避免畫出錯的圖。
+  let spcAutoT = 0;
+  function spcAutoRun() {
+    clearTimeout(spcAutoT);
+    spcAutoT = setTimeout(() => {
+      if (!$("spcData").value.trim() || spcSeqCols().length) return;
+      const p = spcRows(); if (p.error) return;
+      if ($("spcType").value === "auto" && QQ.spcAuto(p.rows, spcKind()).error) return;
+      spcRun();
+    }, 150);
+  }
+  $("spcData").addEventListener("input", e => { if (!e.isTrusted || /^insertFrom(Paste|Drop)$/.test(e.inputType || "")) spcAutoRun(); });
+  $("spcData").addEventListener("change", spcAutoRun);
+  ["spcLsl", "spcUsl", "spcTgt", "spcType"].forEach(id => $(id).addEventListener("change", () => { if (TQ.spc) spcAutoRun(); }));
+  document.querySelectorAll("#viewSPC [data-ex], #spcKind button").forEach(b => b.addEventListener("click", spcAutoRun));
   document.querySelectorAll("#viewSPC [data-ex], #spcKind button").forEach(b => b.addEventListener("click", () => setTimeout(spcSeqCheck, 0)));
   $("spcRun").addEventListener("click", spcSeqCheck, true);
   mkImporter({ key: "spcImp", data: "spcData", pickCols: true, numOnly: true, clearOn: "#viewSPC [data-ex]", metaPrompt: SPC_META_PROMPT, roleLabel: SPC_ROLE, plan: spcPlan, planHtml: spcPlanHtml, planCheck: spcPlanCheck, onFill: spcOnFill });
