@@ -735,6 +735,10 @@ details.fx, .fx-body, .fx-steps, .fx-steps > li { min-width: 0; max-width: 100%;
 .reg-chk { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; color: var(--bad); }
 .reg-imp-tbl td[contenteditable]:focus { outline: 2px solid var(--teal); outline-offset: -2px; background: var(--teal-soft); }
 .imp-pick td { background: var(--code-bg); text-align: center; }
+.imp-plan { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--code-bg); display: grid; gap: 6px; }
+.imp-plan p { margin: 0; }
+.imp-pick small { display: block; font-size: 11.5px; white-space: nowrap; }
+.imp-plan .fields { margin-top: 0; }
 .reg-corr td.num { text-align: center; min-width: 64px; }
 .reg-corr .reg-cell { cursor: pointer; } .reg-corr .reg-cell:hover, .reg-corr .reg-cell:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
 .reg-corr .reg-sig { font-weight: 700; } .reg-corr .reg-self { color: var(--muted); text-align: center; }
@@ -12619,13 +12623,15 @@ else root.runValidation = runValidation;
   // 共用匯入（試作）：目前接 SPC 的資料框
   // 原則與 regress_ui.js 的匯入相同：Excel／CSV／Word／PDF 文字層由程式讀取；掃描檔與照片才請 AI 轉錄；
   // AI 只照抄看得到的數字，不計算、不補值；AI 轉錄的結果須人工逐格核對才可填入。
+  // 自動判讀（o.plan）：欄位角色、資料型態、規格。AI 依判斷法則回傳 impmeta，程式再檢查；結果顯示在確認區、可修改，填入時一併套用。
   // 沿用：regress_ui.js 的 readXlsx、textTable；fishbone.js 的 pdfLib、renderPage、unzip、imgLimits、PDFJS
   // =====================================================================
   function mkImporter(o) {
-    // o = { key: id 前綴, data: 資料框 id, pickCols: 是否讓使用者勾選要用的欄, numOnly: 勾選的欄是否只能是數字, clearOn: 會改寫資料框的其他按鈕（選擇器） }
+    // o = { key: id 前綴, data: 資料框 id, pickCols: 是否讓使用者勾選要用的欄, numOnly: 勾選的欄是否只能是數字, clearOn: 會改寫資料框的其他按鈕（選擇器）,
+    //       metaPrompt: 給 AI 的判讀法則, roleLabel: 欄位角色的顯示名稱, plan(S, note) → 判讀結果, planHtml(P), planCheck(P) → 錯誤文字, onFill(P, src) → 附加的來源說明 }
     const K = o.key, D = $(o.data);
-    const S = { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [] };
-    const reset = () => Object.assign(S, { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [] });
+    const S = { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [], meta: null, plan: null };
+    const reset = () => Object.assign(S, { file: null, kind: "", sheets: null, table: null, from: "", ai: false, imgs: [], pdf: null, use: [], meta: null, plan: null });
     const el = s => $(K + s);
     D.insertAdjacentHTML("beforebegin", `<div class="run-row" style="margin-top:0"><button class="btn" type="button" id="${K}Btn">匯入檔案（Excel、CSV、Word、PDF、照片）</button><input autocomplete="off" type="file" id="${K}File" accept=".xlsx,.csv,.tsv,.txt,.docx,.pdf,image/png,image/jpeg,image/webp" hidden><span class="hint" id="${K}Src"></span></div><div class="reg-imp" id="${K}" hidden></div>`);
     el("Btn").addEventListener("click", () => el("File").click());
@@ -12692,29 +12698,34 @@ else root.runValidation = runValidation;
         const q = ["你是資料轉錄員。請把附上圖片中的數據表格，照原樣轉成 Tab 分隔的純文字表格。",
           "規則：1. 只抄寫圖片中看得到的內容，不要計算、推估、補齊或修正任何數字。2. 看不清楚或被遮住的格子填 ?。3. 第一列是欄名（照原表格；沒有欄名就寫 欄1、欄2…）。4. 每一列對應原表格的一列，順序不變；合計、平均、全距等統計列或統計欄不要抄。5. 有多個表格時，只抄最主要的數據表，並在說明中提到。6. 數字保留原本的小數位數，不要加千分位逗號。",
           "輸出格式：先用最多 3 行說明表格在哪一頁、有幾列幾欄、哪些地方看不清楚；然後輸出一個 ```impdata 區塊，裡面是 Tab 分隔的表格。",
-          `圖片依序為：${imgs.map((x, i) => `${i + 1}. ${x.name}`).join("；")}。`].join("\n");
+          o.metaPrompt || "",
+          `圖片依序為：${imgs.map((x, i) => `${i + 1}. ${x.name}`).join("；")}。`].filter(Boolean).join("\n");
         const res = await sample([{ role: "user", content: q }], { cache: false, modelTier: "default", images: imgs.map(x => x.b) });
         const m = String(res.text || "").match(/```impdata\s*([\s\S]*?)```/);
         if (!m) throw new Error("AI 沒有回傳表格。可以再試一次，或回到原始檔案複製貼上。");
-        const note = String(res.text).replace(/```impdata[\s\S]*?```/, "").trim();
+        const mm = String(res.text).match(/```impmeta\s*([\s\S]*?)```/);
+        S.meta = null; if (mm) { try { const j = JSON.parse(mm[1]); if (j && typeof j === "object") S.meta = j; } catch (_) {} }
+        const note = String(res.text).replace(/```impdata[\s\S]*?```/, "").replace(/```impmeta[\s\S]*?```/, "").trim();
         S.ai = true;
         show(m[1].split(/\r?\n/).filter(l => l.trim()).map(l => l.split("\t").map(x => x.trim())), `AI 從「${S.file.name}」轉錄`, note);
       } catch (e) { msg((e && (e.message || e.text)) || "AI 轉錄失敗。", true); if (el("Ai")) el("Ai").disabled = false; }
     }
-    const isNum = x => x !== "" && isFinite(+String(x).replace(/，/g, ","));
+    const isNum = impIsNum;
     function show(rows, from, note) {
       rows = rows.map(r => r.map(x => String(x == null ? "" : x).trim()));
       const k = Math.max(...rows.map(r => r.length)); rows = rows.map(r => { const a = r.slice(); while (a.length < k) a.push(""); return a; });
       S.table = rows; S.from = from;
-      // 預設勾選：資料列全是數字（或 ?／空白）且至少有一個數字的欄。只是預設，由使用者決定
-      S.use = rows[0].map((_, j) => !o.pickCols || (rows.slice(1).every(r => isNum(r[j]) || r[j] === "?" || r[j] === "") && rows.slice(1).some(r => isNum(r[j]))));
+      // 預設勾選：有判讀時依欄位角色；否則勾資料列全是數字（或 ?／空白）的欄。只是預設，由使用者決定
+      S.plan = o.plan ? o.plan(S, note) : null;
+      S.use = S.plan && S.plan.use ? S.plan.use.slice() : rows[0].map((_, j) => !o.pickCols || (rows.slice(1).every(r => isNum(r[j]) || r[j] === "?" || r[j] === "") && rows.slice(1).some(r => isNum(r[j]))));
       el("SrcTag").textContent = S.ai ? "來源：AI 轉錄・必須逐格核對" : "來源：" + (S.kind === "pdf" ? "PDF 文字層（程式擷取）・請核對" : "程式讀取（未經 AI）");
       el("SrcTag").classList.toggle("reg-ai", S.ai);
       const show = rows.slice(0, 200);
       const imgs = S.ai && S.imgs.length ? `<div class="reg-imp-imgs">${S.imgs.map(x => `<figure><img alt="${esc(x.name)}" data-src="1"><figcaption>${esc(x.name)}</figcaption></figure>`).join("")}</div>` : "";
-      const pick = o.pickCols ? `<tr class="imp-pick"><td class="hint">要用</td>${rows[0].map((_, j) => `<td><label class="chk"><input type="checkbox" data-col="${j}"${S.use[j] ? " checked" : ""}></label></td>`).join("")}</tr>` : "";
-      el("Body").innerHTML = (note ? `<div class="note info">${mdLite(note)}</div>` : "") + `<div class="reg-imp-grid${imgs ? " two" : ""}">${imgs}<div class="scroll-x reg-imp-tbl"><table class="mini"><tbody>${pick}${show.map((r, i) => `<tr${i === 0 ? ' class="reg-imp-head"' : ""}><td class="hint">${i === 0 ? "欄名" : i}</td>${r.map((x, j) => `<td contenteditable="true" spellcheck="false" data-r="${i}" data-c="${j}" class="${x === "?" ? "pk-miss" : ""}">${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>${rows.length > 200 ? `<p class="hint">只顯示前 200 列（共 ${rows.length} 列，填入時全部帶入）。</p>` : ""}</div></div>`;
+      const pick = o.pickCols ? `<tr class="imp-pick"><td class="hint">要用</td>${rows[0].map((_, j) => `<td><label class="chk"><input type="checkbox" data-col="${j}"${S.use[j] ? " checked" : ""}></label>${S.plan && S.plan.roles && o.roleLabel ? `<small class="hint">${esc(o.roleLabel[S.plan.roles[j]] || "")}</small>` : ""}</td>`).join("")}</tr>` : "";
+      el("Body").innerHTML = (note ? `<div class="note info">${mdLite(note)}</div>` : "") + (S.plan && o.planHtml ? o.planHtml(S.plan) : "") + `<div class="reg-imp-grid${imgs ? " two" : ""}">${imgs}<div class="scroll-x reg-imp-tbl"><table class="mini"><tbody>${pick}${show.map((r, i) => `<tr${i === 0 ? ' class="reg-imp-head"' : ""}><td class="hint">${i === 0 ? "欄名" : i}</td>${r.map((x, j) => `<td contenteditable="true" spellcheck="false" data-r="${i}" data-c="${j}" class="${x === "?" ? "pk-miss" : ""}">${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>${rows.length > 200 ? `<p class="hint">只顯示前 200 列（共 ${rows.length} 列，填入時全部帶入）。</p>` : ""}</div></div>`;
       if (imgs) [...el("Body").querySelectorAll("img[data-src]")].forEach((im, i) => { im.src = URL.createObjectURL(S.imgs[i].b); });
+      el("Body").querySelectorAll("[data-plan]").forEach(c => c.addEventListener(c.type === "checkbox" || c.tagName === "SELECT" ? "change" : "input", () => { S.plan[c.dataset.plan] = c.type === "checkbox" ? c.checked : c.value.trim(); gate(); }));
       el("Body").querySelectorAll("input[data-col]").forEach(c => c.addEventListener("change", () => { S.use[+c.dataset.col] = c.checked; gate(); }));
       el("Body").querySelectorAll("td[data-r]").forEach(td => td.addEventListener("input", () => { const v = td.textContent.trim(); S.table[+td.dataset.r][+td.dataset.c] = v; td.classList.toggle("pk-miss", v === "?"); gate(); }));
       if (S.ai) { el("Ctl").innerHTML = `<button class="btn small" type="button" id="${K}AiRe">重新請 AI 轉錄</button>`; el("AiRe").addEventListener("click", () => { S.ai = false; needAi("重新請 AI 轉錄。"); }); }
@@ -12727,6 +12738,7 @@ else root.runValidation = runValidation;
     function problems() {
       const cols = S.use.map((u, j) => (u ? j : -1)).filter(j => j >= 0), out = [];
       if (!cols.length) return { cols, out: ["請至少勾選一欄。"] };
+      const pe = S.plan && o.planCheck ? o.planCheck(S.plan) : ""; if (pe) out.push(pe);
       S.table.slice(1).forEach((r, i) => cols.forEach(j => { const x = r[j]; if (x === "?" || x === "" || (o.numOnly && !isNum(x))) out.push(`第 ${i + 1} 列「${S.table[0][j] || "欄" + (j + 1)}」${x === "" ? "是空白" : `是「${x}」`}`); }));
       return { cols, out };
     }
@@ -12741,10 +12753,10 @@ else root.runValidation = runValidation;
       const p = problems(); if (p.out.length || (S.ai && !el("Chk").checked)) { gate(); return; }
       const put = () => {
         D.value = S.table.map(r => p.cols.map(j => r[j].replace(/[\t\n]/g, " ")).join("\t")).join("\n");
-        const src = `資料來源：${S.from}${S.ai ? "（使用者已核對）" : ""}。`;
+        const P = S.plan, src = `資料來源：${S.from}${S.ai ? "（使用者已核對）" : ""}。`;
         close(); el("Src").textContent = src;
         D.dispatchEvent(new Event("input", { bubbles: true }));
-        o.onFill && o.onFill(src);
+        if (o.onFill) { const more = o.onFill(P, src); if (more) el("Src").textContent = src + more; }
       };
       if (D.value.trim()) {
         if (el("Rep")) return;
@@ -12757,6 +12769,7 @@ else root.runValidation = runValidation;
     if (o.clearOn) document.querySelectorAll(o.clearOn).forEach(b => b.addEventListener("click", () => { el("Src").textContent = ""; }));
     return { open, close };
   }
+  const impIsNum = x => x !== "" && isFinite(+String(x).replace(/，/g, ","));
   // ---- Word（.docx）：取出文件中的表格（不含巢狀表格），每個表格至少 2 列 ----
   async function docxTables(file) {
     let z, xml; try { z = await unzip(await file.arrayBuffer()); xml = await z.get("word/document.xml"); } catch (_) { xml = null; }
@@ -12783,7 +12796,92 @@ else root.runValidation = runValidation;
     if (width < 2 || tbl.length < 3) return { tbl: null };
     return { tbl, width, dropped: rows.filter(r => r.length >= 2 && r.length !== width).length };
   }
-  mkImporter({ key: "spcImp", data: "spcData", pickCols: true, numOnly: true, clearOn: "#viewSPC [data-ex]" });
+  // ---- 規格文字：「a～b」「m±d」「LSL a／USL b」→ { lsl, usl, tgt }；讀不出來回傳 null ----
+  function parseSpecText(t) {
+    const s = String(t || "").replace(/[～〜~–—]/g, "~").replace(/＋/g, "+").replace(/[－−]/g, "-").replace(/：/g, ":").replace(/，/g, ",");
+    const N = "(-?\\d+(?:\\.\\d+)?)", r10 = x => +(+x).toFixed(10);
+    let m = s.match(new RegExp(N + "\\s*(?:±|\\+\\s*/\\s*-|\\+-)\\s*(\\d+(?:\\.\\d+)?)"));
+    if (m) return { lsl: r10(+m[1] - +m[2]), usl: r10(+m[1] + +m[2]), tgt: +m[1] };
+    m = s.match(new RegExp(N + "\\s*(?:~|至|到|-)\\s*(\\d+(?:\\.\\d+)?)"));
+    if (m && +m[1] < +m[2]) return { lsl: +m[1], usl: +m[2] };
+    const L = s.match(new RegExp("LSL\\s*[:=]?\\s*" + N, "i")), U = s.match(new RegExp("USL\\s*[:=]?\\s*" + N, "i"));
+    if (L || U) { const o = {}; if (L) o.lsl = +L[1]; if (U) o.usl = +U[1]; if (L && U && !(o.lsl < o.usl)) return null; return o; }
+    return null;
+  }
+
+  // =====================================================================
+  // SPC：自動判讀（欄位角色、資料型態、規格）
+  // AI 依法則回傳 impmeta；程式檢查：欄名須存在、規格須與 AI 抄的原文一致、數據須大致落在規格附近（防單位不同）
+  // =====================================================================
+  const SPC_META_PROMPT = [
+    "另外輸出一個 ```impmeta 區塊（JSON），只根據圖片上寫的內容判斷，沒寫就填 null，不可依數據推估：",
+    '{"cols":{"欄名（與表格第一列完全相同）":"value 或 order 或 id 或 other"},"kind":"var 或 defective 或 defect 或 null","lsl":數字或null,"usl":數字或null,"target":數字或null,"unit":"規格的單位或null","spec_text":"圖片上規格的原文或null"}',
+    "判斷法則：1. 時間、日期、序號、編號、批號、樣本編號是 order 或 id，不是量測值。2. 同一時間點的多個量測值（例如 X1～X5、樣本1～5）都是 value，代表同一子組。3. 量測數值 kind=var；不良數與抽樣數 kind=defective；缺點數 kind=defect。4. 規格寫成「a～b」時 lsl=a、usl=b；寫成「m±d」時 lsl=m−d、usl=m+d、target=m；只寫上限或下限就只填那一個。5. 規格的單位和數據不同（例如 μm 對 mm）時，lsl、usl 填 null，並在 spec_text 說明。6. 頁面上沒有寫規格就填 null，不可自己推估。7. 規格、標題、簽名等不是數據的文字不要抄進表格。"
+  ].join("\n");
+  const SPC_ROLE = { value: "量測值", order: "時間／序號（不列入）", id: "編號（不列入）", other: "其他（不列入）", text: "文字（不列入）" };
+  function spcColRole(head, vals) {
+    if (vals.some(x => x !== "" && x !== "?" && !impIsNum(x)) || !vals.some(impIsNum)) return "text";
+    if (/時間|日期|序號|編號|批|樣本號|^(no\.?|#|id|time|date|seq)\b/i.test(String(head).trim())) return "order";
+    const n = vals.filter(impIsNum).map(Number);
+    if (n.length >= 3) { const d = n[1] - n[0]; if (d !== 0 && n.every((v, i) => !i || Math.abs(v - n[i - 1] - d) <= 1e-9 * Math.max(1, Math.abs(v)))) return "order"; }
+    return "value";
+  }
+  function spcPlan(S, note) {
+    const T = S.table, H = T[0], body = T.slice(1), m = S.meta, notes = [];
+    const fin = v => typeof v === "number" && isFinite(v);
+    const roles = H.map((h, j) => spcColRole(h, body.map(r => r[j])));
+    if (m && m.cols && typeof m.cols === "object") H.forEach((h, j) => { const r = m.cols[h]; if (["value", "order", "id", "other"].includes(r) && roles[j] !== "text") roles[j] = r; });
+    const kind = m && ["var", "defective", "defect"].includes(m.kind) ? m.kind : "";
+    let sp = null, src = "";
+    if (m) {
+      if (fin(m.lsl) || fin(m.usl)) {
+        sp = { lsl: fin(m.lsl) ? m.lsl : "", usl: fin(m.usl) ? m.usl : "", tgt: fin(m.target) ? m.target : "" };
+        src = `AI 從原始資料讀取${m.spec_text ? `「${m.spec_text}」` : ""}`;
+        const c = m.spec_text ? parseSpecText(m.spec_text) : null;
+        if (c && ((c.lsl !== undefined && c.lsl !== sp.lsl) || (c.usl !== undefined && c.usl !== sp.usl))) { notes.push(`AI 給的規格數字和它抄的原文「${m.spec_text}」對不上，未帶入，請自行填寫。`); sp = null; }
+      } else if (m.spec_text) notes.push(`AI 看到規格「${m.spec_text}」但沒有給數值（可能單位不同），請自行判斷後填寫。`);
+    } else {
+      const texts = [].concat(...T, note ? [note] : []).filter(x => /規格|公差|spec|LSL|USL|tolerance/i.test(x));
+      for (const t of texts) { const r = parseSpecText(t); if (r) { sp = { lsl: r.lsl ?? "", usl: r.usl ?? "", tgt: r.tgt ?? "" }; src = `檔案中寫的「${t.slice(0, 40)}」`; break; } }
+    }
+    // 合理性：數據大致要落在規格附近，否則可能單位不同或讀錯
+    const vals = [].concat(...body.map(r => r.filter((x, j) => roles[j] === "value" && impIsNum(x)).map(Number)));
+    if (sp && kind !== "defective" && kind !== "defect" && vals.length) {
+      const L = sp.lsl === "" ? null : +sp.lsl, U = sp.usl === "" ? null : +sp.usl;
+      let ok = true;
+      if (L !== null && U !== null) { const w = U - L; ok = L < U && vals.filter(v => v >= L - w && v <= U + w).length >= vals.length * 0.8; }
+      else { const lim = L !== null ? L : U, med = vals.slice().sort((a, b) => a - b)[vals.length >> 1]; if (lim && med) { const k = Math.abs(med / lim); ok = k <= 10 && k >= 0.1; } }
+      if (!ok) { notes.push(`讀到的規格（${L ?? "—"}～${U ?? "—"}）和數據範圍差太多，可能單位不同或讀錯，未帶入，請自行確認。`); sp = null; }
+    }
+    return { use: roles.map(r => r === "value"), roles, kind, lsl: sp ? String(sp.lsl) : "", usl: sp ? String(sp.usl) : "", tgt: sp ? String(sp.tgt) : "", src: sp ? src : "", notes, auto: true };
+  }
+  function spcPlanHtml(P) {
+    const kinds = [["", "維持目前選擇"], ["var", "計量值"], ["defective", "不良品"], ["defect", "缺點數"]];
+    const inp = (k, lab) => `<div class="field"><label>${lab}</label><input type="text" inputmode="decimal" autocomplete="off" data-plan="${k}" value="${esc(P[k])}"></div>`;
+    return `<div class="imp-plan"><p><b>自動判讀</b> <span class="hint">填入時一併套用，可修改</span></p><div class="fields"><div class="field"><label>資料型態</label><select data-plan="kind">${kinds.map(([v, t]) => `<option value="${v}"${P.kind === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>${inp("lsl", "規格下限 LSL")}${inp("tgt", "目標值")}${inp("usl", "規格上限 USL")}</div>`
+      + `<p class="hint">規格來源：${P.src ? esc(P.src) : "沒有找到規格（可自行填寫）"}</p>`
+      + (P.notes.length ? P.notes.map(n => `<p class="hint"><span class="status ng">${esc(n)}</span></p>`).join("") : "")
+      + `<label class="chk"><input type="checkbox" data-plan="auto"${P.auto ? " checked" : ""}> 填入後自動執行分析</label></div>`;
+  }
+  function spcPlanCheck(P) {
+    const f = k => (P[k] === "" ? null : impIsNum(P[k]) ? +P[k] : NaN);
+    const L = f("lsl"), U = f("usl"), G = f("tgt");
+    if ([L, U, G].some(v => Number.isNaN(v))) return "規格要填數字";
+    if (L !== null && U !== null && !(L < U)) return "規格下限要小於上限";
+    return "";
+  }
+  function spcOnFill(P) {
+    if (!P) return "";
+    if (P.kind && spcKind() !== P.kind) { const b = document.querySelector(`#spcKind [data-v="${P.kind}"]`); if (b) b.click(); }
+    let more = "";
+    if (spcKind() === "var" && (P.lsl !== "" || P.usl !== "" || P.tgt !== "")) {
+      [["spcLsl", P.lsl], ["spcUsl", P.usl], ["spcTgt", P.tgt]].forEach(([id, v]) => { $(id).value = v; $(id).dispatchEvent(new Event("input", { bubbles: true })); });
+      more = `規格：${P.src || "使用者填寫"}（LSL ${P.lsl || "—"}、USL ${P.usl || "—"}）。`;
+    }
+    if (P.auto) $("spcRun").click();
+    return more;
+  }
+  mkImporter({ key: "spcImp", data: "spcData", pickCols: true, numOnly: true, clearOn: "#viewSPC [data-ex]", metaPrompt: SPC_META_PROMPT, roleLabel: SPC_ROLE, plan: spcPlan, planHtml: spcPlanHtml, planCheck: spcPlanCheck, onFill: spcOnFill });
   // =====================================================================
   // 內建範例案件（教學用；數據全部為模擬，產品與批號為代號）
   // 情境參考 FDA MAUDE 同類產品（product code KPE，I.V. container）常見的問題類型：Fluid Leak、Seal、底部封邊漏液
