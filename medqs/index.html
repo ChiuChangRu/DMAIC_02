@@ -745,6 +745,10 @@ textarea.imp-over { outline: 2px dashed var(--teal); outline-offset: 2px; backgr
 .ai-onb p { margin: 0 0 8px; }
 .ai-onb p a { color: var(--teal); font-weight: 700; }
 .nv-lab-go { cursor: pointer; border-radius: 6px; }
+.hyp-design { display: grid; gap: 6px; }
+.hyp-design .help { margin: 0; }
+.ex-stale { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.ex-stale[hidden] { display: none; }
 .nv-lab-go:hover b, .nv-lab-go:focus-visible b { text-decoration: underline; }
 .nv-lab-go:focus-visible { outline: 2px solid #D8995F; outline-offset: 2px; }
 .ai-onb .chk { margin-top: 10px; }
@@ -1557,6 +1561,7 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
           <p class="help">直接從 Excel 選取範圍後貼上，直式（每欄一組）或橫式（每列一組）都可以。第一列或第一欄是文字時會當成組別名稱。依納入的組數自動判定：1 組對目標值、2 組互比、3 組以上整體比較。</p>
           <div class="chips" role="group" aria-label="載入範例">
             <button class="chip" type="button" data-example="1">範例：單組</button>
+            <button class="chip" type="button" data-example="2">範例：兩組</button>
             <button class="chip" type="button" data-example="3">範例：三組</button>
             <button class="chip" type="button" id="clearBtn">清除</button>
           </div>
@@ -15551,6 +15556,78 @@ else root.runValidation = runValidation;
     const apply = () => { if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t); b.textContent = M[t]; b.setAttribute("aria-label", "外觀：" + M[t].slice(2) + "（按一下切換）"); };
     b.addEventListener("click", () => { t = NEXT[t]; try { localStorage.setItem(KEY, t); } catch (_) {} apply(); });
     apply();
+  })();
+  // =====================================================================
+  // 假設檢定：明確的「比較類型」（單組對目標值／兩組比較／三組以上）＋對應的分析方法
+  // 判定仍依納入的組數；點選類型＝調整「納入分析的組別」（有資料時）或提示資料格式（沒資料時）
+  // 分析方法只列計算引擎實際有的檢定
+  // =====================================================================
+  (function hypDesign() {
+    const box = $("pasteBox"); if (!box) return;
+    const step = box.closest(".step"), help = step && step.querySelector("p.help"); if (!help) return;
+    help.insertAdjacentHTML("beforebegin", `<div class="hyp-design"><div class="group-label">比較類型</div><div class="chips" id="hypDesign" role="group" aria-label="比較類型"><button class="chip" type="button" data-k="1" aria-pressed="false">單組對目標值</button><button class="chip" type="button" data-k="2" aria-pressed="false">兩組比較</button><button class="chip" type="button" data-k="3" aria-pressed="false">三組以上</button></div><p class="help" id="hypDesignHelp"></p></div>`);
+    const INFO = {
+      1: { need: "貼 1 欄數據，並在 STEP 2 填目標值。", ph: "例：\n管壁厚度\n0.512\n0.498\n0.505", how: "單樣本 t 檢定（常態）；不符合常態時用 Wilcoxon 符號等級檢定。" },
+      2: { need: "貼 2 欄（每欄一組），例如油壓／電動。", ph: "例：\n油壓\t電動\n5.12\t5.03\n5.08\t4.98", how: "獨立樣本：Welch t（或 Student t）；不符合常態時用 Mann-Whitney。成對樣本：成對 t；不符合常態時用 Wilcoxon 符號等級。要證明「沒有差異」時用同等性 TOST。" },
+      3: { need: "貼 3 欄以上（每欄一組）。", ph: "例：\n供應商A\t供應商B\t供應商C\n12.1\t12.6\t11.8", how: "ANOVA（變異數相同時）或 Welch ANOVA；不符合常態時用 Kruskal-Wallis。" }
+    };
+    let pick = 0;
+    function sync() {
+      const k0 = currentGroups().length, k = k0 >= 3 ? 3 : k0, p = state.parsed, n = p && !p.error ? p.series.filter(s => s.values.length).length : 0;
+      const show = k || pick;
+      document.querySelectorAll("#hypDesign [data-k]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.k === show)));
+      const I = INFO[show];
+      $("hypDesignHelp").innerHTML = !I ? "依貼上的欄數自動判定，也可以直接點選。" : (k ? `目前資料判定為「${modeLabel(k0)}」。` : "") + (!n ? I.need + " " : pick && n < pick ? `<span class="status ng">${pick === 3 ? "需要至少 3 組" : `需要 ${pick} 組`}，目前資料只有 ${n} 組。</span> ` : "") + "對應分析：" + I.how;
+    }
+    const rd = renderDetect;
+    renderDetect = function () { const r = rd.apply(this, arguments); try { sync(); } catch (_) {} return r; };
+    $("hypDesign").addEventListener("click", e => {
+      const b = e.target.closest("[data-k]"); if (!b) return;
+      pick = +b.dataset.k; box.placeholder = INFO[pick].ph;
+      const p = state.parsed;
+      if (p && !p.error) {
+        const avail = p.series.map((s, i) => (s.values.length ? i : -1)).filter(i => i >= 0);
+        if (avail.length >= pick) { state.included = pick === 3 ? avail : avail.slice(0, pick); state.swap = false; renderDetect(); updateSettingsUI(); markStale(); return; }
+      } else box.focus();
+      sync();
+    });
+    box.addEventListener("input", () => { pick = 0; });
+    document.querySelectorAll("#subCompare [data-example], #clearBtn").forEach(b => b.addEventListener("click", () => { pick = 0; setTimeout(sync, 0); }, true));
+    sync();
+  })();
+  // =====================================================================
+  // 工具頁殘留範例資料提醒：載入範例（公開範例或「範例」按鈕）之後，本案問題又改了 → 進到該頁時提示，可一鍵清除
+  // =====================================================================
+  (function exStale() {
+    const V = {
+      hypothesis: { data: "pasteBox", prob: "hypProblem", ex: "#subCompare [data-example]", clear: () => $("clearBtn").click() },
+      spc: { data: "spcData", prob: "spcProblem", ex: "#viewSPC [data-ex]", clear: () => { const d = $("spcData"); d.value = ""; d.dispatchEvent(new Event("input", { bubbles: true })); } }
+    };
+    const mark = {}, cq = () => (($("caseQ") || {}).value || "").trim();
+    const isPub = v => { const t = $(V[v].prob); return !!t && /^【公開範例】/.test(t.value); };
+    Object.entries(V).forEach(([v, c]) => {
+      document.querySelectorAll(c.ex).forEach(b => b.addEventListener("click", () => { mark[v] = { q: cq(), label: (b.textContent || "").trim() }; }));
+      const d = $(c.data); if (d) d.addEventListener("input", e => { if (e.isTrusted) delete mark[v]; });
+    });
+    const sec = v => document.querySelector(`section[data-view="${v}"]`);
+    Object.keys(V).forEach(v => { const s = sec(v); if (s) s.insertAdjacentHTML("afterbegin", `<div class="note warn ex-stale" id="exStale_${v}" hidden><span></span> <button class="btn small primary" type="button" data-exclr="${v}">清除這頁資料</button> <button class="btn small" type="button" data-exkeep="${v}">保留</button></div>`); });
+    document.addEventListener("click", e => {
+      const c = e.target.closest("[data-exclr]"), k = e.target.closest("[data-exkeep]");
+      if (c) { const v = c.dataset.exclr; V[v].clear(); const t = $(V[v].prob); if (t) { t.value = cq(); t.dataset.custom = ""; t.dataset.auto = t.value; } delete mark[v]; tick(); }
+      if (k) { const v = k.dataset.exkeep; mark[v] = Object.assign(mark[v] || {}, { q: cq(), keep: true }); tick(); }
+    });
+    function tick() {
+      Object.keys(V).forEach(v => {
+        const has = (($(V[v].data) || {}).value || "").trim();
+        const tag = isPub(v) ? $(V[v].prob).value.slice(0, 60) : "";
+        if (tag && has && (!mark[v] || mark[v].pub !== tag)) mark[v] = { q: cq(), label: tag, pub: tag };
+        if (!has) delete mark[v];
+        const m = mark[v], el = $("exStale_" + v); if (!el) return;
+        const on = !!(m && cq() && cq() !== m.q);
+        el.hidden = !on; if (on) el.querySelector("span").textContent = `這頁還是之前載入的範例資料（${m.label}），和目前的本案問題「${cq().slice(0, 30)}」不同。`;
+      });
+    }
+    setInterval(tick, 800);
   })();
   // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
