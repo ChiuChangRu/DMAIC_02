@@ -2835,7 +2835,7 @@
     ]},
     { cat: "量測可不可信", items: [
       { q: "量測儀器與人員的變異可以接受嗎？", tool: "MSA", mode: "Gage R&R", data: "樣品 × 量測者 × 重複量測", refs: ["iso5725"], go: { route: "msa" } },
-      { q: "目視檢驗，不同檢驗員判定一致嗎？", tool: "MSA", mode: "屬性一致性分析", data: "多位檢驗員對同一批樣品的判定", refs: ["iso5725"], go: { route: "msa" } },
+      { q: "目視檢驗，不同檢驗員判定一致嗎？", tool: "MSA", mode: "屬性一致性分析", data: "多位檢驗員對同一批樣品的判定", refs: ["iso5725"], go: { route: "msa", sub: "attr" } },
       { q: "量具有沒有偏差？偏差會不會隨量測大小改變？", tool: "MSA", mode: "偏差、線性", data: "標準件的參考值與重複量測值", refs: ["iso5725"], go: { route: "msa", sub: "bias" } },
       { q: "量測系統會不會隨時間漂移？", tool: "MSA", mode: "穩定性", data: "同一標準件每隔一段時間的量測值", refs: ["iso5725"], go: { route: "msa", sub: "stab" } }
     ]},

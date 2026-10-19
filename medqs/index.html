@@ -15657,6 +15657,14 @@ else root.runValidation = runValidation;
     setInterval(tick, 800);
   })();
   // =====================================================================
+  // 工具箱「從情境找工具」：點情境問題就直接前往對應工具（沿用「直接前往」按鈕，子頁與模式一樣帶過去）
+  // 只點類別標籤時不跳頁
+  // =====================================================================
+  (function guideDirect() {
+    const L = $("guideList"); if (!L) return;
+    L.addEventListener("click", e => { if (!e.isTrusted || !e.target.closest("[data-i]")) return; setTimeout(() => { const g = $("guideGo"); if (g) g.click(); }, 0); });
+  })();
+  // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
   // 條件：不在 claude.ai 中、也沒有可用的自帶 API key。提供 API 申請連結（Moonshot），或直接到設定頁貼 key。
   // claude.ai 中不顯示（那裡只能用模式 (1)，不能貼 key）。「不再提醒」存在 localStorage。
@@ -15930,7 +15938,7 @@ else root.runValidation = runValidation;
     ]},
     { cat: "量測可不可信", items: [
       { q: "量測儀器與人員的變異可以接受嗎？", tool: "MSA", mode: "Gage R&R", data: "樣品 × 量測者 × 重複量測", refs: ["iso5725"], go: { route: "msa" } },
-      { q: "目視檢驗，不同檢驗員判定一致嗎？", tool: "MSA", mode: "屬性一致性分析", data: "多位檢驗員對同一批樣品的判定", refs: ["iso5725"], go: { route: "msa" } },
+      { q: "目視檢驗，不同檢驗員判定一致嗎？", tool: "MSA", mode: "屬性一致性分析", data: "多位檢驗員對同一批樣品的判定", refs: ["iso5725"], go: { route: "msa", sub: "attr" } },
       { q: "量具有沒有偏差？偏差會不會隨量測大小改變？", tool: "MSA", mode: "偏差、線性", data: "標準件的參考值與重複量測值", refs: ["iso5725"], go: { route: "msa", sub: "bias" } },
       { q: "量測系統會不會隨時間漂移？", tool: "MSA", mode: "穩定性", data: "同一標準件每隔一段時間的量測值", refs: ["iso5725"], go: { route: "msa", sub: "stab" } }
     ]},

@@ -913,3 +913,11 @@
     }
     setInterval(tick, 800);
   })();
+  // =====================================================================
+  // 工具箱「從情境找工具」：點情境問題就直接前往對應工具（沿用「直接前往」按鈕，子頁與模式一樣帶過去）
+  // 只點類別標籤時不跳頁
+  // =====================================================================
+  (function guideDirect() {
+    const L = $("guideList"); if (!L) return;
+    L.addEventListener("click", e => { if (!e.isTrusted || !e.target.closest("[data-i]")) return; setTimeout(() => { const g = $("guideGo"); if (g) g.click(); }, 0); });
+  })();
