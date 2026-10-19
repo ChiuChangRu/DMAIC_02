@@ -828,3 +828,16 @@
     lab.addEventListener("click", go);
     lab.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   })();
+  // =====================================================================
+  // 外觀切換：自動（跟隨系統）→ 淺色 → 深色；設定 <html data-theme>，CSS 已有對應規則；選擇記在 localStorage
+  // =====================================================================
+  (function themeToggle() {
+    const KEY = "mdqs.theme", M = { auto: "🌓 自動", light: "☀️ 淺色", dark: "🌙 深色" }, NEXT = { auto: "light", light: "dark", dark: "auto" };
+    let t = "auto"; try { t = localStorage.getItem(KEY) || "auto"; } catch (_) {} if (!M[t]) t = "auto";
+    const ref = $("learnLink"); if (!ref) return;
+    ref.insertAdjacentHTML("beforebegin", `<button type="button" class="btn ghost-light small" id="themeTgl" title="切換外觀：自動（跟隨系統）／淺色／深色"></button>`);
+    const b = $("themeTgl");
+    const apply = () => { if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t); b.textContent = M[t]; b.setAttribute("aria-label", "外觀：" + M[t].slice(2) + "（按一下切換）"); };
+    b.addEventListener("click", () => { t = NEXT[t]; try { localStorage.setItem(KEY, t); } catch (_) {} apply(); });
+    apply();
+  })();
