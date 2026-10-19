@@ -13831,13 +13831,19 @@ else root.runValidation = runValidation;
       <div class="run-row" style="margin-top:6px"><button type="button" class="btn small" data-vpnew="1">＋ 自行新增項目</button>${L.some(x => !x.on) ? `<button type="button" class="btn small" data-vpclean="1">刪除未勾選的項目</button>` : ""}</div>`;
   }
   const VP_TOOLS = ["假設檢定－單組對目標值", "假設檢定－兩組獨立", "假設檢定－兩組成對", "假設檢定－三組以上（ANOVA）", "假設檢定－同等性（TOST）", "假設檢定－次數資料（不良率、卡方）", "假設檢定－統計允差區間", "相關與回歸", "MSA－Gage R&R", "MSA－偏差／線性／穩定性", "MSA－屬性一致性", "SPC－管制圖與製程能力", "DOE－實驗設計", "田口方法", "樣本數規劃", "不用統計－文件審查／比對", "不用統計－修改 IFU／標示", "不用統計－設計變更／防呆", "不用統計－100% 全檢", "不用統計－供應商管制（COA、稽核）", "不用統計－引用既有資料或文獻", "不用統計－工程判斷"];
+  // 選項旁的適用場合附註（只改顯示文字；選項的值不變，程式與 AI 判讀仍用 VP_TOOLS 原字串）：[選單上的短註, 滑鼠停留時的完整說明]
+  const VP_NOTE = {
+    "MSA－Gage R&R": ["計量量測：多人重複量同批零件", "計量量測（尺寸、拉力等）：多位操作員重複量測同一批零件，評估量測變異是否夠小（重複性、再現性，%GRR、ndc）。用在新量具、新檢驗員或量測方法變更時。"],
+    "MSA－偏差／線性／穩定性": ["計量量具準確度：對標準件、量程、長期", "計量量具的準確度：量標準件時偏差多少（偏差）、整個量程內偏差是否一致（線性）、長期量測同一標準件是否漂移（穩定性）。用在量具導入、量程確認、定期監控。"],
+    "MSA－屬性一致性": ["目視或通過／不通過判定是否一致", "目視、通過／不通過、等級判定：多位檢驗員判同一批樣品，評估彼此一致性與對標準答案的一致性（Kappa）。例如外觀檢驗、漏液判定。"]
+  };
   // 驗證策略：一般下拉選單（datalist 在格子有字時只列出相符的選項，看起來像不能改）；選「自行輸入…」才換成文字框
   let vpCustom = "";
   function vpToolCell(x) {
     const v = x.tool || "";
     if (vpCustom === x.id) return `<input class="vp-tool" data-id="${x.id}" value="${esc(v)}" placeholder="輸入驗證策略，按 Enter 完成" aria-label="驗證策略（自行輸入）">`;
     const stat = VP_TOOLS.filter(t => !/^不用統計/.test(t)), non = VP_TOOLS.filter(t => /^不用統計/.test(t)), other = v && !VP_TOOLS.includes(v);
-    const o = t => `<option value="${esc(t)}"${t === v ? " selected" : ""}>${esc(t)}</option>`;
+    const o = t => `<option value="${esc(t)}"${t === v ? " selected" : ""}${VP_NOTE[t] ? ` title="${esc(VP_NOTE[t][1])}"` : ""}>${esc(t)}${VP_NOTE[t] ? "　（" + esc(VP_NOTE[t][0]) + "）" : ""}</option>`;
     return `<select class="vp-tool" data-id="${x.id}" aria-label="驗證策略">${v ? "" : `<option value="" selected>請選擇</option>`}${other ? `<option value="${esc(v)}" selected>${esc(v)}</option>` : ""}<optgroup label="統計工具">${stat.map(o).join("")}</optgroup><optgroup label="不用統計">${non.map(o).join("")}</optgroup><optgroup label="其他"><option value="__custom">✎ 自行輸入…</option></optgroup></select>`;
   }
   function vpChanged(full) { fbSave(); if (full) vpRender(); try { pdcaRender(); } catch (_) {} }
