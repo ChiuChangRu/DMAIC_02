@@ -308,3 +308,24 @@
   document.querySelectorAll("#viewSPC [data-ex], #spcKind button").forEach(b => b.addEventListener("click", () => setTimeout(spcSeqCheck, 0)));
   $("spcRun").addEventListener("click", spcSeqCheck, true);
   mkImporter({ key: "spcImp", data: "spcData", pickCols: true, numOnly: true, clearOn: "#viewSPC [data-ex]", metaPrompt: SPC_META_PROMPT, roleLabel: SPC_ROLE, plan: spcPlan, planHtml: spcPlanHtml, planCheck: spcPlanCheck, onFill: spcOnFill });
+  // =====================================================================
+  // 相關與回歸：匯入檔案填入資料後，自動請 AI 建議欄位（Y、X、分層）
+  // 沿用既有的「請 AI 建議欄位」（regAi）：AI 只建議，套用仍要按「套用欄位建議」；沒有 AI 時維持手動選擇
+  // regImpApply 是函式宣告，可以包一層；填入可能要先確認「取代」，所以等資料框真的換了、確認區關閉後才觸發
+  // =====================================================================
+  (function regAutoAi() {
+    if (typeof regImpApply !== "function" || !$("regAi")) return;
+    const orig = regImpApply;
+    regImpApply = function () {
+      const before = $("regData").value, r = orig.apply(this, arguments);
+      let n = 0; const t = setInterval(() => {
+        if (++n > 600) { clearInterval(t); return; }
+        if ($("regData").value === before || !$("regImp").hidden) return;
+        clearInterval(t);
+        if (!sample || !REG.cols.length) return;
+        $("regHint").textContent = "已填入資料。AI 正在看欄位，建議要分析的 Y、X 與分層（要套用請按「套用欄位建議」）。";
+        $("regAi").click();
+      }, 200);
+      return r;
+    };
+  })();
