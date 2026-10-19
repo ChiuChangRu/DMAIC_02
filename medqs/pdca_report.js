@@ -68,7 +68,7 @@
     const hist = rds && rds.list.length ? sec("hist", "歷程", "6　前幾輪的結果", `<table class="pd-tbl pd-hist"><thead><tr><th style="width:62px">輪次</th><th style="width:74px">日期</th><th style="width:92px">從哪一步開始</th><th style="width:76px">結果</th><th>說明</th></tr></thead><tbody>${rds.list.map(x => `<tr><td>第 ${x.n} 輪</td><td>${new Date(x.date).toISOString().slice(0, 10)}</td><td>${x.from >= 0 ? stepLab[x.from] : "—"}</td><td>${RL[x.result] || ""}</td><td>${esc(x.note || "")}</td></tr>`).join("")}<tr><td>第 ${rds.n} 輪</td><td>—</td><td>${rds.from >= 0 ? stepLab[rds.from] : "—"}</td><td>進行中</td><td>本報告</td></tr></tbody></table><p class="pd-note">各輪的完整內容封存在案件中，可在流程列「各輪紀錄」查看或匯出。</p>`) : "";
     const nMod = Object.keys(P.t).length + Object.values(P.c).filter(Boolean).length;
     const body = `<div class="pd-sheet"${forFile ? "" : ` id="pdcaSheet"`}>
-      <header class="pd-head"><div><div class="pd-eyebrow">醫材品質統計輔助工具 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
+      <header class="pd-head"><div><div class="pd-eyebrow">PDCA品質輔助系統 · 魚骨圖</div><h3>PDCA 問題解決報告</h3><div class="pd-meta">產出日期 ${today}${pdCaseName()}</div></div><div class="pd-ring">${pdIco.ring}</div></header>
       ${sec("rec", "P", "1　記錄問題", rec)}${sec("ana", "P", "2　分析問題（魚骨圖）", ana)}${sec("why", "P", "3　找出原因（5 個為什麼）", why)}${sec("act", "D", "4　採取對策", act)}${sec("chk", "C · A", "5　驗證結果與標準化", chk)}${hist}
       <footer class="pd-foot">${nMod ? "本報告含人工補充與修改的內容。" : "本報告只呈現魚骨圖分頁現有的內容。"}空白欄位請補齊後歸檔（CAPA／調查報告）。原因的依據與排除理由以「原因清單」為準。</footer>${(() => { try { return vrApxHtml(mode); } catch (_) { return ""; } })()}</div>`;
     return body;
