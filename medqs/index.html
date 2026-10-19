@@ -14872,7 +14872,7 @@ else root.runValidation = runValidation;
       }
       if (v === "fishbone") {
         const pop = $("fbPop");
-        if (pop && vis(pop)) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "要驗證？按這裡"]; }
+        if (pop && vis(pop) && !cand.length && use.length && !ver.length) { const vb = pop.querySelector('[data-p="verify"]'); if (vb && vb.getAttribute("aria-pressed") !== "true") return [6, vb, "要驗證？按這裡"]; }   // 只在「點原因，標 ◇」這一步指 ◇；已逐一確認、已有 ◇ 時不再追問
         { const m = exMissing()[0]; if (m) { const el = m[1] ? document.querySelector(`[data-hfsr2="${m[1].id}"]`) : document.querySelector(`li.st-excl[data-f="${m[0].id}"]:not([data-s]) .fb-reason`); if (el) return [6, el, "寫排除理由（會寫進報告）"]; } }
         if (cand.length) return [6, document.querySelector('.fb-f.st-cand .fb-f-text'), `逐一確認（剩 ${cand.length}）`];   // 指原因本身，不指「採用」，避免誤以為要同意
         if (use.length && !ver.length) return [6, document.querySelector("#fbSvgWrap [data-f]"), "點原因，標 ◇ 待驗證"];
