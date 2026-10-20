@@ -34,7 +34,7 @@
     nav.className = "toolnav sb-nav"; nav.setAttribute("aria-label", "方法一：工具箱；方法二：PDCA 改善流程"); nav.removeAttribute("role");
     const hid = nav.querySelector(".nv-hid");
     const tb = btn("toolbox"), steps = [...nav.querySelectorAll("[data-step]")];
-    nav.insertAdjacentHTML("afterbegin", grp("tb", "方法一", "🧰 工具箱") + grp("flow", "方法二", "PDCA 改善流程"));
+    nav.insertAdjacentHTML("afterbegin", grp("tb", "方法一", "工具箱") + grp("flow", "方法二", "PDCA 改善流程"));
     const [gTb, gFl] = nav.querySelectorAll(".sb-grp"), bTb = gTb.querySelector(".sb-body"), bFl = gFl.querySelector(".sb-body");
     const item = (b, key, subs) => { const d = document.createElement("div"); d.className = "sb-tool"; d.dataset.t = key; b.className = (b.className + " sb-it").trim(); b.removeAttribute("tabindex"); b.removeAttribute("role"); d.appendChild(b); if (subs) { b.classList.add("sb-has"); d.insertAdjacentHTML("beforeend", `<div class="sb-sub" hidden>${subs}</div>`); } return d; };
     if (tb) { tb.textContent = "從情境找工具（總覽）"; bTb.appendChild(item(tb, "toolbox")); }
