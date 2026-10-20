@@ -1384,6 +1384,8 @@ nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
   body.sb-drawer .sb { transform: none; }
   .sb-foot { display: none; }
 }
+/* ③ 驗證計畫：AI 建議的驗證策略標記（plan_ai.js） */
+.hub-aitag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--teal); background: var(--teal-soft); border-radius: 999px; padding: 1px 8px; }
 </style>
 
 <div class="wrap">
@@ -6997,7 +6999,7 @@ else root.runValidation = runValidation;
     if (!o.detail || typeof o.detail !== "object") o.detail = d.detail;
     if (!o.ext || typeof o.ext !== "object") o.ext = null;
     if (o.pdca != null && typeof o.pdca !== "object") o.pdca = {};
-    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, fid: typeof x.fid === "string" ? x.fid.slice(0, 40) : "", fbt: typeof x.fbt === "string" ? x.fbt.slice(0, 300) : "", cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000), inp: x.ss.inp && typeof x.ss.inp === "object" ? { sub: String(x.ss.inp.sub || "").slice(0, 12), f: Object.fromEntries(Object.entries(x.ss.inp.f || {}).slice(0, 80).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 200)])), c: Object.fromEntries(Object.entries(x.ss.inp.c || {}).slice(0, 30).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 40)])) } : undefined } : undefined, vr: x.vr && typeof x.vr === "object" ? { st: String(x.vr.st || "").slice(0, 4), note: String(x.vr.note || "").slice(0, 1000) } : undefined, apx: Array.isArray(x.apx) ? x.apx.filter(a => a && typeof a === "object").map(a => ({ id: a.id || fid(), at: +a.at || Date.now(), tool: String(a.tool || "").slice(0, 200), st: String(a.st || "").slice(0, 4), note: String(a.note || "").slice(0, 1000), html: String(a.html || "").slice(0, 400000), plan: a.plan && typeof a.plan === "object" ? { q: String(a.plan.q || "").slice(0, 8), n: String(a.plan.n || "").slice(0, 120), meth: String(a.plan.meth || "").slice(0, 80), sum: String(a.plan.sum || "").slice(0, 300) } : null, act: String(a.act || "").slice(0, 120), dev: !!a.dev, devWhy: String(a.devWhy || "").slice(0, 300), meth: String(a.meth || "").slice(0, 80), key: String(a.key || "").slice(0, 120) })) : [], ana: x.ana && typeof x.ana === "object" && x.ana.snap && typeof x.ana.snap === "object" ? { at: +x.ana.at || 0, snap: x.ana.snap } : undefined })) : [];
+    o.vplan = Array.isArray(o.vplan) ? o.vplan.filter(x => x && typeof x === "object").map(x => ({ id: x.id || fid(), on: !!x.on, fid: typeof x.fid === "string" ? x.fid.slice(0, 40) : "", fbt: typeof x.fbt === "string" ? x.fbt.slice(0, 300) : "", cause: String(x.cause || ""), method: String(x.method || ""), data: String(x.data || ""), tool: String(x.tool || ""), toolAi: typeof x.toolAi === "string" ? x.toolAi.slice(0, 120) : undefined, ss: x.ss && typeof x.ss === "object" ? { q: String(x.ss.q || "").slice(0, 8), n: String(x.ss.n || "").slice(0, 120), sum: String(x.ss.sum || "").slice(0, 300), why: String(x.ss.why || "").slice(0, 2000), auto: String(x.ss.auto || "").slice(0, 2000), inp: x.ss.inp && typeof x.ss.inp === "object" ? { sub: String(x.ss.inp.sub || "").slice(0, 12), f: Object.fromEntries(Object.entries(x.ss.inp.f || {}).slice(0, 80).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 200)])), c: Object.fromEntries(Object.entries(x.ss.inp.c || {}).slice(0, 30).map(([k, v]) => [String(k).slice(0, 40), String(v).slice(0, 40)])) } : undefined } : undefined, vr: x.vr && typeof x.vr === "object" ? { st: String(x.vr.st || "").slice(0, 4), note: String(x.vr.note || "").slice(0, 1000) } : undefined, apx: Array.isArray(x.apx) ? x.apx.filter(a => a && typeof a === "object").map(a => ({ id: a.id || fid(), at: +a.at || Date.now(), tool: String(a.tool || "").slice(0, 200), st: String(a.st || "").slice(0, 4), note: String(a.note || "").slice(0, 1000), html: String(a.html || "").slice(0, 400000), plan: a.plan && typeof a.plan === "object" ? { q: String(a.plan.q || "").slice(0, 8), n: String(a.plan.n || "").slice(0, 120), meth: String(a.plan.meth || "").slice(0, 80), sum: String(a.plan.sum || "").slice(0, 300) } : null, act: String(a.act || "").slice(0, 120), dev: !!a.dev, devWhy: String(a.devWhy || "").slice(0, 300), meth: String(a.meth || "").slice(0, 80), key: String(a.key || "").slice(0, 120) })) : [], ana: x.ana && typeof x.ana === "object" && x.ana.snap && typeof x.ana.snap === "object" ? { at: +x.ana.at || 0, snap: x.ana.snap } : undefined })) : [];
     o.vpSkip = Array.isArray(o.vpSkip) ? o.vpSkip.filter(v => typeof v === "string").slice(-200) : [];   // 使用者從驗證清單刪掉的魚骨圖原因，不再自動帶入
     o.factors = o.factors.filter(f => f && typeof f.text === "string").map(f => ({ id: f.id || fid(), ref: typeof f.ref === "string" ? f.ref : "", text: f.text, st: ST_LABEL[f.st] ? f.st : "cand", src: SRC_LABEL[f.src] ? f.src : "user", key: !!f.key, verify: !!f.verify, reason: f.reason || "", cat: f.cat && typeof f.cat === "object" ? f.cat : {},
       subs: (Array.isArray(f.subs) ? f.subs : []).filter(x => x && typeof x.text === "string").map(x => ({ id: x.id || fid(), text: x.text, st: ST_LABEL[x.st] ? x.st : "cand", src: SRC_LABEL[x.src] ? x.src : "user" })) }));
@@ -14937,7 +14939,7 @@ else root.runValidation = runValidation;
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
-        const noLv = on.find(x => !x.lv && !(x.nv && String(x.nv.why || "").trim()));
+        const noLv = LV_ON && on.find(x => !x.lv && !(x.nv && String(x.nv.why || "").trim()));
         if (noLv) { const el = document.querySelector(`#planHub [data-hublv="${noLv.id}"]`); if (el) return [7, el, "選對策層次"]; }
         for (const x of on) {
           if (x.nv) { if (String(x.nv.why || "").trim()) continue; return [8, document.querySelector(`[data-nvwhy="${x.id}"]`), "寫不驗證的原因"]; }
@@ -15325,9 +15327,9 @@ else root.runValidation = runValidation;
         pr ? `本案問題：${pr}` : "", `原因：${x.cause}`, subs ? `子因子：${subs}` : "", f ? `魚骨圖分類：${fbCatName(f)}` : "",
         x.method ? `目前寫的驗證方式：${x.method}` : "", x.tool ? `目前選的策略：${x.tool}（可以建議改）` : "",
         `規則：先判斷要不要統計。不用統計就足以確認的，用「不用統計－」開頭的策略；需要數據比較、推論、或要證明比例／可靠度時，才用統計工具。不要給任何數值（標準差、不良率、樣本數、規格都不要寫），數值由使用者依自己的資料填。`,
-        `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。`,
-        `回答最多 5 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）④ 對策層次（理由一行）。推論標 *。`,
-        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料","lv":"對策層次 1、2 或 3"}`, "```",
+        LV_ON ? `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。` : "",
+        `回答最多 ${LV_ON ? 5 : 4} 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）${LV_ON ? "④ 對策層次（理由一行）" : ""}。推論標 *。`,
+        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料"${LV_ON ? ',"lv":"對策層次 1、2 或 3"' : ""}}`, "```",
         `策略清單：${VP_TOOLS.join("、")}`,
         `樣本數代碼：${SVQS().map(o => o[0] + "＝" + o[1]).join("；")}`].filter(Boolean).join("\n");
       fbAskAI(q, undefined, { label: `問 AI：${x.cause.slice(0, 20)}`, quote: "", display: `「${x.cause}」要怎麼驗證？要不要統計、用哪個工具、樣本數要證明什麼？` });
@@ -15342,7 +15344,7 @@ else root.runValidation = runValidation;
     };
     const html = j => {
       const x = item(j.id), done = x && x.tool === j.tool, ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
-      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
+      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${LV_ON && j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
     };
     const ob = aiBody;
     aiBody = function (text, final, key) {
@@ -15354,7 +15356,7 @@ else root.runValidation = runValidation;
       const b = e.target.closest("[data-vitem]"); if (!b || b.disabled) return;
       let j; try { j = JSON.parse(b.dataset.vitem); } catch (_) { return; }
       const x = item(j.id); if (!x) return;
-      x.tool = j.tool; if (j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
+      x.tool = j.tool; if (LV_ON && j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
       let svOK = false; try { svOK = svOk(x); } catch (_) {}
       if (!isNS(j.tool) && j.svq && !svOK) x.ss = { q: j.svq, n: "", sum: "", why: "" };
       try { vpChanged(true); } catch (_) {}
@@ -15411,6 +15413,7 @@ else root.runValidation = runValidation;
   // 排除的原因與理由寫進 PDCA 報告第 2 段
   // =====================================================================
   var LV = { "1": "① 根因調查", "2": "② 製程／放行卡控", "3": "③ 臨床控管（IFU）" };
+  var LV_ON = false;   // 對策層次：先拿掉（驗證計畫面板太複雜）；資料欄位保留，改回 true 即恢復選單、報告欄位與魚骨圖顏色
   function exWhy(f, s) { return String(s ? ((fb.sxr || {})[s.id] || "") : (f.reason || "")).trim(); }
   function exMissing() { const L = []; (fb.factors || []).forEach(f => { if (f.st === "excl" && !exWhy(f)) L.push([f, null]); else if (f.st !== "excl") (f.subs || []).forEach(s => { if (s.st === "excl" && !exWhy(f, s)) L.push([f, s]); }); }); return L; }
   (function exclReason() {
@@ -15489,7 +15492,7 @@ else root.runValidation = runValidation;
   // AI 可建議（問 AI 這一項），人可修改；報告第 4 段對策表加「層次」欄
   // =====================================================================
   (function levelInit() {
-    const hub = $("planHub"); if (!hub) return;
+    const hub = $("planHub"); if (!hub || !LV_ON) return;
     const item = id => (fb.vplan || []).find(y => y.id === id);
     const DEF = t => /修改 IFU|標示/.test(t || "") ? "3" : /100% 全檢/.test(t || "") ? "2" : "";
     const deco = () => hub.querySelectorAll(".hub-item").forEach(it => {
@@ -15526,7 +15529,7 @@ else root.runValidation = runValidation;
   // 已排除的原因也畫上去（刪除線），對側寫排除理由；◇ 尚無對策的標紅字。對策不加框，只用顏色區分層次。
   // 取代原本的魚骨圖（② 魚骨圖分頁、PDCA 報告、匯出圖都用這一張）；點原因、分類、問題點照常可以編輯
   // =====================================================================
-  const LOOP_LEGEND = `<p class="hint loop-leg" style="font-size:12px;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝對策：<b style="color:var(--lv1,#2E7D5B)">① 根因調查</b>、<b style="color:var(--lv2,#A35F25)">② 製程／放行卡控</b>、<b style="color:var(--lv3,#3B6EA8)">③ 臨床控管（IFU）</b>；灰字＝排除理由；<b style="color:var(--bad,#B3261E)">紅字＝◇ 尚無對策</b>。</p>`;
+  const LOOP_LEGEND = `<p class="hint loop-leg" style="font-size:12px;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝${LV_ON ? `對策：<b style="color:var(--lv1,#2E7D5B)">① 根因調查</b>、<b style="color:var(--lv2,#A35F25)">② 製程／放行卡控</b>、<b style="color:var(--lv3,#3B6EA8)">③ 臨床控管（IFU）</b>` : `<b style="color:var(--lv1,#2E7D5B)">驗證策略</b>`}；灰字＝排除理由；<b style="color:var(--bad,#B3261E)">紅字＝◇ 尚無對策</b>。</p>`;
   fbDiagram = function (edit) {
     const at = (k, v) => edit ? ` data-${k}="${v}" class="fb-hit"` : "";
     const cats = fbCats(); if (!cats.length) return "";
@@ -15535,7 +15538,9 @@ else root.runValidation = runValidation;
     const cm = (f, s) => { const L = []; if (f.st === "excl") { wrapText("排除理由：" + (String(f.reason || "").trim() || "未填"), P.kw).forEach(t => L.push({ t, c: "var(--muted)" })); return L; }
       const it = (fb.vplan || []).filter(x => x.on && x.fid === f.id);
       if (!it.length) { if (f.verify) L.push({ t: "尚無對策", c: "var(--bad,#B3261E)", b: 1 }); return L; }
-      it.forEach(x => { const lab = (x.lv ? LV[x.lv] : "未選層次") + (x.nv && String(x.nv.why || "").trim() ? "（不驗證）" : ""); L.push({ t: lab, c: LVC[x.lv] || "var(--muted)", b: 1 }); wrapText(x.tool || "未選策略", P.kw).forEach(t => L.push({ t, c: "var(--ink)" })); });
+      it.forEach(x => { const nv = x.nv && String(x.nv.why || "").trim() ? "（不驗證）" : "";
+        if (!LV_ON) { wrapText((x.tool || "未選策略") + nv, P.kw).forEach(t => L.push({ t, c: x.tool ? "var(--lv1,#2E7D5B)" : "var(--muted)", b: 1 })); return; }
+        const lab = (x.lv ? LV[x.lv] : "未選層次") + nv; L.push({ t: lab, c: LVC[x.lv] || "var(--muted)", b: 1 }); wrapText(x.tool || "未選策略", P.kw).forEach(t => L.push({ t, c: "var(--ink)" })); });
       return L; };
     const items = cats.map(c => fb.factors.filter(f => f.cat[fb.set] === c.id && (f.st === "use" || f.st === "excl")).map(f => ({ f,
       lines: wrapText((f.key ? "★ " : "") + (f.verify && f.st !== "excl" ? "◇ " : "") + f.text, P.cw),
@@ -15916,6 +15921,55 @@ else root.runValidation = runValidation;
       if (mobile()) drawer(false);
     });
     sync();
+  })();
+  // =====================================================================
+  // ③ 驗證計畫：驗證策略預設用 AI 建議，人可以改
+  // 進入 ③ 時，有勾選的項目還沒選策略、AI 可用 → 自動請 AI 建議一次（同一批項目只問一次）；
+  // AI 回答裡的 verify 建議直接填進「還沒選策略」的項目（不覆蓋已選的），並標「AI 建議」；改選後標記消失。
+  // =====================================================================
+  (function planAiInit() {
+    const hub = $("planHub"); if (!hub) return;
+    const asked = new Set(), applied = new Set();
+    const blank = x => x.on && !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim());
+    const aiOn = () => { try { return aiMode === "claude" || aiMode === "byok"; } catch (_) { return false; } };
+    const note = m => { const el = $("planMsg"); if (el) el.textContent = m; };
+    function autoAsk() {
+      if (!aiOn()) return;
+      let b = false; try { b = busy; } catch (_) {} if (b) return;
+      try { vpSyncFb(); } catch (_) {}
+      const todo = (fb.vplan || []).filter(x => blank(x) && !asked.has(x.id)); if (!todo.length) return;
+      todo.forEach(x => asked.add(x.id));
+      note(`已自動請 AI 建議 ${todo.length} 個項目的驗證策略；回覆後會直接填入「① 驗證策略」，可以再自行修改。`);
+      $("fbPlanAI").click();
+    }
+    // AI 回覆完成：verify 建議填進還沒選策略的項目
+    function apply(text) {
+      let items = null; try { items = vpParse(text); } catch (_) {} if (!items) return 0;
+      const key = items.map(i => i.cause + "|" + i.tool).join("\n"); if (applied.has(key)) return 0; applied.add(key);
+      let n = 0;
+      (fb.vplan || []).filter(blank).forEach(x => {
+        const it = items.find(i => VP_TOOLS.includes(i.tool) && vpSim(i.cause, x.cause) >= VP_SIM); if (!it) return;
+        x.tool = it.tool; x.toolAi = it.tool;
+        if (!String(x.method || "").trim() && it.method) x.method = it.method;
+        if (!String(x.data || "").trim() && it.data) x.data = it.data;
+        n++;
+      });
+      if (n) { try { vpChanged(true); } catch (_) {} try { closePanel(); } catch (_) {} note(`已依 AI 建議填入 ${n} 個項目的驗證策略（標「AI 建議」）；請自行判斷，可直接在選單改選。`); }
+      return n;
+    }
+    // 填入後收起 AI 視窗，露出已填入的策略（回覆仍可從「問 AI」再看）
+    const ob = aiBody;
+    aiBody = function (text, final, key) { const h = ob(text, final, key); if (final) setTimeout(() => { try { apply(text); } catch (e) { console.warn("plan ai", e); } }, 0); return h; };
+    // 「AI 建議」標記：策略仍是 AI 給的值才顯示
+    const deco = () => hub.querySelectorAll(".hub-item").forEach(it => {
+      const s = it.querySelector("select.hub-tool"); if (!s) return; const x = (fb.vplan || []).find(y => y.id === s.dataset.id);
+      const tag = it.querySelector(".hub-aitag"), on = !!(x && x.toolAi && x.tool === x.toolAi);
+      if (on && !tag) s.insertAdjacentHTML("afterend", `<span class="hub-aitag" title="AI 建議的策略，請自行判斷；可直接在選單改選">🤖 AI 建議，可修改</span>`);
+      else if (!on && tag) tag.remove();
+    });
+    new MutationObserver(() => setTimeout(deco, 0)).observe(hub, { childList: true, subtree: true });
+    const _route = route;
+    route = function (name) { _route(name); if (name === "plan") setTimeout(() => { try { autoAsk(); } catch (e) { console.warn("plan ai", e); } }, 300); };
   })();
 
   // ---------- problem guide ----------

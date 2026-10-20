@@ -145,7 +145,7 @@
         if (!on.length) { const c = document.querySelector("#fbVplan [data-vpon]"); if (c && $("planEdit")) $("planEdit").open = true; return [7, c, "勾選要驗證的"]; }
         const noTool = on.find(x => !String(x.tool || "").trim() && !(x.nv && String(x.nv.why || "").trim()));
         if (noTool) return [7, document.querySelector(`#planHub .hub-tool[data-id="${noTool.id}"]`), "選驗證策略"];
-        const noLv = on.find(x => !x.lv && !(x.nv && String(x.nv.why || "").trim()));
+        const noLv = LV_ON && on.find(x => !x.lv && !(x.nv && String(x.nv.why || "").trim()));
         if (noLv) { const el = document.querySelector(`#planHub [data-hublv="${noLv.id}"]`); if (el) return [7, el, "選對策層次"]; }
         for (const x of on) {
           if (x.nv) { if (String(x.nv.why || "").trim()) continue; return [8, document.querySelector(`[data-nvwhy="${x.id}"]`), "寫不驗證的原因"]; }
@@ -533,9 +533,9 @@
         pr ? `本案問題：${pr}` : "", `原因：${x.cause}`, subs ? `子因子：${subs}` : "", f ? `魚骨圖分類：${fbCatName(f)}` : "",
         x.method ? `目前寫的驗證方式：${x.method}` : "", x.tool ? `目前選的策略：${x.tool}（可以建議改）` : "",
         `規則：先判斷要不要統計。不用統計就足以確認的，用「不用統計－」開頭的策略；需要數據比較、推論、或要證明比例／可靠度時，才用統計工具。不要給任何數值（標準差、不良率、樣本數、規格都不要寫），數值由使用者依自己的資料填。`,
-        `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。`,
-        `回答最多 5 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）④ 對策層次（理由一行）。推論標 *。`,
-        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料","lv":"對策層次 1、2 或 3"}`, "```",
+        LV_ON ? `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。` : "",
+        `回答最多 ${LV_ON ? 5 : 4} 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）${LV_ON ? "④ 對策層次（理由一行）" : ""}。推論標 *。`,
+        `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料"${LV_ON ? ',"lv":"對策層次 1、2 或 3"' : ""}}`, "```",
         `策略清單：${VP_TOOLS.join("、")}`,
         `樣本數代碼：${SVQS().map(o => o[0] + "＝" + o[1]).join("；")}`].filter(Boolean).join("\n");
       fbAskAI(q, undefined, { label: `問 AI：${x.cause.slice(0, 20)}`, quote: "", display: `「${x.cause}」要怎麼驗證？要不要統計、用哪個工具、樣本數要證明什麼？` });
@@ -550,7 +550,7 @@
     };
     const html = j => {
       const x = item(j.id), done = x && x.tool === j.tool, ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
-      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
+      return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${LV_ON && j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
     };
     const ob = aiBody;
     aiBody = function (text, final, key) {
@@ -562,7 +562,7 @@
       const b = e.target.closest("[data-vitem]"); if (!b || b.disabled) return;
       let j; try { j = JSON.parse(b.dataset.vitem); } catch (_) { return; }
       const x = item(j.id); if (!x) return;
-      x.tool = j.tool; if (j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
+      x.tool = j.tool; if (LV_ON && j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
       let svOK = false; try { svOK = svOk(x); } catch (_) {}
       if (!isNS(j.tool) && j.svq && !svOK) x.ss = { q: j.svq, n: "", sum: "", why: "" };
       try { vpChanged(true); } catch (_) {}
@@ -619,6 +619,7 @@
   // 排除的原因與理由寫進 PDCA 報告第 2 段
   // =====================================================================
   var LV = { "1": "① 根因調查", "2": "② 製程／放行卡控", "3": "③ 臨床控管（IFU）" };
+  var LV_ON = false;   // 對策層次：先拿掉（驗證計畫面板太複雜）；資料欄位保留，改回 true 即恢復選單、報告欄位與魚骨圖顏色
   function exWhy(f, s) { return String(s ? ((fb.sxr || {})[s.id] || "") : (f.reason || "")).trim(); }
   function exMissing() { const L = []; (fb.factors || []).forEach(f => { if (f.st === "excl" && !exWhy(f)) L.push([f, null]); else if (f.st !== "excl") (f.subs || []).forEach(s => { if (s.st === "excl" && !exWhy(f, s)) L.push([f, s]); }); }); return L; }
   (function exclReason() {
@@ -697,7 +698,7 @@
   // AI 可建議（問 AI 這一項），人可修改；報告第 4 段對策表加「層次」欄
   // =====================================================================
   (function levelInit() {
-    const hub = $("planHub"); if (!hub) return;
+    const hub = $("planHub"); if (!hub || !LV_ON) return;
     const item = id => (fb.vplan || []).find(y => y.id === id);
     const DEF = t => /修改 IFU|標示/.test(t || "") ? "3" : /100% 全檢/.test(t || "") ? "2" : "";
     const deco = () => hub.querySelectorAll(".hub-item").forEach(it => {
@@ -734,7 +735,7 @@
   // 已排除的原因也畫上去（刪除線），對側寫排除理由；◇ 尚無對策的標紅字。對策不加框，只用顏色區分層次。
   // 取代原本的魚骨圖（② 魚骨圖分頁、PDCA 報告、匯出圖都用這一張）；點原因、分類、問題點照常可以編輯
   // =====================================================================
-  const LOOP_LEGEND = `<p class="hint loop-leg" style="font-size:12px;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝對策：<b style="color:var(--lv1,#2E7D5B)">① 根因調查</b>、<b style="color:var(--lv2,#A35F25)">② 製程／放行卡控</b>、<b style="color:var(--lv3,#3B6EA8)">③ 臨床控管（IFU）</b>；灰字＝排除理由；<b style="color:var(--bad,#B3261E)">紅字＝◇ 尚無對策</b>。</p>`;
+  const LOOP_LEGEND = `<p class="hint loop-leg" style="font-size:12px;margin:4px 0 8px">骨頭左側＝原因（◇ 待驗證；刪除線＝已排除），右側＝${LV_ON ? `對策：<b style="color:var(--lv1,#2E7D5B)">① 根因調查</b>、<b style="color:var(--lv2,#A35F25)">② 製程／放行卡控</b>、<b style="color:var(--lv3,#3B6EA8)">③ 臨床控管（IFU）</b>` : `<b style="color:var(--lv1,#2E7D5B)">驗證策略</b>`}；灰字＝排除理由；<b style="color:var(--bad,#B3261E)">紅字＝◇ 尚無對策</b>。</p>`;
   fbDiagram = function (edit) {
     const at = (k, v) => edit ? ` data-${k}="${v}" class="fb-hit"` : "";
     const cats = fbCats(); if (!cats.length) return "";
@@ -743,7 +744,9 @@
     const cm = (f, s) => { const L = []; if (f.st === "excl") { wrapText("排除理由：" + (String(f.reason || "").trim() || "未填"), P.kw).forEach(t => L.push({ t, c: "var(--muted)" })); return L; }
       const it = (fb.vplan || []).filter(x => x.on && x.fid === f.id);
       if (!it.length) { if (f.verify) L.push({ t: "尚無對策", c: "var(--bad,#B3261E)", b: 1 }); return L; }
-      it.forEach(x => { const lab = (x.lv ? LV[x.lv] : "未選層次") + (x.nv && String(x.nv.why || "").trim() ? "（不驗證）" : ""); L.push({ t: lab, c: LVC[x.lv] || "var(--muted)", b: 1 }); wrapText(x.tool || "未選策略", P.kw).forEach(t => L.push({ t, c: "var(--ink)" })); });
+      it.forEach(x => { const nv = x.nv && String(x.nv.why || "").trim() ? "（不驗證）" : "";
+        if (!LV_ON) { wrapText((x.tool || "未選策略") + nv, P.kw).forEach(t => L.push({ t, c: x.tool ? "var(--lv1,#2E7D5B)" : "var(--muted)", b: 1 })); return; }
+        const lab = (x.lv ? LV[x.lv] : "未選層次") + nv; L.push({ t: lab, c: LVC[x.lv] || "var(--muted)", b: 1 }); wrapText(x.tool || "未選策略", P.kw).forEach(t => L.push({ t, c: "var(--ink)" })); });
       return L; };
     const items = cats.map(c => fb.factors.filter(f => f.cat[fb.set] === c.id && (f.st === "use" || f.st === "excl")).map(f => ({ f,
       lines: wrapText((f.key ? "★ " : "") + (f.verify && f.st !== "excl" ? "◇ " : "") + f.text, P.cw),
