@@ -1388,6 +1388,12 @@ nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
 .hub-aitag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--teal); background: var(--teal-soft); border-radius: 999px; padding: 1px 8px; }
 /* 魚骨圖字級下拉（hf_ui.js fbFsInit） */
 .fb-fs { font: inherit; font-size: 14px; font-weight: 700; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+/* ① 定義問題：本案已送出的問題（hf_ui.js homeRecord） */
+.home-rec { border: 1px solid var(--line); border-left: 4px solid var(--teal); background: var(--surface); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+.home-rec .hr-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.home-rec .hr-h .btn { margin-left: auto; }
+.home-rec ol { margin: 8px 0 0; padding-left: 22px; font-size: 14.5px; line-height: 1.55; }
+.home-rec li + li { margin-top: 4px; }
 </style>
 
 <div class="wrap">
@@ -15759,6 +15765,28 @@ else root.runValidation = runValidation;
     const cur = fbFsZ(), opts = [["0.85", "小"], ["1", "標準"], ["1.25", "大"], ["1.5", "特大"], ["1.8", "最大"]];
     item.insertAdjacentHTML("afterend", `<div class="fb-tb-item"><label class="group-label" for="fbFs">字級</label><select id="fbFs" class="fb-fs">${opts.map(([k, t]) => `<option value="${k}"${Math.abs(+k - cur) < 0.01 ? " selected" : ""}>${t}</option>`).join("")}</select></div>`);
     $("fbFs").addEventListener("change", e => { try { localStorage.setItem("mdqs.fb.fs", e.target.value); } catch (_) {} e.target.blur(); try { popClose(); } catch (_) {} try { fbRenderOut(); } catch (err) { console.warn("fb fs", err); } });
+  })();
+  // =====================================================================
+  // ① 定義問題：送出後輸入框會清空、問答收在 AI 對話裡，回到這頁時看起來像資料不見了
+  // → 在輸入框上方列出「本案已送出的問題」與 AI 回覆數，一鍵打開 AI 對話；輸入框改成追問／補充
+  // =====================================================================
+  (function homeRecord() {
+    const q = $("homeQ"), lab = $("homeQLab"); if (!q || !lab) return;
+    lab.insertAdjacentHTML("beforebegin", `<div class="home-rec" id="homeRec" hidden></div>`);
+    const R = $("homeRec"), LAB0 = lab.textContent, PH0 = q.placeholder;
+    const paint = () => {
+      let log = []; try { log = homeLogNow(); } catch (_) {}
+      const us = log.filter(m => m.role === "user" && (!m.label || /^你/.test(m.label))), nA = log.filter(m => m.role !== "user").length;
+      if (!us.length) { R.hidden = true; R.innerHTML = ""; lab.textContent = LAB0; q.placeholder = PH0; return; }
+      R.hidden = false;
+      R.innerHTML = `<div class="hr-h"><b>本案已送出的問題</b><span class="hint">AI 已回覆 ${nA} 則，完整問答在 AI 對話裡</span><button type="button" class="btn small primary" data-hrgo="1">💬 打開 AI 對話</button></div><ol>${us.map(m => `<li>${esc(String(m.display || m.text || "").slice(0, 400))}</li>`).join("")}</ol>`;
+      lab.textContent = "繼續追問，或輸入新的問題（送出時可選擇延續上一個問題或重新開始）"; q.placeholder = "例如：補充發生批號、比例，或問 AI 下一步";
+    };
+    R.addEventListener("click", e => { if (e.target.closest("[data-hrgo]")) { try { openPanel(); } catch (_) {} } });
+    const _route = route;
+    route = function (name) { _route(name); if (name === "home") setTimeout(paint, 0); };
+    new MutationObserver(() => { try { if (currentView === "home") paint(); } catch (_) {} }).observe($("msgs"), { childList: true });
+    setTimeout(paint, 0);
   })();
   // =====================================================================
   // 未連接 AI 時的提醒（GitHub 版等 claude.ai 以外的開啟方式）
