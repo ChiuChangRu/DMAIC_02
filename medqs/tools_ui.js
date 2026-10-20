@@ -344,14 +344,43 @@
   $("msaSubHint").textContent = MSA_HINT.grr;
   bindSubtabs("msaTabs", s => { msaSub = s; $("msaSubHint").textContent = MSA_HINT[s]; });
   // ---- Gage R&R ----
-  const GRR_EX = (() => {
-    const r = rng(23), parts = [], L = ["操作員,零件,第1次,第2次,第3次"];
-    for (let j = 0; j < 10; j++) parts.push(25 + 1.6 * gauss(r));
-    const opB = [0, 0.18, -0.12];
-    ["王", "李", "陳"].forEach((op, o) => parts.forEach((pv, j) => L.push([op, "P" + (j + 1)].concat([0, 1, 2].map(() => (pv + opB[o] + 0.15 * gauss(r)).toFixed(2))).join(","))));
-    return L.join("\n");
-  })();
-  $("grrEx").addEventListener("click", () => { $("grrData").value = GRR_EX; $("grrTol").value = "8"; $("grrMethod").value = "anova"; grrRun(); $("grrHint").textContent = "範例：3 位操作員 × 10 件 × 3 次，量測導管外徑相關尺寸（虛構數值，公差 8）。"; });
+  // 內建範例＝IVB-500 點滴軟袋範例案件的熱封寬度 Gage R&R（同一份模擬數據；規格 8.0 ± 1.0 mm → 公差 2）
+  // 固定寫在程式裡，不會被使用者輸入的數據蓋掉；載入時一併重設計算設定（方法、6σ、交互作用門檻），避免沿用上一次（例如公開範例的「不併入」）
+  const GRR_EX = `操作員,樣品,第1次,第2次
+甲,P1,7.76,7.87
+甲,P2,7.58,7.64
+甲,P3,8.36,8.3
+甲,P4,7.87,7.93
+甲,P5,7.93,8.09
+甲,P6,6.62,6.69
+甲,P7,7.49,7.5
+甲,P8,7.84,7.95
+甲,P9,7.53,7.52
+甲,P10,7.74,7.86
+乙,P1,7.8,7.84
+乙,P2,7.69,7.55
+乙,P3,8.38,8.44
+乙,P4,7.95,7.96
+乙,P5,8.07,8.01
+乙,P6,6.73,6.65
+乙,P7,7.5,7.47
+乙,P8,7.95,7.9
+乙,P9,7.68,7.62
+乙,P10,7.78,7.81
+丙,P1,7.68,7.8
+丙,P2,7.6,7.52
+丙,P3,8.29,8.32
+丙,P4,7.82,7.89
+丙,P5,7.97,7.93
+丙,P6,6.62,6.74
+丙,P7,7.49,7.5
+丙,P8,7.91,7.86
+丙,P9,7.53,7.53
+丙,P10,7.71,7.79`;
+  $("grrEx").addEventListener("click", () => {
+    $("grrData").value = GRR_EX; $("grrTol").value = "2"; $("grrMethod").value = "anova"; $("grrK").value = "6"; $("grrAlpha").value = "0.05";
+    grrRun(); $("grrHint").textContent = "範例：IVB-500 點滴軟袋熱封寬度（mm），3 位操作員（甲乙丙）× 10 袋 × 2 次，規格 8.0 ± 1.0 mm（公差 2）。模擬數據，與 IVB-500 範例案件相同。";
+  });
   function grrParse(text) {
     const lines = String(text || "").split(/\r?\n/), ops = [], parts = [], cell = {};
     let r0 = null;
