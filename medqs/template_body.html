@@ -2902,6 +2902,11 @@
   }
   $("recLine").addEventListener("click", e => { if (e.target.closest("#recReset")) { setRecommend(null); return; } const b = e.target.closest("[data-rec]"); if (b) { closePanel(); route(b.dataset.rec); } });
   let valRan = false, currentView = "home";
+  var routeBooted = false, routeFromPop = false;
+  window.addEventListener("popstate", () => {
+    const h = (location.hash || "").replace("#", "") || "home";
+    routeFromPop = true; try { route(h); } finally { routeFromPop = false; }
+  });
   function route(name) {
     const tool = TOOLS.find(t => t.id === name);
     const view = ["home", "validation", "hypothesis", "fishbone", "aisettings", "spc", "msa", "doe", "taguchi", "sample", "regression", "pdca", "plan", "toolbox"].includes(name) ? name : (tool ? "placeholder" : "home");
@@ -2929,7 +2934,9 @@
       $("phProblem").addEventListener("input", e => { toolProblems[name] = e.target.value; });
     }
     if (view === "validation" && !valRan) { valRan = true; runVal(); }
-    try { history.replaceState(null, "", "#" + name); } catch (_) {}
+    // 每次換頁記一筆瀏覽紀錄：按瀏覽器「上一頁」回到上一個頁面（不會離開網頁、資料不會因重新載入而消失）；開頁第一次與「上一頁」本身只改網址不新增
+    try { if (location.hash !== "#" + name) { if (routeBooted && !routeFromPop) history.pushState(null, "", "#" + name); else history.replaceState(null, "", "#" + name); } } catch (_) { try { history.replaceState(null, "", "#" + name); } catch (__) {} }
+    routeBooted = true;
     window.scrollTo(0, 0);
   }
   document.querySelector(".toolnav").addEventListener("click", e => { const b = e.target.closest("[data-route]"); if (b) route(b.dataset.route); });
