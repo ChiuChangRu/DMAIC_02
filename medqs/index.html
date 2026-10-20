@@ -1335,6 +1335,55 @@ body.ai-waiting .glove, body.ai-waiting .glove-edge { display: none !important; 
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --lv1: #7FD3A6; --lv2: #F0B07A; --lv3: #8DB8F0; } }
 :root[data-theme="dark"] { --lv1: #7FD3A6; --lv2: #F0B07A; --lv3: #8DB8F0; }
 .pd-sheet, .pd-sheet * { --lv1: #2E7D5B; --lv2: #A35F25; --lv3: #3B6EA8; }
+/* 左側欄（sidebar.js）：方法一工具箱、方法二 PDCA；設定與案件在上方標題列 */
+.wrap.sb-wide { max-width: 1440px; }
+.sb-wide header.top { padding-bottom: 20px; }
+.sb-layout { display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 20px; align-items: start; }
+.sb-main { min-width: 0; }
+.sb { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; background: var(--band); color: var(--band-ink); border-radius: 14px; padding: 10px 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+nav.toolnav.sb-nav { display: flex; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; margin: 0; padding: 0; overflow: visible; }
+.sb-grp { width: 100%; }
+.sb-grp { border-radius: 10px; background: rgba(255,255,255,.04); }
+.sb-grp.on { background: rgba(255,255,255,.09); }
+nav.toolnav .sb-gh { width: 100%; display: flex; align-items: baseline; gap: 8px; text-align: left; color: var(--band-ink); border: 0; border-radius: 10px; padding: 10px 10px; background: transparent; }
+.sb-gh small { font-size: 12px; font-weight: 700; color: var(--band-muted); }
+.sb-gh b { font-size: 15.5px; }
+.sb-grp[data-g="flow"] .sb-gh b { color: #E8B07C; }
+.sb-car { margin-left: auto; font-style: normal; color: var(--band-muted); }
+.sb-car::before { content: "▸"; }
+.sb-gh[aria-expanded="true"] .sb-car::before { content: "▾"; }
+.sb-body { padding: 0 4px 8px; display: flex; flex-direction: column; gap: 2px; }
+nav.toolnav .sb-it { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; font-size: 14.5px; color: var(--band-muted); border: 0; border-left: 3px solid transparent; border-radius: 6px; padding: 7px 10px; background: transparent; white-space: normal; }
+nav.toolnav .sb-it:hover { color: var(--band-ink); background: rgba(255,255,255,.06); }
+nav.toolnav .sb-tool.on > .sb-it { color: #F5F1EA; background: rgba(255,255,255,.1); border-left-color: #D8995F; }
+nav.toolnav .sb-it.sb-has::after { content: "▸"; margin-left: auto; font-size: 12px; opacity: .7; }
+nav.toolnav .sb-it.sb-has[aria-expanded="true"]::after { content: "▾"; }
+.sb-sub { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 6px 14px; border-left: 1px solid rgba(255,255,255,.16); padding-left: 6px; }
+nav.toolnav .sb-s { width: 100%; text-align: left; font-size: 13px; font-weight: 500; color: var(--band-muted); border: 0; border-radius: 6px; padding: 5px 8px; background: transparent; white-space: normal; line-height: 1.35; }
+nav.toolnav .sb-s:hover { color: var(--band-ink); background: rgba(255,255,255,.06); }
+nav.toolnav .sb-s.on { color: #1F2933; background: #D8995F; font-weight: 700; }
+.sb-none { font-size: 12.5px; color: var(--band-muted); padding: 4px 8px; }
+nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
+.sb-foot:empty { display: none; }
+.sb-foot { margin-top: 6px; padding: 10px 8px 2px; border-top: 1px solid rgba(255,255,255,.14); display: flex; flex-direction: column; gap: 8px; }
+.sb-foot .fl-case { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 12.5px; color: var(--band-muted); }
+.sb-foot .fl-act { display: flex; flex-direction: column; gap: 6px; }
+.sb-foot .fl-act button, .sb-foot .rd-undo { width: 100%; }
+.sb-flash { outline: 3px solid var(--copper); outline-offset: 4px; transition: outline-color .6s; }
+.btn.sb-set.on { background: #D8995F; color: #1F2933; border-color: #D8995F; }
+.sb-burger { display: none; font: inherit; font-size: 22px; line-height: 1; color: var(--band-ink); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 6px 10px; cursor: pointer; align-self: center; }
+.sb-mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 60; }
+@media (min-width: 900px) {
+  .sb-wide [data-view] .subtabs:not(#ssTabs) { display: none; }   /* 電腦：子分頁只放在側欄 */
+  .sb-wide #flowBar .fl-slim { display: none; }                    /* 暫存進度等改顯示在側欄底部 */
+}
+@media (max-width: 899px) {
+  .sb-layout { display: block; }
+  .sb-burger { display: inline-block; }
+  .sb { position: fixed; z-index: 61; top: 0; left: 0; bottom: 0; width: min(300px, 86vw); max-height: none; border-radius: 0 14px 14px 0; transform: translateX(-105%); transition: transform .2s ease; }
+  body.sb-drawer .sb { transform: none; }
+  .sb-foot { display: none; }
+}
 </style>
 
 <div class="wrap">
@@ -14819,7 +14868,7 @@ else root.runValidation = runValidation;
     $("glTgl").addEventListener("click", () => setOn(!on));
     const vis = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
     const view = () => { const s = [...document.querySelectorAll("section[data-view]")].find(x => !x.hidden); return s ? s.dataset.view : ""; };
-    const nav = r => document.querySelector(`.toolnav [data-route="${r}"]`);
+    const nav = r => { const b = document.querySelector(`.toolnav [data-route="${r}"], .sb-set[data-route="${r}"]`); if (on) { try { sbReveal(b); } catch (_) {} } return b; };   // 側欄收合時，導引要指的步驟先展開
     const homeTurns = () => { try { return chatKey === "home" ? turns.length : ((chats.home && chats.home.turns) || []).length; } catch (_) { return 0; } };
     const panelOpen = () => !$("aiPanel").hidden;
     let w5Target = null;
@@ -15747,6 +15796,127 @@ else root.runValidation = runValidation;
     if (/^測試中/.test(hint) || AIS.busy) return false;
     return [0, $("byokTest"), "⑤ 測試連線"];
   }
+  // =====================================================================
+  // 左側欄：方法一（工具箱：各工具 → 子分頁）、方法二（PDCA 四步 → 驗證項目／報告段落）
+  // 沿用原本 .toolnav 的按鈕（data-route、完成狀態、導引手指都不變），只是搬到左側欄重新排列。
+  // 「設定與案件」放在上方標題列。預設全部收合，點了才展開。
+  // 電腦：工具的子分頁只在側欄；手機（側欄收成 ☰）：工具頁上方保留子分頁。
+  // =====================================================================
+  const SB_SUBS = {
+    hypothesis: [["compare", "比較檢定（量測數值）"], ["count", "次數資料（不良率、類別）"], ["tol", "統計允差區間"]],
+    msa: [["grr", "Gage R&R"], ["bias", "偏差"], ["lin", "線性"], ["stab", "穩定性"], ["attr", "屬性一致性"]],
+    doe: [["fact", "因子設計（製程參數）"], ["mix", "混合設計（配方比例）"]]
+  };
+  const SB_TOOLS = ["sample", "hypothesis", "regression", "msa", "spc", "doe", "taguchi"];
+  const SB_PD = [["1", "記錄問題"], ["2", "分析問題（魚骨圖）"], ["3", "找出原因（5 個為什麼）"], ["4", "採取對策"], ["5", "驗證結果與標準化"], ["6", "前幾輪的結果"]];
+  function sbReveal(b) {   // 導引手指要指的按鈕在收合的群組裡：展開那一組
+    const g = b && b.closest && b.closest(".sb-grp"); if (!g || !g.querySelector(".sb-body").hidden) return;
+    sbOpen(g, true);
+  }
+  function sbOpen(g, on) { g.querySelector(".sb-body").hidden = !on; g.querySelector(".sb-gh").setAttribute("aria-expanded", String(on)); }
+  (function sbInit() {
+    const nav = document.querySelector("nav.toolnav"), wrap = document.querySelector(".wrap"), head = document.querySelector("header.top");
+    if (!nav || !wrap || !head) return;
+    const btn = r => nav.querySelector(`[data-route="${r}"]`);
+    // 設定與案件 → 上方標題列
+    const set = btn("aisettings"), acts = head.querySelector(".top-actions");
+    if (set && acts) { set.className = "btn ghost-light small sb-set"; set.removeAttribute("role"); acts.insertBefore(set, acts.firstChild); set.addEventListener("click", () => route("aisettings")); }
+    // 版面：標題列下方分成 左側欄＋主畫面
+    const lay = document.createElement("div"); lay.className = "sb-layout";
+    const side = document.createElement("aside"); side.className = "sb"; side.id = "sideNav"; side.setAttribute("aria-label", "功能選單");
+    const main = document.createElement("div"); main.className = "sb-main";
+    while (head.nextSibling) main.appendChild(head.nextSibling);
+    lay.append(side, main); wrap.appendChild(lay); wrap.classList.add("sb-wide");
+    const sub = (t, k, lab) => `<button type="button" class="sb-s" data-sbt="${t}" data-sbs="${k}">${esc(lab)}</button>`;
+    const grp = (g, small, title) => `<div class="sb-grp" data-g="${g}"><button type="button" class="sb-gh" aria-expanded="false"><small>${small}</small><b>${title}</b><i class="sb-car" aria-hidden="true"></i></button><div class="sb-body" hidden></div></div>`;
+    nav.className = "toolnav sb-nav"; nav.setAttribute("aria-label", "方法一：工具箱；方法二：PDCA 改善流程"); nav.removeAttribute("role");
+    const hid = nav.querySelector(".nv-hid");
+    const tb = btn("toolbox"), steps = [...nav.querySelectorAll("[data-step]")];
+    nav.insertAdjacentHTML("afterbegin", grp("tb", "方法一", "🧰 工具箱") + grp("flow", "方法二", "PDCA 改善流程"));
+    const [gTb, gFl] = nav.querySelectorAll(".sb-grp"), bTb = gTb.querySelector(".sb-body"), bFl = gFl.querySelector(".sb-body");
+    const item = (b, key, subs) => { const d = document.createElement("div"); d.className = "sb-tool"; d.dataset.t = key; b.className = (b.className + " sb-it").trim(); b.removeAttribute("tabindex"); b.removeAttribute("role"); d.appendChild(b); if (subs) { b.classList.add("sb-has"); d.insertAdjacentHTML("beforeend", `<div class="sb-sub" hidden>${subs}</div>`); } return d; };
+    if (tb) { tb.textContent = "從情境找工具（總覽）"; bTb.appendChild(item(tb, "toolbox")); }
+    SB_TOOLS.forEach(t => { const b = btn(t); if (!b) return; bTb.appendChild(item(b, t, t === "sample" ? " " : SB_SUBS[t] ? SB_SUBS[t].map(([k, l]) => sub(t, k, l)).join("") : "")); });
+    steps.forEach(b => { const k = b.dataset.route; bFl.appendChild(item(b, k, k === "plan" || k === "pdca" ? " " : "")); });
+    nav.querySelectorAll(".nv-grp, .nv-arr").forEach(x => x.remove());
+    if (hid) nav.appendChild(hid);   // 計算驗證等仍然隱藏
+    side.appendChild(nav);
+    side.insertAdjacentHTML("beforeend", `<div class="sb-foot" id="sbFoot"></div>`);
+    // 手機：☰ 開關側欄
+    head.querySelector(".top-row").insertAdjacentHTML("afterbegin", `<button type="button" class="sb-burger" id="sbBurger" aria-controls="sideNav" aria-expanded="false" aria-label="開啟功能選單">☰</button>`);
+    document.body.insertAdjacentHTML("beforeend", `<div class="sb-mask" id="sbMask" hidden></div>`);
+    const drawer = on => { document.body.classList.toggle("sb-drawer", on); $("sbMask").hidden = !on; $("sbBurger").setAttribute("aria-expanded", String(on)); };
+    $("sbBurger").addEventListener("click", () => drawer(!document.body.classList.contains("sb-drawer")));
+    $("sbMask").addEventListener("click", () => drawer(false));
+    const mobile = () => matchMedia("(max-width: 899px)").matches;
+
+    // 動態子項目：樣本數（問題）、③ 驗證項目、④ 報告段落
+    function fill(t) {
+      const box = nav.querySelector(`.sb-tool[data-t="${t}"] .sb-sub`); if (!box) return;
+      if (t === "sample") box.innerHTML = [...document.querySelectorAll("#ssQ [data-q]")].map(b => { let t = ""; try { t = (SSQ[b.dataset.q] || {}).title || ""; } catch (_) {} t = (t || b.textContent || "").replace(/\s+/g, " ").trim(); return sub("sample", b.dataset.q, t.split("？")[0].slice(0, 30) + (t.includes("？") ? "？" : "")); }).join("");
+      else if (t === "plan") {
+        const L = [...document.querySelectorAll("#planHub .hub-item")];
+        box.innerHTML = L.length ? L.map((x, i) => sub("plan", i, `${i + 1}. ${(x.querySelector(".hub-t") || x).textContent.trim()}`)).join("") : `<span class="sb-none">尚無驗證項目</span>`;
+      } else if (t === "pdca") {
+        const has6 = [...document.querySelectorAll("#pdcaWrap .pd-sec h4")].some(h => /^6/.test(h.textContent.trim()));
+        box.innerHTML = SB_PD.filter(([n]) => n !== "6" || has6).map(([n, l]) => sub("pdca", n, `${n}　${l}`)).join("");
+      }
+    }
+    const cv = () => { try { return currentView; } catch (_) { return ""; } };   // currentView 在本模組之後才宣告（初始化時讀會 TDZ）
+    function sync() {
+      const v = cv();
+      if (set) set.classList.toggle("on", v === "aisettings");
+      nav.querySelectorAll(".sb-tool").forEach(d => d.classList.toggle("on", d.dataset.t === v));
+      nav.querySelectorAll(".sb-grp").forEach(g => g.classList.toggle("on", !!g.querySelector(`.sb-tool[data-t="${v}"]`)));
+      nav.querySelectorAll(".sb-s").forEach(s => {
+        const t = s.dataset.sbt, k = s.dataset.sbs; let on = false;
+        if (t !== v) on = false;
+        else if (t === "hypothesis") on = !!document.querySelector(`#viewAnalyze .subtabs [data-sub="${k}"][aria-selected="true"]`);
+        else if (t === "msa" || t === "doe") on = !!document.querySelector(`#${t}Tabs [data-tsub="${k}"][aria-selected="true"]`);
+        else if (t === "sample") on = !!document.querySelector(`#ssQ [data-q="${k}"][aria-pressed="true"]`);
+        s.classList.toggle("on", on);
+      });
+    }
+    nav.addEventListener("click", e => {
+      const gh = e.target.closest(".sb-gh");
+      if (gh) { const g = gh.closest(".sb-grp"); sbOpen(g, g.querySelector(".sb-body").hidden); return; }
+      const s = e.target.closest(".sb-s");
+      if (s) {
+        const t = s.dataset.sbt, k = s.dataset.sbs;
+        if (t === "sample") { const b = btn("sample"); if (b && cv() !== "sample") b.click(); try { ssPick(k); } catch (_) {} }
+        else if (t === "plan" || t === "pdca") {
+          const b = btn(t); if (b && cv() !== t) b.click();
+          setTimeout(() => {
+            const el = t === "plan" ? document.querySelectorAll("#planHub .hub-item")[+k] : [...document.querySelectorAll("#pdcaWrap .pd-sec")].find(x => { const h = x.querySelector("h4"); return h && h.textContent.trim().startsWith(k); });
+            if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("sb-flash"); setTimeout(() => el.classList.remove("sb-flash"), 1400); }
+          }, 120);
+        } else gotoTool(t, k);
+        setTimeout(sync, 0); if (mobile()) drawer(false); return;
+      }
+      const it = e.target.closest(".sb-it");
+      if (it && !e.isTrusted) { setTimeout(sync, 0); return; }   // 程式代按（導引、跳轉）：只前往，不改展開狀態
+      if (it) {   // 點工具或步驟：前往（.toolnav 原本的處理），有子項目就展開；已在這頁再點一次就收合
+        const d = it.closest(".sb-tool"), sb = d.querySelector(".sb-sub");
+        if (sb) { const was = d.dataset.t === cv() && !sb.hidden; setTimeout(() => { fill(d.dataset.t); sb.hidden = was; it.setAttribute("aria-expanded", String(!was)); sync(); }, 0); }
+        else setTimeout(sync, 0);
+        if (mobile() && !sb) drawer(false);
+      }
+    });
+    // 頁面上切換子分頁時，側欄跟著標示
+    document.addEventListener("click", e => { if (e.target.closest(".subtabs, #ssQ")) setTimeout(sync, 0); });
+    const _route = route;
+    route = function (name) { _route(name); try { ["plan", "pdca", "sample"].forEach(t => { const sb = nav.querySelector(`.sb-tool[data-t="${t}"] .sb-sub`); if (sb && !sb.hidden) fill(t); }); sync(); } catch (e) { console.warn("sidebar", e); } };
+    // 暫存進度、重新檢討魚骨圖、輪次：顯示在側欄底部（按鈕轉給原本流程列處理）
+    const fl = $("flowBar");
+    const foot = () => { const s = fl && fl.querySelector(".fl-slim"); $("sbFoot").innerHTML = s ? s.innerHTML : ""; };
+    if (fl) { new MutationObserver(foot).observe(fl, { childList: true, subtree: true, characterData: true, attributes: true }); foot(); }
+    $("sbFoot").addEventListener("click", e => {
+      const b = e.target.closest("[data-fl]"); if (!b || !fl) return;
+      const o = fl.querySelector(`.fl-slim [data-fl="${b.dataset.fl}"]`); if (o) o.click();
+      if (mobile()) drawer(false);
+    });
+    sync();
+  })();
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;

@@ -76,7 +76,7 @@
     $("glTgl").addEventListener("click", () => setOn(!on));
     const vis = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
     const view = () => { const s = [...document.querySelectorAll("section[data-view]")].find(x => !x.hidden); return s ? s.dataset.view : ""; };
-    const nav = r => document.querySelector(`.toolnav [data-route="${r}"]`);
+    const nav = r => { const b = document.querySelector(`.toolnav [data-route="${r}"], .sb-set[data-route="${r}"]`); if (on) { try { sbReveal(b); } catch (_) {} } return b; };   // 側欄收合時，導引要指的步驟先展開
     const homeTurns = () => { try { return chatKey === "home" ? turns.length : ((chats.home && chats.home.turns) || []).length; } catch (_) { return 0; } };
     const panelOpen = () => !$("aiPanel").hidden;
     let w5Target = null;
