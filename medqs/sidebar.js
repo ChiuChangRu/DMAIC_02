@@ -119,3 +119,43 @@
     });
     sync();
   })();
+  // =====================================================================
+  // 操作問題回饋：側欄「暫存進度」上方。填寫後開啟 GitHub「新增 Issue」頁（內容已帶入），使用者登入 GitHub 後按送出。
+  // 網頁不存任何 GitHub 金鑰；自動附上的只有頁面、執行環境、瀏覽器與畫面寬度，不含案件內容（去識別化）。
+  // =====================================================================
+  (function bugFeedback() {
+    const side = $("sideNav"), foot = $("sbFoot"); if (!side || !foot) return;
+    const REPO = "https://github.com/ChiuChangRu/DMAIC_02";
+    foot.insertAdjacentHTML("beforebegin", `<div class="sb-bug"><button type="button" class="sb-bug-btn" id="sbBug">🐞 操作問題回饋</button></div>`);
+    document.body.insertAdjacentHTML("beforeend", `<dialog class="bug-dlg" id="bugDlg" aria-labelledby="bugT"><form method="dialog">
+      <h3 id="bugT">🐞 操作問題回饋</h3>
+      <p class="hint">寫下遇到的問題，按「到 GitHub 送出」會開啟 GitHub 的回報頁（內容已帶入），登入 GitHub 後按「Submit new issue」即完成。<b>請勿寫入人名、單位、客戶或醫院名稱等可識別資料</b>；GitHub 上的回報是公開的。</p>
+      <label class="group-label" for="bugTitle">標題（一句話）</label><input type="text" id="bugTitle" maxlength="120" placeholder="例如：③ 驗證計畫按「規劃」後回來，策略不見了">
+      <label class="group-label" for="bugDesc">發生什麼事？怎麼操作的？</label><textarea id="bugDesc" rows="6" placeholder="1. 在哪一頁做了什麼&#10;2. 預期看到什麼&#10;3. 實際看到什麼"></textarea>
+      <label class="bug-env"><input type="checkbox" id="bugEnv" checked> 附上目前頁面、執行環境、瀏覽器與畫面寬度（不含案件內容）</label>
+      <pre class="bug-envtxt" id="bugEnvTxt"></pre>
+      <p class="hint" id="bugHint"></p>
+      <div class="run-row"><button type="button" class="btn primary" id="bugGo">到 GitHub 送出 ↗</button><button type="button" class="btn" id="bugCopy">複製內容</button><button type="submit" class="btn ghost" value="cancel">取消</button></div>
+    </form></dialog>`);
+    const D = $("bugDlg");
+    const VIEW = { home: "① 定義問題", fishbone: "② 魚骨圖", plan: "③ 驗證計畫", pdca: "④ PDCA 報告", toolbox: "工具箱", aisettings: "設定與案件", sample: "樣本數規劃", hypothesis: "假設檢定", regression: "相關與回歸", msa: "MSA", spc: "SPC", doe: "DOE", taguchi: "田口方法", validation: "計算驗證" };
+    const env = () => { let v = ""; try { v = currentView; } catch (_) {}
+      const host = /claude\.ai|claudeusercontent/.test(location.href) || window.claude ? "claude.ai" : location.host || "本機檔案";
+      return [`- 頁面：${VIEW[v] || v || "（不明）"}`, `- 執行環境：${host}`, `- 瀏覽器：${navigator.userAgent}`, `- 畫面寬度：${innerWidth}px`, `- 回報時間：${new Date().toLocaleString("zh-TW", { hour12: false })}`].join("\n"); };
+    const body = () => `## 問題描述\n${$("bugDesc").value.trim() || "（未填）"}\n` + ($("bugEnv").checked ? `\n## 環境（自動附上，不含案件內容）\n${env()}\n` : "") + `\n---\n_由 PDCA品質輔助系統「操作問題回饋」產生_`;
+    const title = () => "[操作問題] " + ($("bugTitle").value.trim() || "（未填標題）");
+    const paint = () => { $("bugEnvTxt").hidden = !$("bugEnv").checked; $("bugEnvTxt").textContent = env(); };
+    $("sbBug").addEventListener("click", () => { $("bugHint").textContent = ""; paint(); try { D.showModal(); } catch (_) { D.setAttribute("open", ""); } setTimeout(() => $("bugTitle").focus(), 0); });
+    $("bugEnv").addEventListener("change", paint);
+    $("bugGo").addEventListener("click", () => {
+      if (!$("bugDesc").value.trim() && !$("bugTitle").value.trim()) { $("bugHint").textContent = "請先寫標題或問題描述。"; return; }
+      const url = `${REPO}/issues/new?title=${encodeURIComponent(title())}&body=${encodeURIComponent(body())}`;
+      try { window.open(url, "_blank", "noopener"); } catch (_) {}
+      $("bugHint").innerHTML = `已開啟 GitHub 回報頁（新分頁）。若沒有出現，請按「複製內容」後到 <a href="${REPO}/issues/new" target="_blank" rel="noopener">GitHub 回報頁</a> 貼上。`;
+    });
+    $("bugCopy").addEventListener("click", async () => {
+      const t = title() + "\n\n" + body();
+      try { await navigator.clipboard.writeText(t); $("bugHint").textContent = "已複製。"; }
+      catch (_) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (__) {} ta.remove(); $("bugHint").textContent = ok ? "已複製。" : "這個檢視無法複製，請手動選取上面的文字。"; }
+    });
+  })();
