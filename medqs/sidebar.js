@@ -126,9 +126,9 @@
   (function bugFeedback() {
     const side = $("sideNav"), foot = $("sbFoot"); if (!side || !foot) return;
     const REPO = "https://github.com/ChiuChangRu/DMAIC_02";
-    foot.insertAdjacentHTML("beforebegin", `<div class="sb-bug"><button type="button" class="sb-bug-btn" id="sbBug">🐞 操作問題回饋</button></div>`);
+    foot.insertAdjacentHTML("beforebegin", `<div class="sb-bug"><button type="button" class="sb-bug-btn" id="sbBug">操作問題回饋</button></div>`);
     document.body.insertAdjacentHTML("beforeend", `<dialog class="bug-dlg" id="bugDlg" aria-labelledby="bugT"><form method="dialog">
-      <h3 id="bugT">🐞 操作問題回饋</h3>
+      <h3 id="bugT">操作問題回饋</h3>
       <p class="hint">寫下遇到的問題，按「到 GitHub 送出」會開啟 GitHub 的回報頁（內容已帶入），登入 GitHub 後按「Submit new issue」即完成。<b>請勿寫入人名、單位、客戶或醫院名稱等可識別資料</b>；GitHub 上的回報是公開的。</p>
       <label class="group-label" for="bugTitle">標題（一句話）</label><input type="text" id="bugTitle" maxlength="120" placeholder="例如：③ 驗證計畫按「規劃」後回來，策略不見了">
       <label class="group-label" for="bugDesc">發生什麼事？怎麼操作的？</label><textarea id="bugDesc" rows="6" placeholder="1. 在哪一頁做了什麼&#10;2. 預期看到什麼&#10;3. 實際看到什麼"></textarea>
