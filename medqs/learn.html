@@ -112,6 +112,9 @@ td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; 
 .tex-live .tex { font-size: 16px; }
 .note { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; font-size: 14.5px; margin-top: 12px; }
 ul.tight { margin: 6px 0 0; padding-left: 1.2em; } ul.tight li { margin: 2px 0; }
+.btn-mini { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--act-text); background: transparent; border: 1px solid var(--act-text); border-radius: 999px; padding: 2px 10px; cursor: pointer; margin-left: 6px; }
+.exd { margin: 6px 0 0; max-height: 220px; overflow: auto; font-family: var(--font-mono); font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; white-space: pre; }
+ol.tight { padding-left: 1.3em; } ol.tight li { margin: 3px 0; }
 footer { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
 footer a, .card a { color: var(--act-text); }
 </style>
@@ -132,8 +135,9 @@ footer a, .card a { color: var(--act-text); }
     <a href="#s2" data-tab="s2" aria-current="false">2 同等性 TOST 入門</a>
     <a href="#s3" data-tab="s3" aria-current="false">3 t 檢定入門</a>
     <a href="#s4" data-tab="s4" aria-current="false">4 比例與卡方入門</a>
-    <span>5 樣本數（規劃中）</span>
-    <span>6 MSA（規劃中）</span>
+    <a href="#s5" data-tab="s5" aria-current="false">5 SPC 管制圖</a>
+    <span>6 樣本數（規劃中）</span>
+    <span>7 MSA（規劃中）</span>
   </nav>
 </header>
 
@@ -856,6 +860,174 @@ footer a, .card a { color: var(--act-text); }
   </section>
 </section>
 
+<section id="s5" hidden>
+  <h2 class="sec">5　SPC 管制圖入門：製程穩不穩定、趨勢報告怎麼判</h2>
+  <p class="sec-lede">管制圖回答的是「這個製程<b>現在</b>跟<b>過去</b>一樣穩定嗎？」：把每一批、每一時段的結果依時間排好，畫上由資料本身算出來的中心線和管制界限，看有沒有「不像隨機波動」的訊號。上市後的客訴、不良事件趨勢，也是同樣的想法，只是判定規則改用公司訂的門檻與連續上升點數。</p>
+
+  <section class="card" id="s5-1">
+    <span class="qref">5-1</span>
+    <h3>先認識幾個詞</h3>
+    <div class="scroll-x"><table>
+      <tr><th>名詞</th><th>白話意思</th><th>舉例</th></tr>
+      <tr><td><b>管制圖</b></td><td>依生產時間順序畫的點圖，加上中心線與上下管制界限。用來分辨「平常就會有的波動」和「有事發生了」。</td><td>每小時抽 5 支 Luer 量外徑，畫 25 組。</td></tr>
+      <tr><td><b>中心線 CL</b></td><td>這段資料的平均水準。</td><td>外徑平均 10.00 mm。</td></tr>
+      <tr><td><b>管制界限 UCL／LCL</b></td><td>中心線 ± 3 個標準差，<b>由資料本身算出來</b>，代表製程「平常會跑到哪裡」。<b>不是規格</b>：在管制界限內不代表合格，超出規格也不一定超出管制界限。</td><td>UCL 10.04、LCL 9.96；規格是 9.88～10.12。</td></tr>
+      <tr><td><b>子組</b></td><td>同一時間、同一條件下一起抽的幾個樣品。子組內只有「短期」波動，子組之間的差異才看得出製程有沒有變。</td><td>每小時連續抽 5 支 = 一個子組（n = 5）。</td></tr>
+      <tr><td><b>普通原因／特殊原因</b></td><td>普通原因是製程本來就有的小波動，管制圖上像隨機散布；特殊原因是「有事發生」（換料、換刀、量具壞了），會出現超界或規律。</td><td>B 線換熱封刀後，熱封強度整體往下掉。</td></tr>
+      <tr><td><b>判異規則</b></td><td>判斷「不像隨機」的規則，最常用的是 Nelson 8 條（見 5-4）。觸發不等於一定有問題，是「該去查原因」的訊號。</td><td>連續 9 點都在中心線下方。</td></tr>
+      <tr><td><b>製程能力 Cpk</b></td><td>製程波動和規格比起來夠不夠窄。<b>製程穩定（管制內）時才有意義</b>；還有異常訊號時算出來的 Cpk 不能代表未來。</td><td>Cpk 1.33 以上一般視為足夠。</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card" id="s5-2">
+    <span class="qref">5-2</span>
+    <h3>選對管制圖：先看資料是哪一種</h3>
+    <p class="help">輔助工具會依你貼的資料自動選圖，下面是它的判斷方式。選錯圖，管制界限就算錯。</p>
+    <div class="scroll-x"><table>
+      <tr><th>資料型態</th><th>每次抽幾個／條件</th><th>用哪張圖</th><th>看什麼</th><th>醫材例子</th><th>在輔助工具怎麼貼</th></tr>
+      <tr><td rowspan="3"><b>計量值</b><br>（量測數值）</td><td>每次 1 個</td><td><b>I-MR</b></td><td>I 圖看每個值；MR 圖看相鄰兩點差多少（短期波動）</td><td>每批 1 個拉伸強度、每天 1 次滅菌 BI 培養時間</td><td>每列 1 個數值</td></tr>
+      <tr><td>每次 2～10 個</td><td><b>X̄-R</b></td><td>X̄ 圖看子組平均有沒有偏移；R 圖看子組內全距（波動）有沒有變大</td><td>每小時抽 5 支量外徑</td><td>每列一個子組，數值用空白或 Tab 隔開</td></tr>
+      <tr><td>每次 11～25 個</td><td><b>X̄-S</b></td><td>同上，但子組大時用標準差估計波動較準確</td><td>每批抽 15 個量壁厚</td><td>同上</td></tr>
+      <tr><td rowspan="2"><b>不良品</b><br>（每件判過／不過）</td><td>每批抽樣數相同</td><td><b>np</b></td><td>每批的不良<b>件數</b></td><td>每批固定抽 200 個做外觀檢驗</td><td>每列：不良數, 抽樣數</td></tr>
+      <tr><td>每批抽樣數不同</td><td><b>p</b></td><td>每批的不良<b>率</b>；界限隨抽樣數變寬變窄</td><td>每批產量不同、全檢的不良率；<b>每月事件數 ÷ 銷售量</b></td><td>每列：不良數, 抽樣數（或事件數, 銷售量）</td></tr>
+      <tr><td rowspan="2"><b>缺點數</b><br>（一件可以有好幾個缺點）</td><td>每次檢驗單位相同</td><td><b>c</b></td><td>每次的缺點<b>個數</b></td><td>每卷膜面的黑點數</td><td>每列：缺點數</td></tr>
+      <tr><td>每次檢驗單位不同</td><td><b>u</b></td><td>每單位的缺點數</td><td>不同長度管材的表面瑕疵（每 100 m）</td><td>每列：缺點數, 檢驗單位數</td></tr>
+    </table></div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>兩張圖要一起看</b>（I-MR、X̄-R、X̄-S）：下面那張（MR、R、S）先穩定，上面那張的界限才可信。</li>
+      <li><b>資料一定要依生產時間順序</b>，不要挑樣、不要重新排序；判異規則 2～8 都靠順序才有意義。</li>
+      <li><b>點數</b>：一般建議至少 20～25 組再訂管制界限；點數太少，界限估計不穩定。</li>
+      <li><b>先做 MSA</b>：量測系統的變異太大（%GRR 高），管制圖看到的多半是量具的雜訊（MSA 章節規劃中）。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s5-3">
+    <span class="qref">5-3</span>
+    <h3>動手看：管制界限與判異規則</h3>
+    <p class="help">下面是一條<b>教學用模擬</b>的個別值管制圖（I 圖）：前段只有普通原因的隨機波動，你可以從某一點開始加入「偏移」或「漂移」，看哪些判異規則會先抓到。管制界限用前 20 點（偏移前）計算，就像實務上用穩定期間的資料訂界限。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="q_sh">從某點起平均偏移 <output id="o_qsh"></output></label><input type="range" id="q_sh" min="0" max="3" step="0.25" value="1"></div>
+        <div class="ctl"><label for="q_dr">從某點起每點漂移 <output id="o_qdr"></output></label><input type="range" id="q_dr" min="0" max="0.4" step="0.05" value="0"></div>
+        <div class="ctl"><label for="q_at">變化從第幾點開始 <output id="o_qat"></output></label><input type="range" id="q_at" min="10" max="30" step="1" value="21"></div>
+        <div class="ctl"><label>隨機波動</label><button type="button" class="btn-mini" id="q_seed">換一組隨機波動</button></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c-h0)"></i>中心線 CL</span>
+        <span><i style="background:var(--c-alpha)"></i>管制界限 ±3σ</span>
+        <span><i style="background:var(--c-alpha);opacity:.35"></i>±1σ、±2σ 參考線</span>
+        <span><i style="background:var(--bad)"></i>觸發判異規則的點</span>
+      </div>
+      <svg class="plot" id="p51" viewBox="0 0 680 320" role="img" aria-label="個別值管制圖與判異規則"></svg>
+      <div class="stats" id="q_stats"></div>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>偏移 1σ、漂移 0</b>：常常沒有點超出 3σ（規則 1 抓不到），要靠比較敏感的規則 2、5、6，而且要過好幾點才抓到。按「換一組隨機波動」多看幾次。</li>
+      <li><b>偏移 3σ</b>：很快就有點超出管制界限（規則 1）。大偏移靠規則 1。</li>
+      <li><b>偏移 0、漂移 0.3</b>：慢慢變差（例如刀具磨耗），規則 6、5、2 會陸續抓到。雜訊相對小、漂移大時，「連續 6 點上升」（規則 3）也會抓到；雜訊會打斷連續上升，所以規則 3 不一定先觸發。</li>
+      <li><b>偏移 0、漂移 0</b>：全部是普通原因，偶爾也會有規則被觸發（誤報），所以觸發後是「去查」，不是直接判定有問題。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s5-4">
+    <span class="qref">5-4</span>
+    <h3>Nelson 8 條判異規則：每一條在抓什麼</h3>
+    <div class="scroll-x"><table>
+      <tr><th>規則</th><th>內容</th><th>白話：可能代表</th></tr>
+      <tr><td>1</td><td>1 點超出 3σ 管制界限</td><td>突發的大事件：用錯料、設備故障、量錯。</td></tr>
+      <tr><td>2</td><td>連續 9 點在中心線同一側</td><td>平均已經移動：換批原料、換刀、換操作員後的持續偏移。</td></tr>
+      <tr><td>3</td><td>連續 6 點持續上升或下降</td><td>漂移：刀具或模具磨耗、溫度慢慢上升、試劑老化。</td></tr>
+      <tr><td>4</td><td>連續 14 點上下交替</td><td>兩個來源輪流：兩台設備、兩個班別的資料交錯混在一起。</td></tr>
+      <tr><td>5</td><td>連續 3 點中有 2 點在 2σ 之外（同一側）</td><td>中等程度的偏移剛發生。</td></tr>
+      <tr><td>6</td><td>連續 5 點中有 4 點在 1σ 之外（同一側）</td><td>小幅但持續的偏移。</td></tr>
+      <tr><td>7</td><td>連續 15 點都在 1σ 以內</td><td>波動異常地小：界限算錯、資料被修飾、量具解析度不夠、混了不同來源。</td></tr>
+      <tr><td>8</td><td>連續 8 點都在 1σ 之外（兩側皆可）</td><td>資料來自兩個不同水準的群體混在一起。</td></tr>
+    </table></div>
+    <p class="help" style="margin-top:10px">輔助工具預設 8 條全開，可以在「判異規則」逐條關閉。開越多條越敏感，誤報也越多；公司程序有指定規則時，以公司規定為準。有兩張圖時（例如 X̄-R），第二張圖只套用規則 1。</p>
+  </section>
+
+  <section class="card" id="s5-5">
+    <span class="qref">5-5</span>
+    <h3>上市後趨勢報告規則（MDR 第 88 條）</h3>
+    <p class="help">歐盟 MDR 第 88 條要求：<b>非嚴重事件</b>或<b>預期的不良副作用</b>，發生頻率或嚴重程度出現統計上顯著增加、且可能影響效益風險平衡時，要提出趨勢報告。單一嚴重事件走的是第 87 條通報（2／10／15 天時限），兩者不同。公司的判定方式（TCF-008 雙重觸發條件）如下：</p>
+    <div class="scroll-x"><table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td><b>發生率</b></td><td>X(%) ＝ 事件數 ÷ 市場產品銷售量（同一期間，例如每月）</td></tr>
+      <tr><td><b>條件 1：絕對門檻</b></td><td>X ≥ IT。門檻 IT 依風險分析（RMP）設定；以 PD（TCF008）為例 IT ＝ 0.1%（10⁻³）。</td></tr>
+      <tr><td><b>條件 2：相對趨勢</b></td><td>連續 ≥ 6 點持續上升，即使 X 仍低於 IT 也算。即 Nelson 規則 3 只看「上升」方向。</td></tr>
+      <tr><td><b>判定</b></td><td>任一條件成立，就觸發趨勢報告程序：啟動 CAPA、更新風險管理（RMP／RMR）與臨床評估（CER／PMCF）；不良事件趨勢需評估是否向主管機關通報，客戶抱怨趨勢則於內部處理。</td></tr>
+    </table></div>
+    <p class="help" style="margin-top:10px">下面是<b>教學用模擬</b>的 12 個月資料（每月銷售約 1 萬個）。拖拉看看門檻、連續點數和最後一個月的事件數怎麼影響判定。</p>
+    <div class="inner">
+      <div class="controls">
+        <div class="ctl"><label for="tr_it">門檻 IT <output id="o_trit"></output></label><input type="range" id="tr_it" min="0.02" max="0.2" step="0.01" value="0.1"></div>
+        <div class="ctl"><label for="tr_n">連續上升點數 ≥ <output id="o_trn"></output></label><input type="range" id="tr_n" min="3" max="9" step="1" value="6"></div>
+        <div class="ctl"><label for="tr_last">第 12 個月事件數 <output id="o_trlast"></output></label><input type="range" id="tr_last" min="0" max="15" step="1" value="8"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--navy)"></i>每月發生率</span>
+        <span><i style="background:var(--c-alpha)"></i>門檻 IT</span>
+        <span><i style="background:var(--bad)"></i>觸發條件的月份</span>
+      </div>
+      <svg class="plot" id="p52" viewBox="0 0 680 300" role="img" aria-label="每月發生率與趨勢報告門檻"></svg>
+      <div class="two" style="margin-top:10px"><div class="stat" id="tr_v1"></div><div class="stat" id="tr_v2"></div></div>
+    </div>
+    <ul class="tight help" style="margin-top:12px">
+      <li><b>預設情況</b>：每個月都低於 0.1%，但第 7～12 個月連續 6 點一路上升 → 條件 2 成立，要啟動趨勢報告程序。這正是「門檻還沒到，但已經在變差」的情況。</li>
+      <li><b>把第 12 個月拉到 10 以上</b>：發生率超過 0.1% → 條件 1 也成立。</li>
+      <li><b>把第 12 個月拉到 5 以下</b>：上升中斷，連續上升只剩 5 點 → 條件 2 不成立。</li>
+      <li><b>和 p 管制圖的差別</b>：p 圖的界限由資料本身算出（統計上的異常）；趨勢報告的 IT 是公司依風險訂的門檻（可接受程度）。兩者可以一起看。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s5-6">
+    <span class="qref">5-6</span>
+    <h3>範例：在輔助工具操作</h3>
+    <p class="help">以下數據都是<b>教學用模擬</b>，可以按「複製」後貼到輔助工具的 SPC 頁練習。</p>
+    <div class="two">
+      <div class="stat">
+        <div class="k">範例 A：上市後趨勢（p 圖＋趨勢報告規則）</div>
+        <ol class="tight" style="margin:6px 0">
+          <li>到輔助工具「SPC」，資料型態選「<b>不良品</b>」。</li>
+          <li>貼上右邊的數據（每列：事件數, 銷售量）。</li>
+          <li>展開「上市後趨勢報告規則」，勾選「套用」，IT 填 <b>0.1</b>，連續上升點數 <b>6</b>。</li>
+          <li>按「執行分析」：會看到 p 圖、Nelson 判異，以及「觸發趨勢報告程序（條件 2：第 7～12 點連續 6 點上升）」。</li>
+        </ol>
+      </div>
+      <div class="stat"><div class="k">範例 A 數據 <button type="button" class="btn-mini" data-copy="ex_t">複製</button></div><pre class="exd" id="ex_t"></pre></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div class="stat">
+        <div class="k">範例 B：製程穩定性（I-MR 圖）</div>
+        <ol class="tight" style="margin:6px 0">
+          <li>資料型態選「<b>計量值</b>」，貼上右邊的數據（每列 1 個拉伸強度，單位 N）。</li>
+          <li>規格下限 LSL 填 <b>47</b>（只有下限）。</li>
+          <li>按「執行分析」：自動選 I-MR；看 I 圖有沒有點超出管制界限、MR 圖有沒有異常大的跳動；管制內時再看 Cpk。</li>
+        </ol>
+      </div>
+      <div class="stat"><div class="k">範例 B 數據 <button type="button" class="btn-mini" data-copy="ex_i">複製</button></div><pre class="exd" id="ex_i"></pre></div>
+    </div>
+  </section>
+
+  <section class="card" id="s5-7">
+    <span class="qref">5-7</span>
+    <h3>依據與注意事項</h3>
+    <div class="scroll-x"><table>
+      <tr><th>來源</th><th>用在哪裡</th></tr>
+      <tr><td>EU MDR（Regulation (EU) 2017/745）第 VII 章第 83～100 條，特別是第 87 條（嚴重事件通報）、第 88 條（趨勢報告）</td><td>5-5 的法規背景</td></tr>
+      <tr><td>GHTF/SG2/N36R7:2003 Manufacturer's trend reporting of adverse events</td><td>不良事件趨勢與客戶抱怨趨勢的分類</td></tr>
+      <tr><td>ISO/TR 20416 Post-market surveillance for manufacturers</td><td>上市後監督的資料分析；公司簡報引用其「連續 6 點以上持續上升即判定趨勢成立」</td></tr>
+      <tr><td>公司簡報「醫療器材 MDR 趨勢報告介紹」（2026/08/17）、TCF-008-05-0-1-P</td><td>發生率公式、IT 門檻、雙重觸發條件</td></tr>
+      <tr><td><a href="https://itl.nist.gov/div898/handbook/pmc/section3/pmc32.htm" target="_blank" rel="noopener">NIST/SEMATECH e-Handbook 6.3.2 What are Variables Control Charts?</a></td><td>管制圖原理（英文，免費線上閱讀）</td></tr>
+    </table></div>
+    <ul class="tight help" style="margin-top:12px">
+      <li>IT 門檻與連續點數以各產品的風險管理檔案與公司程序為準；本頁的 0.1%、6 點是簡報中 PD（TCF008）的例子。</li>
+      <li>本頁的「ISO/TR 20416 指導原則：連續 6 點」是依公司簡報的引述，ISO 原文條號尚未在本系統核對。</li>
+      <li>本頁圖表中的數據是教學用模擬，不是任何產品的實際資料。</li>
+    </ul>
+  </section>
+</section>
+
 <footer>
   計算方法：常態分布（σ 視為已知的近似）、t 分布、二項分布、卡方分布與 Fisher 精確檢定（超幾何分布），由本頁 JavaScript 計算，未使用 AI 產生數值。輔助工具的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計輔助工具</a>
 </footer>
@@ -1275,18 +1447,96 @@ footer a, .card a { color: var(--act-text); }
   ["c_n1", "c_x1", "c_n2", "c_x2"].forEach(id => $(id).addEventListener("input", draw42));
 
   // ---- 分頁切換 ----
+  // ===== 5 SPC 管制圖入門（教學用模擬數據，固定種子產生，不是實際產品資料）=====
+  function rngS(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function gaussS(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  let qSeed = 7;
+  const Q_N = 36, Q_BASE = 20;
+  function spcRulesHit(z, v) {   // Nelson 規則 1、2、3、5、6（z：以 σ 為單位的偏離）
+    const N = z.length, hit = Array.from({ length: N }, () => new Set());
+    for (let i = 0; i < N; i++) {
+      if (Math.abs(z[i]) > 3) hit[i].add(1);
+      if (i >= 8) { const w = z.slice(i - 8, i + 1); if (w.every(t => t > 0) || w.every(t => t < 0)) hit[i].add(2); }
+      if (i >= 5) { const w = v.slice(i - 5, i + 1); let up = true, dn = true; for (let j = 1; j < 6; j++) { if (!(w[j] > w[j - 1])) up = false; if (!(w[j] < w[j - 1])) dn = false; } if (up || dn) hit[i].add(3); }
+      if (i >= 1) { const w = z.slice(Math.max(0, i - 2), i + 1); if ((w.filter(t => t > 2).length >= 2 && z[i] > 2) || (w.filter(t => t < -2).length >= 2 && z[i] < -2)) hit[i].add(5); }
+      if (i >= 3) { const w = z.slice(Math.max(0, i - 4), i + 1); if ((w.filter(t => t > 1).length >= 4 && z[i] > 1) || (w.filter(t => t < -1).length >= 4 && z[i] < -1)) hit[i].add(6); }
+    }
+    return hit;
+  }
+  function draw51() {
+    const sh = +$("q_sh").value, dr = +$("q_dr").value, at = +$("q_at").value;
+    $("o_qsh").textContent = fx(sh, 2) + "σ"; $("o_qdr").textContent = fx(dr, 2) + "σ"; $("o_qat").textContent = "第 " + at + " 點";
+    const r = rngS(qSeed), v = [];
+    for (let i = 1; i <= Q_N; i++) v.push(50 + gaussS(r) + (i >= at ? sh + dr * (i - at + 1) : 0));
+    const base = v.slice(0, Q_BASE), cl = base.reduce((a, b) => a + b, 0) / Q_BASE;
+    let mr = 0; for (let i = 1; i < Q_BASE; i++) mr += Math.abs(base[i] - base[i - 1]); const sg = mr / (Q_BASE - 1) / 1.128;
+    const z = v.map(x => (x - cl) / sg), hit = spcRulesHit(z, v);
+    const lo = Math.min(cl - 3.6 * sg, ...v) - 0.2, hi = Math.max(cl + 3.6 * sg, ...v) + 0.2;
+    const xt = []; for (let i = 1; i <= Q_N; i += 5) xt.push(i);
+    const F = frame({ svg: "p51", H: 320, x0: 0.3, x1: Q_N + 0.7, y0: lo, y1: hi, T: 22, L: 52, xt, xl: "依生產時間順序（點）", yt: [-3, -2, -1, 0, 1, 2, 3].map(k => cl + k * sg), yf: v => fx(v, 1) });
+    let s = F.s;
+    [[-2, .35], [-1, .2], [1, .2], [2, .35]].forEach(([k, op]) => { s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(cl + k * sg)}" y2="${F.sy(cl + k * sg)}" stroke="var(--c-alpha)" stroke-opacity="${op}" stroke-dasharray="4 4"/>`; });
+    [-3, 3].forEach(k => { s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(cl + k * sg)}" y2="${F.sy(cl + k * sg)}" stroke="var(--c-alpha)" stroke-width="2"/><text x="${F.R - 4}" y="${F.sy(cl + k * sg) - 5}" text-anchor="end" font-size="12" fill="var(--c-alpha)">${k > 0 ? "UCL" : "LCL"}</text>`; });
+    s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(cl)}" y2="${F.sy(cl)}" stroke="var(--c-h0)" stroke-width="1.6"/><text x="${F.R - 4}" y="${F.sy(cl) - 5}" text-anchor="end" font-size="12" fill="var(--muted)">CL</text>`;
+    if (at <= Q_N && (sh > 0 || dr > 0)) s += `<line x1="${F.sx(at - 0.5)}" x2="${F.sx(at - 0.5)}" y1="${F.T}" y2="${F.B}" stroke="var(--c-beta)" stroke-dasharray="5 4"/><text x="${F.sx(at - 0.5) + 6}" y="${F.T + 12}" font-size="12" fill="var(--c-beta)">開始變化</text>`;
+    s += `<line x1="${F.sx(Q_BASE + 0.5)}" x2="${F.sx(Q_BASE + 0.5)}" y1="${F.B - 8}" y2="${F.B}" stroke="var(--muted)"/><text x="${F.sx(Q_BASE / 2)}" y="${F.B - 12}" text-anchor="middle" font-size="11.5" fill="var(--muted)">前 ${Q_BASE} 點訂界限</text>`;
+    s += `<polyline points="${v.map((y, i) => F.sx(i + 1).toFixed(1) + "," + F.sy(y).toFixed(1)).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="1.6"/>`;
+    v.forEach((y, i) => { const h = hit[i].size > 0; s += `<circle cx="${F.sx(i + 1)}" cy="${F.sy(y)}" r="${h ? 5.5 : 4}" fill="${h ? "var(--bad)" : "var(--navy)"}" stroke="var(--surface)" stroke-width="1.5"><title>第 ${i + 1} 點：${fx(y, 2)}${h ? "；規則 " + [...hit[i]].join("、") : ""}</title></circle>`; });
+    $("p51").innerHTML = s;
+    const first = r => { const i = hit.findIndex(h => h.has(r)); return i < 0 ? "未觸發" : "第 " + (i + 1) + " 點"; };
+    const nm = { 1: "規則 1（超出 3σ）", 2: "規則 2（9 點同側）", 3: "規則 3（6 點連續升降）", 5: "規則 5（3 點中 2 點超出 2σ）", 6: "規則 6（5 點中 4 點超出 1σ）" };
+    $("q_stats").innerHTML = [1, 2, 3, 5, 6].map(k => `<div class="stat"><div class="k">${nm[k]}</div><div class="v" style="font-size:16px;color:${first(k) === "未觸發" ? "var(--muted)" : "var(--bad)"}">${first(k)}</div></div>`).join("");
+  }
+  // 5-5 趨勢報告：12 個月模擬（每月銷售約 1 萬個）
+  const T_SALES = [10120, 9870, 10350, 9980, 10210, 9760, 10050, 10300, 9920, 10140, 10080, 10000], T_EV = [3, 5, 2, 4, 3, 4, 2, 3, 4, 5, 6, 8];
+  function trendCalc(ev, it, n) {
+    const rate = ev.map((e, i) => e / T_SALES[i]), c1 = rate.map((x, i) => x * 100 >= it - 1e-12 ? i : -1).filter(i => i >= 0), runs = [];
+    let s = 0; for (let i = 1; i <= rate.length; i++) { if (i < rate.length && rate[i] > rate[i - 1]) continue; if (i - s >= n) runs.push([s, i - 1]); s = i; }
+    return { rate, c1, runs, hit: c1.length > 0 || runs.length > 0 };
+  }
+  function draw52() {
+    const it = +$("tr_it").value, n = +$("tr_n").value, last = +$("tr_last").value;
+    $("o_trit").textContent = fx(it, 2) + "%"; $("o_trn").textContent = n + " 點"; $("o_trlast").textContent = last + " 件（" + fx(last / T_SALES[11] * 100, 3) + "%）";
+    const ev = T_EV.slice(0, 11).concat(last), R = trendCalc(ev, it, n), mark = new Set(R.c1); R.runs.forEach(([a, b]) => { for (let i = a; i <= b; i++) mark.add(i); });
+    const ymax = Math.max(it * 1.25, ...R.rate.map(x => x * 100)) * 1.15, st = [0.01, 0.02, 0.05, 0.1].find(v => ymax / v <= 6) || 0.1, yt = []; for (let v = 0; v <= ymax + 1e-9; v += st) yt.push(+v.toFixed(3));
+    const F = frame({ svg: "p52", H: 300, x0: 0.4, x1: 12.6, y0: 0, y1: ymax, T: 22, L: 60, xt: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], xf: v => v + "月", yt, yf: v => v + "%", yl: "發生率" });
+    let s = F.s; const bw = (F.sx(1) - F.sx(0)) * 0.55;
+    R.rate.forEach((x, i) => { const y = x * 100, on = mark.has(i); s += `<rect x="${F.sx(i + 1) - bw / 2}" y="${F.sy(y)}" width="${bw}" height="${F.B - F.sy(y)}" fill="${on ? "var(--bad)" : "var(--navy)"}" fill-opacity="${on ? .85 : .55}"><title>${i + 1} 月：${ev[i]} ÷ ${T_SALES[i]} = ${fx(y, 3)}%</title></rect>`; });
+    R.runs.forEach(([a, b]) => { s += `<path d="M${F.sx(a + 1)} ${F.sy(R.rate[a] * 100) - 14} L${F.sx(b + 1)} ${F.sy(R.rate[b] * 100) - 14}" stroke="var(--bad)" stroke-width="2" marker-end="url(#arrT)" fill="none"/>`; });
+    s = `<defs><marker id="arrT" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--bad)"/></marker></defs>` + s;
+    s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(it)}" y2="${F.sy(it)}" stroke="var(--c-alpha)" stroke-width="2" stroke-dasharray="7 4"/><text x="${F.R - 4}" y="${F.sy(it) - 6}" text-anchor="end" font-size="12.5" fill="var(--c-alpha)">IT ${fx(it, 2)}%</text>`;
+    $("p52").innerHTML = s;
+    const L1 = R.c1.length ? "成立：" + R.c1.map(i => `${i + 1} 月（${fx(R.rate[i] * 100, 3)}%）`).join("、") : `未成立（每月都 < ${fx(it, 2)}%）`;
+    const L2 = R.runs.length ? "成立：" + R.runs.map(([a, b]) => `${a + 1}～${b + 1} 月連續 ${b - a + 1} 點上升`).join("；") : `未成立（沒有連續 ${n} 點以上上升）`;
+    $("tr_v1").innerHTML = `<div class="k">判定</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${R.hit ? "var(--bad)" : "var(--good)"}">${R.hit ? "觸發趨勢報告程序" : "未觸發趨勢報告"}</div>`;
+    $("tr_v2").innerHTML = `<div class="k">兩個條件</div><div style="font-size:14.5px;margin-top:2px">條件 1（發生率 ≥ IT）：${L1}<br>條件 2（連續 ≥ ${n} 點上升）：${L2}</div>`;
+  }
+  function exData() {
+    $("ex_t").textContent = "事件數\t銷售量\n" + T_EV.map((e, i) => e + "\t" + T_SALES[i]).join("\n");
+    const r = rngS(11), L = ["拉伸強度 (N)"]; for (let i = 0; i < 30; i++) L.push((52 + 1.2 * gaussS(r) + (i === 21 ? 5.2 : 0)).toFixed(1));
+    $("ex_i").textContent = L.join("\n");
+  }
+  function draw5() { exData(); draw51(); draw52(); }
+  ["q_sh", "q_dr", "q_at"].forEach(id => $(id).addEventListener("input", draw51));
+  $("q_seed").addEventListener("click", () => { qSeed = (qSeed * 7919 + 13) % 100003; draw51(); });
+  ["tr_it", "tr_n", "tr_last"].forEach(id => $(id).addEventListener("input", draw52));
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-copy]"); if (!b) return; const t = $(b.dataset.copy).textContent;
+    let ok = false; try { await navigator.clipboard.writeText(t); ok = true; } catch (_) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { ok = document.execCommand("copy"); } catch (__) {} ta.remove(); }
+    b.textContent = ok ? "已複製" : "請手動選取"; setTimeout(() => { b.textContent = "複製"; }, 1500);
+  });
   function showTab(id) {
-    const ok = ["s1", "s2", "s3", "s4"].includes(id) ? id : "s1";
-    ["s1", "s2", "s3", "s4"].forEach(k => { $(k).hidden = k !== ok; });
+    const ok = ["s1", "s2", "s3", "s4", "s5"].includes(id) ? id : "s1";
+    ["s1", "s2", "s3", "s4", "s5"].forEach(k => { $(k).hidden = k !== ok; });
     document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
-    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else if (ok === "s4") { draw41(); draw42(); } else { all(); draw3b(); }
+    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else if (ok === "s4") { draw41(); draw42(); } else if (ok === "s5") { draw5(); } else { all(); draw3b(); }
   }
   document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   // 回到統計輔助工具：GitHub Pages 用相對路徑，其他（claude.ai）用輔助工具網址
   (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
   showTab(location.hash.slice(1));
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4"].find(k => !$(k).hidden) || "s1"), 150); });
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4", "s5"].find(k => !$(k).hidden) || "s1"), 150); });
   window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc, cpUpper, propCalc, chiCalc, zeroN };
 })();
 </script>

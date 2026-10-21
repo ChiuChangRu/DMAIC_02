@@ -2274,7 +2274,7 @@ nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
   </section>
 
   <section id="viewSPC" role="tabpanel" data-view="spc" hidden>
-    <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力</span></div>
+    <div class="tool-head"><h2 class="tool-title">SPC 管制圖</h2><span class="hint">依資料型態自動選管制圖，標出 Nelson 判異規則與製程能力　<a class="link spc-learn" target="_blank" rel="noopener" href="https://chiuchangru.github.io/DMAIC_02/medqs/learn.html#s5">怎麼看管制圖？（教學）↗</a></span></div>
     <div class="tool-problem"><label for="spcProblem" class="group-label">描述情境或問題（AI 建議設計、說明結果都會參考；從定義問題問過的問題會自動帶入，可修改）</label><textarea autocomplete="off" id="spcProblem" rows="2" placeholder="例如：注射筒筒身外徑製程是否穩定"></textarea><span class="hint" id="spcProblemSrc"></span></div>
     <details class="card mp-card" id="spcPlan" open>
       <summary><span class="qref copper">規劃</span> <b>資料規劃</b><span class="hint"> 先決定資料怎麼收、怎麼分組；收完把數值填回，再分析</span></summary>
@@ -16113,8 +16113,10 @@ else root.runValidation = runValidation;
         <div class="field"><label for="trIt">條件 1：發生率門檻 IT（%）</label><input autocomplete="off" id="trIt" type="number" step="any" min="0" inputmode="decimal" placeholder="依 RMP；例：PD（TCF-008）0.1"></div>
         <div class="field"><label for="trN">條件 2：連續上升點數 ≥</label><input autocomplete="off" id="trN" type="number" step="1" min="3" value="6" inputmode="numeric"></div>
       </div>
+      <p class="hint"><a class="link" id="trLearn" target="_blank" rel="noopener" href="https://chiuchangru.github.io/DMAIC_02/medqs/learn.html#s5">教學：統計觀念圖解第 5 章（各種管制圖、趨勢報告規則與範例）↗</a></p>
       <p class="hint">任一條件成立即觸發趨勢報告程序。條件 2 即 Nelson 規則 3 只看「上升」的方向；依公司簡報，ISO/TR 20416 指導原則為連續 6 點以上持續上升即判定趨勢成立。</p>
     </details>`);
+    try { if (/github\.io$/.test(location.hostname)) document.querySelectorAll("#trLearn, .spc-learn").forEach(a => { a.href = "learn.html#s5"; }); } catch (_) {}
     const pct = v => (v * 100).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") + "%";
     function trend() {
       const S = TQ.spc; if (!S || !$("trOn").checked) return null;

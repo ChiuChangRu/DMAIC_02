@@ -15,8 +15,10 @@
         <div class="field"><label for="trIt">條件 1：發生率門檻 IT（%）</label><input autocomplete="off" id="trIt" type="number" step="any" min="0" inputmode="decimal" placeholder="依 RMP；例：PD（TCF-008）0.1"></div>
         <div class="field"><label for="trN">條件 2：連續上升點數 ≥</label><input autocomplete="off" id="trN" type="number" step="1" min="3" value="6" inputmode="numeric"></div>
       </div>
+      <p class="hint"><a class="link" id="trLearn" target="_blank" rel="noopener" href="https://chiuchangru.github.io/DMAIC_02/medqs/learn.html#s5">教學：統計觀念圖解第 5 章（各種管制圖、趨勢報告規則與範例）↗</a></p>
       <p class="hint">任一條件成立即觸發趨勢報告程序。條件 2 即 Nelson 規則 3 只看「上升」的方向；依公司簡報，ISO/TR 20416 指導原則為連續 6 點以上持續上升即判定趨勢成立。</p>
     </details>`);
+    try { if (/github\.io$/.test(location.hostname)) document.querySelectorAll("#trLearn, .spc-learn").forEach(a => { a.href = "learn.html#s5"; }); } catch (_) {}
     const pct = v => (v * 100).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") + "%";
     function trend() {
       const S = TQ.spc; if (!S || !$("trOn").checked) return null;
