@@ -15971,7 +15971,7 @@ else root.runValidation = runValidation;
     // 動態子項目：樣本數（問題）、③ 驗證項目、④ 報告段落
     function fill(t) {
       const box = nav.querySelector(`.sb-tool[data-t="${t}"] .sb-sub`); if (!box) return;
-      if (t === "sample") box.innerHTML = [...document.querySelectorAll("#ssQ [data-q]")].map(b => { let t = ""; try { t = (SSQ[b.dataset.q] || {}).title || ""; } catch (_) {} t = (t || b.textContent || "").replace(/\s+/g, " ").trim(); return sub("sample", b.dataset.q, t.split("？")[0].slice(0, 30) + (t.includes("？") ? "？" : "")); }).join("");
+      if (t === "sample") box.innerHTML = [...document.querySelectorAll("#ssTabs [data-tsub]")].map(b => sub("sample", b.dataset.tsub, b.textContent.trim())).join("");   // 直接列檢定／抽樣方法（不列情境問題）
       else if (t === "plan") {
         const L = [...document.querySelectorAll("#planHub .hub-item")];
         box.innerHTML = L.length ? L.map((x, i) => sub("plan", i, `${i + 1}. ${(x.querySelector(".hub-t") || x).textContent.trim()}`)).join("") : `<span class="sb-none">尚無驗證項目</span>`;
@@ -15991,7 +15991,7 @@ else root.runValidation = runValidation;
         if (t !== v) on = false;
         else if (t === "hypothesis") on = !!document.querySelector(`#viewAnalyze .subtabs [data-sub="${k}"][aria-selected="true"]`);
         else if (t === "msa" || t === "doe") on = !!document.querySelector(`#${t}Tabs [data-tsub="${k}"][aria-selected="true"]`);
-        else if (t === "sample") on = !!document.querySelector(`#ssQ [data-q="${k}"][aria-pressed="true"]`);
+        else if (t === "sample") on = !!document.querySelector(`#ssTabs [data-tsub="${k}"][aria-selected="true"]`);
         s.classList.toggle("on", on);
       });
     }
@@ -16001,7 +16001,7 @@ else root.runValidation = runValidation;
       const s = e.target.closest(".sb-s");
       if (s) {
         const t = s.dataset.sbt, k = s.dataset.sbs;
-        if (t === "sample") { const b = btn("sample"); if (b && cv() !== "sample") b.click(); try { ssPick(k); } catch (_) {} }
+        if (t === "sample") gotoTool("sample", k);
         else if (t === "plan" || t === "pdca") {
           const b = btn(t); if (b && cv() !== t) b.click();
           setTimeout(() => {
@@ -16021,7 +16021,7 @@ else root.runValidation = runValidation;
       }
     });
     // 頁面上切換子分頁時，側欄跟著標示
-    document.addEventListener("click", e => { if (e.target.closest(".subtabs, #ssQ")) setTimeout(sync, 0); });
+    document.addEventListener("click", e => { if (e.target.closest(".subtabs, #ssQ, #ssTiles")) setTimeout(sync, 0); });
     const _route = route;
     route = function (name) { _route(name); try { ["plan", "pdca", "sample"].forEach(t => { const sb = nav.querySelector(`.sb-tool[data-t="${t}"] .sb-sub`); if (sb && !sb.hidden) fill(t); }); sync(); } catch (e) { console.warn("sidebar", e); } };
     // 暫存進度、重新檢討魚骨圖、輪次：顯示在側欄底部（按鈕轉給原本流程列處理）
