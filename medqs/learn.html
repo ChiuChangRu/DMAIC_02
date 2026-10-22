@@ -118,7 +118,8 @@ h2.sec { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; p
 .chap-no { font-family: var(--font-body); font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--on-act); background: var(--act); border-radius: 999px; padding: 3px 12px; }
 .chap-t { flex: 1 1 auto; }
 .chap .sec-lede { margin-top: 12px; }
-section.chap > section.card[id] > h3 { cursor: pointer; }
+section.chap > section.card[id] > h3, section.chap > section.card.folded[id] { cursor: pointer; }
+section.chap > section.card.folded[id]:hover { border-color: var(--act-text); }
 section.chap > section.card[id] > h3:hover { color: var(--act-text); }
 section.card[id] { scroll-margin-top: 12px; }
 .card .qref { font-size: 13px; color: var(--on-act); background: var(--act); border-radius: 6px; padding: 1px 8px; letter-spacing: .04em; }
@@ -1660,7 +1661,9 @@ footer a, .card a { color: var(--act-text); }
       const nb = e.target.closest("[data-note]");
       if (nb) { const c = $(nb.dataset.note), box = c.querySelector(".note-box"); if (c.classList.contains("folded")) setFold(c, false); box.hidden = !box.hidden; if (!box.hidden) box.querySelector("textarea").focus(); return; }
       const fb = e.target.closest("[data-fold]"); if (fb) { const c = $(fb.dataset.fold); setFold(c, !c.classList.contains("folded")); return; }
-      const hh = e.target.closest("section.chap > section.card[id] > h3"); if (hh) { const c = hh.parentElement; setFold(c, !c.classList.contains("folded")); return; }
+      const fc = e.target.closest("section.chap > section.card.folded[id]");   // 收合時：點整個區域就展開（筆記按鈕、筆記框除外）
+      if (fc && !e.target.closest(".note-box, [data-note]")) { setFold(fc, false); return; }
+      const hh = e.target.closest("section.chap > section.card[id] > h3, section.chap > section.card[id] > .qref"); if (hh) { setFold(hh.parentElement, true); return; }   // 展開時：點標題收合
       if (e.target.closest("[data-notes]")) { openNotes(); return; }
       const jn = e.target.closest("[data-jumpnote]"); if (jn) { e.preventDefault(); $("notesDlg").close(); const id = jn.dataset.jumpnote; setFold($(id), false); showTab(id); return; }
       if (e.target.closest("#notesClose")) { $("notesDlg").close(); return; }
