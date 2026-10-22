@@ -118,17 +118,8 @@ h2.sec { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; p
 .chap-no { font-family: var(--font-body); font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--on-act); background: var(--act); border-radius: 999px; padding: 3px 12px; }
 .chap-t { flex: 1 1 auto; }
 .chap .sec-lede { margin-top: 12px; }
-.chap-toc { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--copper); border-radius: 10px; padding: 12px 18px; margin: 0 0 28px; }
-.chap-bar { padding: 10px 16px; }
-.chap-bar .toc-tools { margin-bottom: 0; }
 section.chap > section.card[id] > h3 { cursor: pointer; }
 section.chap > section.card[id] > h3:hover { color: var(--act-text); }
-.chap-toc-h { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--act-text); margin-bottom: 4px; }
-.chap-toc ol { list-style: none; margin: 0; padding: 0; columns: 2 280px; column-gap: 28px; }
-.chap-toc li { break-inside: avoid; margin: 3px 0; }
-.chap-toc a { color: var(--ink); text-decoration: none; display: inline-flex; gap: 8px; }
-.chap-toc a b { font-family: var(--font-mono); font-weight: 500; color: var(--act-text); min-width: 2.6em; }
-.chap-toc a:hover { color: var(--act-text); text-decoration: underline; }
 section.card[id] { scroll-margin-top: 12px; }
 .card .qref { font-size: 13px; color: var(--on-act); background: var(--act); border-radius: 6px; padding: 1px 8px; letter-spacing: .04em; }
 .fig-cap { font-size: 13px; font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
@@ -147,7 +138,6 @@ section.card[id] { scroll-margin-top: 12px; }
 .note-box textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
 .note-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .toc-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; }
-.chap-toc a.has-note::after { content: "（有筆記）"; font-size: 12px; color: var(--act-text); margin-left: 4px; }
 .notes-dlg { width: min(640px, calc(100vw - 32px)); max-height: 80vh; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; background: var(--surface); color: var(--ink); }
 .notes-dlg::backdrop { background: rgba(0,0,0,.45); }
 .notes-dlg h3 { margin: 0 0 4px; font-family: var(--font-display); font-weight: 500; }
@@ -1610,8 +1600,6 @@ footer a, .card a { color: var(--act-text); }
       h.innerHTML = `<span class="chap-no">第 ${m[1]} 章</span><span class="chap-t">${m[2]}</span>`;
       sec.classList.add("chap");
       const cards = [...sec.querySelectorAll(":scope > section.card[id]")];
-      const lede = sec.querySelector(":scope > .sec-lede") || h;
-      lede.insertAdjacentHTML("afterend", `<nav class="chap-toc chap-bar" aria-label="第 ${m[1]} 章"><div class="chap-toc-h">本章 ${cards.length} 節：點小節標題展開或收合</div></nav>`);
       cards.forEach(c => { const q = c.querySelector(".qref"), t = c.querySelector("h3"); const plots = [...c.querySelectorAll("svg.plot")];
         plots.forEach((p, i) => { p.insertAdjacentHTML("beforebegin", `<div class="fig-cap">圖 ${q ? q.textContent.trim() : ""}${plots.length > 1 ? "（" + (i + 1) + "）" : ""}　${t ? t.textContent.replace(/^動手(看|算)：/, "").trim() : ""}</div>`); }); });
     });
@@ -1649,7 +1637,6 @@ footer a, .card a { color: var(--act-text); }
       const n = notes()[c.id], b = c.querySelector("[data-note]"), m = c.querySelector(".note-meta");
       if (b) { b.textContent = n ? "筆記（已寫）" : "筆記"; b.classList.toggle("on", !!n); }
       if (m) m.textContent = n ? "已儲存 " + new Date(n.at).toLocaleString("zh-TW", { hour12: false }) : "";
-      const li = document.querySelector(`.chap-toc a[data-jump="${c.id}"]`); if (li) li.classList.toggle("has-note", !!n);
       paintNoteCount();
     }
     function setFold(c, on, save = true) {
@@ -1658,10 +1645,9 @@ footer a, .card a { color: var(--act-text); }
       if (!on) redraw();
     }
     // 章首目錄：全部展開／全部收合／我的筆記
-    document.querySelectorAll(".chap-toc").forEach(t => {
-      t.querySelector(".chap-toc-h").insertAdjacentHTML("afterend", `<div class="toc-tools"><button type="button" class="ct-btn" data-all="open">全部展開</button><button type="button" class="ct-btn" data-all="fold">全部收合</button><button type="button" class="ct-btn" data-notes="1">我的筆記（<span class="nn">0</span>）</button></div>`);
-    });
-    function paintNoteCount() { const k = Object.keys(notes()).length; document.querySelectorAll(".chap-toc .nn").forEach(x => { x.textContent = k; }); }
+    // 「我的筆記」放在頁首按鈕列（章首不再放大綱或工具列）
+    $("lnTheme").insertAdjacentHTML("beforebegin", `<button type="button" class="top-link top-btn" data-notes="1">我的筆記（<span class="nn">0</span>）</button>`);
+    function paintNoteCount() { const k = Object.keys(notes()).length; document.querySelectorAll(".nn").forEach(x => { x.textContent = k; }); }
     document.body.insertAdjacentHTML("beforeend", `<dialog class="notes-dlg" id="notesDlg" aria-labelledby="notesT"><h3 id="notesT">我的筆記</h3><p class="help">筆記只存在這個瀏覽器（換電腦、清除瀏覽資料就會消失）。要保留請下載。</p><div id="notesList"></div><div class="toc-tools" style="margin-top:12px"><button type="button" class="ct-btn" id="notesDl">下載筆記（.txt）</button><button type="button" class="ct-btn" id="notesCopy">複製全部</button><button type="button" class="ct-btn" id="notesClose">關閉</button></div><p class="help" id="notesHint"></p></dialog>`);
     const allText = () => { const n = notes(); return cards.filter(c => n[c.id]).map(c => `【${c.querySelector(".qref").textContent.trim()} ${c.querySelector("h3").textContent.trim()}】（${new Date(n[c.id].at).toLocaleString("zh-TW", { hour12: false })}）\n${n[c.id].t.trim()}`).join("\n\n"); };
     function openNotes() {
@@ -1675,7 +1661,6 @@ footer a, .card a { color: var(--act-text); }
       if (nb) { const c = $(nb.dataset.note), box = c.querySelector(".note-box"); if (c.classList.contains("folded")) setFold(c, false); box.hidden = !box.hidden; if (!box.hidden) box.querySelector("textarea").focus(); return; }
       const fb = e.target.closest("[data-fold]"); if (fb) { const c = $(fb.dataset.fold); setFold(c, !c.classList.contains("folded")); return; }
       const hh = e.target.closest("section.chap > section.card[id] > h3"); if (hh) { const c = hh.parentElement; setFold(c, !c.classList.contains("folded")); return; }
-      const ab = e.target.closest("[data-all]"); if (ab) { const sec = ab.closest("section.chap"); sec.querySelectorAll(":scope > section.card[id]").forEach(c => setFold(c, ab.dataset.all === "fold")); return; }
       if (e.target.closest("[data-notes]")) { openNotes(); return; }
       const jn = e.target.closest("[data-jumpnote]"); if (jn) { e.preventDefault(); $("notesDlg").close(); const id = jn.dataset.jumpnote; setFold($(id), false); showTab(id); return; }
       if (e.target.closest("#notesClose")) { $("notesDlg").close(); return; }
