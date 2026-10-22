@@ -150,6 +150,8 @@ section.card[id] { scroll-margin-top: 12px; }
 .nel-fig figcaption { font-size: 13.5px; margin-bottom: 2px; }
 .nel-fig figcaption b { color: var(--act-text); }
 .nel-svg { display: block; width: 100%; height: auto; }
+.chart-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.mini-t { font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 4px; }
 .nel-why { font-size: 12.5px; color: var(--muted); }
 .top-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .top-btn { background: transparent; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
@@ -918,6 +920,9 @@ footer a, .card a { color: var(--act-text); }
       <tr><td><b>判異規則</b></td><td>判斷「不像隨機」的規則，最常用的是 Nelson 8 條（見 5-4）。觸發不等於一定有問題，是「該去查原因」的訊號。</td><td>連續 9 點都在中心線下方。</td></tr>
       <tr><td><b>製程能力 Cpk</b></td><td>製程波動和規格比起來夠不夠窄。<b>製程穩定（管制內）時才有意義</b>；還有異常訊號時算出來的 Cpk 不能代表未來。</td><td>Cpk 1.33 以上一般視為足夠。</td></tr>
     </table></div>
+    <p class="help" style="margin-top:12px">用一張圖把上面的名詞對起來（教學用模擬：每小時抽 1 支量外徑，規格 10.00 ± 0.15 mm）：</p>
+    <svg class="plot" id="p50" viewBox="0 0 680 300" role="img" aria-label="管制圖名詞圖解：中心線、管制界限、規格、普通原因與特殊原因"></svg>
+    <ul class="tight help" style="margin-top:8px"><li><b>管制界限在規格裡面</b>：製程能力足夠時常見。第 19 點超出管制界限（有事發生，該查原因），但<b>還在規格內</b>，產品仍合格。</li><li>反過來，製程波動很大時，管制界限可能比規格還寬：點都在管制界限內（製程穩定），卻有產品超出規格（能力不足）。</li></ul>
   </section>
 
   <section class="card" id="s5-2">
@@ -934,6 +939,8 @@ footer a, .card a { color: var(--act-text); }
       <tr><td rowspan="2"><b>缺點數</b><br>（一件可以有好幾個缺點）</td><td>每次檢驗單位相同</td><td><b>c</b></td><td>每次的缺點<b>個數</b></td><td>每卷膜面的黑點數</td><td>每列：缺點數</td></tr>
       <tr><td>每次檢驗單位不同</td><td><b>u</b></td><td>每單位的缺點數</td><td>不同長度管材的表面瑕疵（每 100 m）</td><td>每列：缺點數, 檢驗單位數</td></tr>
     </table></div>
+    <p class="help" style="margin-top:12px">下面是每一種管制圖的<b>例圖</b>（教學用模擬數據；管制界限依各圖的標準公式由數據算出）。紅點是超出管制界限的點。有兩張圖的（I-MR、X̄-R、X̄-S），上面看平均水準、下面看波動大小。</p>
+    <div class="nel-grid chart-grid" id="chartGrid"></div>
     <ul class="tight help" style="margin-top:12px">
       <li><b>兩張圖要一起看</b>（I-MR、X̄-R、X̄-S）：下面那張（MR、R、S）先穩定，上面那張的界限才可信。</li>
       <li><b>資料一定要依生產時間順序</b>，不要挑樣、不要重新排序；判異規則 2～8 都靠順序才有意義。</li>
@@ -1586,7 +1593,76 @@ footer a, .card a { color: var(--act-text); }
       return `<figure class="nel-fig"><figcaption><b>規則 ${ex.r}</b>　${ex.t}</figcaption><svg viewBox="0 0 ${W} ${H}" class="nel-svg" role="img" aria-label="規則 ${ex.r} 示意圖：${ex.t}">${s}</svg><div class="nel-why">可能代表：${NEL_WHY[ex.r]}</div></figure>`;
     }).join("");
   }
-  function draw5() { exData(); draw51(); draw52(); drawNelson(); }
+  // 5-1 名詞圖解、5-2 各種管制圖例圖（教學用模擬數據，固定種子；管制界限依各圖標準公式由數據計算）
+  function binS(r, n, p) { let k = 0; for (let i = 0; i < n; i++) if (r() < p) k++; return k; }
+  function poisS(r, lam) { const L = Math.exp(-lam); let k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; }
+  function miniChart(o) {   // o: { vals, cl, ucl[], lcl[], title, yl, hl[], spec }
+    const W = 320, H = 150, L = 40, R = W - 30, T = 14, B = H - 18, n = o.vals.length;
+    const all = o.vals.concat(o.ucl, o.lcl.filter(v => v != null)), lo0 = Math.min(...all), hi0 = Math.max(...all), pad = (hi0 - lo0) * 0.12 || 1, lo = lo0 - pad, hi = hi0 + pad;
+    const sx = i => L + (i + 0.5) / n * (R - L), sy = v => B - (v - lo) / (hi - lo) * (B - T), f = v => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(2) : v.toFixed(3);
+    let s = "";
+    const step = (arr, col, w) => { let d = ""; arr.forEach((v, i) => { if (v == null) return; const x0 = sx(i) - (R - L) / n / 2, x1 = sx(i) + (R - L) / n / 2; d += (d && arr[i - 1] != null ? `L${x0.toFixed(1)} ${sy(v).toFixed(1)}` : `M${x0.toFixed(1)} ${sy(v).toFixed(1)}`) + ` L${x1.toFixed(1)} ${sy(v).toFixed(1)}`; }); return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}"/>`; };
+    s += step(o.ucl, "var(--c-alpha)", 1.5) + step(o.lcl, "var(--c-alpha)", 1.5);
+    s += `<line x1="${L}" x2="${R}" y1="${sy(o.cl)}" y2="${sy(o.cl)}" stroke="var(--c-h0)" stroke-width="1.1"/>`;
+    s += `<text x="${R + 3}" y="${sy(o.ucl[n - 1]) + 4}" font-size="9.5" fill="var(--c-alpha)">UCL</text><text x="${R + 3}" y="${sy(o.cl) + 4}" font-size="9.5" fill="var(--muted)">CL</text>`;
+    if (o.lcl[n - 1] != null) s += `<text x="${R + 3}" y="${sy(o.lcl[n - 1]) + 4}" font-size="9.5" fill="var(--c-alpha)">LCL</text>`;
+    s += `<text x="${L - 4}" y="${sy(o.ucl[0]) + 3}" text-anchor="end" font-size="9.5" fill="var(--muted)">${f(o.ucl[0])}</text><text x="${L - 4}" y="${sy(o.cl) + 3}" text-anchor="end" font-size="9.5" fill="var(--muted)">${f(o.cl)}</text>`;
+    if (o.lcl[0] != null) s += `<text x="${L - 4}" y="${sy(o.lcl[0]) + 3}" text-anchor="end" font-size="9.5" fill="var(--muted)">${f(o.lcl[0])}</text>`;
+    s += `<polyline points="${o.vals.map((v, i) => sx(i).toFixed(1) + "," + sy(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="1.2"/>`;
+    o.vals.forEach((v, i) => { const out = v > o.ucl[i] + 1e-12 || (o.lcl[i] != null && v < o.lcl[i] - 1e-12); s += `<circle cx="${sx(i)}" cy="${sy(v)}" r="${out ? 3.8 : 2.6}" fill="${out ? "var(--bad)" : "var(--navy)"}"/>`; });
+    s += `<text x="${L}" y="${H - 4}" font-size="9.5" fill="var(--muted)">${o.yl || ""}</text>`;
+    return `<div class="mini-t">${o.title}</div><svg viewBox="0 0 ${W} ${H}" class="nel-svg" role="img" aria-label="${o.title}">${s}</svg>`;
+  }
+  const meanA = a => a.reduce((x, y) => x + y, 0) / a.length;
+  function chartGallery() {
+    const g = $("chartGrid"); if (!g) return;
+    const r = rngS(31), K = 20, figs = [];
+    // I-MR：每批 1 個拉伸強度
+    const x = Array.from({ length: K }, (_, i) => 52 + 1.1 * gaussS(r) + (i === 15 ? 4.6 : 0));
+    const mr = x.map((v, i) => i ? Math.abs(v - x[i - 1]) : null), mrb = meanA(mr.slice(1)), xb = meanA(x);
+    figs.push({ k: "I-MR", d: "計量值，每次 1 個", ex: "每批 1 個拉伸強度（N）", html: miniChart({ vals: x, cl: xb, ucl: x.map(() => xb + 2.66 * mrb), lcl: x.map(() => xb - 2.66 * mrb), title: "I 圖：個別值" }) + miniChart({ vals: mr.slice(1), cl: mrb, ucl: Array(K - 1).fill(3.267 * mrb), lcl: Array(K - 1).fill(null), title: "MR 圖：相鄰兩點差" }) });
+    // X̄-R：n = 5
+    const sg5 = Array.from({ length: K }, (_, i) => Array.from({ length: 5 }, () => 10 + 0.03 * gaussS(r) + (i >= 14 ? 0.045 : 0)));
+    const xb5 = sg5.map(meanA), rg = sg5.map(a => Math.max(...a) - Math.min(...a)), xbb = meanA(xb5), rb = meanA(rg);
+    figs.push({ k: "X̄-R", d: "計量值，每次 2～10 個", ex: "每小時抽 5 支量外徑（mm）", html: miniChart({ vals: xb5, cl: xbb, ucl: Array(K).fill(xbb + 0.577 * rb), lcl: Array(K).fill(xbb - 0.577 * rb), title: "X̄ 圖：子組平均（n = 5）" }) + miniChart({ vals: rg, cl: rb, ucl: Array(K).fill(2.114 * rb), lcl: Array(K).fill(null), title: "R 圖：子組全距" }) });
+    // X̄-S：n = 15
+    const sg15 = Array.from({ length: K }, (_, i) => Array.from({ length: 15 }, () => 0.80 + 0.02 * gaussS(r) + (i === 11 ? 0.03 : 0)));
+    const xb15 = sg15.map(meanA), sd15 = sg15.map(a => { const m = meanA(a); return Math.sqrt(a.reduce((t, v) => t + (v - m) ** 2, 0) / (a.length - 1)); }), xbb15 = meanA(xb15), sb = meanA(sd15);
+    figs.push({ k: "X̄-S", d: "計量值，每次 11～25 個", ex: "每批抽 15 個量壁厚（mm）", html: miniChart({ vals: xb15, cl: xbb15, ucl: Array(K).fill(xbb15 + 0.789 * sb), lcl: Array(K).fill(xbb15 - 0.789 * sb), title: "X̄ 圖：子組平均（n = 15）" }) + miniChart({ vals: sd15, cl: sb, ucl: Array(K).fill(1.572 * sb), lcl: Array(K).fill(0.428 * sb), title: "S 圖：子組標準差" }) });
+    // np：每批固定 200
+    const npv = Array.from({ length: K }, (_, i) => binS(r, 200, i === 13 ? 0.07 : 0.02)), pb = meanA(npv) / 200, npc = 200 * pb, nps = Math.sqrt(200 * pb * (1 - pb));
+    figs.push({ k: "np", d: "不良品，抽樣數相同", ex: "每批固定抽 200 個外觀檢驗", html: miniChart({ vals: npv, cl: npc, ucl: Array(K).fill(npc + 3 * nps), lcl: Array(K).fill(Math.max(0, npc - 3 * nps)), title: "np 圖：每批不良件數", yl: "件" }) });
+    // p：抽樣數不同
+    const pn = Array.from({ length: K }, () => 150 + Math.round(120 * r())), pd = pn.map((n, i) => binS(r, n, i === 8 ? 0.065 : 0.02)), pbar = pd.reduce((a, b) => a + b, 0) / pn.reduce((a, b) => a + b, 0);
+    figs.push({ k: "p", d: "不良品，抽樣數不同", ex: "每批產量不同的全檢不良率；每月事件數 ÷ 銷售量", html: miniChart({ vals: pd.map((d, i) => d / pn[i]), cl: pbar, ucl: pn.map(n => pbar + 3 * Math.sqrt(pbar * (1 - pbar) / n)), lcl: pn.map(n => Math.max(0, pbar - 3 * Math.sqrt(pbar * (1 - pbar) / n))), title: "p 圖：每批不良率（界限隨抽樣數變動）", yl: "比例" }) });
+    // c：每次檢驗單位相同
+    const cv = Array.from({ length: K }, (_, i) => poisS(r, i === 10 ? 13 : 4)), cb = meanA(cv);
+    figs.push({ k: "c", d: "缺點數，檢驗單位相同", ex: "每卷膜面的黑點數", html: miniChart({ vals: cv, cl: cb, ucl: Array(K).fill(cb + 3 * Math.sqrt(cb)), lcl: Array(K).fill(Math.max(0, cb - 3 * Math.sqrt(cb))), title: "c 圖：每次缺點個數", yl: "個" }) });
+    // u：檢驗單位不同
+    const un = Array.from({ length: K }, () => +(0.5 + 1.5 * r()).toFixed(1)), uc = un.map((n, i) => poisS(r, (i === 16 ? 9 : 3) * n)), ubar = uc.reduce((a, b) => a + b, 0) / un.reduce((a, b) => a + b, 0);
+    figs.push({ k: "u", d: "缺點數，檢驗單位不同", ex: "不同長度管材的表面瑕疵（每 100 m）", html: miniChart({ vals: uc.map((c, i) => c / un[i]), cl: ubar, ucl: un.map(n => ubar + 3 * Math.sqrt(ubar / n)), lcl: un.map(n => Math.max(0, ubar - 3 * Math.sqrt(ubar / n))), title: "u 圖：每單位缺點數（界限隨單位數變動）", yl: "個／100 m" }) });
+    g.innerHTML = figs.map((x, i) => `<figure class="nel-fig"><figcaption><b>圖 5-2（${i + 1}）${x.k}</b>　${x.d}</figcaption>${x.html}<div class="nel-why">例：${x.ex}</div></figure>`).join("");
+  }
+  function termFig() {   // 5-1：一張圖看懂中心線、管制界限、規格、普通／特殊原因
+    if (!$("p50")) return;
+    const r = rngS(5), n = 25, v = Array.from({ length: n }, (_, i) => 10 + 0.03 * gaussS(r) + (i === 18 ? 0.115 : 0));
+    const base = v.filter((_, i) => i !== 18), cl = meanA(base); let m = 0; for (let i = 1; i < base.length; i++) m += Math.abs(base[i] - base[i - 1]); const sg = m / (base.length - 1) / 1.128;
+    const ucl = cl + 3 * sg, lcl = cl - 3 * sg, usl = 10.15, lsl = 9.85;
+    v[18] = Math.min(usl - 0.02, ucl + 0.03);   // 示意：超出管制界限但仍在規格內
+    const F = frame({ svg: "p50", H: 300, x0: 0.3, x1: n + 0.7, y0: 9.82, y1: 10.18, T: 16, L: 52, xt: [1, 5, 10, 15, 20, 25], xl: "依生產時間順序（每小時一點）", yt: [9.85, 9.9, 9.95, 10, 10.05, 10.1, 10.15], yf: v => v.toFixed(2) });
+    let s = F.s;
+    s += `<rect x="${F.L}" y="${F.sy(ucl)}" width="${F.R - F.L}" height="${F.sy(lcl) - F.sy(ucl)}" fill="var(--teal)" fill-opacity=".08"/>`;
+    [[usl, "USL 規格上限（設計／客戶給的）"], [lsl, "LSL 規格下限"]].forEach(([y, t]) => { s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(y)}" y2="${F.sy(y)}" stroke="var(--good)" stroke-width="2" stroke-dasharray="8 5"/><text paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" x="${F.L + 6}" y="${F.sy(y) - 5}" font-size="12" fill="var(--good)">${t}</text>`; });
+    [[ucl, "UCL 管制上限（由資料算出）", F.L + 6, "start"], [lcl, "LCL 管制下限", F.R - 6, "end"]].forEach(([y, t, x, an]) => { s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(y)}" y2="${F.sy(y)}" stroke="var(--c-alpha)" stroke-width="2"/><text paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" x="${x}" y="${F.sy(y) - 5}" text-anchor="${an}" font-size="12" fill="var(--c-alpha)">${t}</text>`; });
+    s += `<line x1="${F.L}" x2="${F.R}" y1="${F.sy(cl)}" y2="${F.sy(cl)}" stroke="var(--c-h0)" stroke-width="1.5"/><text paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" x="${F.sx(3)}" y="${F.sy(cl) - 6}" text-anchor="middle" font-size="12" fill="var(--muted)">CL 中心線（平均）</text>`;
+    s += `<polyline points="${v.map((y, i) => F.sx(i + 1).toFixed(1) + "," + F.sy(y).toFixed(1)).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="1.5"/>`;
+    v.forEach((y, i) => { const out = y > ucl || y < lcl; s += `<circle cx="${F.sx(i + 1)}" cy="${F.sy(y)}" r="${out ? 6 : 4}" fill="${out ? "var(--bad)" : "var(--navy)"}" stroke="var(--surface)" stroke-width="1.5"/>`; });
+    const xo = F.sx(19), yo = F.sy(v[18]);
+    s += `<path d="M${xo - 8} ${yo - 4} L${xo - 36} ${yo - 22}" stroke="var(--bad)" stroke-width="1.5"/><text paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" x="${xo - 40}" y="${yo - 24}" text-anchor="end" font-size="12.5" font-weight="700" fill="var(--bad)">特殊原因：超出管制界限，但還在規格內</text>`;
+    s += `<text paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" x="${F.sx(6)}" y="${F.sy(lcl) + 16}" text-anchor="middle" font-size="12" fill="var(--teal)">普通原因：管制界限內的隨機波動</text>`;
+    $("p50").innerHTML = s;
+  }
+  function draw5() { exData(); termFig(); chartGallery(); draw51(); draw52(); drawNelson(); }
   ["q_sh", "q_dr", "q_at"].forEach(id => $(id).addEventListener("input", draw51));
   $("q_seed").addEventListener("click", () => { qSeed = (qSeed * 7919 + 13) % 100003; draw51(); });
   ["tr_it", "tr_n", "tr_last"].forEach(id => $(id).addEventListener("input", draw52));
