@@ -7,7 +7,7 @@
   const SB_SUBS = {
     hypothesis: [["compare", "比較檢定（量測數值）"], ["count", "次數資料（不良率、類別）"], ["tol", "統計允差區間"]],
     msa: [["grr", "Gage R&R"], ["bias", "偏差"], ["lin", "線性"], ["stab", "穩定性"], ["attr", "屬性一致性"]],
-    doe: [["fact", "因子設計（製程參數）"], ["mix", "混合設計（配方比例）"]]
+    doe: [["fact", "因子設計（製程參數）"], ["mix", "混合設計（配方比例）"], ["rsm", "反應曲面（CCD）"]]
   };
   const SB_TOOLS = ["sample", "hypothesis", "regression", "msa", "spc", "doe", "taguchi"];
   const SB_PD = [["1", "記錄問題"], ["2", "分析問題（魚骨圖）"], ["3", "找出原因（5 個為什麼）"], ["4", "採取對策"], ["5", "驗證結果與標準化"], ["6", "前幾輪的結果"]];
