@@ -1423,6 +1423,17 @@ nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
 .rs-hold-i output { color: var(--ink); font-weight: 700; }
 .rs-cd { color: var(--muted); font-size: 11.5px; margin-left: 2px; }
 .rs-ctl input[type=range] { width: 100%; }
+/* ANOVA 表：終端機樣式（rsm.js 加上 .term-tbl） */
+table.term-tbl { width: auto; min-width: 100%; border-collapse: separate; border-spacing: 0; background: #10171D; color: #D5E1DC; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; border-radius: 8px; overflow: hidden; }
+table.term-tbl th, table.term-tbl td { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; padding: 4px 14px; border: 0; color: inherit; text-align: right; font-variant-numeric: tabular-nums; }
+table.term-tbl th:first-child, table.term-tbl td:first-child { text-align: left; }
+table.term-tbl td[colspan] { text-align: left; color: #E8C27A; padding-top: 10px; }
+table.term-tbl thead th, table.term-tbl tr:first-child th { color: #8FB8B2; font-weight: 700; letter-spacing: 0; border-bottom: 1px dashed #4E6A66; padding-top: 8px; }
+table.term-tbl tbody tr:last-child td { border-top: 1px dashed #4E6A66; }
+table.term-tbl tr:hover td { background: #17222A; }
+table.term-tbl b, table.term-tbl strong { color: #F0B07A; }
+table.term-tbl .status.ng, table.term-tbl .ng { color: #F28B82; }
+table.term-tbl .status.ok, table.term-tbl .ok { color: #7FD3A6; }
 </style>
 
 <div class="wrap">
@@ -16538,6 +16549,10 @@ else root.runValidation = runValidation;
     // DOE 子分頁說明
     tabs.addEventListener("click", e => { const b = e.target.closest('[data-tsub="rsm"]'); if (b) setTimeout(() => { $("doeSubHint").textContent = "中心複合設計（CCD）：估計二次曲面、找最佳點、畫 3D 曲面與等高線"; }, 0); });
   })();
+  // =====================================================================
+  // 所有 ANOVA 表：終端機樣式（等寬字、深色底、數字靠右對齊）；仍是 HTML 表格，欄位對齊不會因中文字寬跑掉
+  // =====================================================================
+  ["anovaTable", "regAnova", "grrAnovaT", "doeAnova", "mixAnova", "tgAnovaSN", "tgAnovaM", "rsAnova"].forEach(id => { const t = $(id); if (t) t.classList.add("term-tbl"); });
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;

@@ -287,3 +287,7 @@
     // DOE 子分頁說明
     tabs.addEventListener("click", e => { const b = e.target.closest('[data-tsub="rsm"]'); if (b) setTimeout(() => { $("doeSubHint").textContent = "中心複合設計（CCD）：估計二次曲面、找最佳點、畫 3D 曲面與等高線"; }, 0); });
   })();
+  // =====================================================================
+  // 所有 ANOVA 表：終端機樣式（等寬字、深色底、數字靠右對齊）；仍是 HTML 表格，欄位對齊不會因中文字寬跑掉
+  // =====================================================================
+  ["anovaTable", "regAnova", "grrAnovaT", "doeAnova", "mixAnova", "tgAnovaSN", "tgAnovaM", "rsAnova"].forEach(id => { const t = $(id); if (t) t.classList.add("term-tbl"); });
