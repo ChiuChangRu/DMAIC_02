@@ -18,7 +18,7 @@
     // ---- 2 水準因子設計（全因子、部分因子、PB）：coded −1／+1 ----
     ui("doeMatrix", "doe");
     $("doeSim").addEventListener("click", () => {
-      if (!doe) { $("doeHint").textContent = "請先按「產生實驗矩陣」。"; return; }
+      if (!doe) { doeF.slice(0, doeKNow()).forEach(f => { if (!String(f.lo).trim()) f.lo = "-1"; if (!String(f.hi).trim()) f.hi = "+1"; }); doeFactorsUI(); doeGenerate(); }   // 還沒產生表：自動產生
       const M = doe.design.matrix, k = doe.design.k, full = doeKind() === "full";
       const imp = pick(k, Math.min(k, k >= 3 ? 3 : 2)), b = new Array(k).fill(0);
       b[imp[0]] = (R() < 0.5 ? -1 : 1) * (3 + 2 * R()); if (imp[1] != null) b[imp[1]] = (R() < 0.5 ? -1 : 1) * (1.8 + 1.2 * R()); if (imp[2] != null) b[imp[2]] = (R() < 0.5 ? -1 : 1) * (0.9 + 0.6 * R());
@@ -31,12 +31,12 @@
       const terms = b.map((v, c) => `${sg(v)}·${QQ.LETTERS[c]}`).join(" ") + (inter ? ` ${sg(inter.v)}·${QQ.LETTERS[inter.a]}${QQ.LETTERS[inter.c]}` : "");
       const eff = b.map((v, c) => [Math.abs(v), `${nm(c)} 效應 ${(2 * v).toFixed(2)}`]).sort((x, y) => y[0] - x[0]).map(x => x[1]);
       show("doe", `<p><b>y = ${b0} ${terms} + ε</b>，ε ~ N(0, ${sd.toFixed(2)}²)；因子以 −1（低水準）／+1（高水準）編碼。</p><p>主效應由大到小：${eff.join("、")}${inter ? `；交互作用 ${QQ.LETTERS[inter.a]}${QQ.LETTERS[inter.c]} 效應 ${(2 * inter.v).toFixed(2)}` : full ? "" : "（部分因子／PB 設計的交互作用與主效應混淆，模擬時不加交互作用）"}。</p><p class="hint">效應 = 高水準平均 − 低水準平均 = 2 × 係數。分析結果的效應應接近這些數值；誤差越大、重複越少，估計越不準。</p>`);
-      $("doeHint").textContent = "已填入模擬數據，請按「分析效應」。";
+      $("doeHint").textContent = "已填入模擬數據，請按「分析效應」。"; $("doeSim").nextElementSibling.textContent = "已填入模擬數據，請按下方「分析效應」。";
     });
     // ---- 混合設計：Scheffé 二次模型 ----
     ui("mixMatrix", "mix");
     $("mixSim").addEventListener("click", () => {
-      if (!mix) { $("mixHint").textContent = "請先按「產生實驗點」。"; return; }
+      if (!mix) mixGenerate();
       const q = mix.q, lin = Array.from({ length: q }, () => r1(55 + 30 * R())), pairs = [];
       for (let i = 0; i < q; i++) for (let j = i + 1; j < q; j++) pairs.push([i, j, 0]);
       const big = Math.floor(R() * pairs.length); pairs.forEach((p, n) => { p[2] = n === big ? (R() < 0.5 ? -1 : 1) * r1(20 + 15 * R()) : r1((R() - 0.5) * 6); });
@@ -45,12 +45,12 @@
       mixMatrix();
       const L = QQ.LETTERS, names = mixNamesArr.slice(0, q);
       show("mix", `<p><b>y = ${lin.map((b, c) => `${c ? "+ " : ""}${b}·${L[c]}`).join(" ")} ${pairs.map(([a, c, v]) => `${sg(v)}·${L[a]}${L[c]}`).join(" ")} + ε</b>，ε ~ N(0, ${sd.toFixed(2)}²)；${names.map((n, c) => `${L[c]} = ${esc(n || "成分")} 的比例`).join("、")}（0～1，合計 1）。</p><p>明顯的混合效應：${L[pairs[big][0]]}${L[pairs[big][1]]}（係數 ${pairs[big][2]}，${pairs[big][2] > 0 ? "加成" : "拮抗"}）。分析時「自動」應選到二次模型，並找回這一項。</p>`);
-      $("mixHint").textContent = "已填入模擬數據，請按「分析」。";
+      $("mixHint").textContent = "已填入模擬數據，請按「分析」。"; $("mixSim").nextElementSibling.textContent = "已填入模擬數據，請按下方「分析」。";
     });
     // ---- 田口：各因子水準效應＋雜音條件，含一個「降低雜音影響」的穩健因子 ----
     ui("tgMatrix", "tg");
     $("tgSim").addEventListener("click", () => {
-      if (!tg) { $("tgHint").textContent = "請先按「產生直交表」。"; return; }
+      if (!tg && tgGenerate() === false) { $("tgSim").nextElementSibling.textContent = "無法產生直交表，請先檢查因子設定。"; return; }
       const A = TGE.ARR[tg.design.array], k = tg.k, Ls = tg.design.cols.map(c => Math.max(...A.matrix.map(r => r[c])));
       const type = tg.type, base = type === "smaller" ? 20 : type === "nominal" ? 10 : 50, scale = type === "nominal" ? 0.25 : 1;
       const imp = pick(k, Math.min(k, 3)), robust = imp[imp.length - 1];
@@ -72,7 +72,7 @@
       const L = TGE.LETTERS, nm = f => esc(L[f] + "（" + (tgF[f].name || "因子") + "）");
       const effTxt = eff.map((e, f) => `${nm(f)}：${e.map((v, l) => `${tgF[f].lab[l] || "水準 " + (l + 1)} ${v >= 0 ? "+" : ""}${v}`).join("，")}`).join("<br>");
       show("tg", `<p><b>${type === "dynamic" ? `y = β·M + 雜音 + ε，β = ${beta0} + (各因子效應合計) ÷ 20` : `y = ${base} + 各因子水準效應 + 雜音條件偏移 × 敏感度 + ε`}</b>，ε ~ N(0, ${sd.toFixed(2)}²)。</p><p>各因子水準效應：<br>${effTxt}</p><p>雜音條件偏移：${tgNoise.slice(0, tg.noiseN).map((n, i) => `${esc(n)} ${nShift[i] >= 0 ? "+" : ""}${nShift[i]}`).join("、")}。<b>${nm(robust)}</b> 是穩健因子：水準越高，雜音的影響越小（敏感度 ${sens.join(" → ")}），分析時看 S/N 比的因子效應，這個因子的 S/N 差異應該明顯；平均值主要受前兩個效應大的因子影響。</p>`);
-      $("tgHint").textContent = "已填入模擬數據，請按「分析」。";
+      $("tgHint").textContent = "已填入模擬數據，請按「分析」。"; $("tgSim").nextElementSibling.textContent = "已填入模擬數據，請按下方「分析」。";
     });
     // 重新產生表格時拿掉模擬標示
     const _dg = doeGenerate; doeGenerate = function (keepY) { hide("doe"); return _dg(keepY); };

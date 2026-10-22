@@ -260,7 +260,13 @@
     })();
     // ---- 模擬數據：有最大點的二次曲面（一個因子可能幾乎不影響）＋誤差 ----
     $("rsSim").addEventListener("click", () => {
-      if (!rs) { $("rsHint").textContent = "請先按「產生實驗表」。"; return; }
+      const note = $("rsSim").nextElementSibling;
+      if (!rs) {   // 還沒產生實驗表：空白的高低水準先用 coded −1／+1，直接產生後再填
+        const k0 = kNow(); let filled = 0;
+        rsF.slice(0, k0).forEach((f, i) => { if (!lohi(i)) { f.lo = "-1"; f.hi = "1"; filled++; } });
+        factorsUI(); gen();
+        note.textContent = filled ? `已自動產生實驗表；${filled} 個因子沒填高低水準，先用 coded −1／+1（可再改成實際值）。` : "已自動產生實驗表。";
+      } else note.textContent = "";
       const k = rs.k, R = Math.random, N = () => { let u = 0; while (u === 0) u = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * R()); };
       const xs = Array.from({ length: k }, () => +((R() - 0.5) * 1.2).toFixed(2)), A = Array.from({ length: k }, () => new Array(k).fill(0));
       const weak = k >= 4 ? Math.floor(R() * k) : -1;
@@ -276,7 +282,7 @@
       $("rsSimBadge").innerHTML = "以下結果欄是<b>模擬數據</b>（預測方程式＋隨機誤差），只供練習分析流程，不能作為驗證或確效依據。"; $("rsSimBadge").hidden = false;
       const d = $("rsSimEq"); d.hidden = false; d.open = false;
       d.querySelector(".sim-eq-b").innerHTML = `<p><b>y = ${terms.join(" ")} + ε</b>，ε ~ N(0, ${sd}²)；coded 單位（−1／+1 = 低／高水準）。</p><p>真正的最大點在 ${xs.map((x, i) => `${L[i]} = ${fmtA(i, x)}（coded ${x}）`).join("、")}，最大值 ${y0}。${weak >= 0 ? `${L[weak]} 幾乎不影響反應（平方項很小）。` : ""}分析的駐點應接近這個位置，性質應為「最大點」。</p>`;
-      $("rsHint").textContent = "已填入模擬數據，請按「分析」。";
+      $("rsHint").textContent = "已填入模擬數據，請按「分析」。"; note.textContent += (note.textContent ? " " : "") + "已填入模擬數據，請按下方「分析」。";
     });
     // DOE 子分頁說明
     tabs.addEventListener("click", e => { const b = e.target.closest('[data-tsub="rsm"]'); if (b) setTimeout(() => { $("doeSubHint").textContent = "中心複合設計（CCD）：估計二次曲面、找最佳點、畫 3D 曲面與等高線"; }, 0); });
