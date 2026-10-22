@@ -112,6 +112,21 @@ td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; 
 .tex-live .tex { font-size: 16px; }
 .note { background: var(--warn-soft); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; font-size: 14.5px; margin-top: 12px; }
 ul.tight { margin: 6px 0 0; padding-left: 1.2em; } ul.tight li { margin: 2px 0; }
+/* 章節：章號、本章內容目錄、圖號（chapterNav） */
+h2.sec { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 4px 0 12px; border-bottom: 3px solid var(--copper); }
+.chap-no { font-family: var(--font-body); font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--on-act); background: var(--act); border-radius: 999px; padding: 3px 12px; }
+.chap-t { flex: 1 1 auto; }
+.chap .sec-lede { margin-top: 12px; }
+.chap-toc { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--copper); border-radius: 10px; padding: 12px 18px; margin: 0 0 28px; }
+.chap-toc-h { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--act-text); margin-bottom: 4px; }
+.chap-toc ol { list-style: none; margin: 0; padding: 0; columns: 2 280px; column-gap: 28px; }
+.chap-toc li { break-inside: avoid; margin: 3px 0; }
+.chap-toc a { color: var(--ink); text-decoration: none; display: inline-flex; gap: 8px; }
+.chap-toc a b { font-family: var(--font-mono); font-weight: 500; color: var(--act-text); min-width: 2.6em; }
+.chap-toc a:hover { color: var(--act-text); text-decoration: underline; }
+section.card[id] { scroll-margin-top: 12px; }
+.card .qref { font-size: 13px; color: var(--on-act); background: var(--act); border-radius: 6px; padding: 1px 8px; letter-spacing: .04em; }
+.fig-cap { font-size: 13px; font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
 .btn-mini { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--act-text); background: transparent; border: 1px solid var(--act-text); border-radius: 999px; padding: 2px 10px; cursor: pointer; margin-left: 6px; }
 .exd { margin: 6px 0 0; max-height: 220px; overflow: auto; font-family: var(--font-mono); font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; white-space: pre; }
 ol.tight { padding-left: 1.3em; } ol.tight li { margin: 3px 0; }
@@ -1525,7 +1540,24 @@ footer a, .card a { color: var(--act-text); }
     let ok = false; try { await navigator.clipboard.writeText(t); ok = true; } catch (_) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { ok = document.execCommand("copy"); } catch (__) {} ta.remove(); }
     b.textContent = ok ? "已複製" : "請手動選取"; setTimeout(() => { b.textContent = "複製"; }, 1500);
   });
+  (function chapterNav() {
+    document.querySelectorAll('section[id^="s"] > h2.sec').forEach(h => {
+      const sec = h.parentElement, m = /^(\d+)\s*[　\s]\s*(.*)$/.exec(h.textContent.trim()); if (!m) return;
+      h.innerHTML = `<span class="chap-no">第 ${m[1]} 章</span><span class="chap-t">${m[2]}</span>`;
+      sec.classList.add("chap");
+      const cards = [...sec.querySelectorAll(":scope > section.card[id]")];
+      const items = cards.map(c => { const q = c.querySelector(".qref"), t = c.querySelector("h3"); return q && t ? `<li><a href="#${c.id}" data-jump="${c.id}"><b>${q.textContent.trim()}</b>${t.textContent.trim()}</a></li>` : ""; }).join("");
+      const lede = sec.querySelector(":scope > .sec-lede") || h;
+      lede.insertAdjacentHTML("afterend", `<nav class="chap-toc" aria-label="第 ${m[1]} 章內容"><div class="chap-toc-h">本章內容</div><ol>${items}</ol></nav>`);
+      cards.forEach(c => { const q = c.querySelector(".qref"), t = c.querySelector("h3"); const plots = [...c.querySelectorAll("svg.plot")];
+        plots.forEach((p, i) => { p.insertAdjacentHTML("beforebegin", `<div class="fig-cap">圖 ${q ? q.textContent.trim() : ""}${plots.length > 1 ? "（" + (i + 1) + "）" : ""}　${t ? t.textContent.replace(/^動手(看|算)：/, "").trim() : ""}</div>`); }); });
+    });
+    document.addEventListener("click", e => { const a = e.target.closest("a[data-jump]"); if (!a) return; e.preventDefault(); const el = $(a.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+  })();
   function showTab(id) {
+    const sub = /^s\d+-\d+$/.test(id || "") && document.getElementById(id) ? id : "";
+    if (sub) id = sub.split("-")[0];
+    if (sub) setTimeout(() => { const el = $(sub); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
     const ok = ["s1", "s2", "s3", "s4", "s5"].includes(id) ? id : "s1";
     ["s1", "s2", "s3", "s4", "s5"].forEach(k => { $(k).hidden = k !== ok; });
     document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
