@@ -119,6 +119,10 @@ h2.sec { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; p
 .chap-t { flex: 1 1 auto; }
 .chap .sec-lede { margin-top: 12px; }
 .chap-toc { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--copper); border-radius: 10px; padding: 12px 18px; margin: 0 0 28px; }
+.chap-bar { padding: 10px 16px; }
+.chap-bar .toc-tools { margin-bottom: 0; }
+section.chap > section.card[id] > h3 { cursor: pointer; }
+section.chap > section.card[id] > h3:hover { color: var(--act-text); }
 .chap-toc-h { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--act-text); margin-bottom: 4px; }
 .chap-toc ol { list-style: none; margin: 0; padding: 0; columns: 2 280px; column-gap: 28px; }
 .chap-toc li { break-inside: avoid; margin: 3px 0; }
@@ -1606,9 +1610,8 @@ footer a, .card a { color: var(--act-text); }
       h.innerHTML = `<span class="chap-no">第 ${m[1]} 章</span><span class="chap-t">${m[2]}</span>`;
       sec.classList.add("chap");
       const cards = [...sec.querySelectorAll(":scope > section.card[id]")];
-      const items = cards.map(c => { const q = c.querySelector(".qref"), t = c.querySelector("h3"); return q && t ? `<li><a href="#${c.id}" data-jump="${c.id}"><b>${q.textContent.trim()}</b>${t.textContent.trim()}</a></li>` : ""; }).join("");
       const lede = sec.querySelector(":scope > .sec-lede") || h;
-      lede.insertAdjacentHTML("afterend", `<nav class="chap-toc" aria-label="第 ${m[1]} 章內容"><div class="chap-toc-h">本章內容</div><ol>${items}</ol></nav>`);
+      lede.insertAdjacentHTML("afterend", `<nav class="chap-toc chap-bar" aria-label="第 ${m[1]} 章"><div class="chap-toc-h">本章 ${cards.length} 節：點小節標題展開或收合</div></nav>`);
       cards.forEach(c => { const q = c.querySelector(".qref"), t = c.querySelector("h3"); const plots = [...c.querySelectorAll("svg.plot")];
         plots.forEach((p, i) => { p.insertAdjacentHTML("beforebegin", `<div class="fig-cap">圖 ${q ? q.textContent.trim() : ""}${plots.length > 1 ? "（" + (i + 1) + "）" : ""}　${t ? t.textContent.replace(/^動手(看|算)：/, "").trim() : ""}</div>`); }); });
     });
@@ -1628,10 +1631,10 @@ footer a, .card a { color: var(--act-text); }
     const NK = "mdqs.learn.notes";
     const notes = () => { try { return JSON.parse(LS(NK) || "{}") || {}; } catch (_) { return {}; } };
     const saveNote = (id, t) => { const n = notes(); if (t.trim()) n[id] = { t, at: new Date().toISOString() }; else delete n[id]; LS(NK, JSON.stringify(n)); };
-    const FK = "mdqs.learn.fold", folded = () => { try { return new Set(JSON.parse(LS(FK) || "[]")); } catch (_) { return new Set(); } };
-    const saveFold = s => LS(FK, JSON.stringify([...s]));
+    const OK = "mdqs.learn.open", opened = () => { try { return new Set(JSON.parse(LS(OK) || "[]")); } catch (_) { return new Set(); } };   // 預設收合；只記使用者展開的小節
+    const saveOpen = s => LS(OK, JSON.stringify([...s]));
     // 每個小節：右上角「筆記」「收合」；內容包進 .cbody
-    const cards = [...document.querySelectorAll("section.chap > section.card[id]")], F = folded();
+    const cards = [...document.querySelectorAll("section.chap > section.card[id]")], O = opened(), hashId = (location.hash || "").slice(1);
     cards.forEach(c => {
       const h = c.querySelector(":scope > h3"); if (!h) return;
       const body = document.createElement("div"); body.className = "cbody";
@@ -1640,7 +1643,7 @@ footer a, .card a { color: var(--act-text); }
       h.insertAdjacentHTML("afterend", `<div class="note-box" hidden><label class="note-lab" for="nt_${c.id}">我的筆記（${c.querySelector(".qref") ? c.querySelector(".qref").textContent.trim() : ""}，存在這個瀏覽器）</label><textarea id="nt_${c.id}" rows="3" placeholder="寫下重點、疑問或公司實例（請勿寫入可識別資料）"></textarea><div class="note-meta"></div></div>`);
       c.insertAdjacentHTML("afterbegin", `<div class="card-tools"><button type="button" class="ct-btn" data-note="${c.id}">筆記</button><button type="button" class="ct-btn" data-fold="${c.id}" aria-expanded="true">收合</button></div>`);
       const n = notes()[c.id]; if (n) { c.querySelector("textarea").value = n.t; c.querySelector(".note-box").hidden = false; }
-      paintCard(c); if (F.has(c.id)) setFold(c, true, false);
+      paintCard(c); setFold(c, !(O.has(c.id) || c.id === hashId), false);
     });
     function paintCard(c) {
       const n = notes()[c.id], b = c.querySelector("[data-note]"), m = c.querySelector(".note-meta");
@@ -1651,7 +1654,7 @@ footer a, .card a { color: var(--act-text); }
     }
     function setFold(c, on, save = true) {
       c.classList.toggle("folded", on); const b = c.querySelector("[data-fold]"); if (b) { b.textContent = on ? "展開" : "收合"; b.setAttribute("aria-expanded", String(!on)); }
-      if (save) { const s = folded(); on ? s.add(c.id) : s.delete(c.id); saveFold(s); }
+      if (save) { const s = opened(); on ? s.delete(c.id) : s.add(c.id); saveOpen(s); }
       if (!on) redraw();
     }
     // 章首目錄：全部展開／全部收合／我的筆記
@@ -1671,9 +1674,10 @@ footer a, .card a { color: var(--act-text); }
       const nb = e.target.closest("[data-note]");
       if (nb) { const c = $(nb.dataset.note), box = c.querySelector(".note-box"); if (c.classList.contains("folded")) setFold(c, false); box.hidden = !box.hidden; if (!box.hidden) box.querySelector("textarea").focus(); return; }
       const fb = e.target.closest("[data-fold]"); if (fb) { const c = $(fb.dataset.fold); setFold(c, !c.classList.contains("folded")); return; }
+      const hh = e.target.closest("section.chap > section.card[id] > h3"); if (hh) { const c = hh.parentElement; setFold(c, !c.classList.contains("folded")); return; }
       const ab = e.target.closest("[data-all]"); if (ab) { const sec = ab.closest("section.chap"); sec.querySelectorAll(":scope > section.card[id]").forEach(c => setFold(c, ab.dataset.all === "fold")); return; }
       if (e.target.closest("[data-notes]")) { openNotes(); return; }
-      const jn = e.target.closest("[data-jumpnote]"); if (jn) { e.preventDefault(); $("notesDlg").close(); const id = jn.dataset.jumpnote; showTab(id); return; }
+      const jn = e.target.closest("[data-jumpnote]"); if (jn) { e.preventDefault(); $("notesDlg").close(); const id = jn.dataset.jumpnote; setFold($(id), false); showTab(id); return; }
       if (e.target.closest("#notesClose")) { $("notesDlg").close(); return; }
       if (e.target.closest("#notesDl")) { const t = allText(); if (!t) { $("notesHint").textContent = "還沒有筆記。"; return; } const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["統計觀念圖解　我的筆記\n\n" + t], { type: "text/plain;charset=utf-8" })); a.download = "learn-notes_" + new Date().toISOString().slice(0, 10) + ".txt"; document.body.appendChild(a); a.click(); a.remove(); return; }
       if (e.target.closest("#notesCopy")) { const t = allText(); navigator.clipboard.writeText(t).then(() => { $("notesHint").textContent = "已複製。"; }, () => { $("notesHint").textContent = "這個瀏覽器無法複製，請改用下載。"; }); return; }
@@ -1682,6 +1686,7 @@ footer a, .card a { color: var(--act-text); }
     let tm = null;
     document.addEventListener("input", e => { const ta = e.target.closest(".note-box textarea"); if (!ta) return; const c = ta.closest("section.card"); clearTimeout(tm); tm = setTimeout(() => { saveNote(c.id, ta.value); paintCard(c); }, 400); });
     document.addEventListener("focusout", e => { const ta = e.target.closest && e.target.closest(".note-box textarea"); if (!ta) return; const c = ta.closest("section.card"); clearTimeout(tm); saveNote(c.id, ta.value); paintCard(c); });
+    window.addEventListener("hashchange", () => { const id = (location.hash || "").slice(1), c = /^s\d+-\d+$/.test(id) && $(id); if (c && c.classList.contains("card")) setFold(c, false); });   // 連到某小節時自動展開
     paintNoteCount();
   })();
   function showTab(id) {
