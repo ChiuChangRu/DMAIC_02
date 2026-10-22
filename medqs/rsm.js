@@ -38,6 +38,10 @@
         <aside class="card preview" data-ask="反應曲面結果"><div class="preview-head"><span class="filename"><span class="tag">RESULT</span> <b id="rsTitle">尚未分析</b></span><span class="ask-slot"></span></div><div class="preview-body" id="rsOut"><p class="help">產生實驗表、填入結果後按「分析」。</p></div></aside>
       </div>
       <div class="sheets" id="rsSheets" hidden>
+        <section class="card sheet" data-ask="因子效應圖"><h3>因子效應圖</h3><p class="help">每個因子單獨變化、其他因子固定在中心點時，模型預測的反應怎麼變（主效應圖；彎曲代表有平方項）。點是設計水準（−α、−1、0、+1、+α）。</p><div id="rsMain" class="rs-main"></div>
+          <h3 style="margin-top:16px">標準化效應 Pareto 圖</h3><p class="help">各項的 |t| 值由大到小；超過紅色虛線（α = 0.05 的臨界值）的項為顯著。</p><div id="rsPareto"></div></section>
+        <section class="card sheet" data-ask="二次模型係數"><h3>二次模型係數（coded 單位）</h3><div class="scroll-x"><table id="rsCoef"></table></div></section>
+        <section class="card sheet" data-ask="反應曲面 ANOVA"><h3>ANOVA（含失適性檢定）</h3><div class="scroll-x"><table id="rsAnova"></table></div><p class="help" id="rsAnovaNote"></p></section>
         <section class="card sheet" data-ask="反應曲面圖"><h3>反應曲面圖</h3>
           <div class="fields rs-ctl">
             <div class="field"><label for="rsPX">橫軸因子</label><select autocomplete="off" id="rsPX"></select></div>
@@ -49,8 +53,6 @@
           <p class="hint">在圖上按住拖曳也可以旋轉。底部是同一個曲面的等高線；其他因子固定在下方設定的值（預設為中心點）。</p>
           <div class="rs-plot"><svg id="rsSvg" viewBox="0 0 760 520" role="img" aria-label="反應曲面 3D 圖"></svg></div>
         </section>
-        <section class="card sheet" data-ask="二次模型係數"><h3>二次模型係數（coded 單位）</h3><div class="scroll-x"><table id="rsCoef"></table></div></section>
-        <section class="card sheet" data-ask="反應曲面 ANOVA"><h3>ANOVA（含失適性檢定）</h3><div class="scroll-x"><table id="rsAnova"></table></div><p class="help" id="rsAnovaNote"></p></section>
       </div>
     </div>`);
     const rsF = Array.from({ length: 5 }, (_, i) => ({ name: "因子 " + L[i], lo: "", hi: "" }));
@@ -169,12 +171,38 @@
       rows.push(row("總計", F.n - 1, F.SST));
       $("rsAnova").innerHTML = table(["來源", "自由度", "SS", "MS", "F", "p"], rows);
       $("rsAnovaNote").textContent = "一次項、平方項、交互作用項的 SS 是調整後平方和（拿掉該組項後殘差增加多少）。失適性顯著代表二次模型還不夠描述資料（可能需要轉換或更高階模型）；純誤差來自中心點重複。";
-      plotUI(); $("rsSheets").hidden = false;
+      $("rsSheets").hidden = false; effectsPlot(); plotUI();
       const ctx = [`反應曲面（CCD，k=${k}，α=${nf(rs.a, 4)}，中心點 ${rs.nc}）；反應 ${$("rsY").value}`, `係數：${F.T.map((t, c) => `${t.n} ${nf(F.f.beta[c], 5)}（p ${pTxt(F.f.p[c])}）`).join("；")}`, `R² ${nf(100 * F.R2, 3)}%，模型 p ${pTxt(F.pF)}，失適性 p ${pTxt(lof)}`, `駐點 ${F.xs ? F.xs.map((x, i) => L[i] + "=" + fmtA(i, x)).join("、") : "無"}（${nature}）；建議設定 ${F.opt.x.map((x, i) => L[i] + "=" + fmtA(i, x)).join("、")} 預測 ${nf(F.opt.v, 4)}`];
       if (!$("rsSimBadge").hidden) ctx.push("（注意：結果欄是模擬數據）");
       TQ.rsm = { ctx: ctx.join("\n") };
     }
     $("rsRun").addEventListener("click", analyze);
+    // ---- 因子效應圖（主效應曲線）＋標準化效應 Pareto ----
+    function effectsPlot() {
+      const F = fit, k = rs.k, a = rs.a, yN = $("rsY").value || "反應";
+      const curves = Array.from({ length: k }, (_, i) => Array.from({ length: 41 }, (_, j) => { const x = new Array(k).fill(0); x[i] = -a + 2 * a * j / 40; return [x[i], F.pred(x)]; }));
+      const all = curves.flat().map(p => p[1]), lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.1 || 1, y0 = lo - pad, y1 = hi + pad;
+      const W = 230, H = 190, Lm = 46, R = W - 20, T = 26, B = H - 34, sx = x => Lm + (x + a) / (2 * a) * (R - Lm), sy = y => B - (y - y0) / (y1 - y0) * (B - T);
+      const ticks = [y0 + pad, (y0 + y1) / 2, y1 - pad];
+      $("rsMain").innerHTML = curves.map((c, i) => {
+        let s = `<rect x="${Lm}" y="${T}" width="${R - Lm}" height="${B - T}" fill="var(--surface)" stroke="var(--line)"/>`;
+        ticks.forEach(t => { s += `<line x1="${Lm}" x2="${R}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--line)" stroke-dasharray="3 3"/><text x="${Lm - 4}" y="${sy(t) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${nf(t, 4)}</text>`; });
+        s += `<line x1="${Lm}" x2="${R}" y1="${sy(F.yb)}" y2="${sy(F.yb)}" stroke="var(--muted)" stroke-opacity=".6"/>`;
+        s += `<polyline points="${c.map(([x, y]) => sx(x).toFixed(1) + "," + sy(y).toFixed(1)).join(" ")}" fill="none" stroke="var(--teal)" stroke-width="2.4"/>`;
+        [-a, -1, 0, 1, a].filter((v, j, arr) => arr.indexOf(v) === j).forEach(v => { const x = new Array(k).fill(0); x[i] = v; s += `<circle cx="${sx(v)}" cy="${sy(F.pred(x))}" r="3.6" fill="var(--copper)"/>`; });
+        [-a, 0, a].forEach(v => { s += `<text x="${sx(v)}" y="${B + 14}" text-anchor="middle" font-size="10" fill="var(--muted)">${fmtA(i, v)}</text>`; });
+        s += `<text x="${(Lm + R) / 2}" y="${H - 4}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink)">${esc(L[i] + " " + rsF[i].name)}</text><text x="${Lm}" y="${T - 8}" font-size="10.5" fill="var(--muted)">${esc(yN)}</text>`;
+        return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(L[i])} 主效應圖">${s}</svg>`;
+      }).join("");
+      // Pareto
+      const items = F.T.map((t, c) => ({ n: t.n, t: Math.abs(F.f.t[c]) })).filter((o, c) => F.T[c].kind !== "c" && isFinite(o.t)).sort((p, q) => q.t - p.t);
+      const tc = HT.tInv(0.975, F.f.df), mx = Math.max(tc, ...items.map(o => o.t)) * 1.1, PW = 640, rh = 22, PH = 30 + items.length * rh + 26, PL = 70, PR = PW - 20, px = v => PL + v / mx * (PR - PL);
+      let s = "";
+      items.forEach((o, i) => { const y = 16 + i * rh; s += `<rect x="${PL}" y="${y}" width="${(px(o.t) - PL).toFixed(1)}" height="${rh - 6}" fill="${o.t > tc ? "var(--copper)" : "var(--teal)"}" fill-opacity="${o.t > tc ? .9 : .45}"/><text x="${PL - 6}" y="${y + rh / 2 + 1}" text-anchor="end" font-size="12" fill="var(--ink)">${esc(o.n)}</text><text x="${px(o.t) + 4}" y="${y + rh / 2 + 1}" font-size="11" fill="var(--muted)">${nf(o.t, 3)}</text>`; });
+      const yb = 16 + items.length * rh;
+      s += `<line x1="${px(tc)}" x2="${px(tc)}" y1="8" y2="${yb}" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="6 4"/><text x="${px(tc) + 4}" y="${yb + 16}" font-size="11.5" fill="var(--bad)">臨界值 t = ${nf(tc, 4)}（自由度 ${F.f.df}）</text><line x1="${PL}" x2="${PR}" y1="${yb}" y2="${yb}" stroke="var(--muted)"/>`;
+      $("rsPareto").innerHTML = `<svg viewBox="0 0 ${PW} ${PH}" class="rs-pareto" role="img" aria-label="標準化效應 Pareto 圖">${s}</svg>`;
+    }
     // ---- 3D 曲面圖 ----
     let hold = [];
     function plotUI() {
