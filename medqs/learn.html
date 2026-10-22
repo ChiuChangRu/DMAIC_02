@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>try { document.documentElement.setAttribute("data-theme", localStorage.getItem("mdqs.learn.theme") === "dark" ? "dark" : "light"); } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }</script>
 <title>統計觀念圖解</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +59,7 @@ nav.tabs a[aria-current="true"] { color: #F5F1EA; border-bottom-color: #D8995F; 
 nav.tabs span { font-size: 14px; color: var(--band-muted); padding: 8px 14px 10px; opacity: .7; }
 h2.sec { font-family: var(--font-display); font-weight: 500; font-size: 28px; margin: 8px 0 4px; }
 .sec-lede { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
-.card { background: color-mix(in srgb, var(--teal) 28%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 50%, var(--line)); border-radius: 12px; padding: 24px; margin-bottom: 24px; min-width: 0; }
+.card { position: relative; background: color-mix(in srgb, var(--teal) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 50%, var(--line)); border-radius: 12px; padding: 24px; margin-bottom: 24px; min-width: 0; }
 @media (max-width: 480px) { .card { padding: 18px 14px; } }
 .card h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0 0 6px; }
 .qref { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--act-text); margin-bottom: 4px; }
@@ -127,6 +128,36 @@ h2.sec { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; p
 section.card[id] { scroll-margin-top: 12px; }
 .card .qref { font-size: 13px; color: var(--on-act); background: var(--act); border-radius: 6px; padding: 1px 8px; letter-spacing: .04em; }
 .fig-cap { font-size: 13px; font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
+/* 小節收合、筆記、主題切換（learnUi） */
+.card-tools { position: absolute; top: 14px; right: 16px; display: flex; gap: 6px; }
+.card > h3 { padding-right: 190px; }
+@media (max-width: 560px) { .card-tools { position: static; justify-content: flex-end; margin: -4px 0 6px; } .card > h3 { padding-right: 0; } }
+.ct-btn { font: inherit; font-size: 13px; font-weight: 700; color: var(--act-text); background: var(--surface); border: 1px solid var(--act-text); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.ct-btn:hover { background: var(--copper-soft); }
+.ct-btn.on { background: var(--copper-soft); }
+.card.folded { padding-bottom: 14px; }
+.card.folded .cbody { display: none; }
+.card.folded > h3 { margin-bottom: 0; }
+.note-box { margin: 6px 0 12px; background: var(--warn-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.note-lab { display: block; font-size: 12.5px; font-weight: 700; color: var(--warn-ink); margin-bottom: 4px; }
+.note-box textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.note-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.toc-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; }
+.chap-toc a.has-note::after { content: "（有筆記）"; font-size: 12px; color: var(--act-text); margin-left: 4px; }
+.notes-dlg { width: min(640px, calc(100vw - 32px)); max-height: 80vh; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; background: var(--surface); color: var(--ink); }
+.notes-dlg::backdrop { background: rgba(0,0,0,.45); }
+.notes-dlg h3 { margin: 0 0 4px; font-family: var(--font-display); font-weight: 500; }
+.nl-item { border-top: 1px solid var(--line); padding: 8px 0; }
+.nl-item a { color: var(--act-text); font-weight: 700; text-decoration: none; }
+.nl-t { white-space: pre-wrap; font-size: 14.5px; margin-top: 2px; }
+.nel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 8px; }
+.nel-fig { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.nel-fig figcaption { font-size: 13.5px; margin-bottom: 2px; }
+.nel-fig figcaption b { color: var(--act-text); }
+.nel-svg { display: block; width: 100%; height: auto; }
+.nel-why { font-size: 12.5px; color: var(--muted); }
+.top-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.top-btn { background: transparent; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .btn-mini { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--act-text); background: transparent; border: 1px solid var(--act-text); border-radius: 999px; padding: 2px 10px; cursor: pointer; margin-left: 6px; }
 .exd { margin: 6px 0 0; max-height: 220px; overflow: auto; font-family: var(--font-mono); font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; white-space: pre; }
 ol.tight { padding-left: 1.3em; } ol.tight li { margin: 3px 0; }
@@ -958,6 +989,8 @@ footer a, .card a { color: var(--act-text); }
       <tr><td>7</td><td>連續 15 點都在 1σ 以內</td><td>波動異常地小：界限算錯、資料被修飾、量具解析度不夠、混了不同來源。</td></tr>
       <tr><td>8</td><td>連續 8 點都在 1σ 之外（兩側皆可）</td><td>資料來自兩個不同水準的群體混在一起。</td></tr>
     </table></div>
+    <p class="help" style="margin-top:12px">下面 8 張是<b>示意圖</b>（為了說明規則畫的，不是實際資料）。中間黑線是中心線，橘色實線是 ±3σ 管制界限，淡色虛線是 ±1σ、±2σ；<b style="color:var(--bad)">紅點</b>是構成這條規則的關鍵點，淡紅色底是規則看的那一段。每張圖都用輔助工具同一套判異程式檢查過，只觸發該條規則。</p>
+    <div class="nel-grid" id="nelGrid"></div>
     <p class="help" style="margin-top:10px">輔助工具預設 8 條全開，可以在「判異規則」逐條關閉。開越多條越敏感，誤報也越多；公司程序有指定規則時，以公司規定為準。有兩張圖時（例如 X̄-R），第二張圖只套用規則 1。</p>
   </section>
 
@@ -1531,7 +1564,34 @@ footer a, .card a { color: var(--act-text); }
     const r = rngS(11), L = ["拉伸強度 (N)"]; for (let i = 0; i < 30; i++) L.push((52 + 1.2 * gaussS(r) + (i === 21 ? 5.2 : 0)).toFixed(1));
     $("ex_i").textContent = L.join("\n");
   }
-  function draw5() { exData(); draw51(); draw52(); }
+  // 5-4 Nelson 8 條示意圖（設計好的示意數值，以 σ 為單位，不是實際資料）
+  const NEL_EX = [
+    { r: 1, t: "1 點超出 3σ", z: [0.3, -0.5, 0.8, -0.2, 0.6, -0.9, 0.4, 3.6, 0.1, -0.4, 0.5, -0.7, 0.2, -0.3, 0.6], hl: [7], band: null },
+    { r: 2, t: "連續 9 點在中心線同一側", z: [0.5, -0.8, 0.9, -0.4, -1.1, -0.6, 0.6, 0.3, 1.1, 0.4, 0.8, 0.2, 0.9, 0.5, 0.7], hl: [14], band: [6, 14] },
+    { r: 3, t: "連續 6 點持續上升或下降", z: [0.2, -0.6, 0.5, -0.3, 0.4, -1.3, -0.8, -0.2, 0.4, 1.0, 1.6, 0.9, 0.2, -0.4, 0.3], hl: [10], band: [5, 10] },
+    { r: 4, t: "連續 14 點上下交替", z: [0.2, 0.9, -0.7, 1.0, -0.8, 0.7, -0.9, 1.1, -0.6, 0.8, -1.0, 0.9, -0.7, 1.0, -0.8, 0.6], hl: [13, 14, 15], band: [0, 15] },
+    { r: 5, t: "3 點中 2 點在 2σ 之外（同側）", z: [0.3, -0.4, 0.6, -0.2, 0.5, 2.4, 1.1, 2.3, 0.2, -0.5, 0.4, -0.3, 0.1, 0.6, -0.2], hl: [5, 7], band: [5, 7] },
+    { r: 6, t: "5 點中 4 點在 1σ 之外（同側）", z: [0.2, -0.5, 0.4, -0.3, 1.3, 1.6, 0.4, 1.2, 1.5, -0.2, 0.5, -0.6, 0.3, -0.1, 0.4], hl: [4, 5, 7, 8], band: [4, 8] },
+    { r: 7, t: "連續 15 點都在 1σ 以內", z: [1.6, -1.4, 0.3, -0.2, 0.4, -0.5, 0.1, 0.5, -0.3, 0.2, -0.4, 0.3, -0.1, 0.4, -0.5, 0.2, -0.3, 1.2], hl: [16], band: [2, 16] },
+    { r: 8, t: "連續 8 點都在 1σ 之外（兩側）", z: [0.3, -0.2, 1.5, -1.4, 1.8, -1.2, 1.3, -1.6, 1.4, -1.3, 0.2, 0.4, 0.5, 0.1], hl: [9], band: [2, 9] }];
+  const NEL_WHY = { 1: "突發的大事件", 2: "平均已經移動", 3: "漂移、磨耗", 4: "兩個來源輪流", 5: "中等偏移剛發生", 6: "小幅持續偏移", 7: "波動異常地小", 8: "兩群體混在一起" };
+  function drawNelson() {
+    const g = $("nelGrid"); if (!g) return;
+    g.innerHTML = NEL_EX.map(ex => {
+      const W = 300, H = 150, L = 30, R = W - 10, T = 10, B = H - 14, n = ex.z.length;
+      const sx = i => L + (i + 0.5) / n * (R - L), sy = z => T + (4 - z) / 8 * (B - T);
+      let s = "";
+      if (ex.band) s += `<rect x="${sx(ex.band[0]) - (R - L) / n / 2}" y="${T}" width="${(ex.band[1] - ex.band[0] + 1) * (R - L) / n}" height="${B - T}" fill="var(--bad)" fill-opacity=".09"/>`;
+      [-2, -1, 1, 2].forEach(k => { s += `<line x1="${L}" x2="${R}" y1="${sy(k)}" y2="${sy(k)}" stroke="var(--c-alpha)" stroke-opacity="${Math.abs(k) === 2 ? .45 : .28}" stroke-dasharray="3 3"/>`; });
+      [-3, 3].forEach(k => { s += `<line x1="${L}" x2="${R}" y1="${sy(k)}" y2="${sy(k)}" stroke="var(--c-alpha)" stroke-width="1.6"/>`; });
+      s += `<line x1="${L}" x2="${R}" y1="${sy(0)}" y2="${sy(0)}" stroke="var(--c-h0)" stroke-width="1.2"/>`;
+      [[3, "+3σ"], [0, "CL"], [-3, "−3σ"]].forEach(([k, t]) => { s += `<text x="${L - 4}" y="${sy(k) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${t}</text>`; });
+      s += `<polyline points="${ex.z.map((z, i) => sx(i).toFixed(1) + "," + sy(z).toFixed(1)).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="1.3"/>`;
+      ex.z.forEach((z, i) => { const on = ex.hl.includes(i); s += `<circle cx="${sx(i)}" cy="${sy(z)}" r="${on ? 4.2 : 3}" fill="${on ? "var(--bad)" : "var(--navy)"}" stroke="var(--surface)" stroke-width="1"/>`; });
+      return `<figure class="nel-fig"><figcaption><b>規則 ${ex.r}</b>　${ex.t}</figcaption><svg viewBox="0 0 ${W} ${H}" class="nel-svg" role="img" aria-label="規則 ${ex.r} 示意圖：${ex.t}">${s}</svg><div class="nel-why">可能代表：${NEL_WHY[ex.r]}</div></figure>`;
+    }).join("");
+  }
+  function draw5() { exData(); draw51(); draw52(); drawNelson(); }
   ["q_sh", "q_dr", "q_at"].forEach(id => $(id).addEventListener("input", draw51));
   $("q_seed").addEventListener("click", () => { qSeed = (qSeed * 7919 + 13) % 100003; draw51(); });
   ["tr_it", "tr_n", "tr_last"].forEach(id => $(id).addEventListener("input", draw52));
@@ -1553,6 +1613,76 @@ footer a, .card a { color: var(--act-text); }
         plots.forEach((p, i) => { p.insertAdjacentHTML("beforebegin", `<div class="fig-cap">圖 ${q ? q.textContent.trim() : ""}${plots.length > 1 ? "（" + (i + 1) + "）" : ""}　${t ? t.textContent.replace(/^動手(看|算)：/, "").trim() : ""}</div>`); }); });
     });
     document.addEventListener("click", e => { const a = e.target.closest("a[data-jump]"); if (!a) return; e.preventDefault(); const el = $(a.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+  })();
+  // ===== 淺色／深色、小節收合、筆記（筆記存在這個瀏覽器，不上傳）=====
+  (function learnUi() {
+    const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (_) { return null; } };
+    // 淺色為預設；可切換深色並記住
+    const root = document.documentElement, applyTheme = t => { root.setAttribute("data-theme", t); const b = $("lnTheme"); if (b) b.textContent = t === "dark" ? "切換淺色" : "切換深色"; };
+    const topLink = document.querySelector(".top-link");
+    if (topLink) { topLink.insertAdjacentHTML("beforebegin", `<div class="top-btns"><button type="button" class="top-link top-btn" id="lnTheme"></button></div>`); topLink.previousElementSibling.appendChild(topLink); }
+    applyTheme(LS("mdqs.learn.theme") === "dark" ? "dark" : "light");
+    $("lnTheme").addEventListener("click", () => { const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark"; LS("mdqs.learn.theme", t); applyTheme(t); redraw(); });
+    function redraw() { try { const cur = ["s1", "s2", "s3", "s4", "s5"].find(k => !$(k).hidden); if (cur) showTab(cur); } catch (_) {} }
+    // 筆記資料
+    const NK = "mdqs.learn.notes";
+    const notes = () => { try { return JSON.parse(LS(NK) || "{}") || {}; } catch (_) { return {}; } };
+    const saveNote = (id, t) => { const n = notes(); if (t.trim()) n[id] = { t, at: new Date().toISOString() }; else delete n[id]; LS(NK, JSON.stringify(n)); };
+    const FK = "mdqs.learn.fold", folded = () => { try { return new Set(JSON.parse(LS(FK) || "[]")); } catch (_) { return new Set(); } };
+    const saveFold = s => LS(FK, JSON.stringify([...s]));
+    // 每個小節：右上角「筆記」「收合」；內容包進 .cbody
+    const cards = [...document.querySelectorAll("section.chap > section.card[id]")], F = folded();
+    cards.forEach(c => {
+      const h = c.querySelector(":scope > h3"); if (!h) return;
+      const body = document.createElement("div"); body.className = "cbody";
+      while (h.nextSibling) body.appendChild(h.nextSibling);
+      c.appendChild(body);
+      h.insertAdjacentHTML("afterend", `<div class="note-box" hidden><label class="note-lab" for="nt_${c.id}">我的筆記（${c.querySelector(".qref") ? c.querySelector(".qref").textContent.trim() : ""}，存在這個瀏覽器）</label><textarea id="nt_${c.id}" rows="3" placeholder="寫下重點、疑問或公司實例（請勿寫入可識別資料）"></textarea><div class="note-meta"></div></div>`);
+      c.insertAdjacentHTML("afterbegin", `<div class="card-tools"><button type="button" class="ct-btn" data-note="${c.id}">筆記</button><button type="button" class="ct-btn" data-fold="${c.id}" aria-expanded="true">收合</button></div>`);
+      const n = notes()[c.id]; if (n) { c.querySelector("textarea").value = n.t; c.querySelector(".note-box").hidden = false; }
+      paintCard(c); if (F.has(c.id)) setFold(c, true, false);
+    });
+    function paintCard(c) {
+      const n = notes()[c.id], b = c.querySelector("[data-note]"), m = c.querySelector(".note-meta");
+      if (b) { b.textContent = n ? "筆記（已寫）" : "筆記"; b.classList.toggle("on", !!n); }
+      if (m) m.textContent = n ? "已儲存 " + new Date(n.at).toLocaleString("zh-TW", { hour12: false }) : "";
+      const li = document.querySelector(`.chap-toc a[data-jump="${c.id}"]`); if (li) li.classList.toggle("has-note", !!n);
+      paintNoteCount();
+    }
+    function setFold(c, on, save = true) {
+      c.classList.toggle("folded", on); const b = c.querySelector("[data-fold]"); if (b) { b.textContent = on ? "展開" : "收合"; b.setAttribute("aria-expanded", String(!on)); }
+      if (save) { const s = folded(); on ? s.add(c.id) : s.delete(c.id); saveFold(s); }
+      if (!on) redraw();
+    }
+    // 章首目錄：全部展開／全部收合／我的筆記
+    document.querySelectorAll(".chap-toc").forEach(t => {
+      t.querySelector(".chap-toc-h").insertAdjacentHTML("afterend", `<div class="toc-tools"><button type="button" class="ct-btn" data-all="open">全部展開</button><button type="button" class="ct-btn" data-all="fold">全部收合</button><button type="button" class="ct-btn" data-notes="1">我的筆記（<span class="nn">0</span>）</button></div>`);
+    });
+    function paintNoteCount() { const k = Object.keys(notes()).length; document.querySelectorAll(".chap-toc .nn").forEach(x => { x.textContent = k; }); }
+    document.body.insertAdjacentHTML("beforeend", `<dialog class="notes-dlg" id="notesDlg" aria-labelledby="notesT"><h3 id="notesT">我的筆記</h3><p class="help">筆記只存在這個瀏覽器（換電腦、清除瀏覽資料就會消失）。要保留請下載。</p><div id="notesList"></div><div class="toc-tools" style="margin-top:12px"><button type="button" class="ct-btn" id="notesDl">下載筆記（.txt）</button><button type="button" class="ct-btn" id="notesCopy">複製全部</button><button type="button" class="ct-btn" id="notesClose">關閉</button></div><p class="help" id="notesHint"></p></dialog>`);
+    const allText = () => { const n = notes(); return cards.filter(c => n[c.id]).map(c => `【${c.querySelector(".qref").textContent.trim()} ${c.querySelector("h3").textContent.trim()}】（${new Date(n[c.id].at).toLocaleString("zh-TW", { hour12: false })}）\n${n[c.id].t.trim()}`).join("\n\n"); };
+    function openNotes() {
+      const n = notes(), L = cards.filter(c => n[c.id]);
+      $("notesList").innerHTML = L.length ? L.map(c => `<div class="nl-item"><a href="#${c.id}" data-jumpnote="${c.id}"><b>${c.querySelector(".qref").textContent.trim()}</b> ${c.querySelector("h3").textContent.trim()}</a><div class="nl-t"></div></div>`).join("") : `<p class="help">還沒有筆記。在任一小節右上角按「筆記」開始寫。</p>`;
+      L.forEach((c, i) => { $("notesList").querySelectorAll(".nl-t")[i].textContent = n[c.id].t; });
+      $("notesHint").textContent = ""; try { $("notesDlg").showModal(); } catch (_) { $("notesDlg").setAttribute("open", ""); }
+    }
+    document.addEventListener("click", e => {
+      const nb = e.target.closest("[data-note]");
+      if (nb) { const c = $(nb.dataset.note), box = c.querySelector(".note-box"); if (c.classList.contains("folded")) setFold(c, false); box.hidden = !box.hidden; if (!box.hidden) box.querySelector("textarea").focus(); return; }
+      const fb = e.target.closest("[data-fold]"); if (fb) { const c = $(fb.dataset.fold); setFold(c, !c.classList.contains("folded")); return; }
+      const ab = e.target.closest("[data-all]"); if (ab) { const sec = ab.closest("section.chap"); sec.querySelectorAll(":scope > section.card[id]").forEach(c => setFold(c, ab.dataset.all === "fold")); return; }
+      if (e.target.closest("[data-notes]")) { openNotes(); return; }
+      const jn = e.target.closest("[data-jumpnote]"); if (jn) { e.preventDefault(); $("notesDlg").close(); const id = jn.dataset.jumpnote; showTab(id); return; }
+      if (e.target.closest("#notesClose")) { $("notesDlg").close(); return; }
+      if (e.target.closest("#notesDl")) { const t = allText(); if (!t) { $("notesHint").textContent = "還沒有筆記。"; return; } const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["統計觀念圖解　我的筆記\n\n" + t], { type: "text/plain;charset=utf-8" })); a.download = "learn-notes_" + new Date().toISOString().slice(0, 10) + ".txt"; document.body.appendChild(a); a.click(); a.remove(); return; }
+      if (e.target.closest("#notesCopy")) { const t = allText(); navigator.clipboard.writeText(t).then(() => { $("notesHint").textContent = "已複製。"; }, () => { $("notesHint").textContent = "這個瀏覽器無法複製，請改用下載。"; }); return; }
+      const jt = e.target.closest("a[data-jump]"); if (jt) { const c = $(jt.dataset.jump); if (c && c.classList.contains("folded")) setFold(c, false); }
+    }, true);
+    let tm = null;
+    document.addEventListener("input", e => { const ta = e.target.closest(".note-box textarea"); if (!ta) return; const c = ta.closest("section.card"); clearTimeout(tm); tm = setTimeout(() => { saveNote(c.id, ta.value); paintCard(c); }, 400); });
+    document.addEventListener("focusout", e => { const ta = e.target.closest && e.target.closest(".note-box textarea"); if (!ta) return; const c = ta.closest("section.card"); clearTimeout(tm); saveNote(c.id, ta.value); paintCard(c); });
+    paintNoteCount();
   })();
   function showTab(id) {
     const sub = /^s\d+-\d+$/.test(id || "") && document.getElementById(id) ? id : "";
