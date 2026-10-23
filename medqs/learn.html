@@ -179,8 +179,9 @@ footer a, .card a { color: var(--act-text); }
     <a href="#s3" data-tab="s3" aria-current="false">3 t 檢定入門</a>
     <a href="#s4" data-tab="s4" aria-current="false">4 比例與卡方入門</a>
     <a href="#s5" data-tab="s5" aria-current="false">5 SPC 管制圖</a>
-    <span>6 樣本數（規劃中）</span>
-    <span>7 MSA（規劃中）</span>
+    <a href="#s6" data-tab="s6" aria-current="false">6 推論統計總覽</a>
+    <span>7 樣本數（規劃中）</span>
+    <span>8 MSA（規劃中）</span>
   </nav>
 </header>
 
@@ -1078,6 +1079,131 @@ footer a, .card a { color: var(--act-text); }
   </section>
 </section>
 
+<section id="s6" hidden>
+  <h2 class="sec">6　推論統計總覽：九個核心觀念</h2>
+  <p class="sec-lede">推論統計是「用一部分（樣本）去說整體（母體）」。這一章把常用的九個觀念放在一起看：母體與樣本、抽樣分配、信賴區間、假設檢定、p 值、t 檢定、ANOVA、卡方檢定、迴歸推論。每一節最後都標出要深入時看哪一章、在輔助工具用哪一頁。</p>
+
+  <section class="card" id="s6-1">
+    <span class="qref">6-1</span>
+    <h3>母體與樣本</h3>
+    <p class="help">推論統計用樣本的資料，對更大的母體下結論。母體的特性叫<b>參數</b>（通常不知道），樣本算出來的叫<b>統計量</b>（拿來估計參數）。</p>
+    <svg class="plot" id="p61" viewBox="0 0 680 230" role="img" aria-label="母體與樣本示意圖"></svg>
+    <div class="scroll-x"><table>
+      <tr><th></th><th>母體（population）</th><th>樣本（sample）</th></tr>
+      <tr><td><b>是什麼</b></td><td>想下結論的全部對象</td><td>實際量測的那一部分</td></tr>
+      <tr><td><b>平均</b></td><td>μ（參數，未知）</td><td>x̄（統計量，算得出來）</td></tr>
+      <tr><td><b>標準差</b></td><td>σ（參數，未知）</td><td>s（統計量）</td></tr>
+      <tr><td><b>醫材例子</b></td><td>這一批 10,000 支導管的拉伸強度</td><td>隨機抽 30 支做拉伸試驗</td></tr>
+    </table></div>
+    <ul class="tight help" style="margin-top:10px"><li><b>隨機抽樣</b>是推論成立的前提：只挑同一時段、同一模穴，結論只代表那一部分。</li></ul>
+  </section>
+
+  <section class="card" id="s6-2">
+    <span class="qref">6-2</span>
+    <h3>抽樣分配：樣本平均也會跳動</h3>
+    <p class="help">同一個母體，每次抽樣算出的 x̄ 都不一樣。把「很多次抽樣的 x̄」畫成分布，就是 x̄ 的<b>抽樣分配</b>：中心是 μ，寬度是<b>標準誤 SE = σ ÷ √n</b>。母體是常態，或 n 夠大（中央極限定理）時，x̄ 近似常態。</p>
+    <div class="tex-row"><div class="tex" data-tex="\bar X \sim N\!\left(\mu,\ \dfrac{\sigma}{\sqrt n}\right),\qquad SE=\dfrac{\sigma}{\sqrt n}"></div><div class="tex-note">n 越大，SE 越小：抽越多，x̄ 越接近 μ。n 變成 4 倍，SE 才減半。</div></div>
+    <div class="inner">
+      <div class="controls"><div class="ctl"><label for="g_n">每次抽幾個 n <output id="o_gn"></output></label><input type="range" id="g_n" min="1" max="50" step="1" value="5"></div></div>
+      <div class="legend"><span><i style="background:var(--c-h0);opacity:.35"></i>母體分布（μ = 50、σ = 5）</span><span><i style="background:var(--c-h1);opacity:.7"></i>x̄ 的抽樣分配</span></div>
+      <svg class="plot" id="p62" viewBox="0 0 680 280" role="img" aria-label="母體分布與樣本平均的抽樣分配"></svg>
+      <div class="stats"><div class="stat"><div class="k">標準誤 SE</div><div class="v" id="m_gse"></div></div><div class="stat"><div class="k">x̄ 有 95% 落在</div><div class="v" id="m_grange"></div></div></div>
+    </div>
+  </section>
+
+  <section class="card" id="s6-3">
+    <span class="qref">6-3</span>
+    <h3>信賴區間：估計值加上誤差範圍</h3>
+    <p class="help">只給一個 x̄ 不夠，還要說「大概差多少」。信賴區間 = 點估計 ± 臨界值 × 標準誤。σ 已知用 z，σ 未知（實務上幾乎都是）用 t。</p>
+    <div class="tex-row"><div class="tex" data-tex="\bar x \pm z_{\alpha/2}\,\dfrac{\sigma}{\sqrt n}\quad(\sigma\ \text{已知})\qquad\qquad \bar x \pm t_{\alpha/2,\,n-1}\,\dfrac{s}{\sqrt n}\quad(\sigma\ \text{未知})"></div><div class="tex-note">95% 的意思是：用這個方法重複抽樣，約 95% 的區間會包住真正的 μ。<b>不是</b>「μ 有 95% 機率在這個區間裡」。</div></div>
+    <div class="inner">
+      <div class="controls"><div class="ctl"><label>教學用模擬：母體 μ = 50、σ = 5，每次抽 n = 10，算 95% 區間</label><button type="button" class="btn-mini" id="ci_go">再抽 20 次</button></div></div>
+      <div class="legend"><span><i style="background:var(--navy)"></i>有包住 μ 的區間</span><span><i style="background:var(--bad)"></i>沒包住 μ 的區間</span></div>
+      <svg class="plot" id="p63" viewBox="0 0 680 330" role="img" aria-label="20 次抽樣的 95% 信賴區間"></svg>
+      <div class="stats"><div class="stat"><div class="k">這 20 個區間包住 μ 的個數</div><div class="v" id="m_cicov"></div></div><div class="stat"><div class="k">累計（按越多次越接近 95%）</div><div class="v" id="m_cicum"></div></div></div>
+    </div>
+    <p class="help" style="margin-top:8px">深入：第 2 章（TOST 用 90% 區間）、第 3 章（t 檢定的區間）。</p>
+  </section>
+
+  <section class="card" id="s6-4">
+    <span class="qref">6-4</span>
+    <h3>假設檢定：先假設沒有差，再看資料有多不像</h3>
+    <div class="scroll-x"><table>
+      <tr><th>假設</th><th>意思</th><th>例子</th></tr>
+      <tr><td><b>虛無假設 H₀</b></td><td>沒有效果、沒有差異</td><td>μ = μ₀（改善後平均拉力和以前一樣）</td></tr>
+      <tr><td><b>對立假設 H₁</b></td><td>有效果、有差異（想證明的事）</td><td>μ ≠ μ₀（雙尾）、μ &gt; μ₀ 或 μ &lt; μ₀（單尾）</td></tr>
+    </table></div>
+    <p class="help" style="margin-top:10px">檢定統計量落在兩端的<b>拒絕區</b>（面積合計 α）就拒絕 H₀；落在中間就「不拒絕 H₀」——不等於證明了 H₀（要證明一樣請用第 2 章的同等性 TOST）。</p>
+    <svg class="plot" id="p64" viewBox="0 0 680 250" role="img" aria-label="雙尾檢定的拒絕區"></svg>
+    <p class="help">深入：第 1 章（α、β、檢定力與 OC 曲線）。</p>
+  </section>
+
+  <section class="card" id="s6-5">
+    <span class="qref">6-5</span>
+    <h3>p 值：如果 H₀ 是真的，看到這麼極端的機率</h3>
+    <div class="tex-row"><div class="tex" data-tex="p = P(\text{檢定統計量至少這麼極端}\mid H_0\ \text{為真})"></div><div class="tex-note">p ≤ α → 拒絕 H₀（有證據）；p &gt; α → 不拒絕 H₀（證據不足）。p 值<b>不是</b>「H₀ 為真的機率」，也不代表差異大小。</div></div>
+    <div class="inner">
+      <div class="controls"><div class="ctl"><label for="pv_z">檢定統計量 z <output id="o_pvz"></output></label><input type="range" id="pv_z" min="0" max="3.5" step="0.05" value="2.2"></div><div class="ctl"><label for="pv_side">對立假設</label><select id="pv_side"><option value="two">雙尾（≠）</option><option value="one">單尾（&gt;）</option></select></div></div>
+      <svg class="plot" id="p65" viewBox="0 0 680 260" role="img" aria-label="p 值為尾端面積"></svg>
+      <div class="two" style="margin-top:10px"><div class="stat" id="pv_v1"></div><div class="stat" id="pv_v2"></div></div>
+    </div>
+  </section>
+
+  <section class="card" id="s6-6">
+    <span class="qref">6-6</span>
+    <h3>t 檢定：比較平均值（σ 未知）</h3>
+    <p class="help">檢定一組平均是否等於目標值（單樣本），或兩組平均是否不同（獨立兩樣本、成對）。σ 未知、用樣本標準差 s 估計時用 t 分布。</p>
+    <div class="tex-row"><div class="tex" data-tex="t = \dfrac{\bar x - \mu_0}{s/\sqrt n},\qquad df = n-1"></div><div class="tex-note">分子是「差多少」，分母是「這個差在抽樣誤差裡算大還是小」。|t| 越大越不像只是運氣。</div></div>
+    <svg class="plot" id="p66" viewBox="0 0 680 230" role="img" aria-label="單樣本與兩樣本 t 檢定示意"></svg>
+    <p class="help">深入：第 3 章。輔助工具：假設檢定 → 比較檢定。</p>
+  </section>
+
+  <section class="card" id="s6-7">
+    <span class="qref">6-7</span>
+    <h3>ANOVA：三組以上的平均比較</h3>
+    <p class="help">三組以上不要兩兩做 t 檢定（做越多次，誤判機率越高）。ANOVA 一次檢定「各組平均是否全部相等」：</p>
+    <div class="tex-row"><div class="tex" data-tex="F = \dfrac{\text{組間變異（各組平均之間）}}{\text{組內變異（每組內部的散布）}}"></div><div class="tex-note">組間差異比組內雜訊大很多時 F 大、p 小。顯著只代表「至少有一組不同」，要知道是哪幾組，再做事後比較。</div></div>
+    <svg class="plot" id="p67" viewBox="0 0 680 240" role="img" aria-label="三組資料的盒鬚圖"></svg>
+    <p class="help">輔助工具：假設檢定（貼三欄以上自動做 ANOVA）；DOE、Gage R&amp;R 的 ANOVA 表也是同一個想法。</p>
+  </section>
+
+  <section class="card" id="s6-8">
+    <span class="qref">6-8</span>
+    <h3>卡方檢定：類別資料有沒有關聯</h3>
+    <div class="tex-row"><div class="tex" data-tex="\chi^2 = \sum \dfrac{(O-E)^2}{E},\qquad E = \dfrac{\text{列合計}\times\text{欄合計}}{\text{總數}}"></div><div class="tex-note">O 是實際件數，E 是「如果沒有關聯」應該看到的件數。差得越多，χ² 越大。</div></div>
+    <p class="help">教學用例子：兩條產線的破裂件，破裂位置的分布是否不同（數字為示意）。括號內是期望次數 E，由本頁計算。</p>
+    <div class="scroll-x"><table id="chi6"></table></div>
+    <div class="stats"><div class="stat"><div class="k">χ²</div><div class="v" id="m_c6"></div></div><div class="stat"><div class="k">自由度</div><div class="v">（2−1）×（3−1）= 2</div></div><div class="stat"><div class="k">p 值</div><div class="v" id="m_c6p"></div></div></div>
+    <p class="help" style="margin-top:8px">深入：第 4 章。輔助工具：假設檢定 → 次數資料。</p>
+  </section>
+
+  <section class="card" id="s6-9">
+    <span class="qref">6-9</span>
+    <h3>迴歸推論：哪個因子真的有影響</h3>
+    <div class="tex-row"><div class="tex" data-tex="y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \varepsilon"></div><div class="tex-note">每個係數 β 都做一次 t 檢定（H₀：β = 0）。p ≤ α 代表這個因子對 y 有統計上顯著的影響（在其他因子固定時）。</div></div>
+    <p class="help">示意表：熱封強度（N）對溫度、時間的迴歸（係數為示意；t 與 p 由本頁依 t = 係數 ÷ SE、自由度 21 計算）。</p>
+    <div class="scroll-x"><table id="reg6"></table></div>
+    <ul class="tight help" style="margin-top:8px"><li>溫度每升 1 °C，強度平均增加約 0.52 N，顯著。</li><li>時間的 p &gt; 0.05：在這組資料裡看不出影響，<b>不等於</b>沒有影響（可能範圍太窄或樣本不夠）。</li><li>相關不等於因果；要證明因果用 DOE。</li></ul>
+    <p class="help">輔助工具：相關與回歸。</p>
+  </section>
+
+  <section class="card" id="s6-10">
+    <span class="qref">6-10</span>
+    <h3>九個觀念對應到輔助工具</h3>
+    <div class="scroll-x"><table>
+      <tr><th>想回答的問題</th><th>觀念</th><th>輔助工具頁面</th><th>本頁深入章節</th></tr>
+      <tr><td>平均大概是多少、誤差多大</td><td>信賴區間</td><td>假設檢定（敘述統計表）</td><td>6-3、第 3 章</td></tr>
+      <tr><td>一組平均有沒有達到目標</td><td>單樣本 t 檢定</td><td>假設檢定 → 比較檢定（單組對目標值）</td><td>第 3 章</td></tr>
+      <tr><td>兩組平均有沒有差</td><td>兩樣本／成對 t 檢定</td><td>假設檢定 → 比較檢定</td><td>第 3 章</td></tr>
+      <tr><td>兩組是否「一樣」</td><td>同等性 TOST</td><td>假設檢定 → 比較檢定（檢定目的：同等性）</td><td>第 2 章</td></tr>
+      <tr><td>三組以上平均有沒有差</td><td>ANOVA</td><td>假設檢定（貼三欄以上）</td><td>6-7</td></tr>
+      <tr><td>不良率、類別分布有沒有差</td><td>比例檢定、卡方</td><td>假設檢定 → 次數資料</td><td>第 4 章</td></tr>
+      <tr><td>哪個因子影響結果</td><td>迴歸推論</td><td>相關與回歸；要證明因果用 DOE</td><td>6-9</td></tr>
+      <tr><td>要測幾個才夠</td><td>α、β、檢定力</td><td>樣本數規劃</td><td>第 1 章</td></tr>
+    </table></div>
+  </section>
+</section>
+
 <footer>
   計算方法：常態分布（σ 視為已知的近似）、t 分布、二項分布、卡方分布與 Fisher 精確檢定（超幾何分布），由本頁 JavaScript 計算，未使用 AI 產生數值。輔助工具的「樣本數規劃」用 t 分布精確計算，小樣本時所需 n 會比本頁略大。<a href="index.html">回到統計輔助工具</a>
 </footer>
@@ -1691,7 +1817,7 @@ footer a, .card a { color: var(--act-text); }
     if (topLink) { topLink.insertAdjacentHTML("beforebegin", `<div class="top-btns"><button type="button" class="top-link top-btn" id="lnTheme"></button></div>`); topLink.previousElementSibling.appendChild(topLink); }
     applyTheme(LS("mdqs.learn.theme") === "dark" ? "dark" : "light");
     $("lnTheme").addEventListener("click", () => { const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark"; LS("mdqs.learn.theme", t); applyTheme(t); redraw(); });
-    function redraw() { try { const cur = ["s1", "s2", "s3", "s4", "s5"].find(k => !$(k).hidden); if (cur) showTab(cur); } catch (_) {} }
+    function redraw() { try { const cur = ["s1", "s2", "s3", "s4", "s5", "s6"].find(k => !$(k).hidden); if (cur) showTab(cur); } catch (_) {} }
     // 筆記資料
     const NK = "mdqs.learn.notes";
     const notes = () => { try { return JSON.parse(LS(NK) || "{}") || {}; } catch (_) { return {}; } };
@@ -1753,21 +1879,108 @@ footer a, .card a { color: var(--act-text); }
     window.addEventListener("hashchange", () => { const id = (location.hash || "").slice(1), c = /^s\d+-\d+$/.test(id) && $(id); if (c && c.classList.contains("card")) setFold(c, false); });   // 連到某小節時自動展開
     paintNoteCount();
   })();
+  // ===== 6 推論統計總覽（示意圖與教學用模擬，由本頁計算）=====
+  const npdf = (x, m, s) => Math.exp(-0.5 * ((x - m) / s) ** 2) / (s * Math.sqrt(2 * Math.PI));
+  function draw61() {
+    const F = frame({ svg: "p61", H: 230, x0: 0, x1: 10, y0: 0, y1: 10, T: 10, L: 10, Bp: 10 }); let s = "";
+    const W = F.W, cx1 = W * 0.27, cx2 = W * 0.76, cy = 112;
+    s += `<ellipse cx="${cx1}" cy="${cy}" rx="${W * 0.22}" ry="88" fill="var(--navy)" fill-opacity=".1" stroke="var(--navy)" stroke-width="2"/>`;
+    const r = rngS(3); for (let i = 0; i < 70; i++) { const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * 0.86; s += `<circle cx="${cx1 + Math.cos(a) * d * W * 0.2}" cy="${cy + 10 + Math.sin(a) * d * 62}" r="4" fill="var(--navy)" fill-opacity=".75"/>`; }
+    s += `<text x="${cx1}" y="${cy - 62}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">母體（μ、σ）</text>`;
+    s += `<circle cx="${cx2}" cy="${cy + 6}" r="56" fill="var(--c-alpha)" fill-opacity=".12" stroke="var(--c-alpha)" stroke-width="2"/>`;
+    for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * Math.PI; s += `<circle cx="${cx2 + Math.cos(a) * 26}" cy="${cy + 14 + Math.sin(a) * 22}" r="4.5" fill="var(--c-alpha)"/>`; }
+    s += `<text x="${cx2}" y="${cy - 60}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">樣本（x̄、s）</text>`;
+    s += `<defs><marker id="ar61" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--ink)"/></marker></defs><line x1="${cx1 + W * 0.2}" y1="${cy}" x2="${cx2 - 66}" y2="${cy}" stroke="var(--ink)" stroke-width="2" marker-end="url(#ar61)"/><text x="${(cx1 + W * 0.2 + cx2 - 66) / 2}" y="${cy - 10}" text-anchor="middle" font-size="13" fill="var(--muted)">隨機抽樣</text><text x="${(cx1 + W * 0.2 + cx2 - 66) / 2}" y="${cy + 22}" text-anchor="middle" font-size="13" fill="var(--muted)">用樣本推論母體</text>`;
+    $("p61").innerHTML = s;
+  }
+  function draw62() {
+    const n = +$("g_n").value, mu = 50, sg = 5, se = sg / Math.sqrt(n); $("o_gn").textContent = n;
+    const x0 = mu - 4 * sg, x1 = mu + 4 * sg, ym = npdf(mu, mu, se) * 1.1;
+    const F = frame({ svg: "p62", H: 280, x0, x1, y0: 0, y1: ym, T: 18, L: 20, xt: [30, 35, 40, 45, 50, 55, 60, 65, 70], xl: "拉伸強度（N）" });
+    let s = F.s;
+    s += fillArea(x => npdf(x, mu, sg), x0, x1, F.sx, F.sy, 0, "var(--c-h0)", 0.18) + line(x => npdf(x, mu, sg), x0, x1, F.sx, F.sy, "var(--c-h0)", null, 1.6);
+    s += fillArea(x => npdf(x, mu, se), x0, x1, F.sx, F.sy, 0, "var(--c-h1)", 0.35) + line(x => npdf(x, mu, se), x0, x1, F.sx, F.sy, "var(--c-h1)", null, 2.4);
+    s += `<line x1="${F.sx(mu)}" x2="${F.sx(mu)}" y1="${F.T}" y2="${F.B}" stroke="var(--ink)" stroke-dasharray="5 4"/><text x="${F.sx(mu) + 6}" y="${F.T + 12}" font-size="12.5" fill="var(--ink)">μ = 50</text>`;
+    $("p62").innerHTML = s; $("m_gse").textContent = "5 ÷ √" + n + " = " + fx(se, 2) + " N"; $("m_grange").textContent = fx(mu - 1.96 * se, 1) + " ～ " + fx(mu + 1.96 * se, 1) + " N";
+  }
+  let ciHit = 0, ciAll = 0, ciSeed = 101, ciCounted = -1;
+  function draw63(again) {
+    if (again === true) ciSeed = (ciSeed * 7919 + 17) % 100003;   // 只有按「再抽 20 次」才換一組
+    const r = rngS(ciSeed), mu = 50, sg = 5, n = 10, tc = tInv(0.975, n - 1), rows = [];
+    for (let k = 0; k < 20; k++) { const v = Array.from({ length: n }, () => mu + sg * gaussS(r)), m = v.reduce((a, b) => a + b, 0) / n, sd = Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1)), h = tc * sd / Math.sqrt(n); rows.push({ m, lo: m - h, hi: m + h, ok: m - h <= mu && mu <= m + h }); }
+    const F = frame({ svg: "p63", H: 330, x0: 42, x1: 58, y0: 0, y1: 21, T: 10, L: 30, xt: [42, 44, 46, 48, 50, 52, 54, 56, 58], xl: "信賴區間（N）" }); let s = F.s;
+    s += `<line x1="${F.sx(mu)}" x2="${F.sx(mu)}" y1="${F.T}" y2="${F.B}" stroke="var(--ink)" stroke-width="1.6" stroke-dasharray="5 4"/><text x="${F.sx(mu) + 5}" y="${F.T + 10}" font-size="12" fill="var(--ink)">真正的 μ = 50</text>`;
+    rows.forEach((o, k) => { const y = F.sy(20 - k), c = o.ok ? "var(--navy)" : "var(--bad)"; s += `<line x1="${F.sx(Math.max(42, o.lo))}" x2="${F.sx(Math.min(58, o.hi))}" y1="${y}" y2="${y}" stroke="${c}" stroke-width="2.4"/><circle cx="${F.sx(o.m)}" cy="${y}" r="3.5" fill="${c}"/>`; });
+    $("p63").innerHTML = s;
+    const hit = rows.filter(o => o.ok).length; if (ciCounted !== ciSeed) { ciHit += hit; ciAll += 20; ciCounted = ciSeed; }   // 同一組只計一次（重畫不重複累計）
+    $("m_cicov").textContent = hit + " / 20"; $("m_cicum").textContent = `${ciHit} / ${ciAll}（${fx(100 * ciHit / ciAll, 1)}%）`;
+  }
+  function draw64() {
+    const F = frame({ svg: "p64", H: 250, x0: -4, x1: 4, y0: 0, y1: 0.45, T: 24, L: 20, xt: [-1.96, 0, 1.96], xf: v => v === 0 ? "0" : v < 0 ? "−z(α/2) = −1.96" : "z(α/2) = 1.96" }); let s = F.s;
+    const f = x => npdf(x, 0, 1);
+    s += fillArea(f, -1.96, 1.96, F.sx, F.sy, 0, "var(--navy)", 0.15) + fillArea(f, -4, -1.96, F.sx, F.sy, 0, "var(--bad)", 0.45) + fillArea(f, 1.96, 4, F.sx, F.sy, 0, "var(--bad)", 0.45) + line(f, -4, 4, F.sx, F.sy, "var(--navy)", null, 2.2);
+    [-1.96, 1.96].forEach(z => { s += `<line x1="${F.sx(z)}" x2="${F.sx(z)}" y1="${F.sy(f(z)) - 30}" y2="${F.B}" stroke="var(--bad)" stroke-width="1.6"/>`; });
+    s += `<text x="${F.sx(-3)}" y="${F.sy(0.12)}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--bad)">拒絕 H₀</text><text x="${F.sx(3)}" y="${F.sy(0.12)}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--bad)">拒絕 H₀</text><text x="${F.sx(0)}" y="${F.sy(0.2)}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--navy)">不拒絕 H₀</text><text x="${F.sx(0)}" y="${F.sy(0.2) + 18}" text-anchor="middle" font-size="12" fill="var(--muted)">（H₀ 為真時的檢定統計量分布）</text><text x="${F.sx(3)}" y="${F.sy(0.12) + 18}" text-anchor="middle" font-size="11.5" fill="var(--muted)">兩端面積合計 α = 0.05</text>`;
+    $("p64").innerHTML = s;
+  }
+  function draw65() {
+    const z = +$("pv_z").value, two = $("pv_side").value === "two", f = x => npdf(x, 0, 1), p = two ? 2 * (1 - Phi(z)) : 1 - Phi(z), cz = two ? 1.96 : 1.645;
+    $("o_pvz").textContent = fx(z, 2);
+    const F = frame({ svg: "p65", H: 260, x0: -4, x1: 4, y0: 0, y1: 0.45, T: 18, L: 20, xt: [-3, -2, -1, 0, 1, 2, 3], xl: "檢定統計量（H₀ 為真時的分布）" }); let s = F.s;
+    s += fillArea(f, -4, 4, F.sx, F.sy, 0, "var(--navy)", 0.1) + fillArea(f, z, 4, F.sx, F.sy, 0, "var(--c-alpha)", 0.55) + (two ? fillArea(f, -4, -z, F.sx, F.sy, 0, "var(--c-alpha)", 0.55) : "") + line(f, -4, 4, F.sx, F.sy, "var(--navy)", null, 2.2);
+    s += `<line x1="${F.sx(z)}" x2="${F.sx(z)}" y1="${F.T}" y2="${F.B}" stroke="var(--c-alpha)" stroke-width="2"/><text x="${F.sx(z) + 6}" y="${F.T + 12}" font-size="12.5" fill="var(--c-alpha)">觀察到的 z = ${fx(z, 2)}</text>`;
+    s += `<line x1="${F.sx(cz)}" x2="${F.sx(cz)}" y1="${F.sy(f(cz)) - 18}" y2="${F.B}" stroke="var(--bad)" stroke-dasharray="4 3"/><text x="${F.sx(cz)}" y="${F.sy(f(cz)) - 22}" text-anchor="middle" font-size="11" fill="var(--bad)">臨界值 ${cz}</text>`;
+    $("p65").innerHTML = s;
+    const rej = p <= 0.05;
+    $("pv_v1").innerHTML = `<div class="k">p 值（${two ? "兩端" : "右端"}面積）</div><div style="font-size:20px;font-weight:700;margin-top:2px">${p < 0.0001 ? "< 0.0001" : fx(p, 4)}</div>`;
+    $("pv_v2").innerHTML = `<div class="k">判定（α = 0.05）</div><div style="font-size:17px;font-weight:700;margin-top:2px;color:${rej ? "var(--bad)" : "var(--good)"}">${rej ? "p ≤ α：拒絕 H₀（有證據）" : "p > α：不拒絕 H₀（證據不足）"}</div>`;
+  }
+  function boxSvg(F, cx, w, q, col) { const [mn, q1, md, q3, mx] = q; return `<line x1="${cx}" x2="${cx}" y1="${F.sy(mx)}" y2="${F.sy(q3)}" stroke="${col}" stroke-width="2"/><line x1="${cx}" x2="${cx}" y1="${F.sy(q1)}" y2="${F.sy(mn)}" stroke="${col}" stroke-width="2"/><rect x="${cx - w / 2}" y="${F.sy(q3)}" width="${w}" height="${F.sy(q1) - F.sy(q3)}" fill="${col}" fill-opacity=".2" stroke="${col}" stroke-width="2"/><line x1="${cx - w / 2}" x2="${cx + w / 2}" y1="${F.sy(md)}" y2="${F.sy(md)}" stroke="${col}" stroke-width="3"/><line x1="${cx - w / 4}" x2="${cx + w / 4}" y1="${F.sy(mx)}" y2="${F.sy(mx)}" stroke="${col}" stroke-width="2"/><line x1="${cx - w / 4}" x2="${cx + w / 4}" y1="${F.sy(mn)}" y2="${F.sy(mn)}" stroke="${col}" stroke-width="2"/>`; }
+  function draw66() {
+    const F = frame({ svg: "p66", H: 230, x0: 0, x1: 3, y0: 40, y1: 62, T: 26, L: 44, yt: [40, 45, 50, 55, 60], yl: "N" }); let s = F.s; const w = Math.min(70, (F.R - F.L) / 7);
+    s += `<line x1="${F.sx(0.15)}" x2="${F.sx(0.85)}" y1="${F.sy(50)}" y2="${F.sy(50)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="${F.sx(0.5) - w / 2 - 6}" y="${F.sy(50) + 14}" text-anchor="end" font-size="11.5" fill="var(--bad)">目標 μ₀ = 50</text>`;
+    s += boxSvg(F, F.sx(0.5), w, [45, 49.5, 52, 54.5, 58], "var(--navy)") + boxSvg(F, F.sx(1.85), w, [42, 46.5, 48.5, 51, 55], "var(--navy)") + boxSvg(F, F.sx(2.55), w, [46, 50.5, 53, 55.5, 60], "var(--c-alpha)");
+    s += `<line x1="${F.sx(1.2)}" x2="${F.sx(1.2)}" y1="${F.T - 10}" y2="${F.B}" stroke="var(--muted)" stroke-dasharray="3 4"/>`;
+    [[0.5, "單樣本：平均 vs 目標值"], [2.2, "兩樣本：A 組 vs B 組"]].forEach(([x, t]) => { s += `<text x="${F.sx(x)}" y="${F.T - 10}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">${t}</text>`; });
+    [[0.5, "樣本"], [1.85, "A 組"], [2.55, "B 組"]].forEach(([x, t]) => { s += `<text x="${F.sx(x)}" y="${F.B + 18}" text-anchor="middle" font-size="12.5" fill="var(--muted)">${t}</text>`; });
+    $("p66").innerHTML = s;
+  }
+  function draw67() {
+    const F = frame({ svg: "p67", H: 240, x0: 0, x1: 3, y0: 0, y1: 22, T: 16, L: 44, yt: [0, 5, 10, 15, 20], yl: "數值" }); let s = F.s; const w = Math.min(80, (F.R - F.L) / 6);
+    [[0.5, [3, 7, 9, 11.5, 15], "var(--navy)", "第 1 組"], [1.5, [4, 8, 10, 12.5, 17], "var(--c-alpha)", "第 2 組"], [2.5, [6, 10.5, 13, 15, 20], "var(--good)", "第 3 組"]].forEach(([x, q, c, t]) => { s += boxSvg(F, F.sx(x), w, q, c) + `<text x="${F.sx(x)}" y="${F.B + 18}" text-anchor="middle" font-size="12.5" fill="var(--muted)">${t}</text>`; });
+    s += `<text x="${F.sx(1.5)}" y="${F.T + 4}" text-anchor="middle" font-size="12" fill="var(--muted)">組間：三個中位數的差距　組內：每個盒子的高度</text>`;
+    $("p67").innerHTML = s;
+  }
+  function draw68() {
+    const O = [[18, 9, 13], [7, 15, 18]], rows = ["A 線", "B 線"], cols = ["封口", "管身", "接頭"];
+    const rs = O.map(r => r.reduce((a, b) => a + b, 0)), cs = cols.map((_, j) => O[0][j] + O[1][j]), N = rs[0] + rs[1];
+    let chi = 0; const E = O.map((r, i) => r.map((_, j) => rs[i] * cs[j] / N)); O.forEach((r, i) => r.forEach((o, j) => { chi += (o - E[i][j]) ** 2 / E[i][j]; }));
+    $("chi6").innerHTML = `<tr><th>破裂位置</th>${cols.map(c => `<th>${c}</th>`).join("")}<th>合計</th></tr>` + O.map((r, i) => `<tr><td><b>${rows[i]}</b></td>${r.map((o, j) => `<td>${o}（${fx(E[i][j], 1)}）</td>`).join("")}<td>${rs[i]}</td></tr>`).join("") + `<tr><td><b>合計</b></td>${cs.map(c => `<td>${c}</td>`).join("")}<td>${N}</td></tr>`;
+    const p = Math.exp(-chi / 2);   // 自由度 2 的卡方右尾機率
+    $("m_c6").textContent = fx(chi, 2); $("m_c6p").textContent = fx(p, 4) + (p <= 0.05 ? "（≤ 0.05，兩線分布不同）" : "（> 0.05）");
+  }
+  function draw69() {
+    const df = 21, R = [["截距", 12.4, 3.1], ["溫度（°C）", 0.52, 0.14], ["時間（s）", -0.85, 0.47]];
+    $("reg6").innerHTML = `<tr><th>係數</th><th>估計值</th><th>標準誤</th><th>t 值</th><th>p 值</th><th>判讀（α = 0.05）</th></tr>` + R.map(([n, b, se]) => { const t = b / se, p = 2 * tSf(Math.abs(t), df); return `<tr><td><b>${n}</b></td><td>${b}</td><td>${se}</td><td>${fx(t, 2)}</td><td>${p < 0.0001 ? "< 0.0001" : fx(p, 4)}</td><td style="color:${p <= 0.05 ? "var(--bad)" : "var(--muted)"}">${p <= 0.05 ? "顯著" : "不顯著"}</td></tr>`; }).join("");
+  }
+  function draw6() { draw61(); draw62(); draw63("redraw"); draw64(); draw65(); draw66(); draw67(); draw68(); draw69(); }
+  $("g_n").addEventListener("input", draw62); $("ci_go").addEventListener("click", () => draw63(true));
+  ["pv_z", "pv_side"].forEach(id => $(id).addEventListener("input", draw65)); $("pv_side").addEventListener("change", draw65);
   function showTab(id) {
     const sub = /^s\d+-\d+$/.test(id || "") && document.getElementById(id) ? id : "";
     if (sub) id = sub.split("-")[0];
     if (sub) setTimeout(() => { const el = $(sub); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
-    const ok = ["s1", "s2", "s3", "s4", "s5"].includes(id) ? id : "s1";
-    ["s1", "s2", "s3", "s4", "s5"].forEach(k => { $(k).hidden = k !== ok; });
+    const ok = ["s1", "s2", "s3", "s4", "s5", "s6"].includes(id) ? id : "s1";
+    ["s1", "s2", "s3", "s4", "s5", "s6"].forEach(k => { $(k).hidden = k !== ok; });
     document.querySelectorAll("nav.tabs a[data-tab]").forEach(a => a.setAttribute("aria-current", String(a.dataset.tab === ok)));
-    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else if (ok === "s4") { draw41(); draw42(); } else if (ok === "s5") { draw5(); } else { all(); draw3b(); }
+    if (ok === "s2") { draw21(); draw22(); dlCalc(); } else if (ok === "s3") { buildTbl(); draw31(); draw32(); } else if (ok === "s4") { draw41(); draw42(); } else if (ok === "s5") { draw5(); } else if (ok === "s6") { draw6(); } else { all(); draw3b(); }
   }
   document.querySelector("nav.tabs").addEventListener("click", e => { const a = e.target.closest("a[data-tab]"); if (!a) return; e.preventDefault(); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} showTab(a.dataset.tab); window.scrollTo({ top: 0 }); });
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   // 回到統計輔助工具：GitHub Pages 用相對路徑，其他（claude.ai）用輔助工具網址
   (function () { const ext = "https://claude.ai/artifact/3jLxswUNecKJTLez6QCFSh"; if (!/github\.io$/.test(location.hostname)) document.querySelectorAll('a[href="index.html"]').forEach(a => { a.href = ext; a.target = "_blank"; a.rel = "noopener"; }); })();
   showTab(location.hash.slice(1));
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4", "s5"].find(k => !$(k).hidden) || "s1"), 150); });
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4", "s5", "s6"].find(k => !$(k).hidden) || "s1"), 150); });
   window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc, cpUpper, propCalc, chiCalc, zeroN };
 })();
 </script>
