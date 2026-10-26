@@ -7,7 +7,7 @@
 <title>統計觀念圖解</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+TC:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+TC:wght@500;600&family=LXGW+WenKai+TC:wght@400;700&family=Patrick+Hand&display=swap">
 <style>
 :root {
   --bg: #F5F1EA; --surface: #FFFFFF; --ink: #1F2933; --muted: #5A6570; --line: #E4DCCD;
@@ -124,6 +124,36 @@ section.chap > section.card[id] > h3:hover { color: var(--act-text); }
 section.card[id] { scroll-margin-top: 12px; }
 .card .qref { font-size: 13px; color: var(--on-act); background: var(--act); border-radius: 6px; padding: 1px 8px; letter-spacing: .04em; }
 .fig-cap { font-size: 13px; font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
+/* 手寫圖解（6-4 例）：方格紙、彩色框、手寫字；淺色深色都維持紙張配色（像一張圖） */
+.hn { --hn-ink: #1d1d1b; --hn-red: #b3261e; font-family: "Patrick Hand", "LXGW WenKai TC", "Kaiti TC", "DFKai-SB", cursive; color: var(--hn-ink); background-color: #fbf6ec; background-image: linear-gradient(#d9e3ee 1px, transparent 1px), linear-gradient(90deg, #d9e3ee 1px, transparent 1px); background-size: 22px 22px; border-radius: 10px; padding: 18px 16px 20px; font-size: 17px; line-height: 1.5; }
+.hn b, .hn h4 { font-weight: 700; }
+.hn-ribbon { text-align: center; margin: 0 0 16px; }
+.hn-ribbon span { display: inline-block; font-size: 30px; font-weight: 700; background: #fff; border: 2.5px solid var(--hn-ink); padding: 4px 26px; box-shadow: 3px 3px 0 var(--hn-ink); transform: rotate(-.6deg); }
+.hn mark { background: #fbe773; color: inherit; padding: 0 4px; border-radius: 3px; }
+.hn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 18px; }
+@media (max-width: 720px) { .hn-grid { grid-template-columns: 1fr; } .hn-ribbon span { font-size: 24px; } }
+.hn-box { position: relative; background: rgba(255,255,255,.72); border: 2.5px solid var(--hn-ink); border-radius: 4px 9px 5px 8px; padding: 22px 14px 12px; box-shadow: 2px 3px 0 rgba(0,0,0,.18); }
+.hn-box p { margin: 4px 0; }
+.hn-box h4 { margin: 10px 0 2px; font-size: 18px; color: #1f3a68; text-decoration: underline; text-decoration-color: #9cc3e6; text-underline-offset: 4px; }
+.hn-tag { position: absolute; top: -15px; left: 12px; font-size: 20px; font-weight: 700; background: #fff; border: 2.5px solid var(--hn-ink); padding: 0 10px; line-height: 1.35; }
+.hn-blue { background: #e3f1fb; border-color: #4a90c8; } .hn-blue .hn-tag { background: #bfe0f6; }
+.hn-green { background: #dcefd5; border-color: #3f8a3a; } .hn-green .hn-tag { background: #b9e0ad; }
+.hn-yellow { background: #fff8d6; border-color: #e3c437; } .hn-yellow .hn-tag { background: #fbe773; }
+.hn-red-box { background: #fde6df; border-color: #d0573f; } .hn-red-box .hn-tag { background: #f3a48f; }
+.hn-plain { background: transparent; border: 0; box-shadow: none; padding-top: 26px; } .hn-ytag { background: #fbe773; }
+.hn-formula { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 22px; }
+.hn-frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.2; }
+.hn-frac > span:first-child { border-bottom: 2px solid var(--hn-ink); padding: 0 4px; }
+.hn-frac.sm { font-size: 17px; }
+.hn-defs { list-style: none; margin: 0; padding: 0; font-size: 17px; }
+.hn-data { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin-top: 6px; }
+.hn-tag2 { font-weight: 700; border: 2px solid var(--hn-ink); padding: 0 8px; background: #fff; }
+.hn-steps { margin: 4px 0 0; padding-left: 26px; } .hn-steps li { margin: 3px 0; }
+.hn-calc { font-size: 18px; } .hn-calc > div { margin: 6px 0; }
+.hn-red { color: var(--hn-red); }
+.hn-sub { text-align: center; font-weight: 700; text-decoration: underline; text-decoration-color: #6cbf5a; text-underline-offset: 4px; }
+.hn-curve { width: 100%; height: auto; display: block; font-family: "Patrick Hand", "LXGW WenKai TC", cursive; }
+.hn-keys { list-style: none; margin: 0; padding: 0; } .hn-keys li { margin: 6px 0; padding-left: 16px; position: relative; } .hn-keys li::before { content: "•"; position: absolute; left: 0; font-weight: 700; }
 /* 小節收合、筆記、主題切換（learnUi） */
 .card-tools { position: absolute; top: 14px; right: 16px; display: flex; gap: 6px; }
 .card > h3 { padding-right: 190px; }
@@ -1138,6 +1168,56 @@ footer a, .card a { color: var(--act-text); }
     <p class="help">深入：第 1 章（α、β、檢定力與 OC 曲線）。</p>
   </section>
 
+  <section class="card" id="s6-4e">
+    <span class="qref">6-4 例</span>
+    <h3>解題範例：燈泡壽命的 Z 檢定（手寫圖解）</h3>
+    <p class="help">把 6-4 的五個步驟套進一個完整例子。本圖依英文圖解「Hypothesis Testing – Solved Example」翻譯重繪，數值已重新計算；原圖有兩處計算筆誤，已在下方「校對說明」列出並修正。</p>
+    <div class="hn">
+      <div class="hn-ribbon"><span>假設檢定 － <mark>解題範例</mark></span></div>
+      <div class="hn-grid">
+        <div class="hn-box hn-blue"><div class="hn-tag">什麼是假設檢定？</div>
+          <p>假設檢定是一種統計方法，用來評估關於<b>母體</b>的兩個互斥主張。它用樣本資料判斷：有沒有足夠證據推翻預設的假設（<b>虛無假設</b>）。</p></div>
+        <div class="hn-box hn-green"><div class="hn-tag">公式</div>
+          <div class="hn-formula"><span class="hn-z">Z =</span><span class="hn-frac"><span>x̄ − μ₀</span><span>σ ∕ √n</span></span>
+            <ul class="hn-defs"><li>x̄ ＝ 樣本平均</li><li>μ₀ ＝ 假設的平均</li><li>σ ＝ 標準差</li><li>n ＝ 樣本數</li></ul></div></div>
+        <div class="hn-box"><div class="hn-tag">例題</div>
+          <p>一家工廠宣稱燈泡平均壽命為 1000 小時。研究人員抽測 n = 50 顆，平均壽命 x̄ = 980 小時，標準差 σ = 40。以 5% 顯著水準（α = 0.05）檢驗這個宣稱。</p>
+          <div class="hn-data"><span class="hn-tag2">數據</span><span>n = 50</span><span>x̄ = 980</span><span>σ = 40</span><span>μ₀ = 1000</span><span>α = 0.05（雙尾）</span></div></div>
+        <div class="hn-box hn-yellow"><div class="hn-tag">步驟</div>
+          <ol class="hn-steps"><li>寫出假設（H₀ 與 H₁）。</li><li>選定顯著水準（α）。</li><li>計算檢定統計量（Z）。</li><li>找臨界值並比較。</li><li>做出決策。</li></ol></div>
+        <div class="hn-box"><div class="hn-tag">詳細計算</div>
+          <h4>步驟 1：寫出假設</h4>
+          <p>H₀：μ = 1000（真正平均是 1000 小時）<br>H₁：μ ≠ 1000（真正平均<u>不是</u> 1000 小時－雙尾）</p>
+          <h4>步驟 2 &amp; 3：計算檢定統計量（Z）</h4>
+          <div class="hn-calc">
+            <div>Z = <span class="hn-frac sm"><span>x̄ − μ₀</span><span>σ ∕ √n</span></span></div>
+            <div>&nbsp;&nbsp;= <span class="hn-frac sm"><span>980 − 1000</span><span>40 ∕ √50</span></span></div>
+            <div>&nbsp;&nbsp;= <span class="hn-frac sm"><span>−20</span><span>40 ∕ 7.071</span></span> = <span class="hn-frac sm"><span>−20</span><span>5.657</span></span> = <b class="hn-red">−3.54</b></div>
+          </div></div>
+        <div class="hn-box"><div class="hn-tag">步驟 4：臨界值與圖示</div>
+          <p>α = 0.05（雙尾）時，臨界 Z = <b>±1.96</b></p>
+          <div class="hn-sub">拒絕區與判斷規則</div>
+          <svg class="hn-curve" id="hnCurve" viewBox="0 0 640 280" role="img" aria-label="雙尾 Z 檢定：拒絕區在 ±1.96 以外，Z = −3.54 落在左側拒絕區"></svg>
+          <h4>步驟 5：決策</h4>
+          <p>算出的 Z = −3.54 小於臨界值 −1.96，落在拒絕區，所以<b>拒絕 H₀</b>。</p></div>
+        <div class="hn-box hn-red-box"><div class="hn-tag">結論</div>
+          <p><b>拒絕虛無假設（H₀）。</b>有很強的統計證據顯示，這家工廠燈泡的實際平均壽命與 1000 小時有顯著差異（雙尾 p ≈ 0.0004，遠小於 0.05）。</p></div>
+        <div class="hn-box hn-plain"><div class="hn-tag hn-ytag">重點整理</div>
+          <ul class="hn-keys"><li><mark>H₀（虛無假設）：維持現狀、沒有差異。</mark></li><li><mark>H₁（對立假設）：你想證明的事。</mark></li><li><mark>α：犯型一錯誤（拒絕了其實為真的 H₀）的機率。</mark></li><li><mark>若 |Z 計算值| &gt; |臨界 Z|，拒絕 H₀。</mark></li><li><mark>因為 H₁ 用「≠」，所以是雙尾檢定。</mark></li></ul></div>
+      </div>
+    </div>
+    <div class="scroll-x" style="margin-top:12px"><table>
+      <tr><th colspan="3">校對說明（與英文原圖不同處）</th></tr>
+      <tr><th>位置</th><th>原圖</th><th>本頁</th></tr>
+      <tr><td>計算中間步驟</td><td>= −40 ∕ 7.07</td><td>= −20 ÷ (40 ∕ 7.071)：分子是 980 − 1000 = −20，40 ∕ 7.071 是分母</td></tr>
+      <tr><td>Z 值</td><td>−3.53</td><td>−20 ÷ 5.657 = −3.5355，四捨五入為 <b>−3.54</b>（結論不變）</td></tr>
+    </table></div>
+    <ul class="tight help" style="margin-top:10px">
+      <li><b>實務提醒：</b>Z 檢定假設母體 σ 已知。若 σ = 40 是從這 50 顆樣本算出的標準差（s），嚴格來說應用<b>單樣本 t 檢定</b>（自由度 49，臨界值約 ±2.01）；本例 |t| = 3.54 仍大於臨界值，結論相同。輔助工具的「假設檢定 → 比較檢定（單組對目標值）」用的就是 t 檢定。</li>
+      <li>「拒絕 H₀」只說明平均和 1000 有差，<b>差多少</b>要看信賴區間（6-3）：x̄ ± 1.96 × 5.657 ≈ 968.9 ～ 991.1 小時。</li>
+    </ul>
+  </section>
+
   <section class="card" id="s6-5">
     <span class="qref">6-5</span>
     <h3>p 值：如果 H₀ 是真的，看到這麼極端的機率</h3>
@@ -1982,6 +2062,29 @@ footer a, .card a { color: var(--act-text); }
   showTab(location.hash.slice(1));
   let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(["s1", "s2", "s3", "s4", "s5", "s6"].find(k => !$(k).hidden) || "s1"), 150); });
   window.__learn = { Phi, PhiInv, betaOf, binomCdf, tSf, tInv, tostCalc, ttCalc, dlCalc, cpUpper, propCalc, chiCalc, zeroN };
+})();
+</script>
+<script>
+// 6-4 例：手寫風格的雙尾 Z 檢定圖（Z = (980 − 1000) ÷ (40 ÷ √50) = −3.5355，臨界值 ±1.96）
+(function hnCurve() {
+  const svg = document.getElementById("hnCurve"); if (!svg) return;
+  const W0 = 40, W1 = 600, Y0 = 200, H = 140, X = z => W0 + (z + 4) / 8 * (W1 - W0), Y = z => Y0 - H * Math.exp(-z * z / 2);
+  const path = (a, b, close) => { let d = ""; for (let i = 0; i <= 80; i++) { const z = a + (b - a) * i / 80; d += (i ? " L" : "M") + X(z).toFixed(1) + "," + Y(z).toFixed(1); } return close ? d + ` L${X(b).toFixed(1)},${Y0} L${X(a).toFixed(1)},${Y0} Z` : d; };
+  const z = (980 - 1000) / (40 / Math.sqrt(50)), zt = z.toFixed(2), red = "#b3261e", ink = "#1d1d1b";
+  svg.innerHTML = `<defs><pattern id="hnHatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f6c9c3"/><line x1="0" y1="0" x2="0" y2="7" stroke="${red}" stroke-width="1.6"/></pattern></defs>
+    <path d="${path(-4, -1.96, true)}" fill="url(#hnHatch)"/><path d="${path(1.96, 4, true)}" fill="url(#hnHatch)"/>
+    <line x1="${X(-1.96)}" y1="${Y(-1.96)}" x2="${X(-1.96)}" y2="${Y0}" stroke="${red}" stroke-width="2"/><line x1="${X(1.96)}" y1="${Y(1.96)}" x2="${X(1.96)}" y2="${Y0}" stroke="${red}" stroke-width="2"/>
+    <line x1="${W0 - 10}" y1="${Y0}" x2="${W1 + 10}" y2="${Y0}" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="${path(-4, 4)}" fill="none" stroke="#1f3a68" stroke-width="2.6" stroke-linecap="round"/>
+    <g font-size="25" fill="${ink}" text-anchor="middle">
+      <text x="${X(-1.96)}" y="${Y0 + 28}">−1.96</text><text x="${X(1.96)}" y="${Y0 + 28}">+1.96</text>
+      <text x="${X(0)}" y="${Y0 - 66}">不拒絕 H₀</text><text x="${X(0)}" y="${Y0 - 38}">（0.95）</text>
+      <text x="${X(-3.1)}" y="${Y0 - 100}">拒絕區</text><text x="${X(-3.1)}" y="${Y0 - 72}" fill="${red}">（0.025）</text>
+      <text x="${X(3.1)}" y="${Y0 - 100}">拒絕區</text><text x="${X(3.1)}" y="${Y0 - 72}" fill="${red}">（0.025）</text>
+    </g>
+    <circle cx="${X(z)}" cy="${Y0}" r="6" fill="${red}"/>
+    <path d="M${X(z) + 22},${Y0 + 42} Q${X(z) + 12},${Y0 + 26} ${X(z) + 4},${Y0 + 9}" fill="none" stroke="${red}" stroke-width="2.4"/>
+    <text x="${X(z) + 4}" y="${Y0 + 66}" font-size="25" fill="${red}">我們的 Z = ${zt}（落在拒絕區！）</text>`;
 })();
 </script>
 </body>
