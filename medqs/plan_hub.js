@@ -185,7 +185,7 @@
     Object.keys(CRUMB_NAME).forEach(r => {
       const v = document.querySelector(`[data-view="${r}"]`); if (!v || v.hidden) return;
       let c = v.querySelector(":scope > .crumb"); if (!c) { c = document.createElement("div"); c.className = "crumb"; v.prepend(c); }
-      c.innerHTML = navCtx === "plan" ? `<button type="button" class="linkbtn" data-route-go="plan">← 回到 ③ 驗證計畫</button><span class="hint">　正在用「${CRUMB_NAME[r]}」驗證項目；做完按結果下方的「驗證結束，並儲存到報告」</span>` : `<button type="button" class="linkbtn" data-route-go="toolbox">🧰 工具箱</button><span class="hint"> › ${CRUMB_NAME[r]}</span>`;
+      c.innerHTML = navCtx === "plan" ? `<button type="button" class="linkbtn" data-route-go="plan">← 回到 ③ 驗證計畫</button><span class="hint">　正在用「${CRUMB_NAME[r]}」驗證項目；做完按結果下方的「驗證結束，並儲存到報告」</span>` : `<button type="button" class="linkbtn" data-route-go="toolbox">工具箱</button><span class="hint"> › ${CRUMB_NAME[r]}</span>`;
     });
   }
   setTimeout(() => { Object.keys(CRUMB_NAME).forEach(r => { const v = document.querySelector(`[data-view="${r}"]`); if (v) new MutationObserver(() => { if (!v.hidden) crumbRender(); }).observe(v, { attributes: true, attributeFilter: ["hidden"] }); }); crumbRender(); }, 0);

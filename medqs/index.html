@@ -1450,7 +1450,7 @@ table.term-tbl .status.ok, table.term-tbl .ok { color: #7FD3A6; }
     </div>
     <nav class="tabs toolnav" role="tablist" aria-label="設定與案件；方法一：工具箱；方法二：PDCA 改善流程">
       <span class="nv-grp nv-set"><button type="button" role="tab" class="nv-side" data-route="aisettings" aria-selected="false">⚙ 設定與案件</button></span>
-      <span class="nv-grp nv-tb"><span class="nv-lab" aria-hidden="true"><small>方法一</small></span><button type="button" role="tab" class="nv-side" data-route="toolbox" aria-selected="false">🧰 工具箱</button></span>
+      <span class="nv-grp nv-tb"><span class="nv-lab" aria-hidden="true"><small>方法一</small></span><button type="button" role="tab" class="nv-side" data-route="toolbox" aria-selected="false">工具箱</button></span>
       <span class="nv-grp nv-flow"><span class="nv-lab" aria-hidden="true"><small>方法二</small><b>PDCA 改善流程</b></span><button type="button" role="tab" class="nv-step" data-route="home" data-step="def" aria-selected="true"><span class="nv-n">1</span>定義問題</button><span class="nv-arr" aria-hidden="true">›</span>
       <button type="button" role="tab" class="nv-step" data-route="fishbone" data-step="fb" aria-selected="false"><span class="nv-n">2</span>魚骨圖</button><span class="nv-arr" aria-hidden="true">›</span>
       <button type="button" role="tab" class="nv-step" data-route="plan" data-step="plan" aria-selected="false"><span class="nv-n">3</span>驗證計畫</button><span class="nv-arr" aria-hidden="true">›</span>
@@ -1477,7 +1477,7 @@ table.term-tbl .status.ok, table.term-tbl .ok { color: #7FD3A6; }
   </section>
 
   <section id="viewToolbox" role="tabpanel" data-view="toolbox" hidden>
-    <div class="tool-head"><h2 class="tool-title">🧰 工具箱</h2><span class="hint">不走流程，直接用任何一個工具；依「要回答的問題」分組</span></div>
+    <div class="tool-head"><h2 class="tool-title">工具箱</h2><span class="hint">不走流程，直接用任何一個工具；依「要回答的問題」分組</span></div>
     <div class="home-grid tb-tiles" id="tbTiles" aria-label="工具"></div>
     <div class="tb-ai" id="tbAi">
       <div class="tb-ai-head"><b>🤖 問 AI：該用哪個工具？</b><button type="button" class="linkbtn" id="tbClear" hidden>重新問</button></div>
@@ -1569,7 +1569,7 @@ table.term-tbl .status.ok, table.term-tbl .ok { color: #7FD3A6; }
             <div class="run-row"><button class="btn copper small" type="button" id="fbAttAsk" disabled>請 AI 依附件整理問題點與原因</button><span class="hint">檔案只在你的瀏覽器讀取，內容會送到你自己的 Claude 帳號；不會存進草稿或匯出檔。</span></div>
           </div>
           <details class="ext-out" id="fbExtBox" hidden><summary id="fbExtSum"></summary><div id="fbExtBody"></div><p class="hint">這些案例會一起提供給魚骨圖的 AI 參考。</p></details>
-          <details class="fb-more"><summary>補充資訊（選填，讓 AI 建議更準確）</summary>
+          <details class="fb-more" hidden><summary>補充資訊（選填，讓 AI 建議更準確）</summary>
             <div class="fields">
               <div class="field"><label for="fb_prod">產品／批號</label><input autocomplete="off" id="fb_prod" type="text"></div>
               <div class="field"><label for="fb_when">發生時間</label><input autocomplete="off" id="fb_when" type="text" placeholder="例如：2026 年 9 月起"></div>
@@ -14707,7 +14707,7 @@ else root.runValidation = runValidation;
     Object.keys(CRUMB_NAME).forEach(r => {
       const v = document.querySelector(`[data-view="${r}"]`); if (!v || v.hidden) return;
       let c = v.querySelector(":scope > .crumb"); if (!c) { c = document.createElement("div"); c.className = "crumb"; v.prepend(c); }
-      c.innerHTML = navCtx === "plan" ? `<button type="button" class="linkbtn" data-route-go="plan">← 回到 ③ 驗證計畫</button><span class="hint">　正在用「${CRUMB_NAME[r]}」驗證項目；做完按結果下方的「驗證結束，並儲存到報告」</span>` : `<button type="button" class="linkbtn" data-route-go="toolbox">🧰 工具箱</button><span class="hint"> › ${CRUMB_NAME[r]}</span>`;
+      c.innerHTML = navCtx === "plan" ? `<button type="button" class="linkbtn" data-route-go="plan">← 回到 ③ 驗證計畫</button><span class="hint">　正在用「${CRUMB_NAME[r]}」驗證項目；做完按結果下方的「驗證結束，並儲存到報告」</span>` : `<button type="button" class="linkbtn" data-route-go="toolbox">工具箱</button><span class="hint"> › ${CRUMB_NAME[r]}</span>`;
     });
   }
   setTimeout(() => { Object.keys(CRUMB_NAME).forEach(r => { const v = document.querySelector(`[data-view="${r}"]`); if (v) new MutationObserver(() => { if (!v.hidden) crumbRender(); }).observe(v, { attributes: true, attributeFilter: ["hidden"] }); }); crumbRender(); }, 0);
@@ -16640,7 +16640,7 @@ else root.runValidation = runValidation;
 
   // ---------- problem guide ----------
   let guideCat = null, guideSel = null;
-  const AI_CAT = "AI 對話（找原因、不確定用哪個工具）";
+  const AI_CAT = "AI補述或其他客訴";
   function renderGuide() {
     if (!guideCat) { let c = null; try { c = localStorage.getItem("mdqs.needcat"); } catch (_) {} guideCat = c && GUIDE.some(g => g.cat === c) ? c : GUIDE[0].cat; }   // 情境區已移到工具箱，預設顯示第一類
     $("guideCats").innerHTML = GUIDE.map(c => c.cat).concat([AI_CAT]).map(c => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === guideCat}">${esc(c)}</button>`).join("");
