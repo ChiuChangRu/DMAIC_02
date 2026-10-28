@@ -8623,7 +8623,7 @@ else root.runValidation = runValidation;
       { model: "kimi-k3", label: "Kimi K3（Moonshot，較強）", note: "依官方 K3 快速入門（platform.kimi.com）：上下文 1M、原生支援圖片（base64）、固定為思考模式（無法關閉），可用下方「思考深度」調整（官方預設 max，越深越慢、越貴*）。官方範例的 API 網址是 https://api.moonshot.cn/v1，帳號在那個平台時請把上面的 API 網址改成這個。須儲值至少 10 元人民幣，註冊贈送額度不能用於 K3。價格見官方計價頁，這裡未核實*。多輪對話是否需要回傳思考內容，未實測*。" },
     ],
     stepfun: [
-      { model: "step-3.5-flash", label: "Step 3.5 Flash（StepFun，建議預設）", note: "依 StepFun 官方 GitHub（stepfun-ai/Step-3.5-Flash）：OpenAI 相容格式，國際站 API 網址 https://api.stepfun.ai/v1，上下文 256K。是否支援圖片官方頁未寫*，請先「測試連線」並附一張圖試試。回答可能是簡體中文，網站已預設轉繁體。價格未核實*。API key 在 https://platform.stepfun.ai/interface-key 申請（中國站帳號：platform.stepfun.com，API 網址改成 https://api.stepfun.com/v1，須 +86 手機驗證）。瀏覽器直連是否可行未驗證*。" },
+      { model: "step-3.5-flash", label: "Step 3.5 Flash（StepFun，建議預設）", note: "依 StepFun 官方 GitHub（stepfun-ai/Step-3.5-Flash）：OpenAI 相容格式，國際站 API 網址 https://api.stepfun.ai/v1，上下文 256K。是否支援圖片官方頁未寫*，請先「測試連線」並附一張圖試試。回答可能是簡體中文，網站已預設轉繁體。價格未核實*。API key 在 https://platform.stepfun.ai/interface-key 申請（中國站帳號：platform.stepfun.com，API 網址改成 https://api.stepfun.com/v1，須 +86 手機驗證）。StepFun 不允許網頁直接呼叫，網站會自動經由自己 Cloudflare 上的轉送站連線（只轉給 StepFun；key 不記錄、不儲存）。" },
       { model: "step-3.7-flash", label: "Step 3.7 Flash（StepFun，看圖*）", note: "StepFun 文件的圖片理解範例使用這個型號*（未能直接開官方頁核實）。需要上傳照片時可試這個。價格未核實*。API key 在 https://platform.stepfun.ai/interface-key 申請（中國站帳號：platform.stepfun.com，API 網址改成 https://api.stepfun.com/v1，須 +86 手機驗證）。" },
       { model: "step-5-preview", label: "Step 5 Preview（StepFun，預覽版*）", note: "StepFun 文件（Step Plan）列為建議首次驗證用的型號*；預覽版名稱與行為可能變動。價格未核實*。API key 在 https://platform.stepfun.ai/interface-key 申請（中國站帳號：platform.stepfun.com，API 網址改成 https://api.stepfun.com/v1，須 +86 手機驗證）。" }
     ],
@@ -8654,6 +8654,9 @@ else root.runValidation = runValidation;
   const byokBase = () => (byokCfg.base || BYOK_PROV[byokCfg.provider].base).replace(/\/+$/, "");
   const byokModel = () => (byokCfg.model || BYOK_PROV[byokCfg.provider].model).trim();
   const byokUsable = () => !!byokModel() && (!!byokKeyMem || !BYOK_PROV[byokCfg.provider].needKey);
+  // StepFun 不允許網頁直接呼叫（CORS），官方網址改走自己 Cloudflare 上的轉送站（只轉 StepFun、只接受本網站；key 不記錄）
+  const BYOK_RELAY = { "https://api.stepfun.ai/v1": "https://medapi-mcp.gogoyankee.workers.dev/relay/stepfun/v1/chat/completions", "https://api.stepfun.com/v1": "https://medapi-mcp.gogoyankee.workers.dev/relay/stepfun-cn/v1/chat/completions" };
+  const byokRelayUrl = (prov, base) => prov === "stepfun" ? BYOK_RELAY[base] || "" : "";
   const byokErr = (code, message, text) => Object.assign({ code, message: message || "" }, text ? { text } : {});
 
   // ---- 簡體轉繁體（需要時才載入 OpenCC） ----
@@ -8712,7 +8715,7 @@ else root.runValidation = runValidation;
       body = { model, max_tokens: 8000, stream: true, messages: m };
     } else {
       const m = msgs.map((t, i) => (i === msgs.length - 1 && b64.length ? { role: t.role, content: [{ type: "text", text: t.content }, ...b64.map(x => ({ type: "image_url", image_url: { url: `data:${x.mt};base64,${x.data}` } }))] } : t));
-      url = base + "/chat/completions";
+      url = byokRelayUrl(prov, base) || base + "/chat/completions";
       headers = Object.assign({ "content-type": "application/json" }, byokKeyMem ? { authorization: "Bearer " + byokKeyMem } : {});
       body = { model, stream: true, messages: m };
       if (prov === "kimi" && /^kimi-k3/i.test(model) && ["low", "high", "max"].includes(byokCfg.effort)) body.reasoning_effort = byokCfg.effort;
