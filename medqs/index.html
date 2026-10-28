@@ -1368,6 +1368,8 @@ nav.toolnav .sb-it.sb-has[aria-expanded="true"]::after { content: "▾"; }
 nav.toolnav .sb-s { width: 100%; text-align: left; font-size: 13px; font-weight: 500; color: var(--band-muted); border: 0; border-radius: 6px; padding: 5px 8px; background: transparent; white-space: normal; line-height: 1.35; }
 nav.toolnav .sb-s:hover { color: var(--band-ink); background: rgba(255,255,255,.06); }
 nav.toolnav .sb-s.on { color: #1F2933; background: #D8995F; font-weight: 700; }
+nav.toolnav .sb-s.sb-done { display: flex; gap: 6px; align-items: flex-start; }
+.sb-ok { flex: none; width: 16px; height: 16px; margin-top: 1px; } .sb-ok circle { fill: #2E9E5B; } .sb-ok path { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .sb-none { font-size: 12.5px; color: var(--band-muted); padding: 4px 8px; }
 nav.toolnav.sb-nav button[aria-selected="true"] { border-bottom: 0; }
 .sb-foot:empty { display: none; }
@@ -15970,7 +15972,8 @@ else root.runValidation = runValidation;
     const main = document.createElement("div"); main.className = "sb-main";
     while (head.nextSibling) main.appendChild(head.nextSibling);
     lay.append(side, main); wrap.appendChild(lay); wrap.classList.add("sb-wide");
-    const sub = (t, k, lab) => `<button type="button" class="sb-s" data-sbt="${t}" data-sbs="${k}">${esc(lab)}</button>`;
+    const SB_OK = `<svg class="sb-ok" viewBox="0 0 16 16" aria-label="已完成" role="img"><circle cx="8" cy="8" r="8"/><path d="M4.4 8.3l2.4 2.4 4.8-5"/></svg>`;
+    const sub = (t, k, lab, ok) => `<button type="button" class="sb-s${ok ? " sb-done" : ""}" data-sbt="${t}" data-sbs="${k}">${ok ? SB_OK : ""}<span>${esc(lab)}</span></button>`;
     const grp = (g, small, title) => `<div class="sb-grp" data-g="${g}"><button type="button" class="sb-gh" aria-expanded="false"><small>${small}</small><b>${title}</b><i class="sb-car" aria-hidden="true"></i></button><div class="sb-body" hidden></div></div>`;
     nav.className = "toolnav sb-nav"; nav.setAttribute("aria-label", "方法一：工具箱；方法二：PDCA 改善流程"); nav.removeAttribute("role");
     const hid = nav.querySelector(".nv-hid");
@@ -15999,7 +16002,7 @@ else root.runValidation = runValidation;
       if (t === "sample") box.innerHTML = [...document.querySelectorAll("#ssTabs [data-tsub]")].map(b => sub("sample", b.dataset.tsub, b.textContent.trim())).join("");   // 直接列檢定／抽樣方法（不列情境問題）
       else if (t === "plan") {
         const L = [...document.querySelectorAll("#planHub .hub-item")];
-        box.innerHTML = L.length ? L.map((x, i) => sub("plan", i, `${i + 1}. ${(x.querySelector(".hub-t") || x).textContent.trim()}`)).join("") : `<span class="sb-none">尚無驗證項目</span>`;
+        box.innerHTML = L.length ? L.map((x, i) => sub("plan", i, `${i + 1}. ${(x.querySelector(".hub-t") || x).textContent.trim()}`, x.classList.contains("hub-done"))).join("") : `<span class="sb-none">尚無驗證項目</span>`;
       } else if (t === "pdca") {
         const has6 = [...document.querySelectorAll("#pdcaWrap .pd-sec h4")].some(h => /^6/.test(h.textContent.trim()));
         box.innerHTML = SB_PD.filter(([n]) => n !== "6" || has6).map(([n, l]) => sub("pdca", n, `${n}　${l}`)).join("");
@@ -16048,6 +16051,8 @@ else root.runValidation = runValidation;
     // 頁面上切換子分頁時，側欄跟著標示
     document.addEventListener("click", e => { if (e.target.closest(".subtabs, #ssQ, #ssTiles")) setTimeout(sync, 0); });
     const _route = route;
+    // 驗證項目完成（有結論或已存分析）時側欄跟著打勾：驗證計畫重畫就更新已展開的清單
+    { const hub = $("planHub"); if (hub) new MutationObserver(() => { const sb = nav.querySelector('.sb-tool[data-t="plan"] .sb-sub'); if (sb && !sb.hidden) fill("plan"); }).observe(hub, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] }); }
     route = function (name) { _route(name); try { ["plan", "pdca", "sample"].forEach(t => { const sb = nav.querySelector(`.sb-tool[data-t="${t}"] .sb-sub`); if (sb && !sb.hidden) fill(t); }); sync(); } catch (e) { console.warn("sidebar", e); } };
     // 暫存進度、重新檢討魚骨圖、輪次：顯示在側欄底部（按鈕轉給原本流程列處理）
     const fl = $("flowBar");
