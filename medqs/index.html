@@ -11483,6 +11483,7 @@ else root.runValidation = runValidation;
         pkSet(p + "D", m.design, "change"); if (m.calc === "ni") pkSet("niDir", m.dir, "change");
         pkSet(p + "Sd", m.sd); pkSet(p + "Delta", m.delta === "" ? "" : Math.abs(+m.delta)); pkSet(p + "True", m.trueDiff === "" ? "0" : m.trueDiff);
         pkSet(p + "Alpha", m.alpha === "0.01" ? "0.025" : m.alpha, "change"); pkSet(p + "Power", m.power, "change");
+        pkSet(p + "Name", m.name); pkSet(p + "Unit", m.unit); pkSet(p + "Basis", m.basis, "change"); pkSet(p + "BasisNote", m.basisNote); pkSet(p + "Tol", m.tol);
       } else if (m.calc === "power") {
         pkClick(`#pwDesign [data-v="${m.design}"]`); pkClick('#pwSolve [data-v="n"]'); pkClick(`#pwAlt [data-v="${m.alt}"]`);
         pkSet("pwSd", m.sd); pkSet("pwDelta", m.delta === "" ? "" : Math.abs(+m.delta)); pkSet("pwTarget", m.power, "change"); pkSet("pwAlpha", m.alpha, "change");
@@ -11502,9 +11503,9 @@ else root.runValidation = runValidation;
     descPh: "例如：轉廠後要證明封口拉力平均沒有下降超過 2 N，歷史標準差約 1.5 N",
     goLabel: "帶入並計算",
     role: "你是樣本數規劃的助手。先判斷使用者要回答哪一類問題：要證明「變更後（轉廠、換料、換設備、換方法）一樣」用 tost（同等性 TOST，不能用 p > 0.05 證明一樣）；只在意「換了之後不會變差」用 ni（不劣性，dir＝higher 越大越好或 lower 越小越好）；要證明「有差、改善有效」用 power。其他算法：power（計量型 t 檢定）、attr（通過／不通過：信心度與可靠度，例如 95/95）、prop（不良率比較）、tolp（統計允差區間）。",
-    example: '{"calc":"tost","design":"two","alt":"two-sided","dir":"higher","alpha":0.05,"power":0.9,"sd":null,"delta":null,"trueDiff":0,"conf":0.95,"rel":0.95,"fails":0,"p0":null,"p1":null,"cover":0.99,"tconf":0.95,"side":"lower","method":"norm"}',
-    schemaNote: "calc＝tost、ni、power、attr、prop、tolp。tost 與 ni 用 design（two＝兩組獨立，one＝成對）、delta（δ：可接受的差異，是工程判斷，使用者沒提供就 null，不要自己訂）、sd、trueDiff（預期真實差異，不知道用 0）、alpha（0.05 或 0.025）、power；ni 另用 dir（higher 或 lower）。power 用 design（one＝單組或成對，two＝兩組獨立）、alt（two-sided 或 greater）、alpha、power、sd（標準差，使用者沒提供就 null）、delta（要偵測的最小差異，使用者沒提供就 null）；attr 用 conf（0.9／0.95／0.99）、rel（0.9／0.95／0.99／0.999）、fails（允許失效數 0／1／2／3／5）；prop 用 design、p0、p1（百分比數字，例如 1 代表 1%）、alpha、power；tolp 用 cover（涵蓋比例 0.9／0.95／0.99／0.999）、tconf（0.9／0.95／0.99）、side（lower／upper／two）、method（norm 常態或 np 無母數）。",
-    def: { calc: "power", dir: "higher", trueDiff: "0", design: "two", alt: "two-sided", alpha: "0.05", power: "0.9", sd: "", delta: "", conf: "0.95", rel: "0.95", fails: "0", p0: "", p1: "", cover: "0.99", tconf: "0.95", side: "lower", method: "norm" },
+    example: '{"calc":"tost","design":"two","alt":"two-sided","dir":"higher","alpha":0.05,"power":0.9,"sd":null,"delta":null,"trueDiff":0,"conf":0.95,"rel":0.95,"fails":0,"p0":null,"p1":null,"cover":0.99,"tconf":0.95,"side":"lower","method":"norm","name":null,"unit":null,"basis":null,"basisNote":null,"tol":null}',
+    schemaNote: "calc＝tost、ni、power、attr、prop、tolp。tost 與 ni 用 design（two＝兩組獨立，one＝成對）、delta（δ：可接受的差異，是工程判斷，使用者沒提供就 null，不要自己訂）、sd、trueDiff（預期真實差異，不知道用 0）、alpha（0.05 或 0.025）、power；ni 另用 dir（higher 或 lower）。power 用 design（one＝單組或成對，two＝兩組獨立）、alt（two-sided 或 greater）、alpha、power、sd（標準差，使用者沒提供就 null）、delta（要偵測的最小差異，使用者沒提供就 null）；attr 用 conf（0.9／0.95／0.99）、rel（0.9／0.95／0.99／0.999）、fails（允許失效數 0／1／2／3／5）；prop 用 design、p0、p1（百分比數字，例如 1 代表 1%）、alpha、power；tolp 用 cover（涵蓋比例 0.9／0.95／0.99／0.999）、tconf（0.9／0.95／0.99）、side（lower／upper／two）、method（norm 常態或 np 無母數）。tost 與 ni 另填表單文字欄：name（要比的特性，例如「死體積」）、unit（單位，例如 mL）——使用者在對話中提過就一定要填，沒提過才 null；basis（δ 的依據：func 功能／臨床、cust 客戶要求、proc 現行製程變異、msa 量測能力、spec 規格或內控、other 其他；使用者沒說就 null）、basisNote（δ 依據的一句說明，只寫使用者提供的理由，沒有就 null）、tol（規格公差寬度，使用者提供才填）。",
+    def: { calc: "power", dir: "higher", trueDiff: "0", design: "two", alt: "two-sided", alpha: "0.05", power: "0.9", sd: "", delta: "", conf: "0.95", rel: "0.95", fails: "0", p0: "", p1: "", cover: "0.99", tconf: "0.95", side: "lower", method: "norm", name: "", unit: "", basis: "", basisNote: "", tol: "" },
     fields: [
       { k: "calc", lab: "算法", type: "select", opts: SS_CALC },
       { k: "design", lab: "試驗設計", type: "select", opts: [["one", "單組或成對"], ["two", "兩組獨立"]], show: m => ["power", "prop", "tost", "ni"].includes(m.calc) },
@@ -11563,6 +11564,11 @@ else root.runValidation = runValidation;
       pick("conf", ["0.9", "0.95", "0.99"]); pick("rel", ["0.9", "0.95", "0.99", "0.999"]); pick("fails", ["0", "1", "2", "3", "5"]);
       pick("cover", ["0.9", "0.95", "0.99", "0.999"]); pick("tconf", ["0.9", "0.95", "0.99"]); pick("side", ["lower", "upper", "two"]); pick("method", ["norm", "np"]);
       if (!["0.01", "0.025", "0.05", "0.10"].includes(m.alpha)) m.alpha = "0.05";
+      // 同等性／不劣性表單的文字欄：特性名稱、單位、δ 依據（只帶使用者提供的內容；數值仍不由 AI 訂）
+      const txt = (v, n) => v == null ? "" : String(v).replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n);
+      m.name = txt(j.name, 40); m.unit = txt(j.unit, 16); m.basisNote = txt(j.basisNote, 120);
+      if (["func", "cust", "proc", "msa", "spec", "other"].includes(String(j.basis))) m.basis = String(j.basis);
+      if (j.tol != null && isFinite(+j.tol) && +j.tol > 0) m.tol = String(+j.tol);
     },
     go: m => {
       pkClick(`#ssTabs [data-tsub="${m.calc}"]`);
