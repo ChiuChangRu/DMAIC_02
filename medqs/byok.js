@@ -99,6 +99,7 @@
   async function byokHttpErr(res) {
     let msg = ""; try { const j = await res.json(); msg = (j.error && (j.error.message || j.error.type)) || j.message || ""; } catch (_) {}
     const st = res.status;
+    if (st === 402 || /quota|billing|insufficient|balance|余额|欠费/i.test(msg)) return byokErr("byok_quota", (msg || "").slice(0, 200) + ` (HTTP ${st})`);   // 帳戶額度不足：連線本身是通的
     return byokErr(st === 401 || st === 403 ? "byok_auth" : st === 404 ? "byok_model" : st === 429 ? "rate_limited" : st === 413 ? "prompt_too_large" : st >= 500 ? "upstream_error" : "byok_bad", (msg || "").slice(0, 200) + ` (HTTP ${st})`);
   }
   // 與平台 sample() 相同的介面：sample(input, {onText, signal, images}) → {text, truncated}
