@@ -1137,6 +1137,11 @@ nav.toolnav .nv-hid { display: none; }
 .hc-lab { font-size: 11.5px; color: var(--muted); font-weight: 800; letter-spacing: .03em; }
 .hc-v { font-weight: 800; margin: 2px 0; overflow-wrap: anywhere; } .hc-todo { color: var(--muted); }
 .hc-d { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; } .hc-dev { color: var(--warn-ink); font-weight: 700; }
+/* ① 驗證策略下方的「驗證方式」是重點：放大、深色字、淡底框；不用統計的項目把 ① 欄加寬 */
+.hub-pipe > .hc:first-child > .hc-d { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--copper-soft) 55%, var(--surface)); border-left: 3px solid var(--copper); font-size: 14.5px; line-height: 1.65; color: var(--ink); }
+.hub-pipe > .hc:first-child > .hc-d:empty { display: none; }
+.hub-pipe > .hc:first-child > .hc-d::before { content: "驗證方式"; display: block; font-size: 12px; font-weight: 800; color: var(--act-text); letter-spacing: .04em; margin-bottom: 2px; }
+.hub-pipe.ns { grid-template-columns: minmax(0, 1.5fr) minmax(0, 2.5fr); }
 .hc-b { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
 .hc-ns { display: flex; gap: 8px; flex-wrap: wrap; } .hc-ns select, .hc-ns input { font: inherit; font-size: 13.5px; padding: 4px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .hc-ns input { flex: 1 1 260px; min-width: 0; }
@@ -15427,6 +15432,7 @@ else root.runValidation = runValidation;
         `規則：先判斷要不要統計。不用統計就足以確認的，用「不用統計－」開頭的策略；需要數據比較、推論、或要證明比例／可靠度時，才用統計工具。不要給任何數值（標準差、不良率、樣本數、規格都不要寫），數值由使用者依自己的資料填。`,
         LV_ON ? `對策層次（三選一）：1＝根因調查（找出並消除原因）；2＝製程卡控或放行卡控（含抽樣計畫變更、全檢、管制圖、放行檢驗）；3＝臨床控管（修改 IFU／標示）。` : "",
         `回答最多 ${LV_ON ? 5 : 4} 行：① 要不要統計（理由一行）② 建議策略（理由一行）③ 樣本數要證明什麼（理由一行；不用統計就寫「不需要」）${LV_ON ? "④ 對策層次（理由一行）" : ""}。推論標 *。`,
+        `之後在對話中追問這一項時，只要回答確認、改變或補充了策略與驗證方式，回答最後都要再附一次 vitem 區塊（同一個 id，method 寫追問後最新、最具體的驗證方式），讓使用者按「採用」帶入。`,
         `最後附 vitem 區塊（JSON）：`, "```vitem", `{"id":"${x.id}","tool":"策略，從下面清單擇一照抄","svq":"樣本數代碼，從下面代碼擇一；不用統計填 none","method":"驗證方式一句話","data":"要收集的資料"${LV_ON ? ',"lv":"對策層次 1、2 或 3"' : ""}}`, "```",
         `策略清單：${VP_TOOLS.join("、")}`,
         `樣本數代碼：${SVQS().map(o => o[0] + "＝" + o[1]).join("；")}`].filter(Boolean).join("\n");
@@ -15441,7 +15447,7 @@ else root.runValidation = runValidation;
       return { id: String(j.id || ""), tool, svq, lv, method: String(j.method || "").trim().slice(0, 300), data: String(j.data || "").trim().slice(0, 300) };
     };
     const html = j => {
-      const x = item(j.id), done = x && x.tool === j.tool, ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
+      const x = item(j.id), done = x && x.tool === j.tool && (!j.method || x.method === j.method) && (!j.data || x.data === j.data), ql = j.svq && j.svq !== "none" ? (SVQS().find(o => o[0] === j.svq) || ["", ""])[1] : "";
       return `<div class="fb-sug vitem-sug"><p class="hint">AI 對「${esc(x ? x.cause : "（找不到這一項）")}」的建議（請自行判斷）：<b>${esc(j.tool)}</b>${ql ? `；樣本數：${esc(ql)}` : ""}${LV_ON && j.lv ? `；對策層次：${esc(LV[j.lv])}` : ""}</p>${x ? `<button type="button" class="btn small primary" data-vitem="${esc(JSON.stringify(j))}"${done ? " disabled" : ""}>${done ? "已採用" : "採用到卡片"}</button>` : ""}</div>`;
     };
     const ob = aiBody;
@@ -15454,14 +15460,15 @@ else root.runValidation = runValidation;
       const b = e.target.closest("[data-vitem]"); if (!b || b.disabled) return;
       let j; try { j = JSON.parse(b.dataset.vitem); } catch (_) { return; }
       const x = item(j.id); if (!x) return;
-      x.tool = j.tool; if (LV_ON && j.lv) x.lv = j.lv; if (!String(x.method || "").trim() && j.method) x.method = j.method; if (!String(x.data || "").trim() && j.data) x.data = j.data;
+      // 使用者按「採用」＝要用 AI 這次的回答：策略、驗證方式、要收集的資料一起換成這次的內容（之後仍可在卡片上修改）
+      x.tool = j.tool; if (LV_ON && j.lv) x.lv = j.lv; if (j.method) x.method = j.method; if (j.data) x.data = j.data;
       let svOK = false; try { svOK = svOk(x); } catch (_) {}
       if (!isNS(j.tool) && j.svq && !svOK) x.ss = { q: j.svq, n: "", sum: "", why: "" };
       try { vpChanged(true); } catch (_) {}
       b.disabled = true; b.textContent = "已採用";
       try { closePanel(); } catch (_) {}
       setTimeout(() => { const c = hub.querySelector(`[data-hubai="${x.id}"], [data-hub="edit"][data-id="${x.id}"]`), it = c && c.closest(".hub-item"); if (it) { it.scrollIntoView({ behavior: "smooth", block: "center" }); it.classList.add("vp-flash"); setTimeout(() => it.classList.remove("vp-flash"), 1600); } }, 80);
-      try { fbNote(`已採用 AI 建議：「${x.cause}」→ ${x.tool}。可以再改。`); } catch (_) {}
+      try { fbNote(`已採用 AI 建議：「${x.cause}」→ ${x.tool}${j.method ? "，驗證方式也換成 AI 這次的說明" : ""}。可以再改。`); } catch (_) {}
     });
     // ---- 進工具頁時自動按該頁的 AI 建議（每項每頁一次） ----
     const AIBTN = { hypothesis: "pkhAi", doe: "pkdAi", taguchi: "pktAi", msa: "mpAi", spc: "spAi", regression: "regAi" };

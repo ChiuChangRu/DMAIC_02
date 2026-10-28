@@ -1137,6 +1137,11 @@ nav.toolnav .nv-hid { display: none; }
 .hc-lab { font-size: 11.5px; color: var(--muted); font-weight: 800; letter-spacing: .03em; }
 .hc-v { font-weight: 800; margin: 2px 0; overflow-wrap: anywhere; } .hc-todo { color: var(--muted); }
 .hc-d { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; } .hc-dev { color: var(--warn-ink); font-weight: 700; }
+/* ① 驗證策略下方的「驗證方式」是重點：放大、深色字、淡底框；不用統計的項目把 ① 欄加寬 */
+.hub-pipe > .hc:first-child > .hc-d { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--copper-soft) 55%, var(--surface)); border-left: 3px solid var(--copper); font-size: 14.5px; line-height: 1.65; color: var(--ink); }
+.hub-pipe > .hc:first-child > .hc-d:empty { display: none; }
+.hub-pipe > .hc:first-child > .hc-d::before { content: "驗證方式"; display: block; font-size: 12px; font-weight: 800; color: var(--act-text); letter-spacing: .04em; margin-bottom: 2px; }
+.hub-pipe.ns { grid-template-columns: minmax(0, 1.5fr) minmax(0, 2.5fr); }
 .hc-b { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
 .hc-ns { display: flex; gap: 8px; flex-wrap: wrap; } .hc-ns select, .hc-ns input { font: inherit; font-size: 13.5px; padding: 4px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .hc-ns input { flex: 1 1 260px; min-width: 0; }
