@@ -5,7 +5,7 @@
   // 名稱標籤的顏色只是辨識用，不是各公司的 Logo。claude.ai 模式不知道帳號方案，所以不寫 Pro。
   // =====================================================================
   const AIS = { ok: null, at: null, busy: 0, code: "" };
-  const AI_BRAND = { claude: ["claude.ai", "#A34A16"], anthropic: ["Claude API", "#A34A16"], gemini: ["Gemini", "#2F63B8"], kimi: ["Kimi", "#6B46B8"], openai: ["OpenAI 相容", "#526173"] };
+  const AI_BRAND = { claude: ["claude.ai", "#A34A16"], anthropic: ["Claude API", "#A34A16"], gemini: ["Gemini", "#2F63B8"], kimi: ["Kimi", "#6B46B8"], stepfun: ["StepFun", "#1F7A6E"], openai: ["OpenAI 相容", "#526173"] };
   const AI_FAIL = /^byok|network|rate_limited|upstream|not_granted|sampling|unavailable|auth|forbidden|quota/i;   // 這些代表「連不上或被拒」；格式或內容問題不算
   function aiTrack(p) {
     AIS.busy++; aiChipRender();
